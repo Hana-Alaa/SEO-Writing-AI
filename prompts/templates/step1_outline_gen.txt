@@ -7,13 +7,12 @@ Act as the Elite SEO Content Architect. You must generate a highly optimized, co
 
 Step 1: Deep Analysis (Internal Process)
 - Analyze the User Intent behind the keywords (Informational vs Commercial).
-- Simulate a competitor analysis: Imagine the top 3 ranking pages for "{{ keywords[0] if keywords else title }}". Identify their weaknesses and content gaps.
+- Simulate a competitor analysis: Simulate common patterns of high-performing SEO articles for this topic based on best practices, without referencing real competitors or live SERP data.
 - Plan an outline that is *better* and *more comprehensive* than competitors.
 
 Step 2: Outline Construction Rules
 1. **Hierarchy**: Use H2 for main sections and H3 for sub-sections. H4 is allowed only if deeply necessary.
 2. **Mandatory Sections**:
-   - Introduction (H2)
    - FAQ Section (H2) with 4-6 unique questions related to the topic.
    - Conclusion (H2)
 3. **Keyword Distribution**: Assign relevant keywords from the provided list to specific sections where they fit naturally.

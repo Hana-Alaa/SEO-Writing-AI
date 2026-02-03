@@ -21,7 +21,9 @@ Constraints & Rules:
     - Informational keywords: Fully informational, link to commercial pillar pages when appropriate.
 6. **Originality & Accuracy**: Ensure content is 100% original, factually correct, logically ordered, and adds new value.
 7. **EEAT**: Include expert opinions, examples, references, or statistics if relevant.
-8.**CTA**: Include CTAs only for commercial keywords where applicable.
+8.**CTA**: - For commercial intent: Include persuasive CTAs.
+- For informational intent: Use soft CTAs (read more, internal links).
+9. Do NOT write a global conclusion. Write only section-specific content.
 
 Output Format:
 - Return strictly the markdown content for this section.

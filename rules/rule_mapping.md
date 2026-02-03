@@ -1,7 +1,8 @@
 # SEO Rule Mapping & Deconstruction
-
-This document maps the 19 SEO Rules to specific stages in the prompt engineering workflow.
-
+Simulate competitor content patterns based on general SEO best practices and common SERP structures.
+Do NOT claim access to real Google results.
+Do NOT mention competitor names or domains.
+ 
 **Stages Legend:**
 - **[SYS]**: System Prompt (Global Identity & Constraints)
 - **[OUT]**: Outline Generation Step (Structure & Hierarchy)
@@ -12,10 +13,10 @@ This document maps the 19 SEO Rules to specific stages in the prompt engineering
 | Rule ID | Rule Name | Category | Primary Stage | Constraint Type | Prompt Implementation Strategy |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **01** | Article Length | Structural | [SYS] / [SEC] | **Hard** | System: "Ensure ≥1000 words, expand naturally up to 3000–5000 words without repeating ideas or filler." Section: allocate content naturally per section. |
-| **02** | Main Keyword Usage | Content | [SEC] | **Hard** | Include main keyword in first paragraph; repeat 12–16 times across article naturally; use synonyms/semantic variations; include in some H2/H3 headings. |
+| **02** | Main Keyword Usage | Content | [SEC] | **Hard** | Include main keyword in first paragraph; Primary keyword density: ~1.2% – 1.6% per 1000 words Must scale proportionally with article length; use synonyms/semantic variations; include in some H2/H3 headings. |
 | **03** | Secondary Keywords | Content | [SEC] | **Hard** | Use secondary keywords from Google autocomplete, People Also Ask, Related searches. Auto-generate if missing. Distribute naturally across sections. |
 | **04** | Article Structure | Structural | [OUT] | **Hard** | Generate nested JSON outline of H2/H3. H4 optional for deep explanations. Ensure smooth transitions between sections. |
-| **05** | CTA (Call to Action) | Content | [SEC] | **Hard** | Include clear CTA in first paragraph. Add additional CTAs where relevant. Examples: service promotion, contact numbers, offers, product links. Adjust tone per keyword intent (commercial vs informational). |
+| **05** | CTA (Call to Action) | Content | [SEC] | **Hard** | Include clear CTA in first paragraph. Add additional CTAs where relevant. Examples: service promotion, contact numbers, offers, product links. Adjust tone per keyword intent (commercial vs informational),Introduction Constraints: Maximum 2 short paragraphs, CTA sentence must appear in paragraph 1, CTA tone must match keyword intent |
 | **06** | Content Style by Intent | Content | [SYS] | **Soft** | Persona based on intent: Commercial = persuasive/sales, Informational = educational/neutral. |
 | **07** | Internal Linking | Formatting | [SEC] | **Hard** | Place links naturally. Prioritize service/product pages & commercial pillar articles. Avoid clustering links. |
 | **08** | Article Title (H1) | Structural | [OUT] | **Hard** | Title 60–70 chars, include main keyword. Commercial = sales-oriented. Optionally include numbers/years. |

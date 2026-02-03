@@ -31,6 +31,10 @@
     "required": ["title", "keywords"]
     },
     "seo_meta": {
+      "intent": {
+      "type": "string",
+      "enum": ["commercial", "informational", "transactional", "comparative"]
+      },
       "type": "object",
       "description": "Computed SEO requirements based on rules.",
       "properties": {
@@ -66,7 +70,7 @@
         },
         "heading_level": { 
           "type": "string", 
-          "enum": ["H1", "H2", "H3", "H4"] 
+          "enum": ["H2", "H3", "H4"] 
         },
         "heading_text": { 
           "type": "string" 
@@ -84,13 +88,18 @@
           "type": "array",
           "items": {
             "type": "object",
+            "required": ["url", "anchor_text", "link_type"],
             "properties": {
               "url": { "type": "string" },
-              "anchor_text": { "type": "string" }
+              "anchor_text": { "type": "string" },
+              "link_type": {
+                "type": "string",
+                "enum": ["internal", "external"]
+              }
             }
-          },
-          "description": "Internal/External links allocated to this specific section."
+          }
         },
+        
         "estimated_word_count": {
           "type": "integer",
           "description": "Target length for this section."

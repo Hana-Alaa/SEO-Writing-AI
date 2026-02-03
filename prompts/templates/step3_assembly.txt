@@ -17,7 +17,12 @@ Your Task:
    - Ensure the tone is consistent throughout.
 3. **Establish Hierarchy**: Ensure the H1 (Title) is at the top, followed by H2 main, H3 sub-sections.
 4. **Metadata Generation**: Create the Meta Title and Meta Description according to guidelines.
-5. Ensure article length, keyword usage, CTAs, internal/external links, and EEAT requirements are met.
+5. Assembly Rules:
+  - Do NOT rewrite or expand content.
+  - Stitch sections in correct order.
+  - Add minimal transitions only when necessary.
+  - Transition edits must not exceed 5% of the text.
+
 
 Output Format:
 Return a JSON object with the final content and metadata:
@@ -26,3 +31,5 @@ Return a JSON object with the final content and metadata:
   "meta_title": "SEO Optimized Title (60-70 chars)",
   "meta_description": "Click-worthy description (150-160 chars)"
 }
+
+Use the image plan to insert either
