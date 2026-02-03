@@ -1,0 +1,53 @@
+Context:
+- Article Title: "{{ title }}"
+- Core Keywords: {{ keywords | tojson }}
+
+Your Task:
+Act as the Elite SEO Content Architect. You must generate a highly optimized, competitor-crushing article outline based on the provided title and keywords.
+
+Step 1: Deep Analysis (Internal Process)
+- Analyze the User Intent behind the keywords (Informational vs Commercial).
+- Simulate a competitor analysis: Imagine the top 3 ranking pages for "{{ keywords[0] if keywords else title }}". Identify their weaknesses and content gaps.
+- Plan an outline that is *better* and *more comprehensive* than competitors.
+
+Step 2: Outline Construction Rules
+1. **Hierarchy**: Use H2 for main sections and H3 for sub-sections. H4 is allowed only if deeply necessary.
+2. **Mandatory Sections**:
+   - Introduction (H2)
+   - FAQ Section (H2) with 4-6 unique questions related to the topic.
+   - Conclusion (H2)
+3. **Keyword Distribution**: Assign relevant keywords from the provided list to specific sections where they fit naturally.
+4. **Flow**: Ensure logical progression (e.g., Definition -> Importance -> How-To -> Advanced Tips -> Conclusion).
+
+Step 3: JSON Output Generation
+Output the outline *strictly* as a valid JSON array of objects.
+- Do not output markdown.
+- Do not output explanations.
+- Return ONLY the JSON array.
+
+Each object in the array must follow this schema:
+{
+  "section_id": "sec_X",  // Unique generic ID (sec_01, sec_02...)
+  "heading_level": "H2",  // or H3, H4
+  "heading_text": "The Heading Content",
+  "section_intent": "Brief direction for the writer on what to cover in this section.",
+  "assigned_keywords": ["keyword1", "keyword2"] // Subset of provided keywords relevant here
+}
+
+Example Output JSON:
+[
+  {
+    "section_id": "sec_01",
+    "heading_level": "H2",
+    "heading_text": "Introduction",
+    "section_intent": "Hook the reader, define the core concept, and state the article's value.",
+    "assigned_keywords": ["{{ keywords[0] if keywords else 'topic' }}"]
+  },
+  {
+    "section_id": "sec_02",
+    "heading_level": "H2",
+    "heading_text": "What is ...?",
+    "section_intent": "Explain the definition clearly.",
+    "assigned_keywords": []
+  }
+]

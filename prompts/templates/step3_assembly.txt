@@ -1,0 +1,28 @@
+Context:
+You have received a set of written sections for the article titled: "{{ title }}".
+Your job is to assemble them into a single, cohesive, finalized Masterpiece.
+
+Input Sections:
+{% for section in sections %}
+--- SECTION: {{ section.heading_text }} ---
+{{ section.generated_content }}
+-------------------------------------------
+{% endfor %}
+
+Your Task:
+1. **Assembly**: Stitch these sections together into a cohesive article..
+2. **Analysis**:
+   - Check for smooth transitions between paragraphs/sections. If a transition is abrupt, add a linking sentence.
+   - Remove any redundant introductions (e.g., "In this section...").
+   - Ensure the tone is consistent throughout.
+3. **Establish Hierarchy**: Ensure the H1 (Title) is at the top, followed by H2 main, H3 sub-sections.
+4. **Metadata Generation**: Create the Meta Title and Meta Description according to guidelines.
+5. Ensure article length, keyword usage, CTAs, internal/external links, and EEAT requirements are met.
+
+Output Format:
+Return a JSON object with the final content and metadata:
+{
+  "final_markdown": "The complete, formatted markdown article...",
+  "meta_title": "SEO Optimized Title (60-70 chars)",
+  "meta_description": "Click-worthy description (150-160 chars)"
+}

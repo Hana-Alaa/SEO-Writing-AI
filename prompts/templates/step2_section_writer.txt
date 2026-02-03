@@ -1,0 +1,29 @@
+Context:
+- Article Title: "{{ title }}"
+- Overall Topic Keywords: {{ global_keywords | tojson }}
+
+Current Section Details:
+- Heading ({{ section.heading_level }}): "{{ section.heading_text }}"
+- Intent/Instruction: "{{ section.section_intent }}"
+- Required Keywords for this Section: {{ section.assigned_keywords | tojson }}
+- Mandatory Links: {{ section.assigned_links | tojson }}
+
+Your Task:
+Write the *content* for this specific section. Do not write the whole article. Do not write the heading again (it will be added automatically).
+
+Constraints & Rules:
+1. **Length & Depth**: Meet or exceed the word count specified ({{ section.estimated_word_count | default(300) }} words).
+2. **Keyword Usage**: Naturally include primary and secondary keywords assigned to this section. Avoid keyword stuffing.
+3. **Heading Structure**: Follow the heading hierarchy (H2/H3/H4) as defined in the outline.
+4. **Links**: Include internal and external links where required. Link placement should be natural and contextually relevant.
+5. **Content Style by Keyword Intent**:
+    - Commercial keywords: Include relevant CTAs, highlight product/service benefits, pricing, or unique selling points.
+    - Informational keywords: Fully informational, link to commercial pillar pages when appropriate.
+6. **Originality & Accuracy**: Ensure content is 100% original, factually correct, logically ordered, and adds new value.
+7. **EEAT**: Include expert opinions, examples, references, or statistics if relevant.
+8.**CTA**: Include CTAs only for commercial keywords where applicable.
+
+Output Format:
+- Return strictly the markdown content for this section.
+- Do not wrap in quotes or code blocks.
+- Do not add headings (H1/H2) unless required for sub-sections (H3/H4).
