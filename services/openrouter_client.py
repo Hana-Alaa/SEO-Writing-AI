@@ -41,6 +41,7 @@ class OpenRouterClient:
         response_format: Optional[Dict[str, str]] = None,
         retries: int = 3,
         backoff_factor: float = 2.0
+        
     ) -> Optional[str]:
         """
         Sends a request to OpenRouter with retry logic.

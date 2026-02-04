@@ -18,7 +18,9 @@ class ArticleInput(BaseModel):
 
     @field_validator('keywords')
     def validate_keywords(cls, v):
-        if not v:
-            raise ValueError("At least one keyword must be provided")
-        return [k.strip() for k in v if k.strip()]
+        cleaned = [k.strip() for k in v if k.strip()]
+        if not cleaned:
+            raise ValueError("At least one non-empty keyword is required")
+        return cleaned
+
 

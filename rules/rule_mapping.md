@@ -30,22 +30,35 @@ Do NOT mention competitor names or domains.
 | **16** | EEAT Requirements | Content | [SYS] | **Soft** | Include expert opinions, real examples, statistics when relevant. Maintain authoritative & reader-focused tone. |
 | **17** | Plagiarism Avoidance | Content | [SYS] | **Hard** | Content 100% original. Never copy/rephrase. Each section must add new value. |
 | **18** | Permalink Structure | Structural | [ASM] | **Hard** | Short, readable URL containing main keyword. Suggest manual fix if CMS alters it. Avoid unnecessary parameters. Fully aligned with Google SEO guidelines. |
-| **19** | Competitor Analysis | Content | [Pre-Processing] | **Hard** | Before writing, analyze top-ranking pages for primary keyword: content depth, headings, meta tags, media, keyword usage, unique value, gaps. Ensure content exceeds competitors in coverage, structure, and actionability. |
+| **19** | Competitor Analysis | Content | [STEP-0] | **Hard** | Before writing, analyze top-ranking pages for primary keyword: content depth, headings, meta tags, media, keyword usage, unique value, gaps. Ensure content exceeds competitors in coverage, structure, and actionability. “Simulate a competitive content analysis based on general SEO best practices and common first-page ranking patterns. Do not reference real competitors or SERP data.”|
 
 
 ## Logic Flow Strategy
 
-1. **Pre-Processing**:
-    - Classify Intent (Rule 15, 6).
-    - Perform Competitor Analysis (Rule 19).
-    - Select System Prompt Variant (Commercial vs Informational).
+1. **STEP-0 – Competitive Pattern Simulation & Intent Classification**
+   - Classify Intent (Rule 15, 6)
+   - Simulate Competitive Patterns (Rule 19)
+   - Select System Prompt Variant
+   - Identify:
+     • Required subtopics
+     • Content gaps
+     • Weak competitor sections
+   - OUTPUT:
+     competitive_insights.json
+
 
 2. **Stage 1 (Outline Generation)**:
     - Enforce Rules: 4 (Hierarchy), 8 (H1), 14 (FAQ outline), 19 (Gap Analysis via LLM reasoning).
 
 3. **Stage 2 (Section Loop)**:
-    - Iterate through H2s & H3s.
-    - Enforce Rules: 2 (Main KW), 3 (Secondary KW), 5 (CTA), 7 (Internal Links), 11 (Lists/Tables).
+    - MUST incorporate competitive_insights.json
+    - Enforce Rules:
+        • 2 (Main Keyword)
+        • 3 (Secondary Keywords)
+        • 5 (CTA)
+        • 7 (Internal Links)
+        • 19 (Gap coverage)
+        • 11 (Lists / Tables)
 
 4. **Stage 3 (Images)**:
     - Enforce Rule 10 (7+ images, Alt Text variations).

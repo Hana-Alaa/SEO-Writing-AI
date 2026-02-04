@@ -22,6 +22,7 @@ Your Task:
   - Stitch sections in correct order.
   - Add minimal transitions only when necessary.
   - Transition edits must not exceed 5% of the text.
+  - Do NOT attempt to fix or bypass validation constraints (word count, keyword density, image count). Only assemble.
 
 
 Output Format:

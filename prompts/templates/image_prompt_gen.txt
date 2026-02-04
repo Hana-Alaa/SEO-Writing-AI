@@ -11,14 +11,13 @@ Rules:
 1. **Quantity**: Exactly 7 images.
 2. **Relevance**: Each image must correspond to a specific section of the outline.
 3. **Variety**: Use different styles (e.g., "Photorealistic office setting", "Minimalist vector illustration", "Data visualization chart", "Infographic style").
-4. **Alt Text**: For each image, provide SEO-optimized ALT text that naturally includes a variation of the main keyword or relevant LSI keywords.
-5. **No Text in Images**: The image prompts should avoid requesting complex text inside the image (AI struggles with text).
+4. **Alt Text**: ALT text must include the primary keyword explicitly, with optional natural variations or LSI keywords.
 
 Output Format:
 Return strictly a JSON array of objects. No markdown.
 [
   {
-    "section_id": "sec_01", (Target section for this image)
+    "section_id": "sec_01", 
     "image_type": "Featured Image" or "Infographic" or "Illustration",
     "prompt": "A detailed description of the image for an AI generator (Midjourney/DALL-E style)...",
     "alt_text": "SEO optimized alt text..."

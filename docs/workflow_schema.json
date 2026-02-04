@@ -49,6 +49,23 @@
         "$ref": "#/definitions/section_node"
       }
     },
+      "competitive_insights": {
+    "type": "object",
+    "description": "Simulated competitive patterns and gaps derived in STEP-0.",
+    "properties": {
+      "required_subtopics": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "content_gaps": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "depth_expectations": {
+        "type": "string"
+      }
+    }
+  },
     "final_output": {
       "type": "object",
       "properties": {

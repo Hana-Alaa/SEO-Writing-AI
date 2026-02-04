@@ -9,6 +9,7 @@ Step 1: Deep Analysis (Internal Process)
 - Analyze the User Intent behind the keywords (Informational vs Commercial).
 - Simulate a competitor analysis: Simulate common patterns of high-performing SEO articles for this topic based on best practices, without referencing real competitors or live SERP data.
 - Plan an outline that is *better* and *more comprehensive* than competitors.
+- The outline MUST explicitly cover all identified content gaps from STEP-0.
 
 Step 2: Outline Construction Rules
 1. **Hierarchy**: Use H2 for main sections and H3 for sub-sections. H4 is allowed only if deeply necessary.
