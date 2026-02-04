@@ -80,16 +80,7 @@
 - **Output**: `services/image_generator.py`.
 - **Dependencies**: Task 4.1.
 
-## Phase 5: Orchestration Layer
-
-### Task 5.1:  Workflow Controller
-- **Purpose**: Managing the order of steps fromInput → Outline → Sections → Assembly → Image Generation.
-- **Input**: Article Input object + optional URLs.
-- **Output**: `workflow_state.json or in-memory dict.` 
-- **Dependencies**: Phase 1–4.
-
-
-
+## Phase 5: Orchestration Layer 
 
 ## Phase 6: Validation & Iteration
 

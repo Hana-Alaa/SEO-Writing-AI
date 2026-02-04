@@ -96,6 +96,7 @@ class WorkflowController:
         # if the user specifically requested a separate output. 
         # User requested 'competitive_insights.json' in Step 0. Let's do a quick LLM call for that.
         state = self._step_0_analysis(state)
+        state["final_output"]["meta_title"] = self._generate_article_title(state)
 
         # --- Step 1: Outline Generation ---
         state = self._step_1_outline(state)
@@ -199,18 +200,41 @@ class WorkflowController:
     def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
         logger.info("Running Step 2: Section Writing...")
         
+        from jinja2 import Undefined
+
+        for k, v in context.items():
+            if isinstance(v, Undefined) or v is None:
+                context[k] = ""
+
+        
         sections_content = []
         base_context = self.injector.format_prompt_variables("step2_section_writer", state)
         
         for section in state["outline"]:
             sec_id = section.get("section_id")
-            logger.info(f"Writing Section: {sec_id} - {section.get('heading_text')}")
+            heading_text = section.get("heading_text", "")
+            logger.info(f"Writing Section: {sec_id} - {heading_text}")
             
             # Update context for this specific section
             context = base_context.copy()
             context["section"] = section
-            
-            prompt_content = self.prompts["step2_section"].render(**context)
+
+            # ضمان أن كل المتغيرات المطلوبة موجودة
+            context.setdefault("outline", state.get("outline", []))
+            context.setdefault("seo_meta", state.get("seo_meta", {}))
+            context.setdefault("competitor_gaps", state.get("seo_meta", {}).get("content_gaps", []))
+            context.setdefault("input_data", state.get("input_data", {}))
+
+            # تحويل أي Undefined في context إلى empty string لتجنب خطأ JSON
+            for k, v in context.items():
+                if isinstance(v, Undefined):
+                    context[k] = "" 
+
+            try:
+                prompt_content = self.prompts["step2_section"].render(**context)
+            except Exception as e:
+                logger.error(f"Error rendering template for section {sec_id}: {e}")
+                continue
             
             content_resp = self.llm_client.generate_completion(
                 messages=[{"role": "user", "content": prompt_content}]
@@ -222,9 +246,10 @@ class WorkflowController:
             else:
                 logger.warning(f"Failed to generate content for {sec_id}")
         
-        state["outline"] = sections_content # store back
-        state["sections"] = sections_content # Separating content from structure
+        state["outline"] = sections_content  # store back
+        state["sections"] = sections_content  # separate content from structure
         return state
+
 
     def _step_3_assembly(self, state: Dict[str, Any]) -> Dict[str, Any]:
         logger.info("Running Step 3: Assembly...")

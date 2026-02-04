@@ -13,7 +13,7 @@ class OpenRouterClient:
     Client for interacting with the OpenRouter API with built-in retry logic.
     """
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "google/gemini-2.0-flash-001"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "openai/gpt-4.1-mini"):
         """
         Initialize the client.
         :param api_key: OpenRouter API key. If None, tries to read from OPENROUTER_API_KEY env var.
