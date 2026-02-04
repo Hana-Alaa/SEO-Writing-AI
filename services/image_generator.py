@@ -1,6 +1,21 @@
 import logging
 from typing import List, Dict
 import urllib.parse
+import os
+import requests
+from PIL import Image
+from PIL import Image
+
+def resize_image(filepath: str, max_width: int, max_height: int, quality: int = 85):
+    """
+    Resizes an image to fit within max_width/max_height while maintaining aspect ratio.
+    """
+    try:
+        with Image.open(filepath) as img:
+            img.thumbnail((max_width, max_height))
+            img.save(filepath, optimize=True, quality=quality)
+    except Exception as e:
+        logger.error(f"Failed to resize image {filepath}: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -8,6 +23,9 @@ class ImageGenerator:
     """
     Handles image generation using Pollinations.ai
     """
+    def __init__(self, save_dir: str = "images"):
+        self.save_dir = save_dir
+        os.makedirs(self.save_dir, exist_ok=True)
 
     def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None) -> List[Dict[str, str]]:
         if len(image_prompts) != 7:
@@ -68,3 +86,53 @@ class ImageGenerator:
             raise ValueError("Exactly one Featured Image is required.")
 
         return generated_images
+    
+    def generate_image_url(self, prompt: str) -> str:
+        encoded_prompt = urllib.parse.quote(prompt)
+        return f"https://image.pollinations.ai/prompt/{encoded_prompt}"
+
+    def download_image(self, prompt: str, filename: str = None) -> str:
+        """
+        Downloads image from Pollinations API and resizes it for blog templates.
+        """
+        url = self.generate_image_url(prompt)
+        filename = filename or f"{prompt[:30].replace(' ', '_')}.png"
+        filepath = os.path.join(self.save_dir, filename)
+
+        try:
+            logger.info(f"Downloading image for prompt: '{prompt}'")
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+
+            with open(filepath, "wb") as f:
+                f.write(response.content)
+
+            # **Resize and compress image for blog**
+            resize_image(filepath, max_width=1200, max_height=630, quality=85)
+
+            logger.info(f"Image saved and resized to: {filepath}")
+            return filepath
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to download image: {e}")
+            return ""
+    
+    def save_responsive_versions(self, filepath: str):
+        """
+        Generate multiple sizes for blog templates.
+        """
+        base, ext = os.path.splitext(filepath)
+        sizes = {
+            "featured": (1200, 630),
+            "inline": (800, 420),
+            "thumbnail": (400, 210)
+        }
+
+        img = Image.open(filepath)
+        for name, (w, h) in sizes.items():
+            img_copy = img.copy()
+            img_copy.thumbnail((w, h))
+            new_path = f"{base}_{name}{ext}"
+            img_copy.save(new_path, optimize=True, quality=85)
+            logger.info(f"Saved {name} version: {new_path}")
+

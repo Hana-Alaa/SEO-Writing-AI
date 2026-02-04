@@ -80,15 +80,26 @@
 - **Output**: `services/image_generator.py`.
 - **Dependencies**: Task 4.1.
 
-## Phase 5: Validation & Iteration
+## Phase 5: Orchestration Layer
 
-### Task 5.1: Automated Compliance Validator
+### Task 5.1:  Workflow Controller
+- **Purpose**: Managing the order of steps fromInput → Outline → Sections → Assembly → Image Generation.
+- **Input**: Article Input object + optional URLs.
+- **Output**: `workflow_state.json or in-memory dict.` 
+- **Dependencies**: Phase 1–4.
+
+
+
+
+## Phase 6: Validation & Iteration
+
+### Task 6.1: Automated Compliance Validator
 - **Purpose**: To run code-based checks on the output to verify "Hard Rules" (Keywords present? H2s exist? Links valid?).
 - **Input**: Final Generated Markdown.
 - **Output**: `utils/seo_validator.py` (Functions returning Pass/Fail).
 - **Dependencies**: Task 1.1 (Rule Rules).
 
-### Task 5.2: Iteration & Training Loop
+### Task 6.2: Iteration & Training Loop
 - **Purpose**: To systematically improve prompts based on validator failures.
 - **Input**: Validator Reports.
 - **Output**: `docs/iteration_log.md` and updated prompt templates (v1.1, v1.2).
