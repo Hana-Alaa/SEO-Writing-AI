@@ -54,8 +54,12 @@ def main():
         result_state = controller.run_workflow(user_input)
         
         # Output Results
-        final_file = os.path.join("output", "article_final.md")
+        final_file = os.path.join(result_state["output_folder"], "article_final.md")
         report = result_state.get("validation_report", {})
+        images_folder = os.path.join(result_state["output_folder"], "images")
+        print(f"Article saved to: {os.path.abspath(final_file)}")
+        print(f"Images folder: {images_folder}")
+
         
         print("\n==========================================")
         print("           GENERATION COMPLETE            ")
