@@ -60,7 +60,9 @@ class ImageGenerator:
             encoded_prompt = urllib.parse.quote(final_prompt)
 
             # Deterministic seed
-            seed = hash(section_id) % 100000
+            import hashlib
+            seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 100000
+
 
             # Build image URL
             width = 1200
@@ -87,6 +89,21 @@ class ImageGenerator:
 
         return generated_images
     
+    def generate_image_prompts_only(self, outline: list, seo_meta: dict) -> list:
+        """
+        Placeholder for orchestration testing.
+        Returns a list of fake prompts without calling any AI API.
+        """
+        prompts = []
+        for section in outline:
+            prompts.append({
+                "section_id": section.get("id"),
+                "prompt": f"Image for section '{section.get('title')}'",
+                "alt_text": f"Alt text for {section.get('title')}",
+                "image_type": "Illustration"
+            })
+        return prompts
+
     def generate_image_url(self, prompt: str) -> str:
         encoded_prompt = urllib.parse.quote(prompt)
         return f"https://image.pollinations.ai/prompt/{encoded_prompt}"
@@ -135,4 +152,19 @@ class ImageGenerator:
             new_path = f"{base}_{name}{ext}"
             img_copy.save(new_path, optimize=True, quality=85)
             logger.info(f"Saved {name} version: {new_path}")
+
+    def download_and_process_images(self, image_prompts: list) -> list:
+        """
+        Placeholder: just simulate downloaded images for orchestration testing.
+        """
+        processed = []
+        for item in image_prompts:
+            processed.append({
+                "section_id": item.get("section_id"),
+                "image_type": item.get("image_type"),
+                "alt_text": item.get("alt_text"),
+                "local_path": f"{self.save_dir}/{item.get('section_id')}.png",
+                "url": f"https://fake.url/{item.get('section_id')}.png"
+            })
+        return processed
 

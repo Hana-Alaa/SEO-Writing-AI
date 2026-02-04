@@ -1,71 +1,62 @@
-import os
 import requests
-import logging
 from urllib.parse import quote
+import os
+import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class PollinationsClient:
-    """
-    Client to interact with Pollinations API for AI-generated images.
-    """
+class PollinationsImageService(BaseImageService):
+    BASE_URL = "https://enter.pollinations.ai/api/generate"
 
-    BASE_URL = "https://image.pollinations.ai/prompt/"
-
-    def __init__(self, save_dir: str = "images"):
-        """
-        :param save_dir: Local folder to save downloaded images.
-        """
+    def __init__(self, save_dir="output/images"):
         self.save_dir = save_dir
         os.makedirs(self.save_dir, exist_ok=True)
+        self.api_key = os.getenv("POLLINATIONS_API_KEY")
+        if not self.api_key:
+            logger.warning("No POLLINATIONS_API_KEY found. API calls will fail.")
 
-    def generate_image_url(self, prompt: str) -> str:
-        """
-        Return the Pollinations URL for a given prompt.
-        :param prompt: Text prompt for image generation
-        :return: URL string
-        """
-        encoded_prompt = quote(prompt)
-        return f"{self.BASE_URL}{encoded_prompt}"
+    def generate_image_prompts_only(self, outline: list, seo_meta: dict) -> list:
+        prompts = []
+        for section in outline:
+            prompts.append({
+                "section_id": section.get("id"),
+                "prompt": f"Image for section '{section.get('title')}'",
+                "alt_text": f"Alt text for {section.get('title')}",
+                "image_type": "Illustration"
+            })
+        return prompts
 
-    def download_image(self, prompt: str, filename: str = None) -> str:
-        """
-        Downloads image from Pollinations API.
-        :param prompt: Text prompt for image generation
-        :param filename: Optional local filename (with extension .png or .jpg)
-        :return: Local file path of saved image
-        """
-        url = self.generate_image_url(prompt)
-        filename = filename or f"{prompt[:30].replace(' ', '_')}.png"
-        filepath = os.path.join(self.save_dir, filename)
+    def download_and_process_images(self, image_prompts: list) -> list:
+        processed = []
+        for item in image_prompts:
+            prompt = item.get("prompt")
+            filename = f"{item.get('section_id')}.png"
+            filepath = os.path.join(self.save_dir, filename)
 
-        try:
-            logger.info(f"Downloading image for prompt: '{prompt}'")
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
+            if not self.api_key:
+                logger.warning("API key not set, skipping download for prompt: %s", prompt)
+                url = f"https://fake.url/{item.get('section_id')}.png"
+            else:
+                try:
+                    response = requests.post(
+                        self.BASE_URL,
+                        headers={"Authorization": f"Bearer {self.api_key}"},
+                        json={"prompt": prompt},
+                        timeout=30
+                    )
+                    response.raise_for_status()
+                    with open(filepath, "wb") as f:
+                        f.write(response.content)
+                    url = filepath
+                except Exception as e:
+                    logger.error(f"Failed to download image for '{prompt}': {e}")
+                    url = ""
 
-            with open(filepath, "wb") as f:
-                f.write(response.content)
-
-            logger.info(f"Image saved to: {filepath}")
-            return filepath
-
-        except requests.RequestException as e:
-            logger.error(f"Failed to download image: {e}")
-            return ""
-
-# ======================
-# Example usage
-# ======================
-if __name__ == "__main__":
-    client = PollinationsClient(save_dir="generated_images")
-    
-    # Generate Pollinations URL (optional)
-    url = client.generate_image_url("SEO article hero image, digital style")
-    print("Image URL:", url)
-    
-    # Download image locally
-    local_file = client.download_image("SEO article hero image, digital style")
-    print("Saved image path:", local_file)
+            processed.append({
+                "section_id": item.get("section_id"),
+                "image_type": item.get("image_type"),
+                "alt_text": item.get("alt_text"),
+                "local_path": filepath,
+                "url": url
+            })
+        return processed
