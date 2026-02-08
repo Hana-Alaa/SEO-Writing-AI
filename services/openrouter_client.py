@@ -1,103 +1,91 @@
 import os
-import time
-import requests
+import asyncio
+import httpx
 import logging
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
+from config.ai_config import OPENROUTER
+from services.ai_client_base import BaseAIClient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class OpenRouterClient:
+
+class OpenRouterClient(BaseAIClient):
     """
     Client for interacting with the OpenRouter API with built-in retry logic.
     """
+    STEP_TOKEN_LIMITS = {
+        "outline": 1000,
+        "section": 1500,
+        "image": 300,
+        "assembly": 800,
+        "default": 800
+    }
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "openai/gpt-4.1-mini"):
+    def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the client.
-        :param api_key: OpenRouter API key. If None, tries to read from OPENROUTER_API_KEY env var.
-        :param model: Default model to use.
+        :param api_key: OpenRouter API key.
         """
-        self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
+        self.api_key = api_key or OPENROUTER["api_key"]
+        self.model = OPENROUTER["default_model"]
+        self.base_url = OPENROUTER["base_url"]
         if not self.api_key:
-            logger.warning("OpenRouter API Key not found. Please set OPENROUTER_API_KEY environment variable.")
-            
-        self.model = model
-        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+            logger.warning("OPENROUTER_API_KEY is missing")
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/Start-SE/SEO-Writing-AI",  ##### url site
-            "X-Title": "SEO Writing AI",  #### site title
+            "HTTP-Referer": OPENROUTER["site_url"],
+            "X-Title": OPENROUTER["site_name"],
             "Content-Type": "application/json"
         }
 
-    def generate_completion(
+    async def send(self, prompt: str, step: str = "default") -> str:
+        """
+        Simple shim to send a single prompt as a user message.
+        """
+        messages = [{"role": "user", "content": prompt}]
+        response = await self.generate_completion(messages, step=step)
+        return response if response else ""
+
+    async def generate_completion(
         self, 
-        messages: List[Dict[str, str]], 
-        model: Optional[str] = None,
+        messages: List[Dict[str, str]],
+        step: str = "default",
         temperature: float = 0.7,
-        max_tokens: int = 4000,
-        response_format: Optional[Dict[str, str]] = None,
         retries: int = 3,
-        backoff_factor: float = 2.0
-        
-    ) -> Optional[str]:
-        """
-        Sends a request to OpenRouter with retry logic.
-        
-        :param messages: List of message objects [{"role": "user", "content": "..."}]
-        :param model: Override default model.
-        :param temperature: Creativity control.
-        :param max_tokens: Max output tokens.
-        :param response_format: e.g. {"type": "json_object"}
-        :param retries: Number of retry attempts.
-        :param backoff_factor: Multiplier for wait time between retries.
-        :return: Generated content string, or None if failed.
-        """
-        target_model = model or self.model
-        
+        response_format: Optional[Dict[str, str]] = None
+        ) -> Optional[str]:
+
+        max_tokens = self.STEP_TOKEN_LIMITS.get(step, 800)
+
         payload = {
-            "model": target_model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens
+        "model": self.model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens
         }
-        
         if response_format:
             payload["response_format"] = response_format
 
-        attempt = 0
-        while attempt < retries:
-            try:
-                logger.info(f"Sending request to OpenRouter (Model: {target_model}, Attempt: {attempt + 1})")
-                response = requests.post(
-                    self.base_url, 
-                    headers=self.headers, 
-                    json=payload, 
-                    timeout=60
-                )
-                
-                response.raise_for_status()
-                data = response.json()
-                
-                if "choices" in data and len(data["choices"]) > 0:
-                    content = data["choices"][0].get("message", {}).get("content")
-                    return content
-                else:
-                    logger.error(f"Invalid response structure: {data}")
-                    return None
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            for attempt in range(retries):
+                try:
+                    response = await client.post(
+                        self.base_url,
+                        headers=self.headers,
+                        json=payload
+                    )
+                    response.raise_for_status()
+                    return response.json()["choices"][0]["message"]["content"]
 
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Request failed: {e}")
-                if attempt < retries:
-                    sleep_time = backoff_factor * (2 ** attempt)
-                    logger.info(f"Retrying in {sleep_time} seconds...")
-                    time.sleep(sleep_time)
-                else:
-                    logger.error("Max retries reached. Request failed.")
-                    return None
-            
-            attempt += 1
-        
+                except Exception as e:
+                    if 'response' in locals():
+                        logger.error(f"OpenRouter failed (attempt {attempt+1}): {e} | Status: {response.status_code} | Body: {response.text}")
+                    else:
+                        logger.error(f"OpenRouter failed (attempt {attempt+1}): {e}")
+                    
+                    if attempt < retries - 1:
+                        await asyncio.sleep(2 ** attempt)
+
         return None

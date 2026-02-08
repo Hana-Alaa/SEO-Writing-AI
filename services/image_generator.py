@@ -1,170 +1,206 @@
-import logging
-from typing import List, Dict
-import urllib.parse
 import os
-import requests
+import logging
+import asyncio
+import httpx
+import base64
+import hashlib
+import json
+from jinja2 import Template
+from typing import List, Dict, Optional, Any
 from PIL import Image
-from PIL import Image
-
-def resize_image(filepath: str, max_width: int, max_height: int, quality: int = 85):
-    """
-    Resizes an image to fit within max_width/max_height while maintaining aspect ratio.
-    """
-    try:
-        with Image.open(filepath) as img:
-            img.thumbnail((max_width, max_height))
-            img.save(filepath, optimize=True, quality=quality)
-    except Exception as e:
-        logger.error(f"Failed to resize image {filepath}: {e}")
+from io import BytesIO
+from config.ai_config import STABILITY
 
 logger = logging.getLogger(__name__)
 
+class ImagePromptPlanner:
+    def __init__(self, ai_client, template_path: str):
+        self.ai_client = ai_client
+        with open(template_path, "r", encoding="utf-8") as f:
+            self.template = Template(f.read())
+
+    async def generate(self, title: str, keywords: list, outline: list) -> list:
+        prompt_text = self.template.render(title=title, keywords=keywords, outline=outline)
+        raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
+        try:
+            return json.loads(raw_response)
+        except Exception:
+            return []
+
 class ImageGenerator:
     """
-    Handles image generation using Pollinations.ai
+    Handles image generation using Stability.ai API.
+    Provides responsive versions and deterministic generation.
     """
-    def __init__(self, save_dir: str = "images"):
+
+    STYLE_PREFIXES = {
+        "Featured Image": "High-quality photorealistic featured image, professional lighting, ultra realistic, highly detailed,",
+        "Infographic": "Clean infographic style illustration, flat design, clear visual hierarchy, professional vector graphics,",
+        "Illustration": "Minimalist conceptual illustration, modern style, soft transitions, professional digital art,"
+    }
+
+    def __init__(self, save_dir: str = "output/images", api_key: str = None):
         self.save_dir = save_dir
         os.makedirs(self.save_dir, exist_ok=True)
+        self.api_key = api_key or STABILITY["api_key"]
+        self.model = STABILITY["model"]
+        self.base_url = STABILITY["base_url"]
 
-    def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None) -> List[Dict[str, str]]:
-        if len(image_prompts) != 7:
-            raise ValueError("Exactly 7 images are required per article.")
+        if not self.api_key:
+            logger.warning("Stability.ai API Key is missing. Image generation will fail.")
 
-        generated_images = []
+    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None) -> List[Dict[str, Any]]:
+        """
+        Generates actual images using Stability.ai for a list of prompts in parallel.
+        """
+        if len(image_prompts) < 1:
+            logger.warning("No image prompts provided.")
+            return []
 
-        STYLE_PREFIX = {
-            "Featured Image": "High-quality photorealistic featured image, professional lighting, ultra realistic,",
-            "Infographic": "Clean infographic style illustration, flat design, clear visual hierarchy,",
-            "Illustration": "Minimalist conceptual illustration, modern style, soft colors,"
-        }
-
+        # Create tasks for all images
+        tasks = []
         for item in image_prompts:
-            # Extract inputs
-            prompt = item.get("prompt", "").strip()
-            alt_text = item.get("alt_text", "").strip()
-            section_id = item.get("section_id", "").strip()
-            image_type = item.get("image_type", "Illustration")
+            tasks.append(self._process_single_image(item, primary_keyword))
+        
+        # Run all generation tasks in parallel
+        results = await asyncio.gather(*tasks)
+        
+        # Filter out None results (failures)
+        return [r for r in results if r]
 
-            # Validation layer
-            if not prompt or not alt_text or not section_id:
-                raise ValueError("Invalid image prompt object")
+    async def _process_single_image(self, item: Dict[str, str], primary_keyword: str = None) -> Optional[Dict[str, Any]]:
+        """Internal worker to process a single image generation task."""
+        prompt = item.get("prompt", "").strip()
+        alt_text = item.get("alt_text", "").strip()
+        section_id = item.get("section_id", "").strip()
+        image_type = item.get("image_type", "Illustration")
+
+        if not prompt or not section_id:
+            logger.error(f"Invalid image prompt data for section {section_id}")
+            return None
+
+        if primary_keyword and primary_keyword.lower() not in alt_text.lower():
+            alt_text = f"{primary_keyword} - {alt_text}"
+
+        style_prefix = self.STYLE_PREFIXES.get(image_type, self.STYLE_PREFIXES["Illustration"])
+        final_prompt = f"{style_prefix} {prompt}"
+        seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 4294967295
+
+        local_path = await self._call_stability_api(final_prompt, seed, section_id)
+
+        if local_path:
+            # CPU-bound image processing
+            await asyncio.to_thread(self._process_image_versions, local_path)
             
-            # ALT text check
-            if primary_keyword and primary_keyword.lower() not in alt_text.lower():
-                raise ValueError(f"ALT text for section {section_id} must contain the primary keyword '{primary_keyword}'.")
-
-            # Style injection
-            style_prefix = STYLE_PREFIX.get(image_type, "")
-            final_prompt = f"{style_prefix} {prompt}"
-            encoded_prompt = urllib.parse.quote(final_prompt)
-
-            # Deterministic seed
-            import hashlib
-            seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 100000
-
-
-            # Build image URL
-            width = 1200
-            height = 630
-            image_url = (
-                f"https://image.pollinations.ai/prompt/{encoded_prompt}"
-                f"?width={width}&height={height}&seed={seed}"
-            )
-
-            logger.info(f"Generated AI image for section {section_id}")
-
-            generated_images.append({
-                "url": image_url,
-                "alt_text": alt_text,
-                "caption": f"Image: {prompt[:100]}...",
+            return {
                 "section_id": section_id,
-                "image_type": image_type
-            })
+                "image_type": image_type,
+                "alt_text": alt_text,
+                "local_path": local_path,
+                "url": local_path
+            }
+        
+        return None
 
-        # Featured Image enforcement
-        featured_count = sum(1 for item in generated_images if item.get("image_type") == "Featured Image")
-        if featured_count != 1:
-            raise ValueError("Exactly one Featured Image is required.")
-
-        return generated_images
-    
-    def generate_image_prompts_only(self, outline: list, seo_meta: dict) -> list:
-        """
-        Placeholder for orchestration testing.
-        Returns a list of fake prompts without calling any AI API.
-        """
-        prompts = []
-        for section in outline:
-            prompts.append({
-                "section_id": section.get("id"),
-                "prompt": f"Image for section '{section.get('title')}'",
-                "alt_text": f"Alt text for {section.get('title')}",
-                "image_type": "Illustration"
-            })
-        return prompts
-
-    def generate_image_url(self, prompt: str) -> str:
-        encoded_prompt = urllib.parse.quote(prompt)
-        return f"https://image.pollinations.ai/prompt/{encoded_prompt}"
-
-    def download_image(self, prompt: str, filename: str = None) -> str:
-        """
-        Downloads image from Pollinations API and resizes it for blog templates.
-        """
-        url = self.generate_image_url(prompt)
-        filename = filename or f"{prompt[:30].replace(' ', '_')}.png"
-        filepath = os.path.join(self.save_dir, filename)
-
-        try:
-            logger.info(f"Downloading image for prompt: '{prompt}'")
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
-
-            with open(filepath, "wb") as f:
-                f.write(response.content)
-
-            # **Resize and compress image for blog**
-            resize_image(filepath, max_width=1200, max_height=630, quality=85)
-
-            logger.info(f"Image saved and resized to: {filepath}")
-            return filepath
-
-        except requests.RequestException as e:
-            logger.error(f"Failed to download image: {e}")
+    async def _call_stability_api(self, prompt: str, seed: int, section_id: str, retries: int = 2) -> str:
+        """Internal helper to communicate with Stability.ai with retry logic (async)."""
+        if not self.api_key:
+            logger.error(f"Cannot call Stability API for {section_id}: API Key is missing.")
             return ""
-    
-    def save_responsive_versions(self, filepath: str):
-        """
-        Generate multiple sizes for blog templates.
-        """
-        base, ext = os.path.splitext(filepath)
-        sizes = {
-            "featured": (1200, 630),
-            "inline": (800, 420),
-            "thumbnail": (400, 210)
+
+        url = f"{self.base_url}/{self.model}/text-to-image"
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        
+        body = {
+            "text_prompts": [{"text": prompt, "weight": 1}],
+            "cfg_scale": 7,
+            "height": 768, 
+            "width": 1344, 
+            "samples": 1,
+            "steps": 30,
+            "seed": seed,
+            "sampler": "K_DPM_2_ANCESTRAL", 
+            "clip_guidance_preset": "FAST_BLUE"
         }
 
-        img = Image.open(filepath)
-        for name, (w, h) in sizes.items():
-            img_copy = img.copy()
-            img_copy.thumbnail((w, h))
-            new_path = f"{base}_{name}{ext}"
-            img_copy.save(new_path, optimize=True, quality=85)
-            logger.info(f"Saved {name} version: {new_path}")
+        logger.info(f"Generated prompt for {section_id}: {prompt[:100]}...")
+        
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            for attempt in range(retries + 1):
+                try:
+                    logger.info(f"Stability API call for {section_id} (Attempt {attempt+1}/{retries+1})...")
+                    response = await client.post(url, headers=headers, json=body)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        if "artifacts" in data and len(data["artifacts"]) > 0:
+                            image_data = data["artifacts"][0].get("base64")
+                            filepath = os.path.join(self.save_dir, f"{section_id}.png")
+                            with open(filepath, "wb") as f:
+                                f.write(base64.b64decode(image_data))
+                            logger.info(f"Successfully generated and saved {section_id}.png")
+                            return filepath
+                        else:
+                            logger.error(f"Unexpected API response structure for {section_id}: {data}")
+                    elif response.status_code == 429:
+                        logger.warning(f"Rate limited on attempt {attempt + 1} for {section_id}. Retrying...")
+                        await asyncio.sleep(5 * (attempt + 1))
+                    else:
+                        logger.error(f"Stability API error {response.status_code} for {section_id}: {response.text}")
+                        if attempt < retries:
+                            await asyncio.sleep(2 ** attempt)
+                
+                except httpx.TimeoutException:
+                    logger.warning(f"Timeout on attempt {attempt + 1} for {section_id}. Retrying...")
+                    if attempt < retries:
+                        await asyncio.sleep(2)
+                except Exception as e:
+                    logger.error(f"Unexpected error in Stability API call for {section_id}: {e}")
+                    if attempt < retries:
+                        await asyncio.sleep(1)
+        
+        logger.error(f"All {retries + 1} attempts failed for section {section_id}")
+        return ""
 
-    def download_and_process_images(self, image_prompts: list) -> list:
-        """
-        Placeholder: just simulate downloaded images for orchestration testing.
-        """
-        processed = []
-        for item in image_prompts:
-            processed.append({
-                "section_id": item.get("section_id"),
-                "image_type": item.get("image_type"),
-                "alt_text": item.get("alt_text"),
-                "local_path": f"{self.save_dir}/{item.get('section_id')}.png",
-                "url": f"https://fake.url/{item.get('section_id')}.png"
-            })
-        return processed
+    def _process_image_versions(self, filepath: str):
+        """Generates 1200x630 (Featured), 800x420 (Inline), and 400x210 (Thumbnail)."""
+        try:
+            with Image.open(filepath) as img:
+                base_name, _ = os.path.splitext(filepath)
+                
+                versions = {
+                    "featured": (1200, 630),
+                    "inline": (800, 420),
+                    "thumbnail": (400, 210)
+                }
 
+                for suffix, (tw, th) in versions.items():
+                    # Aspect-aware crop-to-fill
+                    img_work = img.copy()
+                    img_ratio = img_work.width / img_work.height
+                    target_ratio = tw / th
+
+                    if img_ratio > target_ratio:
+                        new_width = int(target_ratio * img_work.height)
+                        offset = (img_work.width - new_width) // 2
+                        img_work = img_work.crop((offset, 0, offset + new_width, img_work.height))
+                    else:
+                        new_height = int(img_work.width / target_ratio)
+                        offset = (img_work.height - new_height) // 2
+                        img_work = img_work.crop((0, offset, img_work.width, offset + new_height))
+
+                    img_work = img_work.resize((tw, th), Image.Resampling.LANCZOS)
+                    save_path = f"{base_name}_{suffix}.png"
+                    img_work.save(save_path, optimize=True, quality=85)
+                    
+                    if suffix == "featured":
+                        img_work.save(filepath, optimize=True, quality=90) # Overwrite original with main 1200x630
+
+                logger.info(f"Generated responsive versions for {filepath}")
+
+        except Exception as e:
+            logger.error(f"Processing image {filepath} failed: {e}")

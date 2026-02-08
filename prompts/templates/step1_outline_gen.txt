@@ -1,6 +1,6 @@
 Context:
 - Article Title: "{{ title }}"
-- Core Keywords: {{ keywords | tojson }}
+- Core Keywords: {{ keywords | default([]) | tojson }}
 
 Your Task:
 Act as the Elite SEO Content Architect. You must generate a highly optimized, competitor-crushing article outline based on the provided title and keywords.
