@@ -24,6 +24,12 @@ Constraints & Rules:
 8.**CTA**: - For commercial intent: Include persuasive CTAs.
 - For informational intent: Use soft CTAs (read more, internal links).
 9. Do NOT write a global conclusion. Write only section-specific content.
+Ensure:
+10. No repeated content from previous sections.
+11. Include assigned keywords naturally.
+12. Follow the flow: Problem → Promise → Solution → Steps → Examples → CTA
+13. Output in Arabic only (all headings + content).
+
 
 Output Format:
 - Return strictly the markdown content for this section.

@@ -16,12 +16,13 @@ class OpenRouterClient(BaseAIClient):
     Client for interacting with the OpenRouter API with built-in retry logic.
     """
     STEP_TOKEN_LIMITS = {
-        "outline": 1000,
-        "section": 1500,
-        "image": 300,
-        "assembly": 800,
-        "default": 800
+        "outline": 80,  
+        "section": 100, 
+        "image": 50,
+        "assembly": 70,
+        "default": 70
     }
+
     
     def __init__(self, api_key: Optional[str] = None):
         """

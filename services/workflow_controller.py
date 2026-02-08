@@ -14,8 +14,8 @@ from typing import Dict, Any, List, Optional, Callable
 
 from services.image_generator import ImageGenerator, ImagePromptPlanner
 # from services.openrouter_client import OpenRouterClient
-# from services.groq_client import GroqClient
-from services.gemini_client import GeminiClient
+from services.groq_client import GroqClient
+# from services.gemini_client import GeminiClient
 # from services.huggingface_client import HuggingFaceClient
 from services.content_generator import OutlineGenerator, SectionWriter, Assembler
 
@@ -64,8 +64,8 @@ class AsyncWorkflowController:
     def __init__(self, work_dir: str = "."):
         # AI Client
         # self.ai_client = OpenRouterClient()
-        self.ai_client = GeminiClient()
-        # self.ai_client = GroqClient()
+        # self.ai_client = GeminiClient()
+        self.ai_client = GroqClient()
         
         # self.ai_client = HuggingFaceClient(
         #     model="TheBloke/Llama-2-7B-Chat-GGML"
@@ -262,7 +262,19 @@ class AsyncWorkflowController:
         final_markdown = "\n\n".join(final_sections)
 
         # Metadata
-        meta_title = (title[:70])  # Can replace with AI-enhanced meta_title
+        keywords = state.get("input_data", {}).get("keywords", [])
+        primary_keyword = keywords[0] if keywords else ""
+
+
+        prompt = f"""
+        Create an SEO-optimized H1 title for the article "{title}".
+        - Include the primary keyword: "{primary_keyword}"
+        - Length: 60-70 chars
+        - Commercial keywords: sales-oriented if applicable
+        - Prefer adding the year 2026
+        Return only the title string.
+        """
+        meta_title = await self.ai_client.send(prompt, step="title_generation")
         meta_description = f"Read our comprehensive guide on {title}"[:160]
 
         assembled = await self.assembler.assemble(
@@ -270,9 +282,44 @@ class AsyncWorkflowController:
             sections=[sec for sec in sections_dict.values()],
             image_plan=state.get("images", [])
         )
+        assembled["meta_title"] = meta_title
+        assembled["meta_description"] = meta_description
         state["final_output"] = assembled
-
         return state
+
+    # async def _step_3_assembly(self, state):
+    #     input_data = state.get("input_data", {})
+    #     title = input_data.get("title", "Untitled")
+    #     outline = state.get("outline", [])
+    #     sections = state.get("sections", {})
+    #     images = state.get("images", [])
+
+    #     image_map = {img['section_id']: img for img in images}
+
+    #     final_sections = []
+    #     for s in outline:
+    #         sid = s.get("section_id")
+    #         sec = sections.get(sid)
+    #         if not sec:
+    #             continue
+
+    #         content = sec.get("generated_content", "")
+    #         img = image_map.get(sid)
+
+    #         if img:
+    #             content += f'\n\n![{img["alt_text"]}]({img["local_path"]})\n\n'
+
+    #         final_sections.append(content)
+
+    #     final_markdown = "\n\n".join(final_sections)
+
+    #     state["final_output"] = {
+    #         "final_markdown": final_markdown,
+    #         "meta_title": title[:70],
+    #         "meta_description": f"Read our comprehensive guide about {title}"[:160]
+    #     }
+
+    #     return state
 
     async def _step_5_validation(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Validates the output against SEO rules."""
