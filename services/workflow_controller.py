@@ -1,5 +1,5 @@
 """
-Phase 5 – Orchestration Layer (Asynchronous)
+Phase 5 - Orchestration Layer (Asynchronous)
 - Fully asynchronous pipeline for high-performance article generation.
 - Parallelizes section writing and image generation.
 - Implements robust error handling, logging, and retries.
