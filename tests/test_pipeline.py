@@ -26,7 +26,11 @@ async def main():
         final_result = await controller.run_workflow(state)
         
         # Save raw markdown to file
-        raw_markdown = final_result["workflow_state"]["final_output"]["raw_text"]
+        raw_markdown = (
+            final_result.get("workflow_state", {})
+                        .get("final_output", {})
+                        .get("raw_text", "")
+        )
         output_dir = final_result.get("output_dir", "output")
         os.makedirs(output_dir, exist_ok=True)
         md_file_path = os.path.join(output_dir, "final_article.md")
@@ -58,6 +62,9 @@ async def main():
         print(json.dumps(output, ensure_ascii=False, indent=2))
         
         from utils.html_renderer import render_html_page
+
+        if final_result.get("meta_title"):
+            final_result["title"] = final_result["meta_title"]
 
         html_path = render_html_page(final_result)
         print("HTML page generated at:", html_path)

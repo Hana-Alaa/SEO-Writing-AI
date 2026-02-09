@@ -71,7 +71,10 @@ class SectionWriter:
         safe_section = {
             "heading_level": section.get("heading_level", "H2"),
             "heading_text": section.get("heading_text", "Untitled Section"),
+            
             "section_intent": section.get("section_intent", "Write informative content."),
+            "content_scope": section.get("section_intent", "Write informative content."),
+            
             "assigned_keywords": section.get("assigned_keywords", []),
             "assigned_links": section.get("assigned_links", []) + section.get("urls", []),  
             "estimated_word_count": section.get("estimated_word_count", 300)
@@ -275,9 +278,9 @@ class Assembler:
 
         final_markdown = "\n\n".join(final_sections)
 
-        # Fallback: لا تستخدم AI الآن
-        response = ""  # fallback raw_text
-        ai_data = {}   # fallback metadata
+        response = final_markdown
+        ai_data = {}   
+        
 
         return {
             "final_markdown": final_markdown,

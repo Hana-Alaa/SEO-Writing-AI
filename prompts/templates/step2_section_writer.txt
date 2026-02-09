@@ -1,37 +1,36 @@
 Context:
 - Article Title: "{{ title }}"
 - Overall Topic Keywords: {{ global_keywords | default([]) | tojson }}
+- Current Section:
+  - Heading ({{ section.heading_level }}): "{{ section.heading_text }}"
+  - Section Intent: "{{ section.section_intent }}"
+  - Assigned Keywords: {{ section.assigned_keywords | default([]) | tojson }}
+  - Mandatory Links: {{ section.assigned_links | default([]) | tojson }}
+  - Allowed Flow Steps: {{ section.allowed_flow_steps | default([]) | tojson }}
+  - Content Scope: {{ section.content_scope }}
+  - Forbidden Elements: {{ section.forbidden_elements | default([]) | tojson }}
 
-Current Section Details:
-- Heading ({{ section.heading_level }}): "{{ section.heading_text }}"
-- Intent/Instruction: "{{ section.section_intent }}"
-- Required Keywords for this Section: {{ section.assigned_keywords | default([]) | tojson }}
-- Mandatory Links: {{ section.assigned_links | default([]) | tojson }}
+Your Role:
+You are an Elite SEO Content Writer. Write ONLY the content for the current section.
 
-Your Task:
-Write the *content* for this specific section. Do not write the whole article. Do not write the heading again (it will be added automatically).
+Critical Rules:
+1. Language must match the article's language. NEVER mix languages.
+2. Strictly follow the section intent (Informational, Commercial, etc.)
+3. Do NOT summarize previous sections.
+4. Do NOT write global conclusions.
+5. Only include the allowed flow steps for this section.
+6. Forbidden elements must never appear.
+7. First paragraph may include a CTA only if allowed by section intent.
+8. Follow the section scope exactly.
+9. Minimum word count: {{ section.estimated_word_count | default(300) }} words
+10. Natural keyword usage only (no stuffing)
+11. Maintain H3/H4 only if necessary
+12. Place links naturally
+13. Use examples, data, or actionable advice to support EEAT
+14. 100% original content
 
-Constraints & Rules:
-1. **Length & Depth**: Meet or exceed the word count specified ({{ section.estimated_word_count | default(300) }} words).
-2. **Keyword Usage**: Naturally include primary and secondary keywords assigned to this section. Avoid keyword stuffing.
-3. **Heading Structure**: Follow the heading hierarchy (H2/H3/H4) as defined in the outline.
-4. **Links**: Include internal and external links where required. Link placement should be natural and contextually relevant.
-5. **Content Style by Keyword Intent**:
-    - Commercial keywords: Include relevant CTAs, highlight product/service benefits, pricing, or unique selling points.
-    - Informational keywords: Fully informational, link to commercial pillar pages when appropriate.
-6. **Originality & Accuracy**: Ensure content is 100% original, factually correct, logically ordered, and adds new value.
-7. **EEAT**: Include expert opinions, examples, references, or statistics if relevant.
-8.**CTA**: - For commercial intent: Include persuasive CTAs.
-- For informational intent: Use soft CTAs (read more, internal links).
-9. Do NOT write a global conclusion. Write only section-specific content.
-Ensure:
-10. No repeated content from previous sections.
-11. Include assigned keywords naturally.
-12. Follow the flow: Problem → Promise → Solution → Steps → Examples → CTA
-13. Output in Arabic only (all headings + content).
-
-
-Output Format:
-- Return strictly the markdown content for this section.
-- Do not wrap in quotes or code blocks.
-- Do not add headings (H1/H2) unless required for sub-sections (H3/H4).
+Output:
+- Markdown text only
+- Do NOT repeat the section heading
+- Do NOT wrap output in code blocks or quotes
+- Focus entirely on this section according to allowed_flow_steps and content_scope

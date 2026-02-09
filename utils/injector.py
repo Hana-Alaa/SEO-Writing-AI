@@ -75,7 +75,7 @@ class DataInjector:
             "title": input_data.get("title", ""),
             "global_keywords": input_data.get("keywords", []),
             "tone": tone_value
-}
+        }
 
         if step_name == "step1_outline_gen":
             # Context for Outline Generator

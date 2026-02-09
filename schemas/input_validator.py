@@ -12,9 +12,9 @@ class URLItem(BaseModel):
         return v
 
 class ArticleInput(BaseModel):
-    title: str = Field(..., min_length=5, max_length=200, description="The main topic/idea for the article")
-    keywords: List[str] = Field(..., min_length=1, description="List of target keywords, first one is primary")
-    urls: Optional[List[URLItem]] = Field(default=[], description="List of URLs to be included in the article")
+    title: str = Field(..., min_length=5, max_length=200)
+    keywords: List[str] = Field(...)
+    urls: Optional[List[URLItem]] = Field(default=[])
 
     @field_validator('keywords')
     def validate_keywords(cls, v):
@@ -22,5 +22,15 @@ class ArticleInput(BaseModel):
         if not cleaned:
             raise ValueError("At least one non-empty keyword is required")
         return cleaned
-
-
+        
+def normalize_urls(urls):
+    out = []
+    for u in urls:
+        link = u.link if hasattr(u, "link") else u["link"]
+        text = u.text if hasattr(u, "text") else u["text"]
+        out.append({
+            "url": str(link),
+            "anchor_text": text,
+            "link_type": "internal"
+        })
+    return out

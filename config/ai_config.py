@@ -19,7 +19,7 @@ OPENROUTER = {
 GROQ = {
     "enabled": True,
     "api_key": os.getenv("GROQ_API_KEY"),
-    "default_model": "openai/gpt-oss-120b",
+    "default_model": "llama-3.3-70b-versatile",
     "max_tokens": {
         "outline": 800,
         "section": 1200,

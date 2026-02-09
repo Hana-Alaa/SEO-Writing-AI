@@ -23,7 +23,7 @@ Your Task:
   - Add minimal transitions only when necessary.
   - Transition edits must not exceed 5% of the text.
   - Do NOT attempt to fix or bypass validation constraints (word count, keyword density, image count). Only assemble.
-
+  - Insert image placeholders in the format: ![Alt Text containing Keyword](Image_Type_Description) immediately after the section they belong to, using the section.image_plan.
 
 Output Format:
 Return a JSON object with the final content and metadata:
@@ -32,5 +32,3 @@ Return a JSON object with the final content and metadata:
   "meta_title": "SEO Optimized Title (60-70 chars)",
   "meta_description": "Click-worthy description (150-160 chars)"
 }
-
-Use the image plan to insert either

@@ -23,9 +23,15 @@ class ImagePromptPlanner:
         prompt_text = self.template.render(title=title, keywords=keywords, outline=outline)
         raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
         try:
-            return json.loads(raw_response)
+            image_prompts = json.loads(raw_response)
+            
         except Exception:
             return []
+
+        unique = {}
+        for p in image_prompts:
+            unique[p.get("section_id")] = p
+        return list(unique.values())
 
 class ImageGenerator:
     """

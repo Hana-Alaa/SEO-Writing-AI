@@ -1,71 +1,60 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "SEO Article Workflow State",
-  "description": "Defines the data structure passed between workflow steps (Input -> Outline -> Section Generation -> assembly).",
   "type": "object",
+  "required": ["project_id", "input_data"],
   "properties": {
-    "project_id": {
-      "type": "string",
-      "description": "Unique identifier for this generation run."
-    },
+    "project_id": { "type": "string" },
+
     "input_data": {
-    "type": "object",
-    "description": "Raw inputs provided by the user.",
-    "properties": {
+      "type": "object",
+      "required": ["title", "keywords"],
+      "properties": {
         "title": { "type": "string" },
-        "keywords": { 
-        "type": "array", 
-        "items": { "type": "string" } 
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" }
         },
         "urls": {
-        "type": "array",
-        "items": {
+          "type": "array",
+          "items": {
             "type": "object",
+            "required": ["link", "text"],
             "properties": {
-            "link": { "type": "string" },
-            "text": { "type": "string" }
+              "link": { "type": "string" },
+              "text": { "type": "string" }
             }
+          }
         }
-        }
+      }
     },
-    "required": ["title", "keywords"]
-    },
+
     "seo_meta": {
-      "intent": {
-      "type": "string",
-      "enum": ["commercial", "informational", "transactional", "comparative"]
-      },
       "type": "object",
-      "description": "Computed SEO requirements based on rules.",
       "properties": {
+        "intent": {
+          "type": "string",
+          "enum": ["commercial", "informational", "transactional", "comparative"]
+        },
         "min_word_count": { "type": "integer", "default": 1000 },
         "required_image_count": { "type": "integer", "default": 7 }
       }
     },
-    "outline": {
-      "type": "array",
-      "description": "The ordered list of article sections. Generated in Step 1, consumed in Step 2.",
-      "items": {
-        "$ref": "#/definitions/section_node"
+
+    "competitive_insights": {
+      "type": "object",
+      "properties": {
+        "required_subtopics": { "type": "array", "items": { "type": "string" } },
+        "content_gaps": { "type": "array", "items": { "type": "string" } },
+        "depth_expectations": { "type": "string" }
       }
     },
-      "competitive_insights": {
-    "type": "object",
-    "description": "Simulated competitive patterns and gaps derived in STEP-0.",
-    "properties": {
-      "required_subtopics": {
-        "type": "array",
-        "items": { "type": "string" }
-      },
-      "content_gaps": {
-        "type": "array",
-        "items": { "type": "string" }
-      },
-      "depth_expectations": {
-        "type": "string"
-      }
-    }
-  },
+
+    "outline": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/section_node" }
+    },
+
     "final_output": {
       "type": "object",
       "properties": {
@@ -76,31 +65,17 @@
       }
     }
   },
+
   "definitions": {
     "section_node": {
       "type": "object",
       "required": ["section_id", "heading_level", "heading_text"],
       "properties": {
-        "section_id": { 
-          "type": "string", 
-          "description": "Unique ID for the section (e.g., 'sec_01')" 
-        },
-        "heading_level": { 
-          "type": "string", 
-          "enum": ["H2", "H3", "H4"] 
-        },
-        "heading_text": { 
-          "type": "string" 
-        },
-        "section_intent": {
-          "type": "string",
-          "description": "Brief description of what this section covers (passed to section writer)."
-        },
-        "assigned_keywords": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Specific keywords that MUST be included in this section."
-        },
+        "section_id": { "type": "string" },
+        "heading_level": { "type": "string", "enum": ["H2", "H3", "H4"] },
+        "heading_text": { "type": "string" },
+        "section_intent": { "type": "string" },
+        "assigned_keywords": { "type": "array", "items": { "type": "string" } },
         "assigned_links": {
           "type": "array",
           "items": {
@@ -109,22 +84,12 @@
             "properties": {
               "url": { "type": "string" },
               "anchor_text": { "type": "string" },
-              "link_type": {
-                "type": "string",
-                "enum": ["internal", "external"]
-              }
+              "link_type": { "type": "string", "enum": ["internal", "external"] }
             }
           }
         },
-        
-        "estimated_word_count": {
-          "type": "integer",
-          "description": "Target length for this section."
-        },
-        "generated_content": {
-          "type": "string",
-          "description": "The raw markdown content generated by the Section Writer (Step 2). Initially null/empty."
-        }
+        "estimated_word_count": { "type": "integer" },
+        "generated_content": { "type": "string" }
       }
     }
   }

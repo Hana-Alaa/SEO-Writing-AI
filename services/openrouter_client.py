@@ -2,6 +2,7 @@ import os
 import asyncio
 import httpx
 import logging
+from pathlib import Path
 from typing import List, Dict, Optional
 from config.ai_config import OPENROUTER
 from services.ai_client_base import BaseAIClient
@@ -10,30 +11,19 @@ from services.ai_client_base import BaseAIClient
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class OpenRouterClient(BaseAIClient):
     """
     Client for interacting with the OpenRouter API with built-in retry logic.
     """
-    STEP_TOKEN_LIMITS = {
-        "outline": 80,  
-        "section": 100, 
-        "image": 50,
-        "assembly": 70,
-        "default": 70
-    }
-
     
     def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize the client.
-        :param api_key: OpenRouter API key.
-        """
         self.api_key = api_key or OPENROUTER["api_key"]
         self.model = OPENROUTER["default_model"]
         self.base_url = OPENROUTER["base_url"]
+        
         if not self.api_key:
             logger.warning("OPENROUTER_API_KEY is missing")
+            
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": OPENROUTER["site_url"],
@@ -41,11 +31,24 @@ class OpenRouterClient(BaseAIClient):
             "Content-Type": "application/json"
         }
 
+    @staticmethod
+    def load_prompt(path: str) -> str:
+        try:
+            return Path(path).read_text(encoding="utf-8")
+        except Exception as e:
+            logger.error(f"Failed to load prompt from {path}: {e}")
+            return ""
+    
     async def send(self, prompt: str, step: str = "default") -> str:
         """
         Simple shim to send a single prompt as a user message.
         """
-        messages = [{"role": "user", "content": prompt}]
+        system_prompt = self.load_prompt("prompts/system_persona.txt")
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
         response = await self.generate_completion(messages, step=step)
         return response if response else ""
 
@@ -58,14 +61,12 @@ class OpenRouterClient(BaseAIClient):
         response_format: Optional[Dict[str, str]] = None
         ) -> Optional[str]:
 
-        max_tokens = self.STEP_TOKEN_LIMITS.get(step, 800)
-
         payload = {
-        "model": self.model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature
         }
+        
         if response_format:
             payload["response_format"] = response_format
 
@@ -78,14 +79,11 @@ class OpenRouterClient(BaseAIClient):
                         json=payload
                     )
                     response.raise_for_status()
+                    
                     return response.json()["choices"][0]["message"]["content"]
 
                 except Exception as e:
-                    if 'response' in locals():
-                        logger.error(f"OpenRouter failed (attempt {attempt+1}): {e} | Status: {response.status_code} | Body: {response.text}")
-                    else:
-                        logger.error(f"OpenRouter failed (attempt {attempt+1}): {e}")
-                    
+                    logger.error(f"OpenRouter failed (attempt {attempt+1}): {e}")
                     if attempt < retries - 1:
                         await asyncio.sleep(2 ** attempt)
 

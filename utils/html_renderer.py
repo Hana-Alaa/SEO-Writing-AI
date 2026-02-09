@@ -3,10 +3,6 @@ import markdown
 from jinja2 import Environment, FileSystemLoader
 
 def render_html_page(final_result: dict):
-    """
-    Converts final_markdown into a full HTML page and saves it beside the article output.
-    """
-
     output_dir = final_result["output_dir"]
     os.makedirs(output_dir, exist_ok=True)
 
@@ -23,9 +19,12 @@ def render_html_page(final_result: dict):
     )
     template = env.get_template("article.html")
 
+    h1_title = final_result.get("meta_title") or final_result.get("title", "")
+
     # 3. Render final HTML
     html = template.render(
         title=final_result.get("title", ""),
+        h1_title=h1_title,
         meta_description=final_result.get("meta_description", ""),
         content=html_content
     )

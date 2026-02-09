@@ -10,14 +10,18 @@ import os
 import time
 import re
 import asyncio
+from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 
 from services.image_generator import ImageGenerator, ImagePromptPlanner
-# from services.openrouter_client import OpenRouterClient
-from services.groq_client import GroqClient
+from services.openrouter_client import OpenRouterClient
+from schemas.input_validator import normalize_urls
+from utils.injector import DataInjector
+# from services.groq_client import GroqClient
 # from services.gemini_client import GeminiClient
 # from services.huggingface_client import HuggingFaceClient
 from services.content_generator import OutlineGenerator, SectionWriter, Assembler
+BASE_DIR = Path(__file__).resolve().parents[1] 
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -63,9 +67,9 @@ class AsyncWorkflowController:
 
     def __init__(self, work_dir: str = "."):
         # AI Client
-        # self.ai_client = OpenRouterClient()
+        self.ai_client = OpenRouterClient()
         # self.ai_client = GeminiClient()
-        self.ai_client = GroqClient()
+        # self.ai_client = GroqClient()
         
         # self.ai_client = HuggingFaceClient(
         #     model="TheBloke/Llama-2-7B-Chat-GGML"
@@ -75,7 +79,7 @@ class AsyncWorkflowController:
         self.executor = AsyncExecutor()
         self.image_prompt_planner = ImagePromptPlanner(
             ai_client=self.ai_client,
-            template_path=os.path.join(self.work_dir, "templates", "image_prompt_template.txt")
+            template_path=BASE_DIR / "prompts" / "templates" / "image_prompt_gen.txt"
         )
             
         # Content generation services
@@ -144,12 +148,15 @@ class AsyncWorkflowController:
         input_data = state.get("input_data", {})
         title = input_data.get("title") or "Untitled"
         keywords = input_data.get("keywords") or []
-        
-        urls = input_data.get("urls", [])
-        outline = await self.outline_gen.generate(title, keywords, urls)
+        urls_raw = input_data.get("urls", [])
+
+        outline = await self.outline_gen.generate(title, keywords, urls_raw)
         if not outline:
             raise RuntimeError("Outline generation returned empty result.")
-            
+
+        urls_norm = normalize_urls(urls_raw)
+        outline = DataInjector.distribute_urls_to_outline(outline, urls_norm)
+
         state["outline"] = outline
         return state
 
@@ -267,19 +274,29 @@ class AsyncWorkflowController:
 
 
         prompt = f"""
-        Create an SEO-optimized H1 title for the article "{title}".
+        Create an SEO-optimized H1 title for the article:
+        "{title}"
+
+        Requirements:
         - Include the primary keyword: "{primary_keyword}"
-        - Length: 60-70 chars
-        - Commercial keywords: sales-oriented if applicable
+        - Length: 60–70 characters
+        - Sales-oriented if intent is commercial
         - Prefer adding the year 2026
-        Return only the title string.
+        - Return only the title text
         """
+
         meta_title = await self.ai_client.send(prompt, step="title_generation")
         meta_description = f"Read our comprehensive guide on {title}"[:160]
 
+        ordered_sections = [
+            sections_dict[s["section_id"]]
+            for s in outline
+            if s.get("section_id") in sections_dict
+        ]
+
         assembled = await self.assembler.assemble(
             title=title,
-            sections=[sec for sec in sections_dict.values()],
+            sections=ordered_sections,
             image_plan=state.get("images", [])
         )
         assembled["meta_title"] = meta_title
@@ -365,5 +382,6 @@ class AsyncWorkflowController:
             "images": state.get("images", []),
             "seo_report": state.get("seo_report", {}),
             "output_dir": state.get("output_dir", ""),
-            "workflow_state": state
+            "workflow_state": state,
+            "raw_text": final_out.get("raw_text", "")
         }
