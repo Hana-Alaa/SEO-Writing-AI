@@ -21,6 +21,10 @@ Instructions:
    - Plan one image per section with ALT text
    - Define the content scope for each section (what should be included, what is forbidden)
    - Specify allowed flow steps: Problem, Promise, Solution, Steps, Examples, CTA
+    - Mandatory inclusion:
+        - At least one section MUST be a "Comparison Table" (e.g., Pros vs Cons, Features comparison).
+        - Define specific CTA placements (e.g., "After Introduction", "Before Conclusion").
+        - For Commercial Intent: Ensure one section is dedicated to "Buying Guide" or "Pricing Analysis".
 
 3. Hard Rules:
    - All headings and content must match the language of the article
@@ -46,6 +50,8 @@ Output Schema:
       "image_type": "diagram | illustration | real-example",
       "alt_text": "ALT text in article language"
     },
-    "estimated_word_count": 400
+    "requires_table": true, 
+    "table_columns": ["Feature", "Competitor A", "Our Solution"],
+    "estimated_word_count": "Assign word counts based on section depth (Intro: 150, Deep Dive: 600, Conclusion: 200)."
   }
 ]

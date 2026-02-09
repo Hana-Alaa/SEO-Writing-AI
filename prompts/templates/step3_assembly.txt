@@ -24,6 +24,10 @@ Your Task:
   - Transition edits must not exceed 5% of the text.
   - Do NOT attempt to fix or bypass validation constraints (word count, keyword density, image count). Only assemble.
   - Insert image placeholders in the format: ![Alt Text containing Keyword](Image_Type_Description) immediately after the section they belong to, using the section.image_plan.
+6. Schema Generation:
+   - Generate valid JSON-LD "FAQPage" Schema based on the FAQ section.
+   - Generate valid JSON-LD "Article" Schema.
+   - Append these schemas inside <script type="application/ld+json"> tags at the end of the final_markdown.
 
 Output Format:
 Return a JSON object with the final content and metadata:

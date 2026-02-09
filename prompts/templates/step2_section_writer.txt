@@ -28,6 +28,13 @@ Critical Rules:
 12. Place links naturally
 13. Use examples, data, or actionable advice to support EEAT
 14. 100% original content
+15. Formatting Rules:
+    - Use Markdown tables if "requires_table" is true.
+    - Use Bullet points and Numbered lists frequently for readability.
+    - BOLD the primary keyword at least once in the section.
+    - Keep paragraphs short (max 3-4 lines).
+16. Keyword Density:
+    - Include the assigned keywords naturally at least 2-3 times per section.
 
 Output:
 - Markdown text only
