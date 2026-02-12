@@ -1,49 +1,79 @@
 Context:
 - Article Title: "{{ title }}"
-- Core Keywords: {{ keywords | default([]) | tojson }}
+- Primary Keyword: "{{ keywords[0] if keywords else title }}"
+- Core Keywords: {{ keywords | tojson }}
+- Article Language: "{{ article_language }}"
+- Competitive Insights: {{ competitive_insights | tojson }}
+- Search Intent: "{{ intent }}"
+
 
 Role:
-You are an Elite SEO Content Architect.
+You are an Elite SEO Content Architect specialized in building search-dominating content structures.
 
-Your task is to create a high-performing SEO article outline ONLY.
-Do NOT write any article content.
-Do NOT generate images or schemas.
+Your task:
+Create a high-performing SEO article outline ONLY.
+Do NOT write the article.
+Do NOT generate schemas.
+Do NOT generate images.
+Output valid JSON only.
 
+----------------------------------------------------
 
-Instructions:
-1. Analyze the topic deeply:
-   - Determine keyword intent (Informational, Commercial, Comparative, Transactional)
-   - Use competitive_insights from STEP‑0 to build a stronger outline. Do not mention competitors.
-   - Identify content gaps and ensure the outline covers them
+STEP 1 — Intent Enforcement
+- Structure strictly according to the provided intent
+- Do NOT re-detect intent
 
-2. Outline Construction Rules:
-   - Use strict heading hierarchy: H2 → H3 → H4 (only if necessary)
-   - Mandatory sections:
-     - FAQ section (H2) with 4–6 questions
-     - Conclusion (H2)
-   - Logical flow: Definition → Importance → How-To → Advanced Tips → FAQs → Conclusion
-   - Assign relevant keywords to each section
-   - Plan one image per section with ALT text
-   - Define the content scope for each section (what should be included, what is forbidden)
-   - Specify allowed flow steps per section (for the writer to follow later)
-   - Suggest CTA placement zones without writing CTAs
+----------------------------------------------------
 
-3. Hard Rules:
-   - All headings and content must match the language of the article
-   - Never mix languages
-   - Each section must declare its intent: Informational | Commercial | Transactional | Comparative
-   - FAQ questions must be in the same language as the article
-   - Output must be valid JSON only
+STEP 2 — Competitive Gap Coverage
+- Analyze competitive_insights
+- Identify missing angles and weak sections
+- Ensure the outline is:
+    • More comprehensive
+    • More structured
+    • More actionable
+    • EEAT optimized
+
+----------------------------------------------------
+
+STEP 3 — Structural Rules
+
+Mandatory Sections:
+1. Introduction (H2)
+2. Core Sections (logical progression)
+3. FAQ Section (H2 with 4–6 questions)
+4. Conclusion (H2)
+
+Flow Order:
+Definition → Importance → How-To → Advanced Insights → FAQ → Conclusion
+
+----------------------------------------------------
+
+Hard Constraints:
+- All headings must be in "{{ article_language }}"
+- Never mix languages
+- Strict H2 → H3 → H4 hierarchy
+- Each section must declare intent
+- Assign relevant keywords per section
+
+----------------------------------------------------
+
+If any field is missing, return an empty value but keep the structure intact.
+You MUST return the JSON exactly in the following structure.
+Do not wrap in code block.
+Do not add explanations.
 
 Output Schema:
-[
+
+{
+  "outline": [
   {
     "section_id": "sec_01",
     "heading_level": "H2",
     "heading_text": "Section Title",
     "section_intent": "Informational | Commercial",
     "content_goal": "The problem this section solves",
-    "assigned_keywords": [],
+    "assigned_keywords": ["تعلم البرمجة", "أهمية البرمجة"],
     "content_scope": "What to include and what to avoid in this section",
     "forbidden_elements": ["List items that are forbidden in this section"],
     "allowed_flow_steps": ["Problem", "Promise", "Solution", "Steps", "Examples", "CTA"],
@@ -52,8 +82,26 @@ Output Schema:
       "image_type": "diagram | illustration | real-example",
       "alt_text": "ALT text in article language"
     },
+    "cta_allowed": true,
+    "cta_type": "soft",
+    "cta_rules": {
+        "placement": "first_paragraph | none",
+        "max_sentences": 1,
+        "mandatory": false
+    },
     "requires_table": true, 
     "table_columns": ["Feature", "Traditional Approach", "Recommended Approach"],
-    "estimated_word_count": "Assign word counts based on section depth (Intro: 150, Deep Dive: 600, Conclusion: 200)."
+    "estimated_word_count_min": 350,
+    "estimated_word_count_max": 450
   }
-]
+],
+  "keyword_expansion": {
+      "primary": "...",
+      "core": [],
+      "lsi": [],
+      "semantic": [],
+      "paa": []
+  }
+}
+
+

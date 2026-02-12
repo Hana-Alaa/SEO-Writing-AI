@@ -19,12 +19,45 @@ class ImagePromptPlanner:
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read())
 
-    async def generate(self, title: str, keywords: list, outline: list) -> list:
-        prompt_text = self.template.render(title=title, keywords=keywords, outline=outline)
+    async def generate(self, title: str, primary_keyword, keywords: list, outline: list) -> list:
+        prompt_text = self.template.render(
+            title=title,
+            primary_keyword=primary_keyword,
+            keywords=keywords,
+            outline=outline
+        )
         raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
         try:
             image_prompts = json.loads(raw_response)
+            if len(image_prompts) != 7:
+                logger.error("Image planner did not return exactly 7 images.")
+                return []
+            featured_count = sum(1 for p in image_prompts if p.get("image_type") == "Featured Image")
+
+            if featured_count != 1:
+                logger.error("There must be exactly ONE Featured Image.")
+                return []
             
+            outline_ids = {s.get("section_id") for s in outline}
+
+            for p in image_prompts:
+                if p.get("section_id") not in outline_ids:
+                    logger.error(f"Invalid section_id in image prompt: {p.get('section_id')}")
+                    return []
+            
+            ids = [p.get("section_id") for p in image_prompts]
+            if len(ids) != len(set(ids)):
+                logger.error("Duplicate section_id detected in image prompts.")
+                return []
+            
+            allowed_types = {"Featured Image", "Infographic", "Illustration"}
+
+            for p in image_prompts:
+                if p.get("image_type") not in allowed_types:
+                    logger.error("Invalid image_type returned.")
+                    return []
+
+
         except Exception:
             return []
 
@@ -62,14 +95,20 @@ class ImageGenerator:
         if len(image_prompts) < 1:
             logger.warning("No image prompts provided.")
             return []
-
-        # Create tasks for all images
-        tasks = []
-        for item in image_prompts:
-            tasks.append(self._process_single_image(item, primary_keyword))
         
         # Run all generation tasks in parallel
-        results = await asyncio.gather(*tasks)
+        sem = asyncio.Semaphore(3)
+
+        async def limited_task(task):
+            async with sem:
+                return await task
+
+        tasks = [
+            self._process_single_image(item, primary_keyword)
+            for item in image_prompts
+        ]
+
+        results = await asyncio.gather(*(limited_task(t) for t in tasks))
         
         # Filter out None results (failures)
         return [r for r in results if r]
@@ -85,12 +124,14 @@ class ImageGenerator:
             logger.error(f"Invalid image prompt data for section {section_id}")
             return None
 
-        if primary_keyword and primary_keyword.lower() not in alt_text.lower():
-            alt_text = f"{primary_keyword} - {alt_text}"
-
         style_prefix = self.STYLE_PREFIXES.get(image_type, self.STYLE_PREFIXES["Illustration"])
         final_prompt = f"{style_prefix} {prompt}"
         seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 4294967295
+
+        logger.info("\n================ FINAL PROMPT (ImageGenerator) ================\n")
+        logger.info(final_prompt)
+        logger.info("\n=============================================================\n")
+
 
         local_path = await self._call_stability_api(final_prompt, seed, section_id)
 

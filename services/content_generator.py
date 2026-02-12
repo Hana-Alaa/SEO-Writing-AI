@@ -1,6 +1,7 @@
 import json
 import logging
 import asyncio
+import re
 from typing import List, Dict, Any, Optional
 from jinja2 import Template, StrictUndefined
 from utils.safe_json import recover_json
@@ -12,245 +13,227 @@ class ContentGeneratorError(Exception):
     pass
 
 class OutlineGenerator:
-    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/step1_outline_gen.txt"):
+    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/01_outline_generator.txt"):
         self.ai_client = ai_client
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read(), undefined=StrictUndefined)
+
+    def _normalize_section(self, section: Dict[str, Any], idx: int):
+        section.setdefault("section_id", f"section_{idx+1}")
+        section.setdefault("heading_level", "H2")
+        section.setdefault("heading_text", "Untitled Section")
+        section.setdefault("section_intent", "Informational")
+        section.setdefault("content_goal", "")
+        section.setdefault("assigned_keywords", [])
+        section.setdefault("content_scope", "")
+        section.setdefault("forbidden_elements", [])
+        section.setdefault("allowed_flow_steps", [])
+        section.setdefault("image_plan", {
+            "required": False,
+            "image_type": "illustration",
+            "alt_text": ""
+        })
+        section.setdefault("cta_allowed", False)
+        section.setdefault("cta_type", "none")
+        section.setdefault("cta_rules", {
+            "placement": "none",
+            "max_sentences": 0,
+            "mandatory": False
+        })
+        section.setdefault("requires_table", False)
+        section.setdefault("table_columns", [])
+        section.setdefault("estimated_word_count_min", 300)
+        section.setdefault("estimated_word_count_max", 600)
+
+
+    def _validate_outline_schema(self, outline: List[Dict[str, Any]]) -> bool:
+        required_keys = {
+            "section_id",
+            "heading_level",
+            "heading_text",
+            "section_intent"
+        }
+
+        # required_keys = {
+        #     "section_id",
+        #     "heading_level",
+        #     "heading_text",
+        #     "section_intent",
+        #     "content_goal",
+        #     "assigned_keywords",
+        #     "content_scope",
+        #     "forbidden_elements",
+        #     "allowed_flow_steps",
+        #     "image_plan",
+        #     "cta_allowed",
+        #     "cta_type",
+        #     "cta_rules",
+        #     "requires_table",
+        #     "table_columns",
+        #     "estimated_word_count_min",
+        #     "estimated_word_count_max"
+        # }
+
+        for section in outline:
+            if not required_keys.issubset(section.keys()):
+                return False
+
+        return True
 
     async def generate(
         self,
         title: str,
         keywords: List[str],
-        urls: List[Dict[str, str]]
-    ) -> List[Dict[str, Any]]:
+        urls: List[Dict[str, str]],
+        article_language: str,
+        competitive_insights: Dict[str, Any],
+        intent: str
+    ) -> Dict[str, Any]:
 
         prompt = self.template.render(
             title=title,
             keywords=keywords,
-            urls=urls
+            urls=urls,
+            article_language=article_language,
+            intent=intent,
+            competitive_insights=competitive_insights
         )
+
+        logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
+        logger.info(prompt)
+        logger.info("\n=============================================================\n")
 
         # response = await self.ai_client.send(prompt)
         response = await self.ai_client.send(prompt, step="outline")
-
 
         if not response:
             logger.error("Outline AI returned empty response")
             return []
 
-        outline = recover_json(response)
+        data = recover_json(response)
+
+        if not data or not isinstance(data, dict):
+            raise ContentGeneratorError("Invalid structure returned by AI.")
+
+        outline = data.get("outline")
+        keyword_expansion = data.get("keyword_expansion", {})
 
         if not outline or not isinstance(outline, list):
-            logger.warning("Outline JSON recovery failed, using raw lines as sections")
-            outline = [{"heading_text": line, "section_id": f"section_{i+1}", "assigned_links": []} 
-                    for i, line in enumerate(response.splitlines()) if line.strip()]
+            raise ContentGeneratorError("Invalid outline structure returned by AI.")
 
+
+        if not self._validate_outline_schema(outline):
+            raise ContentGeneratorError("Invalid outline schema returned by AI.")
+
+        total_min_words = sum(
+            section.get("estimated_word_count_min", 0)
+            for section in outline
+        )
+
+        # if total_min_words < 1200:
+        #     raise ContentGeneratorError(
+        #         f"Total estimated word count too low: {total_min_words}"
+        #     )
+
+        if not outline or not isinstance(outline, list) or not self._validate_outline_schema(outline):
+            raise ContentGeneratorError("Invalid outline schema returned by AI.")
 
         # Normalize sections
         for idx, section in enumerate(outline):
-            section.setdefault("section_id", f"section_{idx+1}")
-            section.setdefault("assigned_links", [])
+            self._normalize_section(section, idx)
 
-        return outline
+        if not isinstance(keyword_expansion, dict):
+            keyword_expansion = {}
 
+        keyword_expansion.setdefault("primary", keywords[0] if keywords else title)
+        keyword_expansion.setdefault("core", keywords)
+        keyword_expansion.setdefault("lsi", [])
+        keyword_expansion.setdefault("semantic", [])
+        keyword_expansion.setdefault("paa", [])
+
+
+        return {
+            "outline": outline,
+            "keyword_expansion": keyword_expansion
+        }
 
 class SectionWriter:
-    """
-    Handles writing content for specific article sections (Async).
-    """
-    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/step2_section_writer.txt"):
+    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/02_section_writer.txt"):
         self.ai_client = ai_client
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read(), undefined=StrictUndefined)
 
-    async def write(self, title: str, global_keywords: List[str], section: Dict[str, Any]) -> str:
-        """
-        Writes content for a specific section asynchronously.
-        """
-        # Ensure section has all required keys for the template
+    async def write(
+        self,
+        title: str,
+        global_keywords: Dict[str, Any],
+        section: Dict[str, Any],
+        article_intent: str,
+        competitive_insights: Dict[str, Any],
+    ) -> str:
+
+
+        def clean(value):
+            return value if value not in [None, "", "None"] else None
+
+        primary_keywords = section.get("primary_keywords") or global_keywords.get("core", [])
+        primary_keyword = section.get("primary_keyword") or global_keywords.get("primary", "")
+        article_language = section.get("article_language") or "ar"
+        cta_allowed = section.get("cta_allowed", False)
+        allowed_flow = section.get("allowed_flow_steps", [])
+
+        if not cta_allowed and "CTA" in allowed_flow:
+            allowed_flow = [step for step in allowed_flow if step != "CTA"]
+
         safe_section = {
             "heading_level": section.get("heading_level", "H2"),
             "heading_text": section.get("heading_text", "Untitled Section"),
-            
-            "section_intent": section.get("section_intent", "Write informative content."),
-            "content_scope": section.get("section_intent", "Write informative content."),
-            
+            "section_intent": section.get("section_intent", "Informational"),
+            "content_scope": section.get("content_scope", ""),
+            "allowed_flow_steps": allowed_flow,
+            "forbidden_elements": section.get("forbidden_elements", []),
             "assigned_keywords": section.get("assigned_keywords", []),
-            "assigned_links": section.get("assigned_links", []) + section.get("urls", []),  
-            "estimated_word_count": section.get("estimated_word_count", 300)
+            "assigned_links": section.get("assigned_links", []) + section.get("urls", []),
+            "estimated_word_count_min": section.get("estimated_word_count_min", 300),
+            "estimated_word_count_max": section.get("estimated_word_count_max", 600),
+            "primary_keywords": primary_keywords,
+            "article_language": article_language,
+            "requires_table": clean(section.get("requires_table")),
+            "cta_allowed": cta_allowed,
+            "cta_type": section.get("cta_type", "none"),
+            "article_intent": article_intent,
+            "competitive_insights": competitive_insights,
         }
-        
+
         prompt = self.template.render(
             title=title,
             global_keywords=global_keywords,
-            section=safe_section
+            primary_keyword=primary_keyword,
+            article_language=article_language,
+            article_intent=article_intent,
+            competitive_insights=competitive_insights,
+            section=safe_section    
         )
-        
+
+
+        logger.info("\n================ FINAL PROMPT (SectionWriter) ================\n")
+        logger.info(prompt)
+        logger.info("\n=============================================================\n")    
+
+        print(f"\n=== Generating Section: {safe_section['heading_text']} ===")
+
         try:
-            # content = await self.ai_client.send(prompt)
             content = await self.ai_client.send(prompt, step="section")
             if not content:
                 logger.warning(f"AI returned empty content for section {section.get('section_id')}")
                 return ""
-            # return content.strip().replace("```", "").strip()
             return content.strip().removeprefix("```").removesuffix("```").strip()
         except Exception as e:
             logger.error(f"Error writing section {section.get('section_id', 'unknown')}: {e}")
             raise ContentGeneratorError(f"Section writing failed: {e}")
 
-# class Assembler:
-#     """
-#     Handles assembling sections into a final article (Async).
-#     """
-#     def __init__(self, ai_client: Any, template_path: str = "prompts/templates/step3_assembly.txt"):
-#         self.ai_client = ai_client
-#         with open(template_path, "r", encoding="utf-8") as f:
-#             self.template = Template(f.read(), undefined=StrictUndefined)
-
-#     async def assemble(self, title: str, sections: List[Dict[str, Any]]) -> Dict[str, str]:
-#         """
-#         Assembles all sections asynchronously.
-#         """
-#         prompt = self.template.render(title=title, sections=sections)
-        
-#         try:
-#             response = await self.ai_client.send(prompt)
-#             if not response:
-#                 raise ContentGeneratorError("AI returned empty response for assembly.")
-
-#             clean_response = response.strip().replace("```json", "").replace("```", "").strip()
-#             final_data = json.loads(clean_response)
-            
-#             required_keys = ["final_markdown", "meta_title", "meta_description"]
-#             for key in required_keys:
-#                 if key not in final_data:
-#                     final_data[key] = "" 
-
-
-#             from utils.safe_json import recover_json
-
-#             raw_response = await self.ai_client.send(prompt)
-#             ai_data = recover_json(raw_response)
-
-#             if not ai_data or not isinstance(ai_data, dict):
-#                 logger.error("Assembly JSON recovery failed.")
-#                 logger.debug(f"RAW ASSEMBLY RESPONSE:\n{raw_response}")
-#                 ai_data = {}
-
-#             final_output = {
-#                 "final_markdown": ai_data.get("final_markdown", ""),
-#                 "meta_title": ai_data.get("meta_title", ""),
-#                 "meta_description": ai_data.get("meta_description", ""),
-#                 "raw_text": raw_response
-#             }
-
-                    
-#             return final_output
-            
-#         except json.JSONDecodeError as e:
-#             logger.error(f"Failed to parse assembler JSON: {e}")
-#             raise ContentGeneratorError(f"AI returned invalid JSON for article assembly: {e}")
-#         except Exception as e:
-#             logger.error(f"Error during article assembly: {e}")
-#             raise ContentGeneratorError(f"Article assembly failed: {e}")
-
-# class Assembler:
-#     def __init__(self, ai_client: Any, template_path: str = "prompts/templates/step3_assembly.txt"):
-#         self.ai_client = ai_client
-#         with open(template_path, "r", encoding="utf-8") as f:
-#             self.template = Template(f.read(), undefined=StrictUndefined)
-
-#     async def assemble(
-#         self,
-#         title: str,
-#         sections: List[Dict[str, Any]]
-#     ) -> Dict[str, str]:
-
-#         prompt = self.template.render(
-#             title=title,
-#             sections=sections
-#         )
-
-#         response = await self.ai_client.send(prompt)
-
-#         if not response:
-#             logger.error("Assembly AI returned empty response")
-#             return {
-#                 "final_markdown": "",
-#                 "meta_title": "",
-#                 "meta_description": "",
-#                 "raw_text": ""
-#             }
-
-#         ai_data = recover_json(response)
-
-#         if not ai_data or not isinstance(ai_data, dict):
-#             logger.error("Assembly JSON recovery failed")
-#             logger.debug(f"RAW ASSEMBLY RESPONSE:\n{response}")
-#             ai_data = {}
-
-#         return {
-#             "final_markdown": ai_data.get("final_markdown", ""),
-#             "meta_title": ai_data.get("meta_title", ""),
-#             "meta_description": ai_data.get("meta_description", ""),
-#             "raw_text": response
-#         }
-
-# class Assembler:
-#     def __init__(self, ai_client: Any, template_path: str = "prompts/templates/step3_assembly.txt"):
-#         self.ai_client = ai_client
-#         with open(template_path, "r", encoding="utf-8") as f:
-#             self.template = Template(f.read(), undefined=StrictUndefined)
-
-#     async def assemble(
-#         self,
-#         title: str,
-#         sections: List[Dict[str, Any]],
-#         image_plan: Optional[List[Dict[str, Any]]] = None  # <-- Pass image prompts here
-#     ) -> Dict[str, str]:
-
-#         # Map section_id -> image details
-#         image_map = {img['section_id']: img for img in image_plan} if image_plan else {}
-
-#         # Insert image placeholders and minimal transitions
-#         final_sections = []
-#         for idx, sec in enumerate(sections):
-#             content = sec.get("generated_content", "")
-            
-#             # Insert image if available
-#             img_html = ""
-#             img_data = image_map.get(sec.get("section_id"))
-#             if img_data:
-#                 img_html = f'\n\n![{img_data["alt_text"]}]({img_data["local_path"]})\n\n'
-            
-#             # Minimal transition (if not last section)
-#             transition = ""
-#             if idx < len(sections) - 1:
-#                 transition = "\n\n" + "Continuing to the next section, we explore..." + "\n\n"
-            
-#             final_sections.append(content + img_html + transition)
-
-#         final_markdown = "\n".join(final_sections)
-
-#         # Generate metadata using AI (optional, or fallback)
-#         prompt = self.template.render(title=title, sections=sections)
-#         # response = await self.ai_client.send(prompt)
-#         try:
-#             response = await self.ai_client.send(prompt, step="assembly")
-#             ai_data = recover_json(response)
-#         except Exception:
-#             logger.warning("Assembly JSON recovery failed, using fallback metadata")
-#             ai_data = {}
-
-#         return {
-#             "final_markdown": final_markdown,
-#             "meta_title": ai_data.get("meta_title", title[:70]),
-#             "meta_description": ai_data.get("meta_description", f"Read our comprehensive guide on {title}"),
-#             "raw_text": response
-#     }
-
 class Assembler:
-    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/step3_assembly.txt"):
+    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/04_article_assembler.txt"):
         self.ai_client = ai_client
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read(), undefined=StrictUndefined)
@@ -258,36 +241,48 @@ class Assembler:
     async def assemble(
         self,
         title: str,
-        sections: List[Dict[str, Any]],
-        image_plan: Optional[List[Dict[str, Any]]] = None
+        article_language: str,
+        sections: List[Dict[str, Any]]
     ) -> Dict[str, str]:
 
-        # Map section_id -> image details
-        image_map = {img['section_id']: img for img in image_plan} if image_plan else {}
+        article_language = article_language or "ar"
 
-        final_sections = []
-        for idx, sec in enumerate(sections):
-            content = sec.get("generated_content", "")
-            
-            img_html = ""
-            img_data = image_map.get(sec.get("section_id"))
-            if img_data:
-                img_html = f'\n\n![{img_data["alt_text"]}]({img_data["local_path"]})\n\n'
-            
-            final_sections.append(content + img_html)
+        final_parts = [f"# {title}"]
 
-        final_markdown = "\n\n".join(final_sections)
+        for sec in sections:
+            level = sec.get("heading_level", "H2")
+            heading = sec.get("heading_text", "").strip()
+            content = sec.get("generated_content", "").strip()
 
-        response = final_markdown
-        ai_data = {}   
-        
+            # 1) Heading level safety
+            if isinstance(level, str) and level.upper().startswith("H"):
+                try:
+                    level_num = int(level.upper().replace("H", ""))
+                except ValueError:
+                    level_num = 2
+            else:
+                level_num = 2
 
-        return {
-            "final_markdown": final_markdown,
-            "meta_title": ai_data.get("meta_title", title[:70]),
-            "meta_description": ai_data.get("meta_description", f"Read our comprehensive guide on {title}"),
-            "raw_text": response
-        }
+            level_num = max(2, min(level_num, 6))  
 
+            # 2) Robust Mechanical Cleanup (Regex Based)
+            cleanup_patterns = [
+                r"\bIn this section,?\s*",
+                r"\bIn this section we will\s*",
+                r"\bNow,?\s*we will discuss\s*",
+                r"\bNow we will discuss\s*"
+            ]
 
+            for pattern in cleanup_patterns:
+                content = re.sub(pattern, "", content, flags=re.IGNORECASE)
+
+            # Remove extra leading spaces after cleanup
+            content = content.strip()
+
+            final_parts.append(f"{'#' * level_num} {heading}")
+            final_parts.append(content)
+
+        final_markdown = "\n\n".join([p for p in final_parts if p])
+
+        return {"final_markdown": final_markdown}
 

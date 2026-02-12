@@ -10,7 +10,7 @@ from openai import OpenAI
 # =========================
 OPENROUTER = {
     "api_key": os.getenv("OPENROUTER_API_KEY"),
-    "default_model": "tngtech/deepseek-r1t2-chimera:free",
+    "default_model": "openai/gpt-4o-mini",
     "base_url": "https://openrouter.ai/api/v1/chat/completions",
     "site_url": "https://github.com/Start-SE/SEO-Writing-AI",
     "site_name": "SEO Writing AI"

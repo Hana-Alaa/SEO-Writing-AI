@@ -7,23 +7,27 @@ from typing import List, Dict, Optional
 from config.ai_config import OPENROUTER
 from services.ai_client_base import BaseAIClient
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class OpenRouterClient(BaseAIClient):
     """
-    Client for interacting with the OpenRouter API with built-in retry logic.
+    Client for interacting with the OpenRouter API with built-in retry,
+    concurrency limiting, and rate-limit handling.
     """
-    
+
+    # GLOBAL limiter for all instances
+    _semaphore = asyncio.Semaphore(3)  # max concurrent requests
+
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or OPENROUTER["api_key"]
         self.model = OPENROUTER["default_model"]
         self.base_url = OPENROUTER["base_url"]
-        
+
         if not self.api_key:
             logger.warning("OPENROUTER_API_KEY is missing")
-            
+
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": OPENROUTER["site_url"],
@@ -38,53 +42,60 @@ class OpenRouterClient(BaseAIClient):
         except Exception as e:
             logger.error(f"Failed to load prompt from {path}: {e}")
             return ""
-    
+
     async def send(self, prompt: str, step: str = "default") -> str:
-        """
-        Simple shim to send a single prompt as a user message.
-        """
         system_prompt = self.load_prompt("prompts/system_persona.txt")
 
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ]
+
         response = await self.generate_completion(messages, step=step)
         return response if response else ""
 
     async def generate_completion(
-        self, 
+        self,
         messages: List[Dict[str, str]],
         step: str = "default",
         temperature: float = 0.7,
-        retries: int = 3,
+        retries: int = 2,
         response_format: Optional[Dict[str, str]] = None
-        ) -> Optional[str]:
+    ) -> Optional[str]:
 
         payload = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature
         }
-        
+
         if response_format:
             payload["response_format"] = response_format
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            for attempt in range(retries):
-                try:
-                    response = await client.post(
-                        self.base_url,
-                        headers=self.headers,
-                        json=payload
-                    )
-                    response.raise_for_status()
-                    
-                    return response.json()["choices"][0]["message"]["content"]
+        async with self._semaphore:  # concurrency limiter
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                for attempt in range(retries):
+                    try:
+                        response = await client.post(
+                            self.base_url,
+                            headers=self.headers,
+                            json=payload
+                        )
 
-                except Exception as e:
-                    logger.error(f"OpenRouter failed (attempt {attempt+1}): {e}")
-                    if attempt < retries - 1:
-                        await asyncio.sleep(2 ** attempt)
+                        # handle rate limit
+                        if response.status_code == 429:
+                            wait_time = 2 + attempt
+                            logger.warning(f"Rate limited (429). Waiting {wait_time}s")
+                            await asyncio.sleep(wait_time)
+                            continue
+
+                        response.raise_for_status()
+
+                        return response.json()["choices"][0]["message"]["content"]
+
+                    except Exception as e:
+                        logger.error(f"OpenRouter failed (attempt {attempt+1}): {e}")
+                        if attempt < retries - 1:
+                            await asyncio.sleep(1)
 
         return None

@@ -11,6 +11,8 @@ import time
 import re
 import asyncio
 from pathlib import Path
+from langdetect import detect  
+from jinja2 import Template, StrictUndefined
 from typing import Dict, Any, List, Optional, Callable
 
 from services.image_generator import ImageGenerator, ImagePromptPlanner
@@ -20,7 +22,14 @@ from utils.injector import DataInjector
 # from services.groq_client import GroqClient
 # from services.gemini_client import GeminiClient
 # from services.huggingface_client import HuggingFaceClient
+from services.title_generator import TitleGenerator
 from services.content_generator import OutlineGenerator, SectionWriter, Assembler
+from services.section_validator import SectionValidator
+from services.image_inserter import ImageInserter
+from services.meta_schema_generator import MetaSchemaGenerator
+from services.article_validator import ArticleValidator
+from utils.json_utils import recover_json
+from utils.seo_utils import enforce_meta_lengths
 BASE_DIR = Path(__file__).resolve().parents[1] 
 
 # Configure logging
@@ -29,10 +38,9 @@ logger = logging.getLogger(__name__)
 
 PARALLEL_SECTIONS = False
 
-
 class AsyncExecutor:
     """Executes async workflow steps with logging and retries."""
-    
+
     async def run_step(self, step_name: str, func: Callable[[Dict[str, Any]], Any], state: Dict[str, Any], retries: int = 0) -> Dict[str, Any]:
         """Runs an async step with retry logic."""
         attempt = 0
@@ -79,13 +87,21 @@ class AsyncWorkflowController:
         self.executor = AsyncExecutor()
         self.image_prompt_planner = ImagePromptPlanner(
             ai_client=self.ai_client,
-            template_path=BASE_DIR / "prompts" / "templates" / "image_prompt_gen.txt"
-        )
+            template_path=BASE_DIR / "prompts" / "templates" / "06_image_planner.txt"
             
+        )
+        with open("prompts/templates/00_intent_classifier.txt", "r", encoding="utf-8") as f:
+            self.intent_template = Template(f.read(), undefined=StrictUndefined)
+
         # Content generation services
+        self.title_generator = TitleGenerator(self.ai_client)
         self.outline_gen = OutlineGenerator(self.ai_client)
         self.section_writer = SectionWriter(self.ai_client)
         self.assembler = Assembler(self.ai_client)
+        self.section_validator = SectionValidator(self.ai_client)
+        self.image_inserter = ImageInserter()
+        self.meta_schema = MetaSchemaGenerator(self.ai_client)
+        self.article_validator = ArticleValidator(self.ai_client)
         
         # Image generator
         api_key = os.getenv("STABILITY_API_KEY")
@@ -107,11 +123,14 @@ class AsyncWorkflowController:
         steps = [
             ("analysis", self._step_0_analysis, 0),
             ("outline_generation", self._step_1_outline, 1),
-            ("content_writing", self._step_2_write_sections, 1),
             ("image_prompting", self._step_4_generate_image_prompts, 0),
             ("image_generation", self._step_4_5_download_images, 2),
-            ("final_assembly", self._step_3_assembly, 0),
-            ("seo_validation", self._step_5_validation, 0)
+            ("content_writing", self._step_2_write_sections, 1),
+            ("section_validation", self._step_4_validate_sections, 0),
+            ("assembly", self._step_5_assembly, 0),
+            ("image_inserter", self._step_6_image_inserter, 0),
+            ("meta_schema", self._step_7_meta_schema, 0),
+            ("article_validation", self._step_8_article_validation, 0)
         ]
 
         for name, func, retries in steps:
@@ -125,17 +144,62 @@ class AsyncWorkflowController:
         return self._assemble_final_output(state)
 
     # ---------------- COORDINATION STEPS (ASYNC) ----------------
-    
+    async def _detect_intent_ai(self, raw_title: str, primary_keyword: str) -> str:
+
+        prompt = self.intent_template.render(
+            raw_title=raw_title,
+            primary_keyword=primary_keyword
+        )
+
+        response = await self.ai_client.send(prompt, step="intent")
+        return response.strip()
+
     async def _step_0_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Setup unique directories and sluggification."""
+
         input_data = state.get("input_data", {})
-        title = input_data.get("title", "Untitled Article")
-        slug = self._sluggify(title)
+        raw_title = input_data.get("title", "Untitled Article")
+        keywords = input_data.get("keywords", [])
+        primary_keyword = keywords[0] if keywords else raw_title
+        user_lang = input_data.get("article_language")
+        article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
         
+        intent = await self._detect_intent_ai(raw_title, primary_keyword)
+
+        valid_intents = {"Informational", "Commercial", "Transactional", "Comparative"}
+
+        if intent not in valid_intents:
+            logger.warning(f"Invalid intent returned: {intent}")
+            intent = "Informational"
+
+        competitive_raw = await self.ai_client.send(
+            f"Provide competitive SERP-style structural insights for the keyword: {primary_keyword}",
+            step="competitive_analysis"
+        )
+        competitive_insights = recover_json(competitive_raw) or {"notes": competitive_raw}
+
+        optimized_title = await self.title_generator.generate(
+            raw_title=raw_title,
+            primary_keyword=primary_keyword,
+            intent=intent,
+            article_language=article_language
+        )
+
+        state["input_data"]["title"] = optimized_title
+        slug = self._sluggify(optimized_title)
+        state["input_data"]["article_language"] = article_language
+        state["primary_keyword"] = primary_keyword
+        state["intent"] = intent
+        state["competitive_insights"] = competitive_insights
+
         article_dir = os.path.join(self.work_dir, "output", slug)
         image_dir = os.path.join(article_dir, "images")
         os.makedirs(image_dir, exist_ok=True)
         
+        base_url = "https://yourdomain.com/"
+        final_url = base_url + slug
+        state["final_url"] = final_url
+
         # Update client storage path
         self.image_client.save_dir = image_dir
         
@@ -150,12 +214,38 @@ class AsyncWorkflowController:
         keywords = input_data.get("keywords") or []
         urls_raw = input_data.get("urls", [])
 
-        outline = await self.outline_gen.generate(title, keywords, urls_raw)
-        if not outline:
+        competitive_insights = state.get("competitive_insights", {})
+        intent = state.get("intent") or "Informational"
+        article_language = input_data.get("article_language", "en")
+
+        outline_data = await self.outline_gen.generate(
+            title=title,
+            keywords=keywords,
+            urls=urls_raw,
+            article_language=article_language,
+            competitive_insights=competitive_insights,
+            intent=intent
+        )
+
+        if not outline_data:
             raise RuntimeError("Outline generation returned empty result.")
+
+        outline = outline_data.get("outline", [])
+        keyword_expansion = outline_data.get("keyword_expansion", {})
+
+        state["outline"] = outline
+        state["global_keywords"] = keyword_expansion
 
         urls_norm = normalize_urls(urls_raw)
         outline = DataInjector.distribute_urls_to_outline(outline, urls_norm)
+
+        primary_keywords = keywords[:] 
+        primary_keyword = primary_keywords[0] if primary_keywords else title
+
+        for sec in outline:
+            sec["primary_keywords"] = primary_keywords
+            sec["primary_keyword"] = primary_keyword
+            sec["article_language"] = article_language
 
         state["outline"] = outline
         return state
@@ -163,14 +253,21 @@ class AsyncWorkflowController:
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
         input_data = state.get("input_data", {})
         title = input_data.get("title", "Untitled")
-        global_keywords = input_data.get("keywords", [])
         outline = state.get("outline", [])
-
+        global_keywords = state.get("global_keywords", {})
+        intent = state.get("intent", "Informational")
+        article_language = input_data.get("article_language", "en")
         if not outline:
             raise RuntimeError("No outline found for section writing.")
 
         tasks = [
-            self._write_single_section(title, global_keywords, section)
+            self._write_single_section(
+                title,
+                global_keywords,
+                section,
+                intent,
+                state.get("competitive_insights", {})
+            )
             for section in outline
         ]
 
@@ -195,11 +292,28 @@ class AsyncWorkflowController:
         logger.info(f"Successfully wrote {len(sections_content)} sections.")
         return state
 
-    async def _write_single_section(self, title: str, global_keywords: List[str], section: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def _write_single_section(
+        self,
+        title: str,
+        global_keywords: Dict[str, Any],
+        section: Dict[str, Any],
+        article_intent: str,
+        competitive_insights: Dict[str, Any]
+    )-> Optional[Dict[str, Any]]:
+
+
         """Worker to write one section."""
-        section_id = section.get("section_id") or section.get("id")
-        content = await self.section_writer.write(title, global_keywords, section)
         
+        section_id = section.get("section_id") or section.get("id")
+
+        content = await self.section_writer.write(
+            title=title,
+            global_keywords=global_keywords,
+            section=section,
+            article_intent=article_intent,
+            competitive_insights=competitive_insights
+        )
+
         if content:
             return {
                 **section,
@@ -208,6 +322,44 @@ class AsyncWorkflowController:
             }
         return None
 
+    async def _step_4_validate_sections(self, state):
+        input_data = state.get("input_data", {})
+        title = input_data.get("title", "Untitled")
+        article_language = input_data.get("article_language", "ar")
+
+        sections = state.get("sections", {})
+        outline = state.get("outline", [])
+
+        failed_sections = []
+
+        for sec in outline:
+            sid = sec.get("section_id")
+            content = sections.get(sid, {}).get("generated_content", "")
+
+            if not content:
+                continue
+
+            result = await self.section_validator.validate(
+                title,
+                article_language,
+                sec,
+                content
+            )
+
+            sections[sid]["validation_report"] = result
+
+            if result["status"].upper() == "FAIL":
+                failed_sections.append({
+                    "section_id": sid,
+                    "issues": result.get("issues", [])
+                })
+
+        state["sections"] = sections
+        state["failed_sections"] = failed_sections
+        state["validation_passed"] = len(failed_sections) == 0
+
+        return state
+
     async def _step_4_generate_image_prompts(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates image prompts using the image client."""
         input_data = state.get("input_data", {})
@@ -215,12 +367,15 @@ class AsyncWorkflowController:
         keywords = input_data.get("keywords", [])
 
         outline = state.get("outline", [])
-        
+
+        primary_keyword = state.get("primary_keyword")
         image_prompts = await self.image_prompt_planner.generate(
             title=title,
+            primary_keyword=primary_keyword,
             keywords=keywords,
             outline=outline
-        )        
+        )
+      
         state["image_prompts"] = image_prompts
         return state
 
@@ -237,56 +392,12 @@ class AsyncWorkflowController:
         images = await self.image_client.generate_images(prompts, primary_keyword=primary_keyword)
         state["images"] = images
         return state
-
-    async def _step_3_assembly(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Full assembly: stitch sections + insert images + generate final markdown and metadata."""
-        input_data = state.get("input_data", {})
-        title = input_data.get("title", "Untitled")
-        sections_dict = state.get("sections", {})
+ 
+    async def _step_5_assembly(self, state):
+        title = state.get("input_data", {}).get("title", "Untitled")
         outline = state.get("outline", [])
-        images = state.get("images", [])
-
-        # Map section_id -> image
-        image_map = {img['section_id']: img for img in images}
-
-        final_sections = []
-        for s in outline:
-            sid = s.get("section_id")
-            sec = sections_dict.get(sid)
-            if not sec:
-                continue
-            content = sec.get("generated_content", "")
-
-            # Add image if exists
-            img_html = ""
-            img_data = image_map.get(sid)
-            if img_data:
-                img_html = f'\n\n![{img_data["alt_text"]}]({img_data.get("local_path","")})\n\n'
-        
-            # Minimal transition
-            final_sections.append(content + img_html)
-
-        final_markdown = "\n\n".join(final_sections)
-
-        # Metadata
-        keywords = state.get("input_data", {}).get("keywords", [])
-        primary_keyword = keywords[0] if keywords else ""
-
-
-        prompt = f"""
-        Create an SEO-optimized H1 title for the article:
-        "{title}"
-
-        Requirements:
-        - Include the primary keyword: "{primary_keyword}"
-        - Length: 60–70 characters
-        - Sales-oriented if intent is commercial
-        - Prefer adding the year 2026
-        - Return only the title text
-        """
-
-        meta_title = await self.ai_client.send(prompt, step="title_generation")
-        meta_description = f"Read our comprehensive guide on {title}"[:160]
+        sections_dict = state.get("sections", {})
+        article_language = state.get("input_data", {}).get("article_language", "ar")
 
         ordered_sections = [
             sections_dict[s["section_id"]]
@@ -294,79 +405,146 @@ class AsyncWorkflowController:
             if s.get("section_id") in sections_dict
         ]
 
-        assembled = await self.assembler.assemble(
-            title=title,
-            sections=ordered_sections,
-            image_plan=state.get("images", [])
-        )
-        assembled["meta_title"] = meta_title
-        assembled["meta_description"] = meta_description
+        assembled = await self.assembler.assemble(title=title, sections=ordered_sections, article_language=article_language)
         state["final_output"] = assembled
         return state
 
-    # async def _step_3_assembly(self, state):
-    #     input_data = state.get("input_data", {})
-    #     title = input_data.get("title", "Untitled")
-    #     outline = state.get("outline", [])
-    #     sections = state.get("sections", {})
-    #     images = state.get("images", [])
+    async def _step_6_image_inserter(self, state):
+        final_md = state.get("final_output", {}).get("final_markdown", "")
+        images = state.get("images", [])
 
-    #     image_map = {img['section_id']: img for img in images}
-
-    #     final_sections = []
-    #     for s in outline:
-    #         sid = s.get("section_id")
-    #         sec = sections.get(sid)
-    #         if not sec:
-    #             continue
-
-    #         content = sec.get("generated_content", "")
-    #         img = image_map.get(sid)
-
-    #         if img:
-    #             content += f'\n\n![{img["alt_text"]}]({img["local_path"]})\n\n'
-
-    #         final_sections.append(content)
-
-    #     final_markdown = "\n\n".join(final_sections)
-
-    #     state["final_output"] = {
-    #         "final_markdown": final_markdown,
-    #         "meta_title": title[:70],
-    #         "meta_description": f"Read our comprehensive guide about {title}"[:160]
-    #     }
-
-    #     return state
-
-    async def _step_5_validation(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Validates the output against SEO rules."""
-        from utils.seo_validator import SEOValidator
-        validator = SEOValidator()
-        
-        final_out = state.get("final_output", {})
-        content = final_out.get("final_markdown", "")
-        
-        if not content:
-            logger.warning("Validation skipped: no final content found.")
+        if not final_md or not images:
             return state
-            
-        metadata = {
-            **state.get("seo_meta", {}), 
-            "images": state.get("images", []), 
-            "domain": "yourdomain.com"
-        }
-        
-        # validator.validate is sync, wrapping to avoid blocking event loop
-        report = await asyncio.to_thread(validator.validate, content, metadata)
-        state["seo_report"] = report
+
+        new_md = await self.image_inserter.insert(final_md, images)
+        state["final_output"]["final_markdown"] = new_md
         return state
 
-    # ---------------- UTILITIES ----------------
+    async def _step_7_meta_schema(self, state):
+        final_md = state.get("final_output", {}).get("final_markdown", "")
+        if not final_md:
+            return state
+
+        meta_raw = await self.meta_schema.generate(
+            final_markdown=final_md,
+            primary_keyword=state.get("primary_keyword"),
+            intent=state.get("intent"),
+            article_language=state.get("input_data", {}).get("article_language", "en"),
+            secondary_keywords=state.get("input_data", {}).get("keywords", []),
+            include_meta_keywords=state.get("include_meta_keywords", False),
+            article_url=state.get("final_url")
+        )
+
+        meta_json = recover_json(meta_raw)
+
+        if not meta_json:
+            logger.error("Meta schema returned invalid JSON")
+            return state
+
+        meta_json = enforce_meta_lengths(meta_json)
+
+        state["seo_meta"] = meta_json
+        return state
+
+    async def _step_8_article_validation(self, state):
+
+        final_md = state.get("final_output", {}).get("final_markdown", "")
+        meta = state.get("seo_meta", {})
+        images = state.get("images", [])
+        input_data = state.get("input_data", {})
+
+        title = input_data.get("title", "")
+        article_language = input_data.get("article_language", "en")
+        keywords = input_data.get("keywords", [])
+        primary_keyword = keywords[0] if keywords else ""
+
+        if not final_md:
+            state["seo_report"] = {
+                "status": "FAIL",
+                "issues": ["Final markdown missing"]
+            }
+            return state
+
+        word_count, keyword_count, keyword_density = self.calculate_keyword_stats(
+            final_md,
+            primary_keyword
+        )
+
+        report_raw = await self.article_validator.validate(
+            final_markdown=final_md, 
+            meta=meta, 
+            images=images,
+            title=title,
+            article_language=article_language,
+            primary_keyword=primary_keyword,
+            word_count=word_count,
+            keyword_count=keyword_count,
+            keyword_density=keyword_density
+        )
+
+        report_json = recover_json(report_raw)
+
+        if not isinstance(report_json, dict):
+            state["seo_report"] = {
+                "status": "FAIL",
+                "issues": ["Validator returned malformed JSON"]
+            }
+            return state
+
+        issues = report_json.get("issues", [])
+
+        if report_json.get("status") not in ["PASS", "FAIL"]:
+            report_json["status"] = "FAIL"
+
+        state["seo_report"] = report_json
+        return state
+
+    # async def _step_5_validation(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    #     """Validates the output against SEO rules."""
+    #     from utils.seo_validator import SEOValidator
+    #     validator = SEOValidator()
+        
+    #     final_out = state.get("final_output", {})
+    #     content = final_out.get("final_markdown", "")
+        
+    #     if not content:
+    #         logger.warning("Validation skipped: no final content found.")
+    #         return state
+            
+    #     metadata = {
+    #         **state.get("seo_meta", {}), 
+    #         "images": state.get("images", []), 
+    #         "domain": "yourdomain.com"
+    #     }
+        
+    #     # validator.validate is sync, wrapping to avoid blocking event loop
+    #     report = await asyncio.to_thread(validator.validate, content, metadata)
+    #     state["seo_report"] = report
+    #     return stat
     
+    # ---------------- UTILITIES ----------------
     def _sluggify(self, text: str) -> str:
         """Generates a clean slug from English or Arabic text."""
         clean = re.sub(r'[^\w\s-]', '', text).strip().lower()
         return re.sub(r'[-\s_]+', '-', clean)
+
+    def calculate_keyword_stats(self, markdown: str, keyword: str):
+        if not markdown or not keyword:
+            return 0, 0, 0.0
+
+        # Remove markdown syntax
+        clean_text = re.sub(r'[#>*`\-\[\]\(\)!]', '', markdown)
+
+        words = re.findall(r'\b\w+\b', clean_text.lower())
+        word_count = len(words)
+
+        keyword_count = clean_text.lower().count(keyword.lower())
+
+        density = 0.0
+        if word_count > 0:
+            density = (keyword_count / word_count) * 1000  # per 1000 words
+
+        return word_count, keyword_count, round(density, 2)
 
     def _assemble_final_output(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Compiles the final structured result."""
