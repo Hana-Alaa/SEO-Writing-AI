@@ -9,7 +9,6 @@ from jinja2 import Template
 from typing import List, Dict, Optional, Any
 from PIL import Image
 from io import BytesIO
-from config.ai_config import STABILITY
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +28,11 @@ class ImagePromptPlanner:
         raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
         try:
             image_prompts = json.loads(raw_response)
-            if len(image_prompts) != 7:
+            required_images = len(outline)
+            if len(image_prompts) != required_images:
                 logger.error("Image planner did not return exactly 7 images.")
                 return []
-            featured_count = sum(1 for p in image_prompts if p.get("image_type") == "Featured Image")
+            featured_count = sum(1 for p in image_prompts if p.get("image_type") == "Featured")
 
             if featured_count != 1:
                 logger.error("There must be exactly ONE Featured Image.")
@@ -50,7 +50,7 @@ class ImagePromptPlanner:
                 logger.error("Duplicate section_id detected in image prompts.")
                 return []
             
-            allowed_types = {"Featured Image", "Infographic", "Illustration"}
+            allowed_types = {"Featured", "Infographic", "Illustration"}
 
             for p in image_prompts:
                 if p.get("image_type") not in allowed_types:
@@ -73,20 +73,15 @@ class ImageGenerator:
     """
 
     STYLE_PREFIXES = {
-        "Featured Image": "High-quality photorealistic featured image, professional lighting, ultra realistic, highly detailed,",
+        "Featured": "High-quality photorealistic featured image, professional lighting, ultra realistic, highly detailed,",
         "Infographic": "Clean infographic style illustration, flat design, clear visual hierarchy, professional vector graphics,",
         "Illustration": "Minimalist conceptual illustration, modern style, soft transitions, professional digital art,"
     }
 
-    def __init__(self, save_dir: str = "output/images", api_key: str = None):
+    def __init__(self, ai_client, save_dir: str = "output/images"):
         self.save_dir = save_dir
+        self.ai_client = ai_client
         os.makedirs(self.save_dir, exist_ok=True)
-        self.api_key = api_key or STABILITY["api_key"]
-        self.model = STABILITY["model"]
-        self.base_url = STABILITY["base_url"]
-
-        if not self.api_key:
-            logger.warning("Stability.ai API Key is missing. Image generation will fail.")
 
     async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None) -> List[Dict[str, Any]]:
         """
@@ -132,8 +127,7 @@ class ImageGenerator:
         logger.info(final_prompt)
         logger.info("\n=============================================================\n")
 
-
-        local_path = await self._call_stability_api(final_prompt, seed, section_id)
+        local_path = await self._call_openrouter(final_prompt, section_id, image_type, seed)
 
         if local_path:
             # CPU-bound image processing
@@ -149,69 +143,84 @@ class ImageGenerator:
         
         return None
 
-    async def _call_stability_api(self, prompt: str, seed: int, section_id: str, retries: int = 2) -> str:
-        """Internal helper to communicate with Stability.ai with retry logic (async)."""
-        if not self.api_key:
-            logger.error(f"Cannot call Stability API for {section_id}: API Key is missing.")
+    async def _call_openrouter(self, prompt: str, section_id: str, image_type: str, seed):
+
+        if image_type == "Featured":
+            filepath = await self.ai_client.send_image(prompt, 1344, 768)
+        elif image_type == "Infographic":
+            filepath = await self.ai_client.send_image(prompt, 1024, 1024)
+        else:
+            filepath = await self.ai_client.send_image(prompt, 1024, 768)
+
+        if not filepath:
+            logger.error(f"Image generation failed for {section_id}")
             return ""
 
-        url = f"{self.base_url}/{self.model}/text-to-image"
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-        
-        body = {
-            "text_prompts": [{"text": prompt, "weight": 1}],
-            "cfg_scale": 7,
-            "height": 768, 
-            "width": 1344, 
-            "samples": 1,
-            "steps": 30,
-            "seed": seed,
-            "sampler": "K_DPM_2_ANCESTRAL", 
-            "clip_guidance_preset": "FAST_BLUE"
-        }
+        return filepath
 
-        logger.info(f"Generated prompt for {section_id}: {prompt[:100]}...")
+    # async def _call_stability_api(self, prompt: str, seed: int, section_id: str, retries: int = 2) -> str:
+    #     """Internal helper to communicate with Stability.ai with retry logic (async)."""
+    #     if not self.api_key:
+    #         logger.error(f"Cannot call Stability API for {section_id}: API Key is missing.")
+    #         return ""
+
+    #     url = f"{self.base_url}/{self.model}/text-to-image"
+    #     headers = {
+    #         "Content-Type": "application/json",
+    #         "Accept": "application/json",
+    #         "Authorization": f"Bearer {self.api_key}"
+    #     }
         
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            for attempt in range(retries + 1):
-                try:
-                    logger.info(f"Stability API call for {section_id} (Attempt {attempt+1}/{retries+1})...")
-                    response = await client.post(url, headers=headers, json=body)
+    #     body = {
+    #         "text_prompts": [{"text": prompt, "weight": 1}],
+    #         "cfg_scale": 7,
+    #         "height": 768, 
+    #         "width": 1344, 
+    #         "samples": 1,
+    #         "steps": 30,
+    #         "seed": seed,
+    #         "sampler": "K_DPM_2_ANCESTRAL", 
+    #         "clip_guidance_preset": "FAST_BLUE"
+    #     }
+
+    #     logger.info(f"Generated prompt for {section_id}: {prompt[:100]}...")
+        
+    #     async with httpx.AsyncClient(timeout=120.0) as client:
+    #         for attempt in range(retries + 1):
+    #             try:
+    #                 logger.info(f"Stability API call for {section_id} (Attempt {attempt+1}/{retries+1})...")
+    #                 response = await client.post(url, headers=headers, json=body)
                     
-                    if response.status_code == 200:
-                        data = response.json()
-                        if "artifacts" in data and len(data["artifacts"]) > 0:
-                            image_data = data["artifacts"][0].get("base64")
-                            filepath = os.path.join(self.save_dir, f"{section_id}.png")
-                            with open(filepath, "wb") as f:
-                                f.write(base64.b64decode(image_data))
-                            logger.info(f"Successfully generated and saved {section_id}.png")
-                            return filepath
-                        else:
-                            logger.error(f"Unexpected API response structure for {section_id}: {data}")
-                    elif response.status_code == 429:
-                        logger.warning(f"Rate limited on attempt {attempt + 1} for {section_id}. Retrying...")
-                        await asyncio.sleep(5 * (attempt + 1))
-                    else:
-                        logger.error(f"Stability API error {response.status_code} for {section_id}: {response.text}")
-                        if attempt < retries:
-                            await asyncio.sleep(2 ** attempt)
+    #                 if response.status_code == 200:
+    #                     data = response.json()
+    #                     if "artifacts" in data and len(data["artifacts"]) > 0:
+    #                         image_data = data["artifacts"][0].get("base64")
+    #                         filepath = os.path.join(self.save_dir, f"{section_id}.png")
+    #                         with open(filepath, "wb") as f:
+    #                             f.write(base64.b64decode(image_data))
+    #                         logger.info(f"Successfully generated and saved {section_id}.png")
+    #                         return filepath
+    #                     else:
+    #                         logger.error(f"Unexpected API response structure for {section_id}: {data}")
+    #                 elif response.status_code == 429:
+    #                     logger.warning(f"Rate limited on attempt {attempt + 1} for {section_id}. Retrying...")
+    #                     await asyncio.sleep(5 * (attempt + 1))
+    #                 else:
+    #                     logger.error(f"Stability API error {response.status_code} for {section_id}: {response.text}")
+    #                     if attempt < retries:
+    #                         await asyncio.sleep(2 ** attempt)
                 
-                except httpx.TimeoutException:
-                    logger.warning(f"Timeout on attempt {attempt + 1} for {section_id}. Retrying...")
-                    if attempt < retries:
-                        await asyncio.sleep(2)
-                except Exception as e:
-                    logger.error(f"Unexpected error in Stability API call for {section_id}: {e}")
-                    if attempt < retries:
-                        await asyncio.sleep(1)
+    #             except httpx.TimeoutException:
+    #                 logger.warning(f"Timeout on attempt {attempt + 1} for {section_id}. Retrying...")
+    #                 if attempt < retries:
+    #                     await asyncio.sleep(2)
+    #             except Exception as e:
+    #                 logger.error(f"Unexpected error in Stability API call for {section_id}: {e}")
+    #                 if attempt < retries:
+    #                     await asyncio.sleep(1)
         
-        logger.error(f"All {retries + 1} attempts failed for section {section_id}")
-        return ""
+    #     logger.error(f"All {retries + 1} attempts failed for section {section_id}")
+    #     return ""
 
     def _process_image_versions(self, filepath: str):
         """Generates 1200x630 (Featured), 800x420 (Inline), and 400x210 (Thumbnail)."""

@@ -3,8 +3,9 @@ Context:
 - Primary Keyword: "{{ keywords[0] if keywords else title }}"
 - Core Keywords: {{ keywords | tojson }}
 - Article Language: "{{ article_language }}"
-- Competitive Insights: {{ competitive_insights | tojson }}
+- Competitive Insights: {{ seo_intelligence | tojson }}
 - Search Intent: "{{ intent }}"
+- Content Type: "{{ content_type }}"
 
 
 Role:
@@ -15,8 +16,12 @@ Create a high-performing SEO article outline ONLY.
 Do NOT write the article.
 Do NOT generate schemas.
 Do NOT generate images.
-Output valid JSON only.
+Use the following SERP semantic assets:
+- People Also Ask questions
+- Related searches
+- LSI keywords
 
+Output valid JSON only.
 ----------------------------------------------------
 
 STEP 1 — Intent Enforcement
@@ -38,6 +43,9 @@ STEP 2 — Competitive Gap Coverage
 
 STEP 3 — Structural Rules
 
+Use the following semantic SERP assets:
+{{ seo_intelligence.get("semantic_assets", {}) | tojson }}
+
 Mandatory Sections:
 1. Introduction (H2)
 2. Core Sections (logical progression)
@@ -46,6 +54,23 @@ Mandatory Sections:
 
 Flow Order:
 Definition → Importance → How-To → Advanced Insights → FAQ → Conclusion
+----------------------------------------------------
+
+If content_type == "editorial":
+
+You MUST include:
+- A Pros section
+- A Cons section
+- A "Who is it for?" section
+- A "Who should avoid it?" section
+- A Short comparison section
+- A Alternatives section
+- Use neutral analytical tone
+
+If content_type == "brand":
+- Focus on benefits
+- Use persuasive tone
+- Strong CTAs allowed
 
 ----------------------------------------------------
 
@@ -55,6 +80,8 @@ Hard Constraints:
 - Strict H2 → H3 → H4 hierarchy
 - Each section must declare intent
 - Assign relevant keywords per section
+- Distribute LSI keywords across sections
+- At least 30% of H2 headings are inspired by PAA questions.
 
 ----------------------------------------------------
 

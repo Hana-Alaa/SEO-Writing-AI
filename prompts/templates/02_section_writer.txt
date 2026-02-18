@@ -7,47 +7,57 @@ This section must strictly follow all SEO quality rules while staying limited to
 ---------------------------------------------------------
 ARTICLE CONTEXT
 ---------------------------------------------------------
-- Article Title: "{{ title }}"
-- Article Intent: "{{ article_intent }}"
-- Primary Keyword: "{{ primary_keyword }}"
-- Global Keywords: {{ global_keywords | tojson }}
-- Article Language: "{{ article_language }}"
+Title: "{{ title }}"
+Intent: "{{ article_intent }}"
+Primary Keyword: "{{ primary_keyword }}"
+Language: "{{ article_language }}"
 
 ---------------------------------------------------------
-CURRENT SECTION CONTEXT
+SECTION CONTEXT
 ---------------------------------------------------------
-- Heading Level: {{ section.heading_level }}
-- Heading Text: "{{ section.heading_text }}"
-- Section Intent: "{{ section.section_intent }}"
-- Content Scope: "{{ section.content_scope }}"
-- Allowed Flow Steps: {{ section.allowed_flow_steps | tojson }}
-- Forbidden Elements: {{ section.forbidden_elements | tojson }}
-- Mandatory Links: {{ section.assigned_links | tojson }}
-- Primary Keywords For This Section: {{ section.primary_keywords | join(", ") }}
-- Minimum Words: {{ section.estimated_word_count_min }}
-- Maximum Words: {{ section.estimated_word_count_max }}
-- Requires Table: {{ section.requires_table | default(false) }}
-- CTA Allowed: {{ section.cta_allowed }}
-- CTA Type: {{ section.cta_type }}
-- LSI Keywords: {{ global_keywords.lsi | default([]) | join(", ") }}
-- Semantic Keywords: {{ global_keywords.semantic | default([]) | join(", ") }}
+Heading Level: {{ section.heading_level }}
+Heading: "{{ section.heading_text }}"
+Section Intent: "{{ section.section_intent }}"
+Scope: "{{ section.content_scope }}"
+
+Required Keywords: {{ section.assigned_keywords | join(", ") }}
+supporting_keywords=supporting_keywords
+
+Allowed Flow: {{ section.allowed_flow_steps | tojson }}
+Forbidden Elements: {{ section.forbidden_elements | tojson }}
+
+Mandatory Links: {{ section.assigned_links | tojson }}
+Brand Mentions: {{ section.brand_mentions | tojson }}
+
+
+Word Range: {{ section.estimated_word_count_min }} - {{ section.estimated_word_count_max }}
+
+Requires Table: {{ section.requires_table | default(false) }}
+CTA Allowed: {{ section.cta_allowed }}
+CTA Type: {{ section.cta_type }}
+
+---------------------------------------------------------
+COMPETITIVE INTELLIGENCE
+---------------------------------------------------------
+Content Gaps To Cover: {{ seo_intelligence.content_gaps | tojson }}
+Weaknesses To Exploit: {{ seo_intelligence.weaknesses_to_exploit | tojson }}
+Differentiation Strategy: {{ seo_intelligence.differentiation_strategy | tojson }}
+
 
 ---------------------------------------------------------
 STRICT SEO RULES FOR THIS SECTION
 ---------------------------------------------------------
 
 1. LANGUAGE
-- Must be 100% in "{{ article_language }}"
-- Never mix languages.
+- Write strictly in "{{ article_language }}"
+- No language mixing
 
-2. PRIMARY KEYWORD USAGE
-- You MUST naturally include assigned_keywords within this section.
-- Must appear naturally in the FIRST paragraph.
-- Must be bolded at least once.
-- Use natural variations and semantic synonyms.
-- Do NOT stuff keywords unnaturally.
-- Do not ignore them.
-- Distribute them logically.
+2. KEYWORD EXECUTION
+- Include all Required Keywords naturally
+- Must appear in first paragraph
+- Bold at least once
+- Use semantic variations
+- Avoid stuffing
 
 3. STRUCTURE
 - Follow allowed_flow_steps as the primary structure.
@@ -71,9 +81,40 @@ STRICT SEO RULES FOR THIS SECTION
   • Do NOT include any CTA.
 
 6. INTERNAL & EXTERNAL LINKS
-- Place mandatory links naturally.
-- Do NOT cluster links in one paragraph.
-- Never mention “internal link” explicitly.
+
+- Use the provided brand URL naturally where relevant.
+- If brand_link_allowed = true, you may include the brand URL once naturally.
+- If brand_link_allowed = false, do not include the brand URL.
+- When mentioning technical concepts (performance, CDN, security, WordPress, speed testing, SEO metrics):
+    • Prefer citing well-known official documentation or tools.
+    • If adding a link, use the official homepage only.
+    • Limit to 1 external authority link in this section.
+    • Do not fabricate URLs.
+    • Only link to high-trust, non-commercial websites.
+- Do NOT invent random promotional links.
+- Do NOT link competitors.
+- Avoid clustering links in a single paragraph.
+- Use only well-known official domains (e.g., wordpress.org, google.com, cloudflare.com). Do not fabricate unknown URLs.
+
+If content_type == "editorial":
+- Support technical claims with references to trusted third-party resources when relevant.
+- Keep outbound links informational, not promotional.
+
+If content_type == "brand":
+- Focus on benefits
+- Use persuasive tone
+- Strong CTAs allowed
+
+If allowed, you may include ONE authoritative external link 
+(e.g., official documentation like Google, WordPress, Cloudflare, etc.)
+
+Rules:
+- Use only real, well-known official domains
+- Maximum 1 external link in this section
+- Do not fabricate unknown domains
+- Do NOT use generic review disclaimers.
+- Avoid cliché neutrality phrases.
+- Write with confident expert positioning.
 
 7. EEAT ENHANCEMENT
 - Include real examples, expert-style insights, practical steps, or data where relevant.
@@ -92,9 +133,9 @@ STRICT SEO RULES FOR THIS SECTION
 - Do NOT include explanations outside the section.
 
 10. COMPETITIVE ADVANTAGE
-- Use competitive_insights to improve depth.
-- Cover missing_subtopics if relevant.
-- Provide stronger explanations than competitors.
+- Use SEO Intelligence to improve depth.
+- Cover Content Gaps if relevant.
+- Apply Differentiation Strategy when appropriate.
 - Add unique angles when possible.
 
 11. Word Count

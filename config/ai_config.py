@@ -10,10 +10,18 @@ from openai import OpenAI
 # =========================
 OPENROUTER = {
     "api_key": os.getenv("OPENROUTER_API_KEY"),
-    "default_model": "openai/gpt-4o-mini",
-    "base_url": "https://openrouter.ai/api/v1/chat/completions",
+    "base_url_chat": "https://openrouter.ai/api/v1/chat/completions",
+    "base_url_responses": "https://openrouter.ai/api/v1/responses",
+    "base_url_image": "https://openrouter.ai/api/v1/images",
     "site_url": "https://github.com/Start-SE/SEO-Writing-AI",
-    "site_name": "SEO Writing AI"
+    "site_name": "SEO Writing AI",
+
+    "models": {
+        "writing": "google/gemini-3-flash-preview",
+        "research": "openai/o4-mini:online",
+        "image": "black-forest-labs/FLUX.1-schnell" 
+
+    }
 }
 
 GROQ = {
@@ -39,7 +47,7 @@ POLLINATIONS = {
 }
 
 STABILITY = {
-    "api_key": "sk-gjcxfako96pgqMBhn33UsDVh69pBCo4Z9Wqa62sSeHEEPD0s",
+    "api_key": "STABILITY_API_KEY",
     "model": "stable-diffusion-xl-1024-v1-0",
     "base_url": "https://api.stability.ai/v1/generation",
     "size": "1024x1024"
@@ -49,3 +57,4 @@ STABILITY = {
 IMAGES = {
     "provider": "mock"  
 }
+

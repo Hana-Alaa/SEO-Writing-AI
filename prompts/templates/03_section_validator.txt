@@ -86,8 +86,11 @@ Validation Checklist:
 - Must not repeat section heading text inside the body unnaturally.
 
 11. Flow Alignment
-- Content structure must logically align with allowed flow steps.
-- No clear structural violations allowed.
+- Content structure must follow the provided allowed_flow_steps IN ORDER.
+- Clear structural misalignment must trigger FAIL.
+
+12. JSON Integrity
+- If output is not valid JSON → status = FAIL
 
 ----------------------------------------------------
 

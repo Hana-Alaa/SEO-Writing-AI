@@ -51,15 +51,17 @@ async def main():
                 "إنشاء موقع ووردبريس"
             ],
             
+            # "urls": [
+            #     {"text": "عرض هوستنجر الخاص (خصم 85%)", "link": "https://www.hostinger.com/"},
+            #     {"text": "أداة بناء المواقع بالذكاء الاصطناعي", "link": "https://www.hostinger.com/website-builder"},
+            #     {"text": "مقارنة الخطط", "link": "https://www.hostinger.com/vps-hosting"}
+            # ],
             "urls": [
-                {"text": "عرض هوستنجر الخاص (خصم 75%)", "link": "https://www.hostinger.com/web-hosting"},
-                {"text": "خطط الأسعار بالتفصيل", "link": "https://www.hostinger.com/pricing"}, 
-                {"text": "أداة بناء المواقع بالذكاء الاصطناعي", "link": "https://www.hostinger.com/website-builder"},
-                {"text": "مقارنة الخطط", "link": "https://www.hostinger.com/vps-hosting"}
-            ],
+                {"text": "الموقع الرسمي لـ Hostinger", "link": "https://www.hostinger.com/"}
+            ]
         }
     }
-    
+
     try:
         final_result = await controller.run_workflow(state)
         
