@@ -24,9 +24,10 @@ class OpenRouterClient(BaseAIClient):
     """
 
     # GLOBAL limiter for all instances
-    _semaphore = asyncio.Semaphore(3)  # max concurrent requests
+    _semaphore = asyncio.Semaphore(2)  # max concurrent requests
 
     def __init__(self, api_key: Optional[str] = None):
+        # self.rate_semaphore = asyncio.Semaphore(2)
         self.observer = ObservabilityTracker()
         self.api_key = api_key or OPENROUTER["api_key"]
         # self.model = OPENROUTER["default_model"]
@@ -35,6 +36,7 @@ class OpenRouterClient(BaseAIClient):
         # self.base_url = OPENROUTER["base_url"]
         self.base_url_chat = OPENROUTER["base_url_chat"]
         self.base_url_responses = OPENROUTER["base_url_responses"]
+        self.client = httpx.AsyncClient(timeout=40.0)
 
         if not self.api_key:
             logger.warning("OPENROUTER_API_KEY is missing")
@@ -70,15 +72,23 @@ class OpenRouterClient(BaseAIClient):
 
         start_time = time.time()
 
-        async with self._semaphore:
-            async with httpx.AsyncClient(timeout=25.0) as client:
-                r = await client.post(
-                    self.base_url_chat,
-                    headers=self.headers,
-                    json=payload
-                )
-                r.raise_for_status()
-                data = r.json()
+        # async with self.rate_semaphore:
+        #     response = await actual_request()
+        # _semaphore = asyncio.Semaphore(1)
+
+        # async with self._semaphore:
+        #     async with httpx.AsyncClient(timeout=25.0) as client:
+        #         r = await client.post(
+        #             self.base_url_chat,
+        #             headers=self.headers,
+        #             json=payload
+        #         )
+        #         r.raise_for_status()
+
+        data = await self._post_with_retry(
+            self.base_url_chat,
+            payload
+        )
 
         end_time = time.time()
 
@@ -126,16 +136,19 @@ class OpenRouterClient(BaseAIClient):
 
         start_time = time.time()
 
-        async with self._semaphore:
-            async with httpx.AsyncClient(timeout=40.0) as client:
-                r = await client.post(
-                    self.base_url_chat,
-                    headers=self.headers,
-                    json=payload
-                )
+        # async with self._semaphore:
+        #     async with httpx.AsyncClient(timeout=40.0) as client:
+        #         r = await client.post(
+        #             self.base_url_chat,
+        #             headers=self.headers,
+        #             json=payload
+        #         )
 
-                r.raise_for_status()
-                data = r.json()
+        #         r.raise_for_status()
+        data = await self._post_with_retry(
+            self.base_url_chat,
+            payload
+        )
 
         end_time = time.time()
 
@@ -162,33 +175,129 @@ class OpenRouterClient(BaseAIClient):
 
         return content
 
-    async def send_image(self, prompt: str, width=1024, height=1024, step="image", seed):
-        
-        image_model = OPENROUTER["models"]["image"]
+    # async def send_image(self, prompt: str, width=1024, height=1024, step="image"):
 
+    #     image_model = OPENROUTER["models"]["image"]
+
+    #     payload = {
+    #         "model": image_model,
+    #         "prompt": prompt,
+    #         "size": f"{width}x{height}",
+    #     }
+
+    #     try:
+    #         data = await self._post_with_retry(
+    #             OPENROUTER["base_url_image"],
+    #             payload
+    #         )
+
+    #         logger.info(f"Image API raw response: {str(data)[:500]}")
+
+    #         if not data:
+    #             logger.error("Empty response from image API")
+    #             return None
+
+    #         if "data" not in data or not data["data"]:
+    #             logger.error(f"Invalid image response structure: {data}")
+    #             return None
+
+    #         image_obj = data["data"][0]
+
+    #         if "b64_json" not in image_obj:
+    #             logger.error(f"No base64 image found in response: {image_obj}")
+    #             return None
+
+    #         image_base64 = image_obj["b64_json"]
+
+    #         os.makedirs("output/images", exist_ok=True)
+    #         filename = f"output/images/{int(time.time()*1000)}.png"
+
+    #         with open(filename, "wb") as f:
+    #             f.write(base64.b64decode(image_base64))
+
+    #         return filename
+
+    #     except Exception as e:
+    #         logger.error(f"Image generation failed: {e}")
+    #         return None
+
+    async def send_image(self, prompt: str, width=1024, height=1024, save_dir: str = None):
+        """Generate an image and save it to save_dir (or default output/images if not given)."""
         payload = {
-            "model": image_model,
-            "prompt": prompt,
-            "size": f"{width}x{height}",
-            "seed": seed,
+            "model": OPENROUTER["models"]["image"],  # flux.2-pro
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "modalities": ["image"]
         }
 
-        async with self._semaphore:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                r = await client.post(
-                    OPENROUTER["base_url_image"],
-                    headers=self.headers,
-                    json=payload
-                )
-                r.raise_for_status()
-                data = r.json()
+        data = await self._post_with_retry(
+            self.base_url_chat,
+            payload
+        )
 
-        image_base64 = data["data"][0]["b64_json"]
+        if not data or "choices" not in data:
+            logger.error("Invalid image response")
+            return None
 
-        os.makedirs("output/images", exist_ok=True)
-        filename = f"output/images/{int(time.time())}.png"
+        message = data["choices"][0]["message"]
+
+        if "images" not in message or not message["images"]:
+            logger.error("No images in response")
+            return None
+
+        image_url = message["images"][0]["image_url"]["url"]
+
+        # data:image/png;base64,xxxxxx
+        header, encoded = image_url.split(",", 1)
+        image_bytes = base64.b64decode(encoded)
+
+        # Use provided save_dir or fall back to default
+        target_dir = save_dir or "output/images"
+        os.makedirs(target_dir, exist_ok=True)
+        filename = os.path.join(target_dir, f"{int(time.time()*1000)}.png")
 
         with open(filename, "wb") as f:
-            f.write(base64.b64decode(image_base64))
+            f.write(image_bytes)
 
+        logger.info(f"Image saved to: {filename}")
         return filename
+
+    async def _post_with_retry(self, url, payload):
+        async with self._semaphore:
+            for attempt in range(4):
+                try:
+                    r = await self.client.post(
+                        url,
+                        headers=self.headers,
+                        json=payload
+                    )
+
+                    if r.status_code != 200:
+                        logger.error(f"HTTP Error {r.status_code}: {r.text}")
+                        await asyncio.sleep(2 ** attempt)
+                        continue
+
+                    try:
+                        return r.json()
+                    except Exception:
+                        logger.error(f"Invalid JSON response: {r.text}")
+                        return None
+
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 429:
+                        wait_time = 2 ** attempt
+                        await asyncio.sleep(wait_time)
+                    else:
+                        logger.error(f"HTTP error: {e}")
+                        return None
+
+        return None
+
+
+    async def close(self):
+        await self.client.aclose()
+

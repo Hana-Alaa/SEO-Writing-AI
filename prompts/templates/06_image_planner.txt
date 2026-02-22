@@ -12,7 +12,7 @@ Act as an AI Visual Director. Your goal is to plan the visual assets for this ar
 You must generate a list of **7 high-quality image prompts** that will be used to generate images for this article.
 
 Rules:
-1. **Quantity**: Exactly 7 images.
+1. **Quantity**: Generate image prompts only for sections where image_plan.required is true. Maximum 3 images.
 2. **Relevance**: Each image must correspond to a specific section of the outline.
 3. **Variety**: Use different styles (e.g., "Photorealistic office setting", "Minimalist vector illustration", "Data visualization chart", "Infographic style").
 4. **Alt Text**: ALT text must include the primary keyword explicitly, with optional natural variations or LSI keywords.

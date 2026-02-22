@@ -12,14 +12,14 @@ OPENROUTER = {
     "api_key": os.getenv("OPENROUTER_API_KEY"),
     "base_url_chat": "https://openrouter.ai/api/v1/chat/completions",
     "base_url_responses": "https://openrouter.ai/api/v1/responses",
-    "base_url_image": "https://openrouter.ai/api/v1/images",
+    "base_url_image": "https://openrouter.ai/api/v1/chat/completions",
     "site_url": "https://github.com/Start-SE/SEO-Writing-AI",
     "site_name": "SEO Writing AI",
 
     "models": {
         "writing": "google/gemini-3-flash-preview",
         "research": "openai/o4-mini:online",
-        "image": "black-forest-labs/FLUX.1-schnell" 
+        "image": "black-forest-labs/flux.2-pro" 
 
     }
 }

@@ -18,6 +18,84 @@ class ImagePromptPlanner:
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read())
 
+    # async def generate(self, title: str, primary_keyword, keywords: list, outline: list) -> list:
+    #     prompt_text = self.template.render(
+    #         title=title,
+    #         primary_keyword=primary_keyword,
+    #         keywords=keywords,
+    #         outline=outline
+    #     )
+    #     raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
+    #     try:
+    #         raw_response = raw_response.strip()
+
+    #         if raw_response.startswith("```"):
+    #             raw_response = raw_response.split("```")[1].strip()
+
+    #         image_prompts = json.loads(raw_response)
+
+    #         for p in image_prompts:
+    #             p["image_type"] = p.get("image_type", "").strip().capitalize()
+
+    #         # keep featured safely
+    #         featured = next((p for p in image_prompts if p["image_type"] == "Featured"), None)
+    #         others = [p for p in image_prompts if p["image_type"] != "Featured"]
+
+    #         if not featured:
+    #             logger.error("No Featured image found.")
+    #             return []
+
+    #         image_prompts = [featured] + others[:2]
+    #         # required_images = sum(
+    #         #     1 for s in outline
+    #         #     if s.get("image_plan", {}).get("required", False)
+    #         # )
+
+    #         # if len(image_prompts) != required_images:
+    #             # logger.error("Image planner did not return exactly 7 images.")
+    #         if len(image_prompts) > 3:
+    #             image_prompts = image_prompts[:3]
+
+
+    #             # return []
+    #         logger.info(f"Extracted image prompts: {image_prompts}")
+
+    #         if featured_count != 1:
+    #             logger.error("There must be exactly ONE Featured Image.")
+    #             return []
+
+    #         featured_count = sum(1 for p in image_prompts if p.get("image_type") == "Featured")
+
+    #         for p in image_prompts:
+    #             if p.get("section_id") not in outline_ids:
+    #                 logger.error(f"Invalid section_id in image prompt: {p.get('section_id')}")
+    #                 return []
+            
+    #         ids = [p.get("section_id") for p in image_prompts]
+    #         if len(ids) != len(set(ids)):
+    #             logger.error("Duplicate section_id detected in image prompts.")
+    #             return []
+            
+    #         allowed_types = {"Featured", "Infographic", "Illustration"}
+
+    #         # for p in image_prompts:
+    #         #     if p.get("image_type") not in allowed_types:
+    #         #         logger.error("Invalid image_type returned.")
+    #         #         return []
+
+    #         for p in image_prompts:
+    #             p["image_type"] = p.get("image_type", "").capitalize()
+
+
+    #     except Exception:
+    #         return []
+
+    #     unique = {}
+    #     for p in image_prompts:
+    #         unique[p.get("section_id")] = p
+    #     return list(unique.values())
+
+
     async def generate(self, title: str, primary_keyword, keywords: list, outline: list) -> list:
         prompt_text = self.template.render(
             title=title,
@@ -25,47 +103,58 @@ class ImagePromptPlanner:
             keywords=keywords,
             outline=outline
         )
-        raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
-        try:
-            image_prompts = json.loads(raw_response)
-            required_images = len(outline)
-            if len(image_prompts) != required_images:
-                logger.error("Image planner did not return exactly 7 images.")
-                return []
-            featured_count = sum(1 for p in image_prompts if p.get("image_type") == "Featured")
 
-            if featured_count != 1:
-                logger.error("There must be exactly ONE Featured Image.")
+        raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
+
+        try:
+            raw_response = raw_response.strip()
+
+            if raw_response.startswith("```"):
+                raw_response = raw_response.split("```")[1].strip()
+
+            image_prompts = json.loads(raw_response)
+
+            if not isinstance(image_prompts, list):
                 return []
-            
+
+            # Normalize types
+            for p in image_prompts:
+                p["image_type"] = p.get("image_type", "").strip().capitalize()
+
+            # Keep exactly 1 Featured
+            featured = next((p for p in image_prompts if p["image_type"] == "Featured"), None)
+            if not featured:
+                logger.error("No Featured image found.")
+                return []
+
+            others = [p for p in image_prompts if p["image_type"] != "Featured"]
+
+            # Limit to 3 images total
+            image_prompts = [featured] + others[:2]
+
+            # Validate section_ids
             outline_ids = {s.get("section_id") for s in outline}
 
             for p in image_prompts:
                 if p.get("section_id") not in outline_ids:
-                    logger.error(f"Invalid section_id in image prompt: {p.get('section_id')}")
+                    logger.error(f"Invalid section_id: {p.get('section_id')}")
                     return []
-            
-            ids = [p.get("section_id") for p in image_prompts]
-            if len(ids) != len(set(ids)):
-                logger.error("Duplicate section_id detected in image prompts.")
-                return []
-            
-            allowed_types = {"Featured", "Infographic", "Illustration"}
 
+            # Remove duplicates safely
+            unique = {}
             for p in image_prompts:
-                if p.get("image_type") not in allowed_types:
-                    logger.error("Invalid image_type returned.")
-                    return []
+                unique[p.get("section_id")] = p
 
+            final_list = list(unique.values())
 
-        except Exception:
+            logger.info(f"FINAL IMAGE PROMPTS COUNT: {len(final_list)}")
+
+            return final_list
+
+        except Exception as e:
+            logger.error(f"Image prompt parsing failed: {e}")
             return []
-
-        unique = {}
-        for p in image_prompts:
-            unique[p.get("section_id")] = p
-        return list(unique.values())
-
+            
 class ImageGenerator:
     """
     Handles image generation using Stability.ai API.
@@ -92,7 +181,7 @@ class ImageGenerator:
             return []
         
         # Run all generation tasks in parallel
-        sem = asyncio.Semaphore(3)
+        sem = asyncio.Semaphore(2)
 
         async def limited_task(task):
             async with sem:
@@ -127,7 +216,7 @@ class ImageGenerator:
         logger.info(final_prompt)
         logger.info("\n=============================================================\n")
 
-        local_path = await self._call_openrouter(final_prompt, section_id, image_type, seed)
+        local_path = await self._call_openrouter(final_prompt, section_id, image_type)
 
         if local_path:
             # CPU-bound image processing
@@ -143,14 +232,19 @@ class ImageGenerator:
         
         return None
 
-    async def _call_openrouter(self, prompt: str, section_id: str, image_type: str, seed):
+    async def _call_openrouter(self, prompt: str, section_id: str, image_type: str):
 
-        if image_type == "Featured":
-            filepath = await self.ai_client.send_image(prompt, 1344, 768)
-        elif image_type == "Infographic":
-            filepath = await self.ai_client.send_image(prompt, 1024, 1024)
-        else:
-            filepath = await self.ai_client.send_image(prompt, 1024, 768)
+        # if image_type == "Featured":
+        #     filepath = await self.ai_client.send_image(prompt, 1344, 768)
+        # elif image_type == "Infographic":
+        #     filepath = await self.ai_client.send_image(prompt, 1024, 1024)
+        # else:
+        #     filepath = await self.ai_client.send_image(prompt, 1024, 768)
+
+        filepath = await self.ai_client.send_image(prompt, 1024, 1024, save_dir=self.save_dir)
+
+        # response = await client.post(url, headers=headers, json=body)
+        logger.info(f"Image API returned path for {section_id}: {filepath}")
 
         if not filepath:
             logger.error(f"Image generation failed for {section_id}")
@@ -158,105 +252,12 @@ class ImageGenerator:
 
         return filepath
 
-    # async def _call_stability_api(self, prompt: str, seed: int, section_id: str, retries: int = 2) -> str:
-    #     """Internal helper to communicate with Stability.ai with retry logic (async)."""
-    #     if not self.api_key:
-    #         logger.error(f"Cannot call Stability API for {section_id}: API Key is missing.")
-    #         return ""
-
-    #     url = f"{self.base_url}/{self.model}/text-to-image"
-    #     headers = {
-    #         "Content-Type": "application/json",
-    #         "Accept": "application/json",
-    #         "Authorization": f"Bearer {self.api_key}"
-    #     }
-        
-    #     body = {
-    #         "text_prompts": [{"text": prompt, "weight": 1}],
-    #         "cfg_scale": 7,
-    #         "height": 768, 
-    #         "width": 1344, 
-    #         "samples": 1,
-    #         "steps": 30,
-    #         "seed": seed,
-    #         "sampler": "K_DPM_2_ANCESTRAL", 
-    #         "clip_guidance_preset": "FAST_BLUE"
-    #     }
-
-    #     logger.info(f"Generated prompt for {section_id}: {prompt[:100]}...")
-        
-    #     async with httpx.AsyncClient(timeout=120.0) as client:
-    #         for attempt in range(retries + 1):
-    #             try:
-    #                 logger.info(f"Stability API call for {section_id} (Attempt {attempt+1}/{retries+1})...")
-    #                 response = await client.post(url, headers=headers, json=body)
-                    
-    #                 if response.status_code == 200:
-    #                     data = response.json()
-    #                     if "artifacts" in data and len(data["artifacts"]) > 0:
-    #                         image_data = data["artifacts"][0].get("base64")
-    #                         filepath = os.path.join(self.save_dir, f"{section_id}.png")
-    #                         with open(filepath, "wb") as f:
-    #                             f.write(base64.b64decode(image_data))
-    #                         logger.info(f"Successfully generated and saved {section_id}.png")
-    #                         return filepath
-    #                     else:
-    #                         logger.error(f"Unexpected API response structure for {section_id}: {data}")
-    #                 elif response.status_code == 429:
-    #                     logger.warning(f"Rate limited on attempt {attempt + 1} for {section_id}. Retrying...")
-    #                     await asyncio.sleep(5 * (attempt + 1))
-    #                 else:
-    #                     logger.error(f"Stability API error {response.status_code} for {section_id}: {response.text}")
-    #                     if attempt < retries:
-    #                         await asyncio.sleep(2 ** attempt)
-                
-    #             except httpx.TimeoutException:
-    #                 logger.warning(f"Timeout on attempt {attempt + 1} for {section_id}. Retrying...")
-    #                 if attempt < retries:
-    #                     await asyncio.sleep(2)
-    #             except Exception as e:
-    #                 logger.error(f"Unexpected error in Stability API call for {section_id}: {e}")
-    #                 if attempt < retries:
-    #                     await asyncio.sleep(1)
-        
-    #     logger.error(f"All {retries + 1} attempts failed for section {section_id}")
-    #     return ""
-
     def _process_image_versions(self, filepath: str):
-        """Generates 1200x630 (Featured), 800x420 (Inline), and 400x210 (Thumbnail)."""
+        """Testing mode: keep single optimized image only."""
         try:
             with Image.open(filepath) as img:
-                base_name, _ = os.path.splitext(filepath)
-                
-                versions = {
-                    "featured": (1200, 630),
-                    "inline": (800, 420),
-                    "thumbnail": (400, 210)
-                }
-
-                for suffix, (tw, th) in versions.items():
-                    # Aspect-aware crop-to-fill
-                    img_work = img.copy()
-                    img_ratio = img_work.width / img_work.height
-                    target_ratio = tw / th
-
-                    if img_ratio > target_ratio:
-                        new_width = int(target_ratio * img_work.height)
-                        offset = (img_work.width - new_width) // 2
-                        img_work = img_work.crop((offset, 0, offset + new_width, img_work.height))
-                    else:
-                        new_height = int(img_work.width / target_ratio)
-                        offset = (img_work.height - new_height) // 2
-                        img_work = img_work.crop((0, offset, img_work.width, offset + new_height))
-
-                    img_work = img_work.resize((tw, th), Image.Resampling.LANCZOS)
-                    save_path = f"{base_name}_{suffix}.png"
-                    img_work.save(save_path, optimize=True, quality=85)
-                    
-                    if suffix == "featured":
-                        img_work.save(filepath, optimize=True, quality=90) # Overwrite original with main 1200x630
-
-                logger.info(f"Generated responsive versions for {filepath}")
-
+                img = img.convert("RGB")
+                img = img.resize((1200, 675), Image.Resampling.LANCZOS)
+                img.save(filepath, format="WEBP", quality=80, optimize=True)
         except Exception as e:
             logger.error(f"Processing image {filepath} failed: {e}")

@@ -140,9 +140,9 @@ class AsyncWorkflowController:
             # ("semantic_layer", self._step_semantic_layer, 1),
             ("serp_analysis", self._step_serp_analysis, 1),
             ("outline_generation", self._step_1_outline, 1),
+            ("content_writing", self._step_2_write_sections, 1),
             ("image_prompting", self._step_4_generate_image_prompts, 0),
             ("image_generation", self._step_4_5_download_images, 2),
-            ("content_writing", self._step_2_write_sections, 1),
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
             ("image_inserter", self._step_6_image_inserter, 0),
@@ -634,6 +634,7 @@ class AsyncWorkflowController:
             keywords=keywords,
             outline=outline
         )
+        print("FINAL IMAGE PROMPTS COUNT:", len(image_prompts))
 
         state["image_prompts"] = image_prompts
         return state
