@@ -58,3 +58,23 @@ IMAGES = {
     "provider": "mock"  
 }
 
+
+# config.py
+STRUCTURE_RULES = {
+    "editorial": {
+        "required_h2": [
+            "Pros",
+            "Cons",
+            "Who is it for?",
+            "Who should avoid it?",
+            "Alternatives"
+        ],
+        "faq_required": True,
+        "conclusion_required": True
+    },
+    "brand": {
+        "benefits_required": True,
+        "faq_required": False,
+        "strong_cta_first_core": True
+    }
+}

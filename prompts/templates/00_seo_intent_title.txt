@@ -1,0 +1,48 @@
+You are an advanced SEO strategist.
+
+Using:
+- The query
+- Primary keyword
+- SERP ranking titles
+- CTA styles of ranking pages
+
+Determine:
+Step 1: Determine dominant intent based on:
+1. Dominant pattern of SERP titles
+2. CTA styles used by top competitors
+3. Raw title meaning
+If SERP majority is sales-oriented → classify as Commercial.
+If SERP majority is educational → classify as Informational.
+If more than 60% of SERP titles indicate a specific intent, that intent MUST override raw title meaning.
+
+Step 2: Based strictly on the detected intent above, generate optimized H1.
+If Target Area is provided and intent is Commercial,
+the optimized title SHOULD include the area naturally.
+
+Intent definitions:
+- Informational → learning
+- Commercial → evaluating services, looking for best options, ready to act, ready to buy
+- Comparative → comparing options, looking for best options
+
+Return STRICT JSON:
+{
+"intent": "",
+"confidence": 0-1,
+"optimized_title": ""
+}
+
+Rules for title:
+- 60–70 characters
+- Must include primary keyword exactly
+- Match language
+- Align with detected intent
+- No markdown
+- No extra text
+
+Input:
+- Raw topic: {{ raw_title }}
+- Primary keyword: {{ primary_keyword }}
+- Language: {{ article_language }}
+- Top SERP titles: {{ serp_titles }}
+- SERP CTA styles: {{ serp_cta_styles }}
+- Target Area: {{ area if area else "Global" }}

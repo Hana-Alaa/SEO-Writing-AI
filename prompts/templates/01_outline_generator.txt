@@ -21,6 +21,16 @@ Use the following SERP semantic assets:
 - Related searches
 - LSI keywords
 
+If intent is Commercial:
+- Place CTA in first section
+- Include benefits section
+- Avoid neutral tone sections
+
+If intent is Informational:
+- No direct selling
+- Include pros/cons if relevant
+- Add FAQ
+
 Output valid JSON only.
 ----------------------------------------------------
 

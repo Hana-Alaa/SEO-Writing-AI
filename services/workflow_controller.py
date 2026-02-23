@@ -135,10 +135,14 @@ class AsyncWorkflowController:
         state.setdefault("brand_link_used", 0)
 
         steps = [
-            ("analysis", self._step_0_analysis, 0),
-            ("web_research", self._step_web_research, 1),  
+            # ("analysis", self._step_0_analysis, 0),
+            # ("web_research", self._step_web_research, 1),  
             # ("semantic_layer", self._step_semantic_layer, 1),
-            ("serp_analysis", self._step_serp_analysis, 1),
+            ("analysis_init", self._step_0_init,0),
+            ("web_research", self._step_0_web_research, 1),  
+            ("intent_title", self._step_0_intent_title,0),
+            ("serp_analysis", self._step_0_serp_analysis, 1),
+
             ("outline_generation", self._step_1_outline, 1),
             ("content_writing", self._step_2_write_sections, 1),
             ("image_prompting", self._step_4_generate_image_prompts, 0),
@@ -172,7 +176,7 @@ class AsyncWorkflowController:
         response = await self.ai_client.send(prompt, step="intent")
         return response.strip()
 
-    async def _step_0_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    async def _step_0_init(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Setup unique directories and sluggification."""
 
         input_data = state.get("input_data", {})
@@ -181,66 +185,25 @@ class AsyncWorkflowController:
         primary_keyword = keywords[0] if keywords else raw_title
         user_lang = input_data.get("article_language")
         article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
-        
-        intent = await self._detect_intent_ai(raw_title, primary_keyword)
-
-        valid_intents = {"Informational", "Commercial", "Transactional", "Comparative"}
-
-        if intent not in valid_intents:
-            logger.warning(f"Invalid intent returned: {intent}")
-            intent = "Informational"
-
-        # competitive_raw = await self.ai_client.send(
-        #     f"Provide competitive SERP-style structural insights for the keyword: {primary_keyword}",
-        #     step="competitive_analysis"
-        # )
-        # competitive_insights = recover_json(competitive_raw) or {"notes": competitive_raw}
-
-        optimized_title = await self.title_generator.generate(
-            raw_title=raw_title,
-            primary_keyword=primary_keyword,
-            intent=intent,
-            article_language=article_language
-        )
-
-        state["input_data"]["title"] = optimized_title
-        
-        # Add timestamp to slug for unique folder
-        import datetime
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        slug_base = self._sluggify(optimized_title)
-        slug = f"{slug_base}_{timestamp}"
-        
+        area = input_data.get("area")
+        state["area"] = area
+        state["article_language"] = article_language
         state["primary_keyword"] = primary_keyword
-        state["intent"] = intent
-        state["slug"] = slug
-        state["input_data"]["article_language"] = article_language
-        # state["competitive_insights"] = competitive_insights
-
-        article_dir = os.path.join(self.work_dir, "output", slug)
-        image_dir = os.path.join(article_dir, "images")
-        os.makedirs(image_dir, exist_ok=True)
-
-        
-        base_url = "https://yourdomain.com/"
-        final_url = base_url + slug
-        state["final_url"] = final_url
-
-        # Update client storage path
-        self.image_client.save_dir = image_dir
-        
-        state["output_dir"] = article_dir
+        state["raw_title"] = raw_title
+        state["keywords"] = keywords
         return state
 
-    async def _step_web_research(self, state):
+    async def _step_0_web_research(self, state):
 
         primary_keyword = state["primary_keyword"]
+        area = state.get("area")
+        search_query = f"{primary_keyword} in {area}" if state.get("area") else primary_keyword
 
         with open("prompts/templates/seo_web_research.txt") as f:
             template = Template(f.read())
 
         research_prompt = template.render(
-            primary_keyword=primary_keyword
+            search_query=search_query
         )
 
         raw = await self.ai_client.send_with_web(
@@ -270,85 +233,66 @@ class AsyncWorkflowController:
 
         return state
 
+    async def _step_0_intent_title(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        raw_title = state.get("raw_title")
+        primary_keyword = state.get("primary_keyword")
+        article_language = state["input_data"].get("article_language")
+        serp_data = state.get("serp_data", {})
+        area = state.get("area")
 
-        # if not serp_data:
-        #     logger.warning("SERP JSON parsing failed.")
-        #     serp_data = {}
+        top_titles = [
+            r.get("title", "")
+            for r in serp_data.get("top_results", [])
+            if isinstance(r, dict)
+        ][:5]
 
-        # if serp_data.get("top_results"):
-        #     serp_data["top_results"] = serp_data["top_results"][:5]
+        cta_styles = [
+            r.get("cta_style", "")
+            for r in serp_data.get("top_results", [])
+            if isinstance(r, dict)
+        ]
 
-        # if serp_data.get("paa_questions"):
-        #     serp_data["paa_questions"] = serp_data["paa_questions"][:8]
+        with open("prompts/templates/00_seo_intent_title.txt") as f:
+            template = Template(f.read())
 
-        # state["serp_data"] = serp_data
+        prompt = template.render(
+            raw_title=raw_title,
+            primary_keyword=primary_keyword,
+            article_language=article_language,
+            serp_titles=top_titles,
+            serp_cta_styles=cta_styles,
+            area=area
+        )
 
-        # trimmed_serp = {
-        #     "top_results": serp_data.get("top_results", [])[:3],
-        #     "paa_questions": serp_data.get("paa_questions", [])[:6],
-        #     "lsi_keywords": serp_data.get("lsi_keywords", [])[:15],
-        #     "related_searches": serp_data.get("related_searches", [])[:8],
-        #     "autocomplete_suggestions": serp_data.get("autocomplete_suggestions", [])[:8]
-        # }
+        raw = await self.ai_client.send(prompt, step="intent_title")
 
-        # logger.info(f"SERP stored successfully: {len(trimmed_serp.get('top_results', []))} results")
+        clean = re.sub(r"```json|```", "", raw).strip()
+        data = recover_json(clean) or {}
 
-        # state["serp_data"] = trimmed_serp
-        # if not trimmed_serp.get("top_results"):
-        #     raise RuntimeError("SERP returned no top results")
-        # return state
+        intent = data.get("intent", "Informational")
+        optimized_title = data.get("optimized_title", raw_title)
 
-    # async def _step_semantic_layer(self, state):
+        state["intent"] = intent
+        if intent in ["Transactional", "Commercial"]:
+            state["content_type"] = "brand"
+        else:
+            state["content_type"] = "editorial"
+        state["content_strategy"] = {
+            "intent": intent,
+            "area": state.get("area"),
+            "competitive_mode": "serp_driven"
+        }
+        state["input_data"]["title"] = optimized_title
 
-    #     primary_keyword = state["primary_keyword"]
-    #     with open("prompts/templates/seo_semantic_layer.txt") as f:
-    #         template = Template(f.read())
+        return state
 
-    #     prompt = template.render(
-    #         primary_keyword=primary_keyword
-    #     )
-
-    #     raw = await self.ai_client.send_with_web(
-    #         prompt,
-    #         max_results= 5
-    #     )
-
-    #     clean = re.sub(r"```json|```", "", raw).strip()
-    #     semantic_data = recover_json(clean) or {}
-
-    #     # merge into existing serp_data
-    #     serp_data = state.get("serp_data", {})
-
-    #     if semantic_data.get("paa_questions"):
-    #         serp_data["paa_questions"] = semantic_data["paa_questions"]
-
-    #     if semantic_data.get("related_searches"):
-    #         serp_data["related_searches"] = semantic_data["related_searches"]
-
-    #     if semantic_data.get("lsi_keywords"):
-    #         serp_data["lsi_keywords"] = semantic_data["lsi_keywords"]
-
-    #     if semantic_data.get("autocomplete_suggestions"):
-    #         serp_data["autocomplete_suggestions"] = semantic_data["autocomplete_suggestions"]
-
-    #     state["serp_data"] = serp_data
-
-    #     return state
-
-    async def _step_serp_analysis(self, state):
+    async def _step_0_serp_analysis(self, state):
 
         serp_data = state.get("serp_data", {})
         primary_keyword = state.get("primary_keyword")
 
         with open("prompts/templates/seo_serp_analysis.txt") as f:
             template = Template(f.read())
-
-        # light_serp = {
-        #     "paa": [q["question"] for q in serp_data.get("paa_questions", [])][:10],
-        #     "lsi": serp_data.get("lsi_keywords", [])[:20],
-        #     "related": serp_data.get("related_searches", [])[:15],
-        #     "titles_pattern": [r["title"] for r in serp_data.get("top_results", [])][:5]
-        # }
         
         paa_raw = serp_data.get("paa_questions", [])
         paa_clean = []
@@ -396,28 +340,155 @@ class AsyncWorkflowController:
                 }
             ]
 
-        # state["seo_intelligence"] = serp_insights
         existing = state.get("seo_intelligence", {})
         existing.update(serp_insights)
         state["seo_intelligence"] = existing
 
         return state
 
+    # async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    #     """Generates the article outline using AI."""
+    #     input_data = state.get("input_data", {})
+    #     title = input_data.get("title") or "Untitled"
+    #     keywords = input_data.get("keywords") or []
+    #     urls_raw = input_data.get("urls", [])
+    #     seo_intelligence = state.get("seo_intelligence", {})
+    #     content_strategy = state.get("content_strategy", {})
+    #     area = state.get("area")
+        
+    #     content_type = state.get("content_type", "editorial")
+    #     if not content_type:
+    #         content_type = "editorial"
+
+    #     intent = state.get("intent") or "Informational"
+    #     article_language = input_data.get("article_language", "en")
+
+    #     outline_data = await self.outline_gen.generate(
+    #         title=title,
+    #         keywords=keywords,
+    #         urls=urls_raw,
+    #         article_language=article_language,
+    #         intent=intent,
+    #         seo_intelligence=seo_intelligence,
+    #         content_type=content_type,
+    #         content_strategy=content_strategy,
+    #         area=area
+    #     )
+
+    #     if not outline_data:
+    #         raise RuntimeError("Outline generation returned empty result.")
+
+    #     outline = outline_data.get("outline", [])
+
+    #     # enforce first
+    #     outline = self._enforce_outline_structure(
+    #         outline,
+    #         intent=intent,
+    #         area=area,
+    #         content_type=content_type
+    #     )
+    #     paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
+    #     outline = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
+    #     rules = content_strategy.get("rules", {})
+    #     if rules.get("faq_required") and not any("FAQ" in sec["heading_text"] for sec in outline):
+    #         outline.append(self.generate_faq_section(seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])))
+    #     # Force Conclusion if missing
+    #     if not any("خاتمة" in sec.get("heading_text", "") or 
+    #        "Conclusion" in sec.get("heading_text", "")
+    #        for sec in outline):
+
+    #         outline.append({
+    #             "section_id": f"sec_{len(outline)+1:02}",
+    #             "heading_level": "H2",
+    #             "heading_text": "الخاتمة",
+    #             "section_intent": state.get("intent", "Informational"),
+    #             "content_goal": "تلخيص المقال وتوجيه القارئ لاتخاذ القرار",
+    #             "assigned_keywords": [state.get("primary_keyword", "")],
+    #             "content_scope": "تلخيص المزايا والعيوب وتوصية نهائية واضحة",
+    #             "forbidden_elements": [],
+    #             "allowed_flow_steps": ["Summary", "Recommendation", "CTA"],
+    #             "image_plan": {
+    #                 "required": False,
+    #                 "image_type": "none",
+    #                 "alt_text": ""
+    #             },
+    #             "cta_allowed": True,
+    #             "cta_type": "soft",
+    #             "cta_rules": {
+    #                 "placement": "none",
+    #                 "max_sentences": 1,
+    #                 "mandatory": False
+    #             },
+    #             "requires_table": False,
+    #             "table_columns": [],
+    #             "estimated_word_count_min": 150,
+    #             "estimated_word_count_max": 250
+    #         })
+
+    #     for idx, sec in enumerate(outline):
+    #         self.outline_gen._normalize_section(
+    #             sec,
+    #             idx,
+    #             content_type,
+    #             content_strategy,
+    #             area
+    #         )
+
+    #     keyword_expansion = outline_data.get("keyword_expansion", {})
+    #     state["global_keywords"] = keyword_expansion
+
+    #     urls_norm = normalize_urls(urls_raw)
+    #     brand_url = urls_norm[0].get("link") if urls_norm else None
+    #     state["brand_url"] = brand_url
+
+    #     # Use "conservative" strategy for Guest Post / External publishing mode
+    #     outline = DataInjector.distribute_urls_to_outline(outline, urls_norm, strategy="conservative")
+
+    #     state["link_strategy"] = {
+    #         "internal_topics": [u for u in urls_norm if u.get("type") == "internal"],
+    #         "authority_topics": [u for u in urls_norm if u.get("type") == "authority"],
+    #         "affiliate_policy": {
+    #             "max_per_section": 3,
+    #             "placement": "distributed",
+    #             "tone": "neutral"
+    #         }
+    #     }
+
+    #     primary_keywords = keywords[:] 
+    #     primary_keyword = primary_keywords[0] if primary_keywords else title
+
+    #     for sec in outline:
+    #         sec["primary_keywords"] = primary_keywords
+    #         sec["primary_keyword"] = primary_keyword
+    #         sec["article_language"] = article_language
+
+    #     for sec in outline:
+    #         if not sec.get("assigned_keywords"):
+    #             raise ContentGeneratorError(
+    #                 f"Section {sec.get('section_id')} missing assigned keywords."
+    #             )
+
+    #     if not outline:
+    #         raise ContentGeneratorError("AI returned empty outline list.")
+
+    #     state["outline"] = outline
+    #     return state
+
     async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Generates the article outline using AI."""
+        """Generates the article outline using AI with LSI distribution and duplicate prevention."""
+        
         input_data = state.get("input_data", {})
         title = input_data.get("title") or "Untitled"
         keywords = input_data.get("keywords") or []
         urls_raw = input_data.get("urls", [])
         seo_intelligence = state.get("seo_intelligence", {})
+        content_strategy = state.get("content_strategy", {})
+        area = state.get("area")
         
-        content_type = state.get("content_type", "editorial")
-        if not content_type:
-            content_type = "editorial"
-
+        content_type = state.get("content_type", "editorial") or "editorial"
         intent = state.get("intent") or "Informational"
         article_language = input_data.get("article_language", "en")
-
+        
         outline_data = await self.outline_gen.generate(
             title=title,
             keywords=keywords,
@@ -425,56 +496,91 @@ class AsyncWorkflowController:
             article_language=article_language,
             intent=intent,
             seo_intelligence=seo_intelligence,
-            content_type=content_type
+            content_type=content_type,
+            content_strategy=content_strategy,
+            area=area
         )
 
         if not outline_data:
             raise RuntimeError("Outline generation returned empty result.")
-
+        
         outline = outline_data.get("outline", [])
-        # Force Conclusion if missing
-        if not any("خاتمة" in sec.get("heading_text", "") or 
-           "Conclusion" in sec.get("heading_text", "")
-           for sec in outline):
-
+        
+        # -----------------------------------
+        # Step 1: Enforce base structure & PAA
+        outline = self._enforce_outline_structure(
+            outline,
+            intent=intent,
+            area=area,
+            content_type=content_type
+        )
+        
+        paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
+        outline = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
+        
+        # Step 2: Add FAQ section if required
+        rules = content_strategy.get("rules", {})
+        if rules.get("faq_required") and not any("FAQ" in sec["heading_text"] for sec in outline):
+            outline.append(self.generate_faq_section(paa_questions))
+        
+        # Step 3: Force Conclusion if missing
+        if not any("خاتمة" in sec.get("heading_text", "") or "Conclusion" in sec.get("heading_text", "") for sec in outline):
             outline.append({
                 "section_id": f"sec_{len(outline)+1:02}",
                 "heading_level": "H2",
                 "heading_text": "الخاتمة",
-                "section_intent": state.get("intent", "Informational"),
+                "section_intent": intent,
                 "content_goal": "تلخيص المقال وتوجيه القارئ لاتخاذ القرار",
-                "assigned_keywords": [state.get("primary_keyword", "")],
+                "assigned_keywords": [keywords[0]] if keywords else [title],
                 "content_scope": "تلخيص المزايا والعيوب وتوصية نهائية واضحة",
                 "forbidden_elements": [],
                 "allowed_flow_steps": ["Summary", "Recommendation", "CTA"],
-                "image_plan": {
-                    "required": False,
-                    "image_type": "none",
-                    "alt_text": ""
-                },
+                "image_plan": {"required": False, "image_type": "none", "alt_text": ""},
                 "cta_allowed": True,
                 "cta_type": "soft",
-                "cta_rules": {
-                    "placement": "none",
-                    "max_sentences": 1,
-                    "mandatory": False
-                },
+                "cta_rules": {"placement": "none", "max_sentences": 1, "mandatory": False},
                 "requires_table": False,
                 "table_columns": [],
                 "estimated_word_count_min": 150,
                 "estimated_word_count_max": 250
             })
-
+        
+        # -----------------------------------
+        # Step 4: Prevent duplicate H2 headings
+        seen_h2 = set()
+        unique_outline = []
+        for sec in outline:
+            if sec["heading_level"] == "H2" and sec["heading_text"] in seen_h2:
+                sec["heading_text"] += f" ({len(seen_h2)+1})"
+            seen_h2.add(sec["heading_text"])
+            unique_outline.append(sec)
+        outline = unique_outline
+        
+        # -----------------------------------
+        # Step 5: Normalize sections & distribute LSI keywords
         keyword_expansion = outline_data.get("keyword_expansion", {})
         state["global_keywords"] = keyword_expansion
-
+        
+        lsi_keywords = keyword_expansion.get("lsi", [])
+        if lsi_keywords:
+            # Round-robin distribution across sections
+            for idx, sec in enumerate(outline):
+                sec["assigned_keywords"].extend([lsi_keywords[i % len(lsi_keywords)] for i in range(idx, idx+3)])
+        
+        for idx, sec in enumerate(outline):
+            self.outline_gen._normalize_section(
+                sec,
+                idx,
+                content_type,
+                content_strategy,
+                area
+            )
+        
+        # -----------------------------------
         urls_norm = normalize_urls(urls_raw)
-        brand_url = urls_norm[0].get("link") if urls_norm else None
-        state["brand_url"] = brand_url
-
-        # Use "conservative" strategy for Guest Post / External publishing mode
+        state["brand_url"] = urls_norm[0].get("link") if urls_norm else None
         outline = DataInjector.distribute_urls_to_outline(outline, urls_norm, strategy="conservative")
-
+        
         state["link_strategy"] = {
             "internal_topics": [u for u in urls_norm if u.get("type") == "internal"],
             "authority_topics": [u for u in urls_norm if u.get("type") == "authority"],
@@ -484,24 +590,18 @@ class AsyncWorkflowController:
                 "tone": "neutral"
             }
         }
-
-        primary_keywords = keywords[:] 
+        
+        primary_keywords = keywords[:]
         primary_keyword = primary_keywords[0] if primary_keywords else title
-
         for sec in outline:
             sec["primary_keywords"] = primary_keywords
             sec["primary_keyword"] = primary_keyword
             sec["article_language"] = article_language
-
+        
         for sec in outline:
             if not sec.get("assigned_keywords"):
-                raise ContentGeneratorError(
-                    f"Section {sec.get('section_id')} missing assigned keywords."
-                )
-
-        if not outline:
-            raise ContentGeneratorError("AI returned empty outline list.")
-
+                raise ContentGeneratorError(f"Section {sec.get('section_id')} missing assigned keywords.")
+        
         state["outline"] = outline
         return state
 
@@ -893,6 +993,196 @@ class AsyncWorkflowController:
             "output_dir": state.get("output_dir", ""),
         }
 
+    # def _enforce_outline_structure(self, outline, intent, area, content_type):
+    #     rules = STRUCTURE_RULES.get(content_type, {})
+
+    #     # =========================
+    #     # 1️. Commercial Enforcement
+    #     # =========================
+    #     if intent in ["Transactional", "Commercial"]:
+
+    #         # Ensure strong CTA in first core section
+    #         # for i, section in enumerate(outline):
+    #         #     if i == 1: 
+    #         #         section["cta_allowed"] = True
+    #         #         section["cta_type"] = "strong"
+    #         #         section["cta_rules"] = {
+    #         #             "position": "start",
+    #         #             "mandatory": True
+    #         #         }
+    #         for section in outline:
+    #             if section.get("section_type") == "core":
+    #                 section["cta_allowed"] = True
+    #                 section["cta_type"] = "strong"
+    #                 section["cta_rules"] = {
+    #                     "placement": "start",
+    #                     "mandatory": True,
+    #                     "max_sentences": 2
+    #                 }
+    #                 break
+
+    #         # Ensure Benefits Section exists
+    #         if not any("لماذا" in s.get("heading_text","") or "why" in s.get("heading_text","").lower() for s in outline):
+    #             outline.insert(2, {
+    #                 "heading_level": "h2",
+    #                 "heading_text": "لماذا تختارنا؟",
+    #                 "section_type": "core",
+    #                 "cta_allowed": True,
+    #                 "image_required": False,
+    #                 "cta_type": "soft",
+    #                 "cta_rules": {
+    #                     "position": "end",
+    #                     "mandatory": False
+    #                 }
+    #             })
+
+    #     # =========================
+    #     # 2️. Informational Enforcement
+    #     # =========================
+    #     if intent == "Informational":
+
+    #         for section in outline:
+    #             section["cta_allowed"] = False
+    #             section["cta_type"] = None
+
+    #         # Ensure FAQ exists
+    #         if not any("faq" in s.get("section_type","").lower() for s in outline):
+    #             outline.append({
+    #                 "heading_level": "h2",
+    #                 "heading_text": "الأسئلة الشائعة",
+    #                 "section_type": "faq",
+    #                 "cta_allowed": False,
+    #                 "image_required": False
+    #             })
+
+    #     # =========================
+    #     # 3️. Local SEO Enforcement
+    #     # =========================
+    #     if area:
+    #         for section in outline:
+    #             if section.get("section_type") == "core":
+    #                 if area not in section.get("heading_text",""):
+    #                     section["heading_text"] += f" في {area}"
+    #                 break
+
+    #         if not any(area in s.get("heading_text","") for s in outline):
+    #             outline.insert(1, {
+    #                 "heading_level": "h2",
+    #                 "heading_text": f"خدماتنا في {area}",
+    #                 "section_type": "local",
+    #                 "cta_allowed": True,
+    #                 "image_required": False
+    #             })
+
+    #     return outline
+
+    def _enforce_outline_structure(self, outline: List[Dict[str, Any]], intent: str, area: Optional[str], content_type: str) -> List[Dict[str, Any]]:
+        """Ensures all mandatory sections and editorial/brand rules are present."""
+        
+        mandatory_sections = [
+            {"heading_text": "Introduction", "heading_level": "H2", "section_intent": intent},
+        ]
+        
+        if content_type == "editorial":
+            editorial_sections = [
+                {"heading_text": "Pros", "heading_level": "H2", "section_intent": "Informational"},
+                {"heading_text": "Cons", "heading_level": "H2", "section_intent": "Informational"},
+                {"heading_text": "Who is it for?", "heading_level": "H2", "section_intent": "Informational"},
+                {"heading_text": "Who should avoid it?", "heading_level": "H2", "section_intent": "Informational"},
+                {"heading_text": "Comparison", "heading_level": "H2", "section_intent": "Informational"},
+                {"heading_text": "Alternatives", "heading_level": "H2", "section_intent": "Informational"},
+            ]
+            mandatory_sections.extend(editorial_sections)
+        
+        elif content_type == "brand":
+            brand_sections = [
+                {"heading_text": "Benefits", "heading_level": "H2", "section_intent": "Commercial"}
+            ]
+            mandatory_sections.extend(brand_sections)
+        
+        # Append missing mandatory sections
+        existing_headings = {sec["heading_text"] for sec in outline}
+        for sec in mandatory_sections:
+            if sec["heading_text"] not in existing_headings:
+                outline.append({
+                    "section_id": f"sec_{len(outline)+1:02}",
+                    "heading_level": sec["heading_level"],
+                    "heading_text": sec["heading_text"],
+                    "section_intent": sec["section_intent"],
+                    "content_goal": "",
+                    "assigned_keywords": [],
+                    "content_scope": "",
+                    "forbidden_elements": [],
+                    "allowed_flow_steps": [],
+                    "image_plan": {"required": False, "image_type": "illustration", "alt_text": ""},
+                    "cta_allowed": False,
+                    "cta_type": "none",
+                    "cta_rules": {"placement": "none", "max_sentences": 0, "mandatory": False},
+                    "requires_table": False,
+                    "table_columns": [],
+                    "estimated_word_count_min": 300,
+                    "estimated_word_count_max": 600
+                })
+        
+        return outline
+
+    def enforce_paa_sections(outline: List[Dict], paa_questions: List[str], min_percent: float = 0.3):
+        h2_sections = [sec for sec in outline if sec["heading_level"] == "H2"]
+        current_paa_count = sum(1 for sec in h2_sections if any(q.lower() in sec["heading_text"].lower() for q in paa_questions))
+
+        required_paa_count = max(1, int(len(h2_sections) * min_percent))
+        missing_count = required_paa_count - current_paa_count
+
+        added_sections = []
+        for q in paa_questions:
+            if missing_count <= 0:
+                break
+            if not any(q.lower() in sec["heading_text"].lower() for sec in h2_sections + added_sections):
+                added_sections.append({
+                    "section_id": f"sec_paa_{len(outline)+len(added_sections)+1}",
+                    "heading_level": "H2",
+                    "heading_text": q,
+                    "section_intent": "Informational",
+                    "content_goal": "Answer this PAA question",
+                    "assigned_keywords": [],
+                    "content_scope": "",
+                    "forbidden_elements": [],
+                    "allowed_flow_steps": ["Problem", "Solution", "Steps", "Examples"],
+                    "image_plan": {"required": False, "image_type": "none", "alt_text": ""},
+                    "cta_allowed": False,
+                    "cta_type": "none",
+                    "cta_rules": {"placement": "none", "max_sentences": 0, "mandatory": False},
+                    "requires_table": False,
+                    "table_columns": [],
+                    "estimated_word_count_min": 200,
+                    "estimated_word_count_max": 400
+                })
+                missing_count -= 1
+
+        outline.extend(added_sections)
+        return outline
+    
+    def generate_faq_section(self, paa_questions):
+        return {
+            "section_id": f"sec_faq_{len(outline)+1}",
+            "heading_level": "H2",
+            "heading_text": "الأسئلة الشائعة",
+            "section_intent": "Informational",
+            "content_goal": "Answer frequently asked questions about the topic",
+            "assigned_keywords": [],
+            "content_scope": "",
+            "forbidden_elements": [],
+            "allowed_flow_steps": ["Problem", "Solution", "Steps", "Examples"],
+            "image_plan": {"required": False, "image_type": "none", "alt_text": ""},
+            "cta_allowed": False,
+            "cta_type": "none",
+            "cta_rules": {"placement": "none", "max_sentences": 0, "mandatory": False},
+            "requires_table": False,
+            "table_columns": [],
+            "estimated_word_count_min": 200,
+            "estimated_word_count_max": 400
+        }
+
     # async def _step_4_validate_sections(self, state):
     #     input_data = state.get("input_data", {})
     #     title = input_data.get("title", "Untitled")
@@ -949,3 +1239,99 @@ class AsyncWorkflowController:
 
     #     return state
 
+    # async def _step_0_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    #     """Setup unique directories and sluggification."""
+
+    #     input_data = state.get("input_data", {})
+    #     raw_title = input_data.get("title", "Untitled Article")
+    #     keywords = input_data.get("keywords", [])
+    #     primary_keyword = keywords[0] if keywords else raw_title
+    #     user_lang = input_data.get("article_language")
+    #     article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
+        
+    #     intent = await self._detect_intent_ai(raw_title, primary_keyword)
+
+    #     valid_intents = {"Informational", "Commercial", "Transactional", "Comparative"}
+
+    #     if intent not in valid_intents:
+    #         logger.warning(f"Invalid intent returned: {intent}")
+    #         intent = "Informational"
+
+    #     # competitive_raw = await self.ai_client.send(
+    #     #     f"Provide competitive SERP-style structural insights for the keyword: {primary_keyword}",
+    #     #     step="competitive_analysis"
+    #     # )
+    #     # competitive_insights = recover_json(competitive_raw) or {"notes": competitive_raw}
+
+    #     optimized_title = await self.title_generator.generate(
+    #         raw_title=raw_title,
+    #         primary_keyword=primary_keyword,
+    #         intent=intent,
+    #         article_language=article_language
+    #     )
+
+    #     state["input_data"]["title"] = optimized_title
+        
+    #     # Add timestamp to slug for unique folder
+    #     import datetime
+    #     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    #     slug_base = self._sluggify(optimized_title)
+    #     slug = f"{slug_base}_{timestamp}"
+        
+    #     state["primary_keyword"] = primary_keyword
+    #     state["intent"] = intent
+    #     state["slug"] = slug
+    #     state["input_data"]["article_language"] = article_language
+    #     # state["competitive_insights"] = competitive_insights
+
+    #     article_dir = os.path.join(self.work_dir, "output", slug)
+    #     image_dir = os.path.join(article_dir, "images")
+    #     os.makedirs(image_dir, exist_ok=True)
+
+        
+    #     base_url = "https://yourdomain.com/"
+    #     final_url = base_url + slug
+    #     state["final_url"] = final_url
+
+    #     # Update client storage path
+    #     self.image_client.save_dir = image_dir
+        
+    #     state["output_dir"] = article_dir
+    #     return state
+
+    # async def _step_semantic_layer(self, state):
+
+    #     primary_keyword = state["primary_keyword"]
+    #     with open("prompts/templates/seo_semantic_layer.txt") as f:
+    #         template = Template(f.read())
+
+    #     prompt = template.render(
+    #         primary_keyword=primary_keyword
+    #     )
+
+    #     raw = await self.ai_client.send_with_web(
+    #         prompt,
+    #         max_results= 5
+    #     )
+
+    #     clean = re.sub(r"```json|```", "", raw).strip()
+    #     semantic_data = recover_json(clean) or {}
+
+    #     # merge into existing serp_data
+    #     serp_data = state.get("serp_data", {})
+
+    #     if semantic_data.get("paa_questions"):
+    #         serp_data["paa_questions"] = semantic_data["paa_questions"]
+
+    #     if semantic_data.get("related_searches"):
+    #         serp_data["related_searches"] = semantic_data["related_searches"]
+
+    #     if semantic_data.get("lsi_keywords"):
+    #         serp_data["lsi_keywords"] = semantic_data["lsi_keywords"]
+
+    #     if semantic_data.get("autocomplete_suggestions"):
+    #         serp_data["autocomplete_suggestions"] = semantic_data["autocomplete_suggestions"]
+
+    #     state["serp_data"] = serp_data
+
+    #     return state

@@ -7,7 +7,7 @@ from jinja2 import Template, StrictUndefined
 logger = logging.getLogger(__name__)
 
 class TitleGenerator:
-    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/00_title_generator.txt"):
+    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/00_seo_intent_title.txt"):
         self.ai_client = ai_client
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read(), undefined=StrictUndefined)

@@ -18,7 +18,7 @@ class OutlineGenerator:
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read(), undefined=StrictUndefined)
 
-    def _normalize_section(self, section: Dict[str, Any], idx: int, content_type: str):
+    def _normalize_section(self, section: Dict[str, Any], idx: int, content_type: str, content_strategy: Dict[str, Any], area: Optional[str]):
 
         section.setdefault("section_id", f"section_{idx+1}")
         section.setdefault("heading_level", "H2")
@@ -46,6 +46,8 @@ class OutlineGenerator:
         section.setdefault("estimated_word_count_min", 300)
         section.setdefault("estimated_word_count_max", 600)
         section.setdefault("content_type", content_type)
+        section.setdefault("content_strategy", content_strategy)
+        section.setdefault("area", area)
 
     def _validate_outline_schema(self, outline: List[Dict[str, Any]]) -> bool:
         required_keys = {
@@ -90,6 +92,8 @@ class OutlineGenerator:
             intent: str,
             seo_intelligence: Dict[str, Any],
             content_type: str,
+            content_strategy: Dict[str, Any],
+            area: Optional[str]
         ) -> Dict[str, Any]:
 
         prompt = self.template.render(
@@ -99,7 +103,9 @@ class OutlineGenerator:
             article_language=article_language,
             intent=intent,
             seo_intelligence=seo_intelligence,
-            content_type=content_type
+            content_type=content_type,
+            content_strategy=content_strategy,
+            area=area
         )
 
         logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
@@ -147,8 +153,8 @@ class OutlineGenerator:
             raise ContentGeneratorError("Invalid outline schema returned by AI.")
 
         # Normalize sections
-        for idx, section in enumerate(outline):
-            self._normalize_section(section, idx, content_type)
+        # for idx, section in enumerate(outline):
+        #     self._normalize_section(section, idx, content_type)
 
         if not isinstance(keyword_expansion, dict):
             keyword_expansion = {}
