@@ -2,10 +2,10 @@ import asyncio
 import json
 import os
 import sys
-
 import logging
 from pathlib import Path
 
+# Setup logging
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR / "prompts.log"
@@ -19,23 +19,37 @@ logging.basicConfig(
     ]
 )
 
+# Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from services.workflow_controller import AsyncWorkflowController
 
 async def main():
+    # work_dir="output" ensures all final products go into the output/ folder
     controller = AsyncWorkflowController(work_dir="output")
-    
         # state = {
     #     "input_data": {
-    #         "title": "أفضل الطرق لتعلم البرمجة بسرعة",
-    #         "keywords": ["تعلم البرمجة", "بايثون", "تطوير الذات"],
+    #         "title": "مراجعة استضافة هوستنجر ",
+            
+    #         "keywords": [
+    #             "استضافة هوستنجر", 
+    #             "Hostinger Review", 
+    #             "أرخص استضافة مواقع", 
+    #             "سعر هوستنجر", 
+    #             "عيوب هوستنجر",
+    #             "إنشاء موقع ووردبريس"
+    #         ],
+            
+    #         # "urls": [
+    #         #     {"text": "عرض هوستنجر الخاص (خصم 85%)", "link": "https://www.hostinger.com/"},
+    #         #     {"text": "أداة بناء المواقع بالذكاء الاصطناعي", "link": "https://www.hostinger.com/website-builder"},
+    #         #     {"text": "مقارنة الخطط", "link": "https://www.hostinger.com/vps-hosting"}
+    #         # ],
     #         "urls": [
-    #             {"text": "مقال عن بايثون", "link": "https://www.python.org/about/gettingstarted/"},
-    #             {"text": "دورة تعلم البرمجة", "link": "https://www.codecademy.com/learn/learn-python-3"},
-    #             {"text": "منصة تعليمية مجانية", "link": "https://www.freecodecamp.org/"},
-    #             {"text": "مقالات تطوير الذات", "link": "https://www.coursera.org/browse/personal-development"},
+    #             {"text": "الموقع الرسمي لـ Hostinger", "link": "https://www.hostinger.com/"}
     #         ]
     #     }
+    # }
+
     # }
 
         # state = {
@@ -62,10 +76,10 @@ async def main():
     #     }
     # }
 
-
+    
     state = {
         "input_data": {
-            "title": "Web Design Agency in Riyadh - Custom Solutions",
+            "title": "Web Design Agency",
             "keywords": [
                 "Web Design Agency",
                 "Web Design Riyadh",
@@ -77,26 +91,33 @@ async def main():
                 {"text": "CEMS IT Official Website", "link": "https://cems-it.com/"}
             ],
             "area": "Riyadh",
-            "logo_path": "images/logo.png"
-        },
+            # Source assets for the test
+            "logo_path": "images/logo.png",
+            "logo_reference_path": "images/reference.webp"
+        }
     }
 
     try:
+        print("\n🚀 Starting SEO Article Generation Pipeline...")
         final_result = await controller.run_workflow(state)
         
         final_markdown = final_result.get("final_markdown", "")
-
         output_dir = final_result.get("output_dir", "output")
+        
+        if not output_dir or output_dir == "":
+            output_dir = "output/debug"
+            
         os.makedirs(output_dir, exist_ok=True)
-        # md_file_path = os.path.join(output_dir, "final_article.md")
 
         md_file_path = os.path.join(output_dir, "final_article.md")
         with open(md_file_path, "w", encoding="utf-8") as f:
             f.write(final_markdown)
-        print(f"✅ Markdown file saved at: {md_file_path}")
+        
+        print(f"\n✅ Pipeline completed successfully!")
+        print(f"📄 Markdown file saved at: {md_file_path}")
 
-        # Prepare structured output
-        output = {
+        # Summary of results
+        summary = {
             "title": final_result.get("title"),
             "slug": final_result.get("slug"),
             "images_count": len(final_result.get("images", [])),
@@ -116,17 +137,16 @@ async def main():
         # print(final_markdown)
 
         # Output JSON
-        print(json.dumps(output, ensure_ascii=False, indent=2))
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
         
         from utils.html_renderer import render_html_page
 
         if final_result.get("meta_title"):
             final_result["title"] = final_result["meta_title"]
         
-
         html_path = render_html_page(final_result)
         print("HTML page generated at:", html_path)
-
+        
         import markdown
 
         md_text = final_result.get("final_markdown", "")

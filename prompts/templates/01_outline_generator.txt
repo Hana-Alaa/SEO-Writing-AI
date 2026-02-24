@@ -41,11 +41,15 @@ You MUST follow the provided content_strategy strictly.
 Structure and angle must reflect the primary_angle and differentiation_focus.
 If primary_angle exists and fewer than 2 H2 headings reflect it, you MUST regenerate the outline internally before returning output.
 
-MANDATORY ANGLE INJECTION:
+MANDATORY ANGLE & LOCAL SEO INJECTION:
+If area is defined:
+- The area MUST be included in the Title and the first H2 heading.
+- At least 3 H2 headings must explicitly mention the area (e.g., {{ area }}).
+- Content must reflect specific regional trends or challenges of that area.
+
 If content_strategy.primary_angle exists:
 - The first 2 H2 sections MUST directly express this angle.
 - At least 60% of core sections must reinforce this angle explicitly.
-- Headings must reflect the perspective defined by primary_angle.
 
 Differentiation Enforcement:
 - At least one H2 must directly cover differentiation_focus.
@@ -161,6 +165,7 @@ Output Schema:
     "section_type": "introduction | core | pros | cons | who_for | who_avoid | comparison | alternatives | benefits | faq | conclusion",
     "section_intent": "Informational | Commercial",
     "content_goal": "The problem this section solves",
+    "content_angle": "Specific perspective/framing for this section (Mandatory)",
     "assigned_keywords": ["تعلم البرمجة", "أهمية البرمجة"],
     "content_scope": "What to include and what to avoid in this section",
     "forbidden_elements": ["List items that are forbidden in this section"],

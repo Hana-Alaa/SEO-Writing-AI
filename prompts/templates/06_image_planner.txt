@@ -13,7 +13,7 @@ Act as an AI Visual Director. Your goal is to plan the visual assets for this ar
 You must generate a list of **7 high-quality image prompts** that will be used to generate images for this article.
 
 Rules:
-1. **Quantity**: You MUST generate exactly **7 image prompts**.
+1. **Quantity**: You MUST generate exactly **7 image prompts**. If there are fewer than 7 sections, assign multiple images to the most important sections (Introduction, Core services).
 2. **Exclusivity - NO STOCK IMAGES**: Do NOT use generic stock photos. Every prompt must focus on:
    - Custom Designs (Minimalist, modern, branded)
    - Product/Service Mockups

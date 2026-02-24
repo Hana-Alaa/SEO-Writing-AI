@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ lang | default('ar') }}" dir="{{ dir | default('rtl') }}">
 
 <head>
     <meta charset="UTF-8">
@@ -74,8 +74,8 @@
             margin-top: 2.5rem;
             margin-bottom: 1rem;
             font-weight: 700;
-            border-right: 4px solid var(--primary-color);
-            padding-right: 12px;
+            border-inline-start: 4px solid var(--primary-color);
+            padding-inline-start: 12px;
         }
 
         h3 {
@@ -104,7 +104,7 @@
         ul,
         ol {
             margin-bottom: 1.5rem;
-            padding-right: 1.5rem;
+            padding-inline-start: 1.5rem;
         }
 
         li {
@@ -113,7 +113,7 @@
 
         blockquote {
             background-color: #f1f5f9;
-            border-right: 4px solid var(--primary-color);
+            border-inline-start: 4px solid var(--primary-color);
             margin: 2rem 0;
             padding: 1.5rem;
             font-style: italic;
@@ -160,7 +160,7 @@
         th,
         td {
             padding: 1rem;
-            text-align: right;
+            text-align: start;
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -214,7 +214,7 @@
 
         .toc ul {
             list-style-type: none;
-            padding-right: 0;
+            padding-inline-start: 0;
             margin-bottom: 0;
         }
 

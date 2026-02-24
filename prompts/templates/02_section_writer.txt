@@ -120,13 +120,16 @@ STRICT SEO RULES FOR THIS SECTION
 - No language mixing
 
 2. KEYWORD EXECUTION
-- Include the Primary Keyword in first paragraph.
-- Distribute supporting keywords naturally.
-- Bold at least once
-- Use semantic variations
-- Avoid stuffing
+- Include the Primary Keyword in first paragraph (once).
+- Distribute supporting keywords naturally — NO bolding unless necessary for emphasis.
+- Use semantic variations to avoid repetitive phrasing.
+- Priority: User experience (UX) and natural flow over keyword density.
 
-3. STRUCTURE
+3. WRITING STYLE & FLOW
+- Avoid repeating the same core "angle" (e.g., "Compound Authority") in EVERY paragraph.
+- Use logical transitions between points.
+- Lead with specific value or data rather than generic marketing jargon.
+- Support claims with industry context (mentioning Saudi digital growth context naturally).
 - Follow allowed_flow_steps as the primary structure.
 - Use H3 or H4 only if needed.
 - Do NOT repeat the section heading in the content.

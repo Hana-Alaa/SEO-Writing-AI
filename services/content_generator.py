@@ -210,10 +210,11 @@ class SectionWriter:
             "estimated_word_count_max": section.get("estimated_word_count_max", 600),
             "primary_keywords": primary_keywords,
             "article_language": article_language,
-            "requires_table": clean(section.get("requires_table")),
+            # "requires_table": clean(section.get("requires_table")),
             "cta_allowed": cta_allowed,
             "cta_type": section.get("cta_type", "none"),
             "article_intent": article_intent,
+            "content_angle": section.get("content_angle", ""),
         }
 
         prompt = self.template.render(

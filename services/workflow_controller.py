@@ -121,7 +121,7 @@ class AsyncWorkflowController:
         # api_key = os.getenv("STABILITY_API_KEY")
         self.image_client = ImageGenerator(
             ai_client=self.ai_client,
-            save_dir=os.path.join(work_dir, "output", "images"), 
+            save_dir=os.path.join(work_dir, "images"), 
         )
 
     async def run_workflow(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -196,6 +196,15 @@ class AsyncWorkflowController:
         state["primary_keyword"] = primary_keyword
         state["raw_title"] = raw_title
         state["keywords"] = keywords
+
+        # Generate slug and directory
+        slug = self._sluggify(primary_keyword)
+        state["slug"] = slug
+        
+        output_dir = os.path.join(self.work_dir, slug)
+        os.makedirs(output_dir, exist_ok=True)
+        state["output_dir"] = output_dir
+
         return state
 
     async def _step_0_web_research(self, state):
@@ -208,7 +217,7 @@ class AsyncWorkflowController:
             template = Template(f.read())
 
         research_prompt = template.render(
-            search_query=search_query
+            primary_keyword=search_query
         )
 
         raw = await self.ai_client.send_with_web(
@@ -692,6 +701,15 @@ class AsyncWorkflowController:
             primary_keyword=primary_keyword,
             logo_path=logo_path
         )
+
+        # Normalize paths for markdown linking
+        for img in images:
+            if "local_path" in img:
+                # Images are in output/images, articles are in output/slug/
+                # We want the path in the markdown to be ../images/filename.webp
+                # so it works from within the article folder.
+                img["local_path"] = f"../images/{os.path.basename(img['local_path'])}"
+
         state["images"] = images
         return state
  
