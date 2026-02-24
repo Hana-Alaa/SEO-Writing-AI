@@ -36,6 +36,9 @@ Requires Table: {{ section.requires_table | default(false) }}
 CTA Allowed: {{ section.cta_allowed }}
 CTA Type: {{ section.cta_type }}
 
+Primary Content Angle: {{ section.content_angle }}
+All examples and framing must align with this angle.
+
 ---------------------------------------------------------
 COMPETITIVE INTELLIGENCE
 ---------------------------------------------------------

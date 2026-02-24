@@ -6,6 +6,7 @@ Context:
 - Competitive Insights: {{ seo_intelligence | tojson }}
 - Search Intent: "{{ intent }}"
 - Content Type: "{{ content_type }}"
+- Content Strategy: {{ content_strategy | tojson }}
 
 
 Role:
@@ -32,6 +33,46 @@ If intent is Informational:
 - Add FAQ
 
 Output valid JSON only.
+
+----------------------------------------------------
+
+STRATEGIC FOUNDATION
+You MUST follow the provided content_strategy strictly.
+Structure and angle must reflect the primary_angle and differentiation_focus.
+If primary_angle exists and fewer than 2 H2 headings reflect it, you MUST regenerate the outline internally before returning output.
+
+MANDATORY ANGLE INJECTION:
+If content_strategy.primary_angle exists:
+- The first 2 H2 sections MUST directly express this angle.
+- At least 60% of core sections must reinforce this angle explicitly.
+- Headings must reflect the perspective defined by primary_angle.
+
+Differentiation Enforcement:
+- At least one H2 must directly cover differentiation_focus.
+- Competitive gaps identified must be explicitly addressed.
+
+Tone Enforcement Rules:
+If tone_direction == "authoritative":
+- Avoid emotional exaggeration
+- Avoid speculative phrases
+- Avoid casual expressions
+
+If tone_direction == "educational":
+- Use explanatory phrasing
+- Include clarifying sub-questions
+
+If tone_direction == "persuasive":
+- Emphasize outcomes
+- Use benefit-driven phrasing
+
+CTA Enforcement:
+If cta_philosophy == "consultative":
+- CTA must feel advisory, not urgent
+- No aggressive verbs
+
+If cta_philosophy == "direct_response":
+- CTA must be action-oriented
+- Include urgency framing
 ----------------------------------------------------
 
 STEP 1 — Intent Enforcement
@@ -56,29 +97,38 @@ STEP 3 — Structural Rules
 Use the following semantic SERP assets:
 {{ seo_intelligence.get("semantic_assets", {}) | tojson }}
 
-Mandatory Sections:
-1. Introduction (H2)
-2. Core Sections (logical progression)
-3. FAQ Section (H2 with 4–6 questions)
-4. Conclusion (H2)
+Mandatory Section Roles:
+Every outline MUST include the following semantic roles (section_type).
+Write the heading_text in "{{ article_language }}" — NEVER in English unless the article language is English.
+The section_type is a machine-readable role identifier — keep it exactly as specified below.
+
+| section_type        | Role Description                                      |
+|---------------------|-------------------------------------------------------|
+| introduction        | Opening section — context, hook, and topic framing    |
+| core                | Main body sections (logical progression, 2–5 sections)|
+| faq                 | 4–6 user questions answered concisely                 |
+| conclusion          | Summary, final recommendation, and optional CTA       |
 
 Flow Order:
-Definition → Importance → How-To → Advanced Insights → FAQ → Conclusion
+introduction → core (multiple) → faq → conclusion
+
 ----------------------------------------------------
 
 If content_type == "editorial":
 
-You MUST include:
-- A Pros section
-- A Cons section
-- A "Who is it for?" section
-- A "Who should avoid it?" section
-- A Short comparison section
-- A Alternatives section
-- Use neutral analytical tone
+You MUST include sections with these section_type values:
+- "pros"         → Advantages of the subject
+- "cons"         → Disadvantages or limitations
+- "who_for"      → Who benefits most from this
+- "who_avoid"    → Who should avoid it
+- "comparison"   → Side-by-side comparison with alternatives
+- "alternatives" → Alternative options available
+
+All heading_text for these sections MUST be written in "{{ article_language }}".
+Use neutral analytical tone.
 
 If content_type == "brand":
-- Focus on benefits
+- Focus on benefits (section_type: "benefits")
 - Use persuasive tone
 - Strong CTAs allowed
 
@@ -107,7 +157,8 @@ Output Schema:
   {
     "section_id": "sec_01",
     "heading_level": "H2",
-    "heading_text": "Section Title",
+    "heading_text": "Section Title in article_language",
+    "section_type": "introduction | core | pros | cons | who_for | who_avoid | comparison | alternatives | benefits | faq | conclusion",
     "section_intent": "Informational | Commercial",
     "content_goal": "The problem this section solves",
     "assigned_keywords": ["تعلم البرمجة", "أهمية البرمجة"],

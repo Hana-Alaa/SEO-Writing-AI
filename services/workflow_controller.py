@@ -14,7 +14,7 @@ import asyncio
 from pathlib import Path
 from langdetect import detect  
 from jinja2 import Template, StrictUndefined
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, Any, List, Optional, Callable, ClassVar
 
 from services.image_generator import ImageGenerator, ImagePromptPlanner
 from services.openrouter_client import OpenRouterClient
@@ -103,6 +103,9 @@ class AsyncWorkflowController:
         )
         with open("prompts/templates/00_intent_classifier.txt", "r", encoding="utf-8") as f:
             self.intent_template = Template(f.read(), undefined=StrictUndefined)
+        
+        with open("prompts/templates/00_content_strategy.txt", "r", encoding="utf-8") as f:
+            self.content_strategy = Template(f.read(), undefined=StrictUndefined)
 
         # Content generation services
         self.title_generator = TitleGenerator(self.ai_client)
@@ -142,8 +145,9 @@ class AsyncWorkflowController:
             ("web_research", self._step_0_web_research, 1),  
             ("intent_title", self._step_0_intent_title,0),
             ("serp_analysis", self._step_0_serp_analysis, 1),
-
+            ("content_strategy", self._step_0_content_strategy, 3),
             ("outline_generation", self._step_1_outline, 1),
+
             ("content_writing", self._step_2_write_sections, 1),
             ("image_prompting", self._step_4_generate_image_prompts, 0),
             ("image_generation", self._step_4_5_download_images, 2),
@@ -277,11 +281,12 @@ class AsyncWorkflowController:
             state["content_type"] = "brand"
         else:
             state["content_type"] = "editorial"
-        state["content_strategy"] = {
-            "intent": intent,
-            "area": state.get("area"),
-            "competitive_mode": "serp_driven"
-        }
+        # state["content_strategy"] = {
+        #     "intent": intent,
+        #     "area": state.get("area"),
+        #     "competitive_mode": "serp_driven"
+        # }
+        state["intent"] = intent
         state["input_data"]["title"] = optimized_title
 
         return state
@@ -346,133 +351,35 @@ class AsyncWorkflowController:
 
         return state
 
-    # async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
-    #     """Generates the article outline using AI."""
-    #     input_data = state.get("input_data", {})
-    #     title = input_data.get("title") or "Untitled"
-    #     keywords = input_data.get("keywords") or []
-    #     urls_raw = input_data.get("urls", [])
-    #     seo_intelligence = state.get("seo_intelligence", {})
-    #     content_strategy = state.get("content_strategy", {})
-    #     area = state.get("area")
-        
-    #     content_type = state.get("content_type", "editorial")
-    #     if not content_type:
-    #         content_type = "editorial"
+    async def _step_0_content_strategy(self, state: Dict[str, Any]) -> Dict[str, Any]:
 
-    #     intent = state.get("intent") or "Informational"
-    #     article_language = input_data.get("article_language", "en")
+        primary_keyword = state.get("primary_keyword")
+        intent = state.get("intent")
+        seo_intelligence = state.get("seo_intelligence", {})
+        content_type = state.get("content_type")
+        area = state.get("area") or "Global"
+        # area = state.get("input_data", {}).get("area", "Global")
 
-    #     outline_data = await self.outline_gen.generate(
-    #         title=title,
-    #         keywords=keywords,
-    #         urls=urls_raw,
-    #         article_language=article_language,
-    #         intent=intent,
-    #         seo_intelligence=seo_intelligence,
-    #         content_type=content_type,
-    #         content_strategy=content_strategy,
-    #         area=area
-    #     )
 
-    #     if not outline_data:
-    #         raise RuntimeError("Outline generation returned empty result.")
+        # Render template
+        prompt = self.content_strategy.render(
+            primary_keyword=primary_keyword,
+            intent=intent,
+            seo_intelligence=json.dumps(seo_intelligence),
+            content_type=content_type,
+            area=area
+        )
 
-    #     outline = outline_data.get("outline", [])
+        raw = await self.ai_client.send(prompt, step="content_strategy")
 
-    #     # enforce first
-    #     outline = self._enforce_outline_structure(
-    #         outline,
-    #         intent=intent,
-    #         area=area,
-    #         content_type=content_type
-    #     )
-    #     paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
-    #     outline = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
-    #     rules = content_strategy.get("rules", {})
-    #     if rules.get("faq_required") and not any("FAQ" in sec["heading_text"] for sec in outline):
-    #         outline.append(self.generate_faq_section(seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])))
-    #     # Force Conclusion if missing
-    #     if not any("خاتمة" in sec.get("heading_text", "") or 
-    #        "Conclusion" in sec.get("heading_text", "")
-    #        for sec in outline):
+        clean = re.sub(r"```json|```", "", raw).strip()
+        data = recover_json(clean) or {}
 
-    #         outline.append({
-    #             "section_id": f"sec_{len(outline)+1:02}",
-    #             "heading_level": "H2",
-    #             "heading_text": "الخاتمة",
-    #             "section_intent": state.get("intent", "Informational"),
-    #             "content_goal": "تلخيص المقال وتوجيه القارئ لاتخاذ القرار",
-    #             "assigned_keywords": [state.get("primary_keyword", "")],
-    #             "content_scope": "تلخيص المزايا والعيوب وتوصية نهائية واضحة",
-    #             "forbidden_elements": [],
-    #             "allowed_flow_steps": ["Summary", "Recommendation", "CTA"],
-    #             "image_plan": {
-    #                 "required": False,
-    #                 "image_type": "none",
-    #                 "alt_text": ""
-    #             },
-    #             "cta_allowed": True,
-    #             "cta_type": "soft",
-    #             "cta_rules": {
-    #                 "placement": "none",
-    #                 "max_sentences": 1,
-    #                 "mandatory": False
-    #             },
-    #             "requires_table": False,
-    #             "table_columns": [],
-    #             "estimated_word_count_min": 150,
-    #             "estimated_word_count_max": 250
-    #         })
+        state["content_strategy"] = data
 
-    #     for idx, sec in enumerate(outline):
-    #         self.outline_gen._normalize_section(
-    #             sec,
-    #             idx,
-    #             content_type,
-    #             content_strategy,
-    #             area
-    #         )
+        logger.info(f"CONTENT STRATEGY GENERATED:\n{json.dumps(data, indent=2)}")
 
-    #     keyword_expansion = outline_data.get("keyword_expansion", {})
-    #     state["global_keywords"] = keyword_expansion
-
-    #     urls_norm = normalize_urls(urls_raw)
-    #     brand_url = urls_norm[0].get("link") if urls_norm else None
-    #     state["brand_url"] = brand_url
-
-    #     # Use "conservative" strategy for Guest Post / External publishing mode
-    #     outline = DataInjector.distribute_urls_to_outline(outline, urls_norm, strategy="conservative")
-
-    #     state["link_strategy"] = {
-    #         "internal_topics": [u for u in urls_norm if u.get("type") == "internal"],
-    #         "authority_topics": [u for u in urls_norm if u.get("type") == "authority"],
-    #         "affiliate_policy": {
-    #             "max_per_section": 3,
-    #             "placement": "distributed",
-    #             "tone": "neutral"
-    #         }
-    #     }
-
-    #     primary_keywords = keywords[:] 
-    #     primary_keyword = primary_keywords[0] if primary_keywords else title
-
-    #     for sec in outline:
-    #         sec["primary_keywords"] = primary_keywords
-    #         sec["primary_keyword"] = primary_keyword
-    #         sec["article_language"] = article_language
-
-    #     for sec in outline:
-    #         if not sec.get("assigned_keywords"):
-    #             raise ContentGeneratorError(
-    #                 f"Section {sec.get('section_id')} missing assigned keywords."
-    #             )
-
-    #     if not outline:
-    #         raise ContentGeneratorError("AI returned empty outline list.")
-
-    #     state["outline"] = outline
-    #     return state
+        return state
 
     async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates the article outline using AI with LSI distribution and duplicate prevention."""
@@ -487,6 +394,7 @@ class AsyncWorkflowController:
         
         content_type = state.get("content_type", "editorial") or "editorial"
         intent = state.get("intent") or "Informational"
+        content_strategy = state.get("content_strategy", {})
         article_language = input_data.get("article_language", "en")
         
         outline_data = await self.outline_gen.generate(
@@ -498,7 +406,7 @@ class AsyncWorkflowController:
             seo_intelligence=seo_intelligence,
             content_type=content_type,
             content_strategy=content_strategy,
-            area=area
+            area=area,
         )
 
         if not outline_data:
@@ -515,42 +423,55 @@ class AsyncWorkflowController:
             content_type=content_type
         )
         
+        outline = self._enforce_intent_distribution(
+            outline,
+            state["intent"],
+            state["content_type"]
+        )
+
+        outline = self._inject_local_seo(outline, state.get("area"))
+
+        outline = self._enforce_content_angle(
+            outline,
+            state.get("content_strategy")
+        )
+
+        outline = self._adjust_paa_by_intent(
+            outline,
+            state["intent"]
+        )
+
+        self._validate_outline_quality(outline, state["intent"])
+
         paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
-        outline = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
+        paa_check = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
+        if not paa_check["paa_ok"]:
+            logger.warning(
+                f"[paa_validate] PAA coverage too low: {paa_check['paa_ratio']:.0%} "
+                f"(missing ~{paa_check['missing_count']} PAA-inspired H2s). "
+                f"Prompt 01_outline_generator.txt should produce ≥30% PAA coverage."
+            )
         
-        # Step 2: Add FAQ section if required
-        rules = content_strategy.get("rules", {})
-        if rules.get("faq_required") and not any("FAQ" in sec["heading_text"] for sec in outline):
-            outline.append(self.generate_faq_section(paa_questions))
-        
-        # Step 3: Force Conclusion if missing
-        if not any("خاتمة" in sec.get("heading_text", "") or "Conclusion" in sec.get("heading_text", "") for sec in outline):
-            outline.append({
-                "section_id": f"sec_{len(outline)+1:02}",
-                "heading_level": "H2",
-                "heading_text": "الخاتمة",
-                "section_intent": intent,
-                "content_goal": "تلخيص المقال وتوجيه القارئ لاتخاذ القرار",
-                "assigned_keywords": [keywords[0]] if keywords else [title],
-                "content_scope": "تلخيص المزايا والعيوب وتوصية نهائية واضحة",
-                "forbidden_elements": [],
-                "allowed_flow_steps": ["Summary", "Recommendation", "CTA"],
-                "image_plan": {"required": False, "image_type": "none", "alt_text": ""},
-                "cta_allowed": True,
-                "cta_type": "soft",
-                "cta_rules": {"placement": "none", "max_sentences": 1, "mandatory": False},
-                "requires_table": False,
-                "table_columns": [],
-                "estimated_word_count_min": 150,
-                "estimated_word_count_max": 250
-            })
+        present_types = {
+            (s.get("section_type") or "").lower().strip() for s in outline
+        }
+        if "faq" not in present_types:
+            logger.warning(
+                "[outline_validate] Missing section_type='faq'. "
+                "Prompt 01_outline_generator.txt must include a faq section."
+            )
+        if "conclusion" not in present_types:
+            logger.warning(
+                "[outline_validate] Missing section_type='conclusion'. "
+                "Prompt 01_outline_generator.txt must include a conclusion section."
+            )
         
         # -----------------------------------
         # Step 4: Prevent duplicate H2 headings
         seen_h2 = set()
         unique_outline = []
         for sec in outline:
-            if sec["heading_level"] == "H2" and sec["heading_text"] in seen_h2:
+            if (sec.get("heading_level") or "").upper() == "H2" and sec["heading_text"] in seen_h2:
                 sec["heading_text"] += f" ({len(seen_h2)+1})"
             seen_h2.add(sec["heading_text"])
             unique_outline.append(sec)
@@ -564,9 +485,16 @@ class AsyncWorkflowController:
         lsi_keywords = keyword_expansion.get("lsi", [])
         if lsi_keywords:
             # Round-robin distribution across sections
-            for idx, sec in enumerate(outline):
-                sec["assigned_keywords"].extend([lsi_keywords[i % len(lsi_keywords)] for i in range(idx, idx+3)])
+            # for idx, sec in enumerate(outline):
+            #     sec["assigned_keywords"].extend([lsi_keywords[i % len(lsi_keywords)] for i in range(idx, idx+3)])
         
+            lsi_pool = lsi_keywords.copy()
+
+            for sec in outline:
+                sec_lsi = lsi_pool[:3]
+                sec["assigned_keywords"].extend(sec_lsi)
+                lsi_pool = lsi_pool[3:]
+    
         for idx, sec in enumerate(outline):
             self.outline_gen._normalize_section(
                 sec,
@@ -661,6 +589,11 @@ class AsyncWorkflowController:
                 sections_content[res["section_id"]] = res
 
         state["sections"] = sections_content
+        first_section = list(sections_content.values())[0]
+        if state.get("area"):
+            if state["area"].lower() not in first_section["generated_content"].lower():
+                logger.warning("Local area missing in first section content")
+
         logger.info(f"Successfully wrote {len(sections_content)} sections.")
         return state
 
@@ -737,6 +670,8 @@ class AsyncWorkflowController:
         print("FINAL IMAGE PROMPTS COUNT:", len(image_prompts))
 
         state["image_prompts"] = image_prompts
+        if primary_keyword.lower() not in alt.lower():
+            alt = f"{primary_keyword} - {alt}"
         return state
 
     async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -1076,112 +1011,324 @@ class AsyncWorkflowController:
 
     #     return outline
 
-    def _enforce_outline_structure(self, outline: List[Dict[str, Any]], intent: str, area: Optional[str], content_type: str) -> List[Dict[str, Any]]:
-        """Ensures all mandatory sections and editorial/brand rules are present."""
-        
-        mandatory_sections = [
-            {"heading_text": "Introduction", "heading_level": "H2", "section_intent": intent},
-        ]
-        
-        if content_type == "editorial":
-            editorial_sections = [
-                {"heading_text": "Pros", "heading_level": "H2", "section_intent": "Informational"},
-                {"heading_text": "Cons", "heading_level": "H2", "section_intent": "Informational"},
-                {"heading_text": "Who is it for?", "heading_level": "H2", "section_intent": "Informational"},
-                {"heading_text": "Who should avoid it?", "heading_level": "H2", "section_intent": "Informational"},
-                {"heading_text": "Comparison", "heading_level": "H2", "section_intent": "Informational"},
-                {"heading_text": "Alternatives", "heading_level": "H2", "section_intent": "Informational"},
-            ]
-            mandatory_sections.extend(editorial_sections)
-        
-        elif content_type == "brand":
-            brand_sections = [
-                {"heading_text": "Benefits", "heading_level": "H2", "section_intent": "Commercial"}
-            ]
-            mandatory_sections.extend(brand_sections)
-        
-        # Append missing mandatory sections
-        existing_headings = {sec["heading_text"] for sec in outline}
-        for sec in mandatory_sections:
-            if sec["heading_text"] not in existing_headings:
-                outline.append({
-                    "section_id": f"sec_{len(outline)+1:02}",
-                    "heading_level": sec["heading_level"],
-                    "heading_text": sec["heading_text"],
-                    "section_intent": sec["section_intent"],
-                    "content_goal": "",
-                    "assigned_keywords": [],
-                    "content_scope": "",
-                    "forbidden_elements": [],
-                    "allowed_flow_steps": [],
-                    "image_plan": {"required": False, "image_type": "illustration", "alt_text": ""},
-                    "cta_allowed": False,
-                    "cta_type": "none",
-                    "cta_rules": {"placement": "none", "max_sentences": 0, "mandatory": False},
-                    "requires_table": False,
-                    "table_columns": [],
-                    "estimated_word_count_min": 300,
-                    "estimated_word_count_max": 600
-                })
-        
-        return outline
+    # ─── Section type roles ────────────────────────────────────────────────────
+    # These are the machine-readable identifiers the LLM must assign to every
+    # outline section (see 01_outline_generator.txt).  The Orchestrator NEVER
+    # injects English heading text – it only validates that the required roles
+    # are present.  heading_text is always owned by the LLM (and written in the
+    # article's language).
+    _MANDATORY_ROLES: ClassVar[set] = {"introduction", "conclusion"}
+    _EDITORIAL_ROLES: ClassVar[set] = {"pros", "cons", "who_for", "who_avoid"}
+    _BRAND_ROLES:     ClassVar[set] = {"benefits"}
 
-    def enforce_paa_sections(outline: List[Dict], paa_questions: List[str], min_percent: float = 0.3):
-        h2_sections = [sec for sec in outline if sec["heading_level"] == "H2"]
-        current_paa_count = sum(1 for sec in h2_sections if any(q.lower() in sec["heading_text"].lower() for q in paa_questions))
+    def _enforce_outline_structure(self, outline: List[Dict[str, Any]], intent: str, area: Optional[str], content_type: str,) -> List[Dict[str, Any]]:
+        """
+        VALIDATES that the LLM-generated outline contains the required semantic
+        section_type roles.  Does NOT inject or mutate heading_text.
 
-        required_paa_count = max(1, int(len(h2_sections) * min_percent))
-        missing_count = required_paa_count - current_paa_count
-
-        added_sections = []
-        for q in paa_questions:
-            if missing_count <= 0:
-                break
-            if not any(q.lower() in sec["heading_text"].lower() for sec in h2_sections + added_sections):
-                added_sections.append({
-                    "section_id": f"sec_paa_{len(outline)+len(added_sections)+1}",
-                    "heading_level": "H2",
-                    "heading_text": q,
-                    "section_intent": "Informational",
-                    "content_goal": "Answer this PAA question",
-                    "assigned_keywords": [],
-                    "content_scope": "",
-                    "forbidden_elements": [],
-                    "allowed_flow_steps": ["Problem", "Solution", "Steps", "Examples"],
-                    "image_plan": {"required": False, "image_type": "none", "alt_text": ""},
-                    "cta_allowed": False,
-                    "cta_type": "none",
-                    "cta_rules": {"placement": "none", "max_sentences": 0, "mandatory": False},
-                    "requires_table": False,
-                    "table_columns": [],
-                    "estimated_word_count_min": 200,
-                    "estimated_word_count_max": 400
-                })
-                missing_count -= 1
-
-        outline.extend(added_sections)
-        return outline
-    
-    def generate_faq_section(self, paa_questions):
-        return {
-            "section_id": f"sec_faq_{len(outline)+1}",
-            "heading_level": "H2",
-            "heading_text": "الأسئلة الشائعة",
-            "section_intent": "Informational",
-            "content_goal": "Answer frequently asked questions about the topic",
-            "assigned_keywords": [],
-            "content_scope": "",
-            "forbidden_elements": [],
-            "allowed_flow_steps": ["Problem", "Solution", "Steps", "Examples"],
-            "image_plan": {"required": False, "image_type": "none", "alt_text": ""},
-            "cta_allowed": False,
-            "cta_type": "none",
-            "cta_rules": {"placement": "none", "max_sentences": 0, "mandatory": False},
-            "requires_table": False,
-            "table_columns": [],
-            "estimated_word_count_min": 200,
-            "estimated_word_count_max": 400
+        If a mandatory role is missing, a WARNING is logged so the prompt can
+        be iterated on – the pipeline still continues (soft validation).
+        """
+        present_types = {
+            (s.get("section_type") or "").lower().strip()
+            for s in outline
         }
+
+        # --- universal mandatory roles ---
+        for role in self._MANDATORY_ROLES:
+            if role not in present_types:
+                logger.warning(
+                    f"[outline_validate] Missing mandatory section_type='{role}'. "
+                    f"Check 01_outline_generator.txt prompt."
+                )
+
+        # --- content-type specific roles ---
+        if content_type == "editorial":
+            for role in self._EDITORIAL_ROLES:
+                if role not in present_types:
+                    logger.warning(
+                        f"[outline_validate] Editorial outline missing section_type='{role}'. "
+                        f"Expected for content_type='editorial'."
+                    )
+
+        elif content_type == "brand":
+            for role in self._BRAND_ROLES:
+                if role not in present_types:
+                    logger.warning(
+                        f"[outline_validate] Brand outline missing section_type='{role}'. "
+                        f"Expected for content_type='brand'."
+                    )
+
+        # --- assign section_ids for any section that is missing one ---
+        for i, sec in enumerate(outline):
+            if not sec.get("section_id"):
+                sec["section_id"] = f"sec_{i+1:02d}"
+
+        return outline
+
+    def _enforce_intent_distribution(self, outline, intent, content_type):
+
+        h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
+
+        if content_type == "brand":
+
+            commercial_sections = [
+                s for s in h2_sections
+                if s.get("section_intent") in ["Commercial", "Transactional"]
+            ]
+
+            ratio = len(commercial_sections) / max(len(h2_sections), 1)
+
+            # if ratio < 0.6:
+            #     outline.insert(1, {
+            #         "section_id": "sec_service_focus",
+            #         "heading_tag": "H2",
+            #         "heading_text": "SERVICE_FOCUS_SECTION",  # Placeholder
+            #         "intent": "Commercial",
+            #         "cta_allowed": True
+            #     })
+            if ratio < 0.6:
+                logger.warning("Commercial distribution too weak.")
+
+        if intent == "Informational":
+            for s in outline:
+                s["cta_allowed"] = False
+
+        return outline
+
+    def enforce_paa_sections( self, outline: List[Dict], paa_questions: List[str], min_percent: float = 0.3,) -> Dict[str, Any]:
+        """
+        VALIDATES PAA coverage in the LLM-generated outline.
+        Does NOT inject sections — the LLM is responsible for covering PAA
+        questions (per the prompt: "At least 30% of H2 headings inspired by PAA").
+
+        Returns a dict so the call site can decide whether to regenerate.
+        """
+        h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
+        total_h2 = max(len(h2_sections), 1)
+
+        if not paa_questions:
+            return {"paa_ok": True, "paa_ratio": 1.0, "missing_count": 0}
+
+        covered = sum(
+            1
+            for sec in h2_sections
+            if any(
+                q.lower() in sec.get("heading_text", "").lower()
+                for q in paa_questions
+            )
+        )
+
+        ratio = covered / total_h2
+        required = max(1, int(total_h2 * min_percent))
+        missing = max(0, required - covered)
+
+        return {
+            "paa_ok": ratio >= min_percent,
+            "paa_ratio": round(ratio, 2),
+            "missing_count": missing,
+        }
+
+    def _inject_local_seo(self, outline, area):
+        """
+        VALIDATES that the local area is reflected in the first H2.
+        Does NOT mutate heading_text — the LLM writes the area in the correct
+        language (e.g. Arabic: "في دبي", German: "in Berlin", English: "in Dubai").
+
+        The outline prompt already receives `area` as context and is instructed
+        to embed it naturally in the article language.
+        """
+        if not area:
+            return outline
+
+        # Mark all sections as local-context required (metadata only, no text mutation)
+        for s in outline:
+            s["local_context_required"] = True
+
+        # Soft validation: warn if the first H2 doesn't mention the area
+        first_h2 = next((s for s in outline if (s.get("heading_level") or "").upper() == "H2"), None)
+        if first_h2 and area.lower() not in first_h2.get("heading_text", "").lower():
+            logger.warning(
+                f"[local_seo_validate] Local area '{area}' not reflected in first H2: "
+                f"'{first_h2.get('heading_text', '')}'. "
+                f"Check that 01_outline_generator.txt receives 'area' in context."
+            )
+
+        return outline
+
+    def _enforce_content_angle(self, outline, strategy):
+        if not strategy:
+            return outline
+
+        angle = strategy.get("primary_angle")
+        if not angle:
+            return outline
+
+        for s in outline:
+            if (s.get("heading_level") or "").upper() == "H2":
+                s["content_angle"] = angle
+                break
+
+        return outline
+
+    def _adjust_paa_by_intent(self, outline, intent):
+        if intent in ["Transactional", "Commercial"]:
+            # Move all PAA to FAQ section only
+            for s in outline:
+                if s.get("source") == "paa":
+                    s["heading_level"] = "H3"
+                    s["parent_section"] = "sec_faq"
+
+        return outline
+
+    def _validate_outline_quality(self, outline, intent):
+        h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
+
+        if len(h2_sections) < 3:
+            raise ValueError("Outline too thin")
+
+        # Prevent duplicate H2 text
+        texts = [s["heading_text"].lower() for s in h2_sections]
+        if len(texts) != len(set(texts)):
+            raise ValueError("Duplicate H2 detected")
+
+        if intent == "Informational":
+            for s in outline:
+                if s.get("cta_allowed"):
+                    raise ValueError("CTA in informational article")
+
+        return True
+
+    
+    # async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    #     """Generates the article outline using AI."""
+    #     input_data = state.get("input_data", {})
+    #     title = input_data.get("title") or "Untitled"
+    #     keywords = input_data.get("keywords") or []
+    #     urls_raw = input_data.get("urls", [])
+    #     seo_intelligence = state.get("seo_intelligence", {})
+    #     content_strategy = state.get("content_strategy", {})
+    #     area = state.get("area")
+        
+    #     content_type = state.get("content_type", "editorial")
+    #     if not content_type:
+    #         content_type = "editorial"
+
+    #     intent = state.get("intent") or "Informational"
+    #     article_language = input_data.get("article_language", "en")
+
+    #     outline_data = await self.outline_gen.generate(
+    #         title=title,
+    #         keywords=keywords,
+    #         urls=urls_raw,
+    #         article_language=article_language,
+    #         intent=intent,
+    #         seo_intelligence=seo_intelligence,
+    #         content_type=content_type,
+    #         content_strategy=content_strategy,
+    #         area=area
+    #     )
+
+    #     if not outline_data:
+    #         raise RuntimeError("Outline generation returned empty result.")
+
+    #     outline = outline_data.get("outline", [])
+
+    #     # enforce first
+    #     outline = self._enforce_outline_structure(
+    #         outline,
+    #         intent=intent,
+    #         area=area,
+    #         content_type=content_type
+    #     )
+    #     paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
+    #     outline = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
+    #     rules = content_strategy.get("rules", {})
+    #     if rules.get("faq_required") and not any("FAQ" in sec["heading_text"] for sec in outline):
+    #         outline.append(self.generate_faq_section(seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])))
+    #     # Force Conclusion if missing
+    #     if not any("خاتمة" in sec.get("heading_text", "") or 
+    #        "Conclusion" in sec.get("heading_text", "")
+    #        for sec in outline):
+
+    #         outline.append({
+    #             "section_id": f"sec_{len(outline)+1:02}",
+    #             "heading_level": "H2",
+    #             "heading_text": "الخاتمة",
+    #             "section_intent": state.get("intent", "Informational"),
+    #             "content_goal": "تلخيص المقال وتوجيه القارئ لاتخاذ القرار",
+    #             "assigned_keywords": [state.get("primary_keyword", "")],
+    #             "content_scope": "تلخيص المزايا والعيوب وتوصية نهائية واضحة",
+    #             "forbidden_elements": [],
+    #             "allowed_flow_steps": ["Summary", "Recommendation", "CTA"],
+    #             "image_plan": {
+    #                 "required": False,
+    #                 "image_type": "none",
+    #                 "alt_text": ""
+    #             },
+    #             "cta_allowed": True,
+    #             "cta_type": "soft",
+    #             "cta_rules": {
+    #                 "placement": "none",
+    #                 "max_sentences": 1,
+    #                 "mandatory": False
+    #             },
+    #             "requires_table": False,
+    #             "table_columns": [],
+    #             "estimated_word_count_min": 150,
+    #             "estimated_word_count_max": 250
+    #         })
+
+    #     for idx, sec in enumerate(outline):
+    #         self.outline_gen._normalize_section(
+    #             sec,
+    #             idx,
+    #             content_type,
+    #             content_strategy,
+    #             area
+    #         )
+
+    #     keyword_expansion = outline_data.get("keyword_expansion", {})
+    #     state["global_keywords"] = keyword_expansion
+
+    #     urls_norm = normalize_urls(urls_raw)
+    #     brand_url = urls_norm[0].get("link") if urls_norm else None
+    #     state["brand_url"] = brand_url
+
+    #     # Use "conservative" strategy for Guest Post / External publishing mode
+    #     outline = DataInjector.distribute_urls_to_outline(outline, urls_norm, strategy="conservative")
+
+    #     state["link_strategy"] = {
+    #         "internal_topics": [u for u in urls_norm if u.get("type") == "internal"],
+    #         "authority_topics": [u for u in urls_norm if u.get("type") == "authority"],
+    #         "affiliate_policy": {
+    #             "max_per_section": 3,
+    #             "placement": "distributed",
+    #             "tone": "neutral"
+    #         }
+    #     }
+
+    #     primary_keywords = keywords[:] 
+    #     primary_keyword = primary_keywords[0] if primary_keywords else title
+
+    #     for sec in outline:
+    #         sec["primary_keywords"] = primary_keywords
+    #         sec["primary_keyword"] = primary_keyword
+    #         sec["article_language"] = article_language
+
+    #     for sec in outline:
+    #         if not sec.get("assigned_keywords"):
+    #             raise ContentGeneratorError(
+    #                 f"Section {sec.get('section_id')} missing assigned keywords."
+    #             )
+
+    #     if not outline:
+    #         raise ContentGeneratorError("AI returned empty outline list.")
+
+    #     state["outline"] = outline
+    #     return state
+
+
 
     # async def _step_4_validate_sections(self, state):
     #     input_data = state.get("input_data", {})
