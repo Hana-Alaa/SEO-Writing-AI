@@ -48,7 +48,7 @@ class OutlineGenerator:
         section.setdefault("content_type", content_type)
         section.setdefault("content_strategy", content_strategy)
         section.setdefault("area", area)
-
+    
     def _validate_outline_schema(self, outline: List[Dict[str, Any]]) -> bool:
         required_keys = {
             "section_id",
@@ -56,26 +56,6 @@ class OutlineGenerator:
             "heading_text",
             "section_intent"
         }
-
-        # required_keys = {
-        #     "section_id",
-        #     "heading_level",
-        #     "heading_text",
-        #     "section_intent",
-        #     "content_goal",
-        #     "assigned_keywords",
-        #     "content_scope",
-        #     "forbidden_elements",
-        #     "allowed_flow_steps",
-        #     "image_plan",
-        #     "cta_allowed",
-        #     "cta_type",
-        #     "cta_rules",
-        #     "requires_table",
-        #     "table_columns",
-        #     "estimated_word_count_min",
-        #     "estimated_word_count_max"
-        # }
 
         for section in outline:
             if not required_keys.issubset(section.keys()):
@@ -189,7 +169,9 @@ class SectionWriter:
         brand_url: str,
         brand_link_used: int,
         brand_link_allowed: bool,
-        allow_external_links: bool  
+        allow_external_links: bool,  
+        execution_plan: Dict[str, Any],
+        area: str
     ) -> str:
 
         def clean(value):
@@ -247,8 +229,10 @@ class SectionWriter:
             content_type=content_type,
             brand_url=brand_url,
             brand_link_allowed=brand_link_allowed,
-            allow_external_links=allow_external_links
-)
+            allow_external_links=allow_external_links,
+            execution_plan=execution_plan,
+            area=area,
+        )
 
         logger.info("\n================ FINAL PROMPT (SectionWriter) ================\n")
         logger.info(prompt)

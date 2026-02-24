@@ -11,6 +11,8 @@ Title: "{{ title }}"
 Intent: "{{ article_intent }}"
 Primary Keyword: "{{ primary_keyword }}"
 Language: "{{ article_language }}"
+Structure Rule: {{ execution_plan.structure_rule }}
+Area: {{ area }}
 
 ---------------------------------------------------------
 SECTION CONTEXT
@@ -21,7 +23,7 @@ Section Intent: "{{ section.section_intent }}"
 Scope: "{{ section.content_scope }}"
 
 Required Keywords: {{ section.assigned_keywords | join(", ") }}
-supporting_keywords=supporting_keywords
+Supporting Keywords: {{ supporting_keywords | join(", ") }}
 
 Allowed Flow: {{ section.allowed_flow_steps | tojson }}
 Forbidden Elements: {{ section.forbidden_elements | tojson }}
@@ -40,12 +42,74 @@ Primary Content Angle: {{ section.content_angle }}
 All examples and framing must align with this angle.
 
 ---------------------------------------------------------
+EXECUTION LAYER (STRICT)
+---------------------------------------------------------
+
+Writing Mode: {{ execution_plan.writing_mode }}
+Tone: {{ execution_plan.tone }}
+Conversion Weight: {{ execution_plan.conversion_weight }}
+Local Context Required: {{ execution_plan.local_context_required }}
+CTA Position: {{ execution_plan.cta_position }}
+CTA Strength: {{ execution_plan.cta_strength }}
+
+RULES:
+
+1. If writing_mode = persuasive:
+   - Lead with outcome, not definition.
+   - Emphasize transformation and value.
+   - Avoid generic explanations.
+
+2. If writing_mode = educational:
+   - Lead with explanation.
+   - Use structured logic.
+   - Avoid aggressive selling language.
+
+3. If comparison_required = true:
+   - Structure content around clear comparison criteria.
+   - Highlight differences, strengths, and weaknesses.
+   - Use side-by-side evaluation where possible.
+   - Avoid neutral generic descriptions.
+
+4. If local_context_required = true:
+   - Mention the area in the first paragraph.
+   - Include at least one sentence describing local market behavior, user needs, or regional challenges.
+   - Avoid generic global framing.
+
+5. If conversion_weight > 0.7:
+   - Use stronger benefit-driven framing.
+   - Use decisive language.
+
+6. If CTA Position = first_paragraph:
+   - Insert CTA sentence inside the first paragraph.
+   - It must respect CTA Type.
+   - Only one sentence.
+
+7. If CTA Position = none:
+   - Do NOT include CTA anywhere.
+
+8. If Content Angle is defined:
+   - The section must clearly reflect this positioning.
+   - The first paragraph must establish this angle explicitly.
+
+9. If content_type = brand AND writing_mode != analytical:
+   - 70% of content must focus on benefits, differentiation, value.
+   - Maximum 30% informational explanation.
+   - Use persuasive tone
+   - Strong CTAs allowed
+
+10. If content_type == "editorial":
+   - Support technical claims with references to trusted third-party resources when relevant.
+   - Keep outbound links informational, not promotional.
+
+11. Every section must clearly articulate user value.
+   - If no clear benefit exists, restructure the paragraph to make it outcome-driven.
+
+---------------------------------------------------------
 COMPETITIVE INTELLIGENCE
 ---------------------------------------------------------
 Content Gaps To Cover: {{ seo_intelligence.content_gaps | tojson }}
 Weaknesses To Exploit: {{ seo_intelligence.weaknesses_to_exploit | tojson }}
 Differentiation Strategy: {{ seo_intelligence.differentiation_strategy | tojson }}
-
 
 ---------------------------------------------------------
 STRICT SEO RULES FOR THIS SECTION
@@ -56,8 +120,8 @@ STRICT SEO RULES FOR THIS SECTION
 - No language mixing
 
 2. KEYWORD EXECUTION
-- Include all Required Keywords naturally
-- Must appear in first paragraph
+- Include the Primary Keyword in first paragraph.
+- Distribute supporting keywords naturally.
 - Bold at least once
 - Use semantic variations
 - Avoid stuffing
@@ -71,19 +135,9 @@ STRICT SEO RULES FOR THIS SECTION
 4. INTENT MATCHING
 - Strictly follow section_intent tone.
 - If Commercial: emphasize value, benefits, differentiation.
-- If Informational: focus on clarity, education, and depth.
+- If Informational: focus on clarity, education, and depth
 
-5. CTA POLICY
-- CTA is OPTIONAL.
-- If CTA Allowed = true:
-  • It must appear inside the FIRST paragraph.
-  • Only 1 sentence.
-  • Must match CTA Type.
-  • Must NOT feel aggressive in informational sections.
-- If CTA Allowed = false:
-  • Do NOT include any CTA.
-
-6. INTERNAL & EXTERNAL LINKS
+5. INTERNAL & EXTERNAL LINKS
 
 - Use the provided brand URL naturally where relevant.
 - If brand_link_allowed = true, you may include the brand URL once naturally.
@@ -99,15 +153,6 @@ STRICT SEO RULES FOR THIS SECTION
 - Avoid clustering links in a single paragraph.
 - Use only well-known official domains (e.g., wordpress.org, google.com, cloudflare.com). Do not fabricate unknown URLs.
 
-If content_type == "editorial":
-- Support technical claims with references to trusted third-party resources when relevant.
-- Keep outbound links informational, not promotional.
-
-If content_type == "brand":
-- Focus on benefits
-- Use persuasive tone
-- Strong CTAs allowed
-
 If allowed, you may include ONE authoritative external link 
 (e.g., official documentation like Google, WordPress, Cloudflare, etc.)
 
@@ -119,35 +164,36 @@ Rules:
 - Avoid cliché neutrality phrases.
 - Write with confident expert positioning.
 
-7. EEAT ENHANCEMENT
+6. EEAT ENHANCEMENT
 - Include real examples, expert-style insights, practical steps, or data where relevant.
 - Provide depth beyond generic explanations.
 
-8. TABLE RULE
+7. TABLE RULE
 - If Requires Table = true:
   • Include ONE relevant markdown table.
 - If false:
   • Do NOT include any table.
 
-9. FORBIDDEN
+8. FORBIDDEN
 - Do NOT reference other sections.
 - Do NOT mention images, schema, metadata, or SEO strategy.
 - Do NOT wrap output in code blocks.
 - Do NOT include explanations outside the section.
 
-10. COMPETITIVE ADVANTAGE
+9. COMPETITIVE ADVANTAGE
 - Use SEO Intelligence to improve depth.
 - Cover Content Gaps if relevant.
 - Apply Differentiation Strategy when appropriate.
 - Add unique angles when possible.
 
-11. Word Count
+10. Word Count
 - Stay strictly within this range.
 - Do not exceed maximum.
 - Do not go below minimum.
 - This section contributes to overall keyword density.
 - Use the primary keyword moderately.
 - Avoid repeating it more than necessary.
+
 
 ---------------------------------------------------------
 OUTPUT FORMAT
