@@ -10,7 +10,7 @@ class ArticleValidator:
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read(), undefined=StrictUndefined)
 
-    async def validate( self, final_markdown, meta, images, title, article_language, primary_keyword, word_count, keyword_count, keyword_density):
+    async def validate( self, final_markdown, meta, images, title, article_language, primary_keyword, word_count, keyword_count, keyword_density, content_strategy=None):
         if isinstance(meta, str):
             try:
                 meta = json.loads(meta)
@@ -29,7 +29,8 @@ class ArticleValidator:
             image_plan=images,
             word_count=word_count,
             keyword_count=keyword_count,
-            keyword_density=keyword_density
+            keyword_density=keyword_density,
+            content_strategy=content_strategy
         )   
 
 

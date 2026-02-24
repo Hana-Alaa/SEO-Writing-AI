@@ -655,9 +655,12 @@ class AsyncWorkflowController:
         )
         print("FINAL IMAGE PROMPTS COUNT:", len(image_prompts))
 
+        for p in image_prompts:
+            alt = p.get("alt_text", "")
+            if primary_keyword and primary_keyword.lower() not in alt.lower():
+                p["alt_text"] = f"{primary_keyword} - {alt}"
+
         state["image_prompts"] = image_prompts
-        if primary_keyword.lower() not in alt.lower():
-            alt = f"{primary_keyword} - {alt}"
         return state
 
     async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -762,29 +765,32 @@ class AsyncWorkflowController:
             final_md,
             primary_keyword
         )
-        issues = []
+        critical_issues = []
+        warnings = []
+
+        # Heuristic checks
         ok, issue = self.validate_sales_intro(final_md, state.get("intent"))
         if not ok:
-            issues.append(issue)
+            critical_issues.append(issue)
 
         if state.get("content_type") == "brand":
             ratio = self.calculate_sales_density(final_md)
             if ratio < 0.6:
-                issues.append(f"Sales density too low: {ratio}")
+                critical_issues.append(f"Sales density too low: {ratio}")
 
         ok, local_issues = self.validate_local_seo(
             final_md,
             meta,
             state.get("area")
         )
-        issues.extend(local_issues)
+        critical_issues.extend(local_issues)
 
         ok, angle_issue = self.validate_content_angle(
             final_md,
             state.get("content_strategy", {})
         )
         if not ok:
-            issues.append(angle_issue)
+            critical_issues.append(angle_issue)
 
         report_raw = await self.article_validator.validate(
             final_markdown=final_md, 
@@ -795,7 +801,8 @@ class AsyncWorkflowController:
             primary_keyword=primary_keyword,
             word_count=word_count,
             keyword_count=keyword_count,
-            keyword_density=keyword_density
+            keyword_density=keyword_density,
+            content_strategy=state.get("content_strategy", {})
         )
 
         report_json = recover_json(report_raw)
@@ -803,16 +810,32 @@ class AsyncWorkflowController:
         if not isinstance(report_json, dict):
             state["seo_report"] = {
                 "status": "FAIL",
-                "issues": ["Validator returned malformed JSON"]
+                "critical_issues": ["Validator returned malformed JSON"],
+                "warnings": []
             }
             return state
 
-        issues = report_json.get("issues", [])
+        # Merge AI issues
+        ai_critical = report_json.get("critical_issues", [])
+        if isinstance(ai_critical, list):
+            critical_issues.extend(ai_critical)
+            
+        ai_warnings = report_json.get("warnings", [])
+        if isinstance(ai_warnings, list):
+            warnings.extend(ai_warnings)
+        
+        # Backward compatibility for "issues" field if it exists
+        if "issues" in report_json and isinstance(report_json["issues"], list):
+            critical_issues.extend(report_json["issues"])
 
-        if report_json.get("status") not in ["PASS", "FAIL"]:
-            report_json["status"] = "FAIL"
+        # Final Report Building
+        final_report = {
+            "critical_issues": critical_issues,
+            "warnings": warnings,
+            "status": "FAIL" if len(critical_issues) > 3 else "PASS"
+        }
 
-        state["seo_report"] = report_json
+        state["seo_report"] = final_report
         return state
 
     async def _step_render_html(self, state):
@@ -922,7 +945,8 @@ class AsyncWorkflowController:
             # SEO
             "meta_title": seo_meta.get("meta_title", ""),
             "meta_description": seo_meta.get("meta_description", ""),
-            "schema": seo_meta.get("schema", {}),
+            "article_schema": seo_meta.get("article_schema", {}),
+            "faq_schema": seo_meta.get("faq_schema", {}),
 
             # Media
             "images": images,
@@ -1085,9 +1109,7 @@ class AsyncWorkflowController:
             return outline
 
         for s in outline:
-            if (s.get("heading_level") or "").upper() == "H2":
-                s["content_angle"] = angle
-                break
+            s["content_angle"] = angle
 
         return outline
 

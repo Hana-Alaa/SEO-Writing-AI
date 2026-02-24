@@ -19,59 +19,59 @@ Context:
 Validation Checklist:
 
 1. **Headings**
-   - H1 exists, matches article title, length 60–70 chars.
-   - H2/H3 hierarchy is logical and consistent.
+   - H1 exists, matches article title, length 60–70 chars. [CRITICAL]
+   - H2/H3 hierarchy is logical and consistent. [WARNING]
 
 2. **Keyword Usage**
-   - Primary keyword appears in the first paragraph.
-   - Keyword density must be between 12–16 per 1000 words.
+   - Primary keyword appears in the first paragraph. [CRITICAL]
+   - Keyword density must be between 10–18 per 1000 words. [CRITICAL]
    - Use the provided numeric value. Do NOT recalculate.
-   - If keyword density is outside range, mark as critical violation.
-
 
 3. **Content & Flow**
-   - CTA present in first paragraph and at conclusion.
-   - Section flow follows allowed sequence (Definition → Importance → How-To → Advanced Tips → FAQ → Conclusion).
+   - CTA present in first paragraph and at conclusion. [CRITICAL]
+   - Section flow follows allowed sequence (Definition → Importance → How-To → Advanced Tips → FAQ → Conclusion). [WARNING]
 
 4. **Images**
-   - At least 7 images present.
-   - All ALT texts include primary keyword.
-   - Image placement corresponds to section mapping.
+   - At least 7 images present. [CRITICAL]
+   - All ALT texts include primary keyword. [CRITICAL]
+   - Image placement corresponds to section mapping. [WARNING]
 
 5. **Internal & External Links**
-   - Internal links distributed naturally across sections.
-   - External links are credible and contextual.
+   - Internal links distributed naturally across sections. [WARNING]
+   - External links are credible and contextual. [WARNING]
 
 6. **FAQ Section**
-   - 4–6 questions included.
-   - Questions and answers match article language.
+   - 4–6 questions included. [CRITICAL]
+   - Questions and answers match article language. [WARNING]
 
 7. **Meta & Schema**
-   - Meta Title: 60–70 chars, includes primary keyword.
-   - Meta Description: 150–160 chars, action-oriented, includes primary keyword.
-   - Article Schema present.
-   - FAQ Schema present (if FAQ section exists).
+   - Meta Title: 60–70 chars, includes primary keyword. [CRITICAL]
+   - Meta Description: 150–160 chars, action-oriented, includes primary keyword. [CRITICAL]
+   - Article Schema present. [CRITICAL]
+   - FAQ Schema present (if FAQ section exists). [CRITICAL]
 
 8. **Forbidden Elements**
-   - No references to images, schema, meta, SEO prompts inside content.
-   - No duplicated content or filler text.
+   - No references to images, schema, meta, SEO prompts inside content. [CRITICAL]
+   - No duplicated content or filler text. [WARNING]
 
-9. If more than 3 critical violations exist, status must be FAIL.
-
-Critical violations include:
-- Missing H1
-- Missing primary keyword in intro
-- Missing FAQ when required
-- Less than 7 images
-- Missing schema
-
+9. **Content Angle & Tone (STRICT)**
+   - Primary Angle: "{{ content_strategy.primary_angle if content_strategy else 'N/A' }}"
+   - Strategic Positioning: "{{ content_strategy.strategic_positioning if content_strategy else 'N/A' }}"
+   - Tone Direction: "{{ content_strategy.tone_direction if content_strategy else 'N/A' }}"
+   - **Requirement**: The article must strictly adhere to this angle and tone. If the writing is generic, misses the emotional triggers, or fails to implement the strategic positioning, mark as a CRITICAL violation.
 
 Output:
 Return ONLY valid JSON:
 
 {
-  "status": "PASS" or "FAIL",
-  "issues": [
-    "Clear, short description of each violation"
+  "status": "PASS",
+  "critical_issues": [
+    "Short description of each critical violation"
+  ],
+  "warnings": [
+    "Short description of each minor warning"
   ]
 }
+
+Note: Status should be "FAIL" only if critical_issues sequence > 3. Otherwise "PASS".
+Don't worry about calculating status, the system will recalculate it based on your issues. Just categorize them correctly.

@@ -89,6 +89,10 @@ Validation Checklist:
 - Content structure must follow the provided allowed_flow_steps IN ORDER.
 - Clear structural misalignment must trigger FAIL.
 
+13. Content Angle Adherence
+- If a Content Angle is provided in Section Context, the section content MUST strictly align with its framing.
+- If the content ignores the specified angle or uses a conflicting framing → status = FAIL.
+
 12. JSON Integrity
 - If output is not valid JSON → status = FAIL
 
