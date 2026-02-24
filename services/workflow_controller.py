@@ -141,9 +141,10 @@ class AsyncWorkflowController:
             # ("analysis", self._step_0_analysis, 0),
             # ("web_research", self._step_web_research, 1),  
             # ("semantic_layer", self._step_semantic_layer, 1),
-            ("analysis_init", self._step_0_init,0),
-            ("web_research", self._step_0_web_research, 1),  
-            ("intent_title", self._step_0_intent_title,0),
+            ("analysis_init", self._step_0_init, 0),
+            ("web_research", self._step_0_web_research, 1),
+            ("intent_title", self._step_0_intent_title, 0),
+            ("style_analysis", self._step_0_style_analysis, 1),
             ("serp_analysis", self._step_0_serp_analysis, 1),
             ("content_strategy", self._step_0_content_strategy, 3),
             ("outline_generation", self._step_1_outline, 1),
@@ -635,6 +636,19 @@ class AsyncWorkflowController:
 
         return None
 
+    async def _step_0_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyzes the reference image if provided to determine the brand's visual style."""
+        ref_path = state.get("input_data", {}).get("logo_reference_path")
+        
+        if ref_path and os.path.exists(ref_path):
+            logger.info(f"Analyzing brand style from reference: {ref_path}")
+            style_desc = await self.ai_client.describe_image_style(ref_path)
+            state["brand_visual_style"] = style_desc
+        else:
+            state["brand_visual_style"] = ""
+            
+        return state
+
     async def _step_4_generate_image_prompts(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates image prompts using the image client."""
         if not self.enable_images:
@@ -646,12 +660,14 @@ class AsyncWorkflowController:
         keywords = input_data.get("keywords", [])
         outline = state.get("outline", [])
         primary_keyword = state.get("primary_keyword")
+        brand_visual_style = state.get("brand_visual_style", "")
 
         image_prompts = await self.image_prompt_planner.generate(
             title=title,
             primary_keyword=primary_keyword,
             keywords=keywords,
-            outline=outline
+            outline=outline,
+            brand_visual_style=brand_visual_style
         )
         print("FINAL IMAGE PROMPTS COUNT:", len(image_prompts))
 
@@ -666,14 +682,16 @@ class AsyncWorkflowController:
     async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Downloads images (now parallel in the client)."""
         prompts = state.get("image_prompts", [])
-        if not prompts:
-            return state
-            
         keywords = state.get("input_data", {}).get("keywords", [])
         primary_keyword = (keywords[0] if keywords else "") or ""
+        logo_path = state.get("input_data", {}).get("logo_path")
         
         # image_client.generate_images is now async
-        images = await self.image_client.generate_images(prompts, primary_keyword=primary_keyword)
+        images = await self.image_client.generate_images(
+            prompts, 
+            primary_keyword=primary_keyword,
+            logo_path=logo_path
+        )
         state["images"] = images
         return state
  

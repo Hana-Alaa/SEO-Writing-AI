@@ -6,24 +6,29 @@ Context:
 - Primary Keyword: "{{ primary_keyword }}"
 - Core Keywords: {{ keywords | tojson }}
 - Article Outline: {{ outline | tojson }}
+- Brand Visual Style: {{ brand_visual_style if brand_visual_style else 'Generic Professional' }}
 
 Your Task:
 Act as an AI Visual Director. Your goal is to plan the visual assets for this article.
 You must generate a list of **7 high-quality image prompts** that will be used to generate images for this article.
 
 Rules:
-1. **Quantity**: Generate image prompts only for sections where image_plan.required is true. Maximum 3 images.
-2. **Relevance**: Each image must correspond to a specific section of the outline.
-3. **Variety**: Use different styles (e.g., "Photorealistic office setting", "Minimalist vector illustration", "Data visualization chart", "Infographic style").
-4. **Alt Text**: ALT text must include the primary keyword explicitly, with optional natural variations or LSI keywords.
-5. Do NOT repeat identical visual concepts across images.
-6. One image must be a Featured Image for the article intro.
-7. The first image MUST correspond to the Introduction section.
-8. Do not assign more than one image to the same section.
-9. image_type must strictly be one of:
+1. **Quantity**: You MUST generate exactly **7 image prompts**.
+2. **Exclusivity - NO STOCK IMAGES**: Do NOT use generic stock photos. Every prompt must focus on:
+   - Custom Designs (Minimalist, modern, branded)
+   - Product/Service Mockups
+   - Real-world "Action" Screenshots (Simulated)
+   - Professional Infographics (Process flows, data)
+3. **Relevance**: Each image must correspond to a specific section of the outline.
+4. **Variety**: Use different styles (e.g., "Photorealistic office setting", "Minimalist vector illustration", "Data visualization chart", "Infographic style").
+5. **Alt Text**: ALT text must include the primary keyword explicitly.
+6. **Featured Image**: One image must be a Featured Image for the article intro.
+7. **Ordering**: The first image MUST correspond to the Introduction section.
+8. image_type must strictly be one of:
    - Featured
    - Infographic
    - Illustration
+   - Mockup
 
 
 Output Format:

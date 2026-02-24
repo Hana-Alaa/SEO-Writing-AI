@@ -266,6 +266,39 @@ class OpenRouterClient(BaseAIClient):
         logger.info(f"Image saved to: {filename}")
         return filename
 
+    async def describe_image_style(self, image_path: str) -> str:
+        """Analyzes a reference image to describe its visual style using a vision model."""
+        if not os.path.exists(image_path):
+            logger.error(f"Reference image not found: {image_path}")
+            return ""
+
+        try:
+            with open(image_path, "rb") as f:
+                base64_image = base64.b64encode(f.read()).decode("utf-8")
+
+            payload = {
+                "model": "google/gemini-2.0-flash-001", # High quality vision model
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Describe the visual style of this image in 20 words or less. Focus on lighting, color palette, mood, and artistic style (e.g., 'minimalist 3D mockup with neon blue lighting and soft shadows')."},
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{base64_image}"}}
+                        ]
+                    }
+                ]
+            }
+
+            data = await self._post_with_retry(self.base_url_chat, payload)
+            if data and "choices" in data:
+                description = data["choices"][0]["message"]["content"].strip()
+                logger.info(f"Vision Style Analysis: {description}")
+                return description
+        except Exception as e:
+            logger.error(f"Vision analysis failed: {e}")
+        
+        return ""
+
     async def _post_with_retry(self, url, payload):
         async with self._semaphore:
             for attempt in range(4):

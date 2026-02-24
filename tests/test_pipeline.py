@@ -25,7 +25,7 @@ from services.workflow_controller import AsyncWorkflowController
 async def main():
     controller = AsyncWorkflowController(work_dir="output")
     
-    # state = {
+        # state = {
     #     "input_data": {
     #         "title": "أفضل الطرق لتعلم البرمجة بسرعة",
     #         "keywords": ["تعلم البرمجة", "بايثون", "تطوير الذات"],
@@ -37,29 +37,48 @@ async def main():
     #         ]
     #     }
     # }
-    
+
+        # state = {
+    #     "input_data": {
+    #         "title": "مراجعة استضافة هوستنجر ",
+            
+    #         "keywords": [
+    #             "استضافة هوستنجر", 
+    #             "Hostinger Review", 
+    #             "أرخص استضافة مواقع", 
+    #             "سعر هوستنجر", 
+    #             "عيوب هوستنجر",
+    #             "إنشاء موقع ووردبريس"
+    #         ],
+            
+    #         # "urls": [
+    #         #     {"text": "عرض هوستنجر الخاص (خصم 85%)", "link": "https://www.hostinger.com/"},
+    #         #     {"text": "أداة بناء المواقع بالذكاء الاصطناعي", "link": "https://www.hostinger.com/website-builder"},
+    #         #     {"text": "مقارنة الخطط", "link": "https://www.hostinger.com/vps-hosting"}
+    #         # ],
+    #         "urls": [
+    #             {"text": "الموقع الرسمي لـ Hostinger", "link": "https://www.hostinger.com/"}
+    #         ]
+    #     }
+    # }
+
+
     state = {
         "input_data": {
-            "title": "مراجعة استضافة هوستنجر ",
-            
+            "title": "Web Design Agency in Riyadh - Custom Solutions",
             "keywords": [
-                "استضافة هوستنجر", 
-                "Hostinger Review", 
-                "أرخص استضافة مواقع", 
-                "سعر هوستنجر", 
-                "عيوب هوستنجر",
-                "إنشاء موقع ووردبريس"
+                "Web Design Agency",
+                "Web Design Riyadh",
+                "Digital Marketing Agency Saudi Arabia",
+                "UI/UX Design",
+                "CEMS IT"
             ],
-            
-            # "urls": [
-            #     {"text": "عرض هوستنجر الخاص (خصم 85%)", "link": "https://www.hostinger.com/"},
-            #     {"text": "أداة بناء المواقع بالذكاء الاصطناعي", "link": "https://www.hostinger.com/website-builder"},
-            #     {"text": "مقارنة الخطط", "link": "https://www.hostinger.com/vps-hosting"}
-            # ],
             "urls": [
-                {"text": "الموقع الرسمي لـ Hostinger", "link": "https://www.hostinger.com/"}
-            ]
-        }
+                {"text": "CEMS IT Official Website", "link": "https://cems-it.com/"}
+            ],
+            "area": "Riyadh",
+            "logo_path": "images/logo.png"
+        },
     }
 
     try:

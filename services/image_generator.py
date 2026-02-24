@@ -96,12 +96,13 @@ class ImagePromptPlanner:
     #     return list(unique.values())
 
 
-    async def generate(self, title: str, primary_keyword, keywords: list, outline: list) -> list:
+    async def generate(self, title: str, primary_keyword, keywords: list, outline: list, brand_visual_style: str = "") -> list:
         prompt_text = self.template.render(
             title=title,
             primary_keyword=primary_keyword,
             keywords=keywords,
-            outline=outline
+            outline=outline,
+            brand_visual_style=brand_visual_style
         )
 
         raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
@@ -125,12 +126,17 @@ class ImagePromptPlanner:
             featured = next((p for p in image_prompts if p["image_type"] == "Featured"), None)
             if not featured:
                 logger.error("No Featured image found.")
-                return []
+                # Fallback: make the first one featured if missing
+                if image_prompts:
+                    image_prompts[0]["image_type"] = "Featured"
+                    featured = image_prompts[0]
+                else:
+                    return []
 
             others = [p for p in image_prompts if p["image_type"] != "Featured"]
 
-            # Limit to 3 images total
-            image_prompts = [featured] + others[:2]
+            # Limit to 7 images total
+            image_prompts = ([featured] + others)[:7]
 
             # Validate section_ids
             outline_ids = {s.get("section_id") for s in outline}
@@ -164,15 +170,17 @@ class ImageGenerator:
     STYLE_PREFIXES = {
         "Featured": "High-quality photorealistic featured image, professional lighting, ultra realistic, highly detailed,",
         "Infographic": "Clean infographic style illustration, flat design, clear visual hierarchy, professional vector graphics,",
-        "Illustration": "Minimalist conceptual illustration, modern style, soft transitions, professional digital art,"
+        "Illustration": "Minimalist conceptual illustration, modern style, soft transitions, professional digital art,",
+        "Mockup": "Professional minimalist product mockup, clean desk setting, premium presentation, high quality 3D render,"
     }
 
-    def __init__(self, ai_client, save_dir: str = "output/images"):
+    def __init__(self, ai_client, save_dir: str = "output/images", logo_path: str = None):
         self.save_dir = save_dir
         self.ai_client = ai_client
+        self.logo_path = logo_path
         os.makedirs(self.save_dir, exist_ok=True)
 
-    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None) -> List[Dict[str, Any]]:
+    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None, logo_path: str = None) -> List[Dict[str, Any]]:
         """
         Generates actual images using Stability.ai for a list of prompts in parallel.
         """
@@ -188,7 +196,7 @@ class ImageGenerator:
                 return await task
 
         tasks = [
-            self._process_single_image(item, primary_keyword)
+            self._process_single_image(item, primary_keyword, logo_path or self.logo_path)
             for item in image_prompts
         ]
 
@@ -197,7 +205,7 @@ class ImageGenerator:
         # Filter out None results (failures)
         return [r for r in results if r]
 
-    async def _process_single_image(self, item: Dict[str, str], primary_keyword: str = None) -> Optional[Dict[str, Any]]:
+    async def _process_single_image(self, item: Dict[str, str], primary_keyword: str = None, logo_path: str = None) -> Optional[Dict[str, Any]]:
         """Internal worker to process a single image generation task."""
         prompt = item.get("prompt", "").strip()
         alt_text = item.get("alt_text", "").strip()
@@ -220,7 +228,7 @@ class ImageGenerator:
 
         if local_path:
             # CPU-bound image processing
-            await asyncio.to_thread(self._process_image_versions, local_path)
+            await asyncio.to_thread(self._process_image_versions, local_path, logo_path)
             
             return {
                 "section_id": section_id,
@@ -252,12 +260,51 @@ class ImageGenerator:
 
         return filepath
 
-    def _process_image_versions(self, filepath: str):
-        """Testing mode: keep single optimized image only."""
+    def _process_image_versions(self, filepath: str, logo_path: str = None):
+        """Optimizes image for speed (WebP) and adds brand logo if provided."""
         try:
             with Image.open(filepath) as img:
-                img = img.convert("RGB")
+                img = img.convert("RGBA") # Convert to RGBA for logo overlay
+                
+                # Resize to standard responsive size
+                # Standard web size, preserving quality
                 img = img.resize((1200, 675), Image.Resampling.LANCZOS)
+                
+                # Add logo if path is provided
+                target_logo = logo_path or self.logo_path
+                if target_logo and os.path.exists(target_logo):
+                    img = self._add_logo(img, target_logo)
+                
+                # Final conversion to RGB for WebP saving
+                img = img.convert("RGB")
                 img.save(filepath, format="WEBP", quality=80, optimize=True)
+                
         except Exception as e:
             logger.error(f"Processing image {filepath} failed: {e}")
+
+    def _add_logo(self, base_image: Image.Image, logo_path: str) -> Image.Image:
+        """Overlays a logo on the bottom right of the base image."""
+        try:
+            with Image.open(logo_path) as logo:
+                logo = logo.convert("RGBA")
+                
+                # Scale logo to ~15% of the base image width
+                base_w, base_h = base_image.size
+                logo_w, logo_h = logo.size
+                scale_ratio = (base_w * 0.15) / logo_w
+                new_logo_w = int(logo_w * scale_ratio)
+                new_logo_h = int(logo_h * scale_ratio)
+                logo = logo.resize((new_logo_w, new_logo_h), Image.Resampling.LANCZOS)
+                
+                # Positioning: Bottom Right with margin
+                margin = 20
+                position = (base_w - new_logo_w - margin, base_h - new_logo_h - margin)
+                
+                # Create a transparent layer for composition
+                overlay = Image.new("RGBA", base_image.size, (0, 0, 0, 0))
+                overlay.paste(logo, position, mask=logo)
+                
+                return Image.alpha_composite(base_image, overlay)
+        except Exception as e:
+            logger.error(f"Logo overlay failed: {e}")
+            return base_image

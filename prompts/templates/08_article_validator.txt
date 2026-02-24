@@ -32,7 +32,8 @@ Validation Checklist:
    - Section flow follows allowed sequence (Definition → Importance → How-To → Advanced Tips → FAQ → Conclusion). [WARNING]
 
 4. **Images**
-   - At least 7 images present. [CRITICAL]
+   - At least 7 unique/exclusive images present. (Designs, Mockups, or Infographics). [CRITICAL]
+   - NO generic stock photos. [CRITICAL]
    - All ALT texts include primary keyword. [CRITICAL]
    - Image placement corresponds to section mapping. [WARNING]
 
