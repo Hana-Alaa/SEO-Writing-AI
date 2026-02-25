@@ -1,4 +1,5 @@
 Context:
+- Feedback: "{{ feedback }}"
 - Article Title: "{{ title }}"
 - Primary Keyword: "{{ keywords[0] if keywords else title }}"
 - Core Keywords: {{ keywords | tojson }}
@@ -37,106 +38,16 @@ Output valid JSON only.
 ----------------------------------------------------
 
 STRATEGIC FOUNDATION
-You MUST follow the provided content_strategy strictly.
-Structure and angle must reflect the primary_angle and differentiation_focus.
-If primary_angle exists and fewer than 2 H2 headings reflect it, you MUST regenerate the outline internally before returning output.
+You MUST follow the provided content_strategy.
+Structure and angle should reflect the primary_angle and differentiation_focus.
 
 MANDATORY ANGLE & LOCAL SEO INJECTION:
 If area is defined:
 - The area MUST be included in the Title and the first H2 heading.
-- At least 3 H2 headings must explicitly mention the area (e.g., {{ area }}).
-- Content must reflect specific regional trends or challenges of that area.
+- Content should reflect specific regional trends or challenges of that area.
 
 If content_strategy.primary_angle exists:
-- The first 2 H2 sections MUST directly express this angle.
-- At least 60% of core sections must reinforce this angle explicitly.
-
-Differentiation Enforcement:
-- At least one H2 must directly cover differentiation_focus.
-- Competitive gaps identified must be explicitly addressed.
-
-Tone Enforcement Rules:
-If tone_direction == "authoritative":
-- Avoid emotional exaggeration
-- Avoid speculative phrases
-- Avoid casual expressions
-
-If tone_direction == "educational":
-- Use explanatory phrasing
-- Include clarifying sub-questions
-
-If tone_direction == "persuasive":
-- Emphasize outcomes
-- Use benefit-driven phrasing
-
-CTA Enforcement:
-If cta_philosophy == "consultative":
-- CTA must feel advisory, not urgent
-- No aggressive verbs
-
-If cta_philosophy == "direct_response":
-- CTA must be action-oriented
-- Include urgency framing
-----------------------------------------------------
-
-STEP 1 — Intent Enforcement
-- Structure strictly according to the provided intent
-- Do NOT re-detect intent
-
-----------------------------------------------------
-
-STEP 2 — Competitive Gap Coverage
-- Analyze competitive_insights
-- Identify missing angles and weak sections
-- Ensure the outline is:
-    • More comprehensive
-    • More structured
-    • More actionable
-    • EEAT optimized
-
-----------------------------------------------------
-
-STEP 3 — Structural Rules
-
-Use the following semantic SERP assets:
-{{ seo_intelligence.get("semantic_assets", {}) | tojson }}
-
-Mandatory Section Roles:
-Every outline MUST include the following semantic roles (section_type).
-Write the heading_text in "{{ article_language }}" — NEVER in English unless the article language is English.
-The section_type is a machine-readable role identifier — keep it exactly as specified below.
-
-| section_type        | Role Description                                      |
-|---------------------|-------------------------------------------------------|
-| introduction        | Opening section — context, hook, and topic framing    |
-| core                | Main body sections (logical progression, 2–5 sections)|
-| faq                 | 4–6 user questions answered concisely                 |
-| conclusion          | Summary, final recommendation, and optional CTA       |
-
-Flow Order:
-introduction → core (multiple) → faq → conclusion
-
-----------------------------------------------------
-
-If content_type == "editorial":
-
-You MUST include sections with these section_type values:
-- "pros"         → Advantages of the subject
-- "cons"         → Disadvantages or limitations
-- "who_for"      → Who benefits most from this
-- "who_avoid"    → Who should avoid it
-- "comparison"   → Side-by-side comparison with alternatives
-- "alternatives" → Alternative options available
-
-All heading_text for these sections MUST be written in "{{ article_language }}".
-Use neutral analytical tone.
-
-If content_type == "brand":
-- Focus on benefits (section_type: "benefits")
-- Use persuasive tone
-- Strong CTAs allowed
-
-----------------------------------------------------
+- The first 2 H2 sections MUST express this angle.
 
 Hard Constraints:
 - All headings must be in "{{ article_language }}"
@@ -165,8 +76,8 @@ Output Schema:
     "section_type": "introduction | core | pros | cons | who_for | who_avoid | comparison | alternatives | benefits | faq | conclusion",
     "section_intent": "Informational | Commercial",
     "content_goal": "The problem this section solves",
-    "content_angle": "Specific perspective/framing for this section (Mandatory)",
-    "assigned_keywords": ["تعلم البرمجة", "أهمية البرمجة"],
+    "content_angle": "Specific perspective/framing for this section",
+    "assigned_keywords": ["keyword 1", "keyword 2"],
     "content_scope": "What to include and what to avoid in this section",
     "forbidden_elements": ["List items that are forbidden in this section"],
     "allowed_flow_steps": ["Problem", "Promise", "Solution", "Steps", "Examples", "CTA"],
@@ -184,8 +95,7 @@ Output Schema:
     },
     "requires_table": true, 
     "table_columns": ["Feature", "Traditional Approach", "Recommended Approach"],
-    "estimated_word_count_min": 350,
-    "estimated_word_count_max": 450
+    "target_word_count": 400
   }
 ],
   "keyword_expansion": {

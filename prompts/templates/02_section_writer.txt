@@ -33,6 +33,7 @@ Brand Mentions: {{ section.brand_mentions | tojson }}
 
 
 Word Range: {{ section.estimated_word_count_min }} - {{ section.estimated_word_count_max }}
+Target Section Lenght: {{ execution_plan.target_word_count }} words
 
 Requires Table: {{ section.requires_table | default(false) }}
 CTA Allowed: {{ section.cta_allowed }}

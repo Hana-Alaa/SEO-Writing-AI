@@ -73,7 +73,8 @@ class OutlineGenerator:
             seo_intelligence: Dict[str, Any],
             content_type: str,
             content_strategy: Dict[str, Any],
-            area: Optional[str]
+            area: Optional[str],
+            feedback: Optional[str] = None
         ) -> Dict[str, Any]:
 
         prompt = self.template.render(
@@ -85,7 +86,8 @@ class OutlineGenerator:
             seo_intelligence=seo_intelligence,
             content_type=content_type,
             content_strategy=content_strategy,
-            area=area
+            area=area,
+            feedback=feedback
         )
 
         logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
@@ -192,9 +194,18 @@ class SectionWriter:
         cta_allowed = section.get("cta_allowed", False)
         allowed_flow = section.get("allowed_flow_steps", [])
 
-        if not cta_allowed and "CTA" in allowed_flow:
-            allowed_flow = [step for step in allowed_flow if step != "CTA"]
+        # Flatten strategic intelligence for the template
+        strategic_intelligence = seo_intelligence.get("strategic_analysis", {}).get("strategic_intelligence", {})
+        
+        # Ensure all expected fields are present to avoid StrictUndefined errors
+        safe_seo = {
+            "content_gaps": strategic_intelligence.get("content_gaps", []),
+            "weaknesses_to_exploit": strategic_intelligence.get("weaknesses_to_exploit", []),
+            "differentiation_strategy": strategic_intelligence.get("differentiation_strategy", []),
+            "structural_patterns": strategic_intelligence.get("structural_patterns", [])
+        }
 
+        # Provide defaults for section fields
         safe_section = {
             "heading_level": section.get("heading_level", "H2"),
             "heading_text": section.get("heading_text", "Untitled Section"),
@@ -203,14 +214,13 @@ class SectionWriter:
             "allowed_flow_steps": allowed_flow,
             "forbidden_elements": section.get("forbidden_elements", []),
             "assigned_keywords": section.get("assigned_keywords", []),
-            "assigned_links": section.get("assigned_links", []) + section.get("urls", []),
+            "assigned_links": section.get("assigned_links", []),
             "brand_mentions": section.get("brand_mentions", []),
             "estimated_word_count_min": section.get("estimated_word_count_min", 300),
-
             "estimated_word_count_max": section.get("estimated_word_count_max", 600),
             "primary_keywords": primary_keywords,
             "article_language": article_language,
-            # "requires_table": clean(section.get("requires_table")),
+            "requires_table": section.get("requires_table", False),
             "cta_allowed": cta_allowed,
             "cta_type": section.get("cta_type", "none"),
             "article_intent": article_intent,
@@ -225,7 +235,7 @@ class SectionWriter:
             article_language=article_language,
             article_intent=article_intent,
             section=safe_section,
-            seo_intelligence=seo_intelligence,
+            seo_intelligence=safe_seo,
             link_strategy=link_strategy,
             content_type=content_type,
             brand_url=brand_url,
