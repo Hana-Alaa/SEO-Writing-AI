@@ -12,6 +12,8 @@ Your job:
 Create a winning Content Strategy BEFORE outline creation.
 
 You must decide:
+- The strategy must remain strictly aligned with the primary keyword topic.
+- Do NOT introduce unrelated frameworks, methodologies, or abstract marketing theories unless explicitly present in SERP data.
 - Strategic positioning
 - Differentiation angle
 - Audience targeting
@@ -27,6 +29,27 @@ Rules:
 - Do NOT repeat SERP data
 - Keep answers concise but strategic
 - Return STRICT JSON only
+
+Content Type: {{content_type}}
+If Content Type equals "brand", you MUST strictly apply the following rules:
+- The strategy MUST follow service-page architecture.
+- The primary angle MUST focus on service differentiation and conversion.
+- Educational SEO frameworks or marketing theory angles are NOT allowed.
+- The strategy MUST reflect dominant SERP format (service pages vs guides).
+- The strategy MUST exploit at least 2 identified competitor weaknesses.
+- The strategy MUST include a clear conversion path aligned with intent.
+For brand content:
+- The strategy MUST mirror the structural intent of top-ranking pages (homepage/service landing style).
+- The primary angle must be directly executable into a service landing page outline.
+- depth_level cannot be "basic".
+
+If Content Type equals "editorial", you MUST strictly apply the following rules:
+- The strategy MUST follow long-form informational architecture.
+- Commercial positioning must be secondary.
+
+If area is provided:
+- Local positioning is mandatory.
+- Include localized differentiation and market-specific authority signals.
 
 Return JSON in this format:
 

@@ -284,6 +284,12 @@ class AsyncWorkflowController:
         data = recover_json(clean) or {}
 
         intent = data.get("intent", "Informational")
+        serp_confirmed = state["seo_intelligence"]["strategic_analysis"]["intent_analysis"]["confirmed_intent"]
+        confidence = state["seo_intelligence"]["strategic_analysis"]["intent_analysis"]["intent_confidence_score"]
+
+        if confidence > 0.6:
+            intent = serp_confirmed
+
         optimized_title = data.get("optimized_title", raw_title)
 
         state["intent"] = intent
@@ -299,6 +305,19 @@ class AsyncWorkflowController:
         state["intent"] = intent
         state["input_data"]["title"] = optimized_title
 
+        return state
+
+    async def _step_0_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyzes the reference image if provided to determine the brand's visual style."""
+        ref_path = state.get("input_data", {}).get("logo_reference_path")
+        
+        if ref_path and os.path.exists(ref_path):
+            logger.info(f"Analyzing brand style from reference: {ref_path}")
+            style_desc = await self.ai_client.describe_image_style(ref_path)
+            state["brand_visual_style"] = style_desc
+        else:
+            state["brand_visual_style"] = ""
+            
         return state
 
     async def _step_0_serp_analysis(self, state):
@@ -355,10 +374,14 @@ class AsyncWorkflowController:
                 }
             ]
 
-        existing = state.get("seo_intelligence", {})
-        existing.update(serp_insights)
-        state["seo_intelligence"] = existing
+        # existing = state.get("seo_intelligence", {})
+        # existing.update(serp_insights)
+        # state["seo_intelligence"] = existing
 
+        state["seo_intelligence"] = {
+           "serp_raw": state.get("serp_data", {}),
+            "strategic_analysis": serp_insights
+        }
         return state
 
     async def _step_0_content_strategy(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -369,13 +392,21 @@ class AsyncWorkflowController:
         content_type = state.get("content_type")
         area = state.get("area") or "Global"
         # area = state.get("input_data", {}).get("area", "Global")
+        full_intel = seo_intelligence.get("strategic_analysis", {})
 
+        intent_layer = full_intel.get("intent_analysis", {})
+        structural_layer = full_intel.get("structural_intelligence", {})
+        strategic_layer = full_intel.get("strategic_intelligence", {})
 
-        # Render template
+        clusters = strategic_layer.get("keyword_clusters", [])
+
         prompt = self.content_strategy.render(
             primary_keyword=primary_keyword,
             intent=intent,
-            seo_intelligence=json.dumps(seo_intelligence),
+            serp_intent_analysis=json.dumps(intent_layer),
+            serp_structural_intelligence=json.dumps(structural_layer),
+            serp_strategic_intelligence=json.dumps(strategic_layer),
+            keyword_clusters=json.dumps(clusters),
             content_type=content_type,
             area=area
         )
@@ -454,12 +485,12 @@ class AsyncWorkflowController:
         self._validate_outline_quality(outline, state["intent"])
 
         paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
-        paa_check = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
+        paa_check = self.enforce_paa_sections(outline, paa_questions, min_percent=0.15)
         if not paa_check["paa_ok"]:
             logger.warning(
                 f"[paa_validate] PAA coverage too low: {paa_check['paa_ratio']:.0%} "
                 f"(missing ~{paa_check['missing_count']} PAA-inspired H2s). "
-                f"Prompt 01_outline_generator.txt should produce ≥30% PAA coverage."
+                f"Prompt 01_outline_generator.txt should produce ≥15% PAA coverage."
             )
         
         present_types = {
@@ -645,19 +676,6 @@ class AsyncWorkflowController:
 
         return None
 
-    async def _step_0_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyzes the reference image if provided to determine the brand's visual style."""
-        ref_path = state.get("input_data", {}).get("logo_reference_path")
-        
-        if ref_path and os.path.exists(ref_path):
-            logger.info(f"Analyzing brand style from reference: {ref_path}")
-            style_desc = await self.ai_client.describe_image_style(ref_path)
-            state["brand_visual_style"] = style_desc
-        else:
-            state["brand_visual_style"] = ""
-            
-        return state
-
     async def _step_4_generate_image_prompts(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates image prompts using the image client."""
         if not self.enable_images:
@@ -811,8 +829,21 @@ class AsyncWorkflowController:
 
         if state.get("content_type") == "brand":
             ratio = self.calculate_sales_density(final_md)
-            if ratio < 0.6:
-                critical_issues.append(f"Sales density too low: {ratio}")
+            
+            # Dynamic threshold based on SERP structural intelligence
+            serp_strat = state.get("seo_intelligence", {}).get("strategic_analysis", {})
+            struct_intel = serp_strat.get("structural_intelligence", {})
+            cta_intensity = str(struct_intel.get("cta_intensity_pattern", "soft")).lower()
+            
+            threshold_map = {
+                "soft": 0.25,
+                "moderate": 0.35,
+                "aggressive": 0.45
+            }
+            required_ratio = threshold_map.get(cta_intensity, 0.25)
+
+            if ratio < required_ratio:
+                critical_issues.append(f"Sales density too low: {ratio} (Target: {required_ratio} based on {cta_intensity} SERP pattern)")
 
         ok, local_issues = self.validate_local_seo(
             final_md,
@@ -962,6 +993,42 @@ class AsyncWorkflowController:
 
         return cleaned
 
+    def validate_intent_from_serp(serp_data, ai_intent):
+        top = serp_data.get("top_results", [])
+        if not top:
+            return ai_intent
+
+        service_like = 0
+        editorial_like = 0
+
+        for r in top:
+            h1 = (r.get("headings", {}).get("h1", "")).lower()
+            cta = r.get("cta_style", "")
+            word_count = r.get("estimated_word_count", 0)
+
+            if cta in ["soft commercial", "aggressive"]:
+                service_like += 1
+            elif word_count > 1200:
+                editorial_like += 1
+
+        if service_like >= 2:
+            return "Commercial"
+
+        if editorial_like >= 2:
+            return "Informational"
+
+        return ai_intent
+
+    def validate_strategy_alignment(strategy, primary_keyword, area):
+        angle = strategy.get("primary_angle", "").lower()
+        if primary_keyword.lower() not in angle:
+            return False, "Primary keyword not reflected in strategy angle"
+
+        if area and area.lower() not in strategy.get("strategic_positioning","").lower():
+            return False, "Local positioning missing"
+
+        return True, None
+
     def _assemble_final_output(self, state: Dict[str, Any]) -> Dict[str, Any]:
         input_data = state.get("input_data", {})
         final_out = state.get("final_output", {})
@@ -1067,8 +1134,10 @@ class AsyncWorkflowController:
             #         "intent": "Commercial",
             #         "cta_allowed": True
             #     })
+            # if ratio < 0.6:
+                # logger.warning("Commercial distribution too weak.")
             if ratio < 0.6:
-                logger.warning("Commercial distribution too weak.")
+                raise ValueError("Commercial intent distribution too weak. Regenerate outline.")
 
         if intent == "Informational":
             for s in outline:
@@ -1076,7 +1145,7 @@ class AsyncWorkflowController:
 
         return outline
 
-    def enforce_paa_sections( self, outline: List[Dict], paa_questions: List[str], min_percent: float = 0.3,) -> Dict[str, Any]:
+    def enforce_paa_sections( self, outline: List[Dict], paa_questions: List[str], min_percent: float = 0.15,) -> Dict[str, Any]:
         """
         VALIDATES PAA coverage in the LLM-generated outline.
         Does NOT inject sections — the LLM is responsible for covering PAA
@@ -1109,34 +1178,35 @@ class AsyncWorkflowController:
             "missing_count": missing,
         }
 
-    def _inject_local_seo(self, outline, area):
+    async def _inject_local_seo(self, outline, area):
         """
         VALIDATES that the local area is reflected in the first H2.
-        Does NOT mutate heading_text — the LLM writes the area in the correct
-        language (e.g. Arabic: "في دبي", German: "in Berlin", English: "in Dubai").
-
-        The outline prompt already receives `area` as context and is instructed
-        to embed it naturally in the article language.
+        Does NOT mutate heading_text.
         """
         if not area:
             return outline
 
-        # Mark all sections as local-context required (metadata only, no text mutation)
+        # Only mark FIRST core H2 as local-context required to avoid over-optimization
+        applied = False
         for s in outline:
-            s["local_context_required"] = True
+            if s.get("section_type") == "core" and s.get("heading_level") == "H2" and not applied:
+                s["local_context_required"] = True
+                applied = True
+            else:
+                s.pop("local_context_required", None)
 
-        # Soft validation: warn if the first H2 doesn't mention the area
+        # Soft validation only. No longer raising ValueError to allow flexibility.
         first_h2 = next((s for s in outline if (s.get("heading_level") or "").upper() == "H2"), None)
         if first_h2 and area.lower() not in first_h2.get("heading_text", "").lower():
             logger.warning(
-                f"[local_seo_validate] Local area '{area}' not reflected in first H2: "
-                f"'{first_h2.get('heading_text', '')}'. "
-                f"Check that 01_outline_generator.txt receives 'area' in context."
+                f"[local_seo_validate] Local area '{area}' not reflected in first H2 heading. "
+                f"Prompt 01_outline_generator.txt should handle this."
             )
+            raise ValueError( f"[local_seo_validate] Local area '{area}' not reflected in first H2: ")
 
         return outline
 
-    def _enforce_content_angle(self, outline, strategy):
+    async def _enforce_content_angle(self, outline, strategy):
         if not strategy:
             return outline
 
@@ -1144,8 +1214,14 @@ class AsyncWorkflowController:
         if not angle:
             return outline
 
+        # Only assign the angle to the first core H2 section to avoid "robotic" repetition
+        applied = False
         for s in outline:
-            s["content_angle"] = angle
+            if s.get("section_type") == "core" and s.get("heading_level") == "H2" and not applied:
+                s["content_angle"] = angle
+                applied = True
+            else:
+                s.pop("content_angle", None)
 
         return outline
 
@@ -1229,6 +1305,11 @@ class AsyncWorkflowController:
 
         elif section_type == "conclusion":
             plan["structure_rule"] = "recap + final CTA"
+
+        structural = state["seo_intelligence"]["strategic_analysis"]["structural_intelligence"]
+        plan["target_word_count"] = structural.get("avg_word_count")
+        plan["cta_pattern"] = structural.get("cta_position_pattern")
+        plan["cta_intensity"] = structural.get("cta_intensity_pattern")
 
         return plan
 

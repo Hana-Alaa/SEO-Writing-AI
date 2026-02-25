@@ -145,7 +145,7 @@ Hard Constraints:
 - Each section must declare intent
 - Assign relevant keywords per section
 - Distribute LSI keywords across sections
-- At least 30% of H2 headings are inspired by PAA questions.
+- Include sections inspired by PAA questions.
 
 ----------------------------------------------------
 
