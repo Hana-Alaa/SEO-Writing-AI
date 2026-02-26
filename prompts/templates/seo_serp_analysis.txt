@@ -35,10 +35,11 @@ Extract:
 - avg_word_count
 - avg_h2_count
 - avg_h3_count
-- dominant_heading_pattern
+- dominant_page_type (service | guide | comparison | homepage)
 - CTA_position_pattern (above fold / mid / end / none)
 - CTA_intensity_pattern (none / soft / moderate / aggressive)
-- pricing_section_presence_ratio
+- pricing_presence_ratio (0–1)
+- faq_presence_ratio (0–1)
 - trust_signal_density (low / medium / high)
 - local_keyword_density (low / medium / high)
 
@@ -76,13 +77,15 @@ Return STRICT JSON only in this structure:
 "informational_signal_strength": 0.0
 },
 "structural_intelligence": {
+"dominant_page_type": "",
 "avg_word_count": 0,
 "avg_h2_count": 0,
 "avg_h3_count": 0,
 "dominant_heading_pattern": "",
 "cta_position_pattern": "",
 "cta_intensity_pattern": "",
-"pricing_section_presence_ratio": 0.0,
+"pricing_presence_ratio": 0.0,
+"faq_presence_ratio": 0.0,
 "trust_signal_density": "",
 "local_keyword_density": ""
 },

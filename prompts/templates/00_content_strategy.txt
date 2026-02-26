@@ -31,19 +31,20 @@ Rules:
 - Return STRICT JSON only
 
 Content Type: {{content_type}}
-If Content Type equals "brand", you MUST strictly apply the following rules:
+If Content Type equals "brand_commercial", you MUST strictly apply the following rules:
 - The strategy MUST follow service-page architecture.
 - The primary angle MUST focus on service differentiation and conversion.
 - Educational SEO frameworks or marketing theory angles are NOT allowed.
 - The strategy MUST reflect dominant SERP format (service pages vs guides).
 - The strategy MUST exploit at least 2 identified competitor weaknesses.
 - The strategy MUST include a clear conversion path aligned with intent.
+- The Intro section MUST prioritize an immediate value proposition and a CTA bridge in the first paragraph.
 For brand content:
 - The strategy MUST mirror the structural intent of top-ranking pages (homepage/service landing style).
 - The primary angle must be directly executable into a service landing page outline.
 - depth_level cannot be "basic".
 
-If Content Type equals "editorial", you MUST strictly apply the following rules:
+If Content Type equals "informational", you MUST strictly apply the following rules:
 - The strategy MUST follow long-form informational architecture.
 - Commercial positioning must be secondary.
 

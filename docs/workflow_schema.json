@@ -2,94 +2,179 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "SEO Article Workflow State",
   "type": "object",
-  "required": ["project_id", "input_data"],
+  "required": [
+    "project_id",
+    "input_data"
+  ],
   "properties": {
-    "project_id": { "type": "string" },
-
+    "project_id": {
+      "type": "string"
+    },
     "input_data": {
       "type": "object",
-      "required": ["title", "keywords"],
+      "required": [
+        "title",
+        "keywords"
+      ],
       "properties": {
-        "title": { "type": "string" },
+        "title": {
+          "type": "string"
+        },
         "keywords": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "urls": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["link", "text"],
+            "required": [
+              "link",
+              "text"
+            ],
             "properties": {
-              "link": { "type": "string" },
-              "text": { "type": "string" }
+              "link": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
             }
           }
         }
       }
     },
-
     "seo_meta": {
       "type": "object",
       "properties": {
         "intent": {
           "type": "string",
-          "enum": ["commercial", "informational", "transactional", "comparative"]
+          "enum": [
+            "brand_commercial",
+            "informational",
+            "comparison"
+          ]
         },
-        "min_word_count": { "type": "integer", "default": 1000 },
-        "required_image_count": { "type": "integer", "default": 7 }
+        "min_word_count": {
+          "type": "integer",
+          "default": 1000
+        },
+        "required_image_count": {
+          "type": "integer",
+          "default": 7
+        }
       }
     },
-
     "competitive_insights": {
       "type": "object",
       "properties": {
-        "required_subtopics": { "type": "array", "items": { "type": "string" } },
-        "content_gaps": { "type": "array", "items": { "type": "string" } },
-        "depth_expectations": { "type": "string" }
+        "required_subtopics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "content_gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "depth_expectations": {
+          "type": "string"
+        }
       }
     },
-
     "outline": {
       "type": "array",
-      "items": { "$ref": "#/definitions/section_node" }
+      "items": {
+        "$ref": "#/definitions/section_node"
+      }
     },
-
     "final_output": {
       "type": "object",
       "properties": {
-        "full_markdown": { "type": "string" },
-        "meta_title": { "type": "string" },
-        "meta_description": { "type": "string" },
-        "validation_report": { "type": "object" }
+        "full_markdown": {
+          "type": "string"
+        },
+        "meta_title": {
+          "type": "string"
+        },
+        "meta_description": {
+          "type": "string"
+        },
+        "validation_report": {
+          "type": "object"
+        }
       }
     }
   },
-
   "definitions": {
     "section_node": {
       "type": "object",
-      "required": ["section_id", "heading_level", "heading_text"],
+      "required": [
+        "section_id",
+        "heading_level",
+        "heading_text"
+      ],
       "properties": {
-        "section_id": { "type": "string" },
-        "heading_level": { "type": "string", "enum": ["H2", "H3", "H4"] },
-        "heading_text": { "type": "string" },
-        "section_intent": { "type": "string" },
-        "assigned_keywords": { "type": "array", "items": { "type": "string" } },
+        "section_id": {
+          "type": "string"
+        },
+        "heading_level": {
+          "type": "string",
+          "enum": [
+            "H2",
+            "H3",
+            "H4"
+          ]
+        },
+        "heading_text": {
+          "type": "string"
+        },
+        "section_intent": {
+          "type": "string"
+        },
+        "assigned_keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "assigned_links": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["url", "anchor_text", "link_type"],
+            "required": [
+              "url",
+              "anchor_text",
+              "link_type"
+            ],
             "properties": {
-              "url": { "type": "string" },
-              "anchor_text": { "type": "string" },
-              "link_type": { "type": "string", "enum": ["internal", "external"] }
+              "url": {
+                "type": "string"
+              },
+              "anchor_text": {
+                "type": "string"
+              },
+              "link_type": {
+                "type": "string",
+                "enum": [
+                  "internal",
+                  "external"
+                ]
+              }
             }
           }
         },
-        "estimated_word_count": { "type": "integer" },
-        "generated_content": { "type": "string" }
+        "estimated_word_count": {
+          "type": "integer"
+        },
+        "generated_content": {
+          "type": "string"
+        }
       }
     }
   }

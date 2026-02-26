@@ -61,7 +61,7 @@ IMAGES = {
 
 # config.py
 STRUCTURE_RULES = {
-    "editorial": {
+    "informational": {
         "required_h2": [
             "Pros",
             "Cons",
@@ -72,7 +72,7 @@ STRUCTURE_RULES = {
         "faq_required": True,
         "conclusion_required": True
     },
-    "brand": {
+    "brand_commercial": {
         "benefits_required": True,
         "faq_required": False,
         "strong_cta_first_core": True

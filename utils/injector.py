@@ -132,12 +132,13 @@ class DataInjector:
         
         # Base context available to all prompts
         tone_map = {
-            "commercial": "Commercial",
+            "brand_commercial": "Commercial",
             "informational": "Informational",
-            "transactional": "Commercial",
-            "comparative": "Informational"
+            "comparison": "Informational",
+            "commercial": "Commercial",
+            "transactional": "Commercial"
         }
-        tone_value = tone_map.get(current_state.get("seo_meta", {}).get("intent", "informational").lower(), "Informational")
+        tone_value = tone_map.get(current_state.get("content_type", "informational").lower(), "Informational")
 
         base_context = {
             "title": input_data.get("title", ""),

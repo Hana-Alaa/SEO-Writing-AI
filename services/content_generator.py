@@ -23,8 +23,10 @@ class OutlineGenerator:
         section.setdefault("section_id", f"section_{idx+1}")
         section.setdefault("heading_level", "H2")
         section.setdefault("heading_text", "Untitled Section")
+        section.setdefault("section_type", "core")
         section.setdefault("section_intent", "Informational")
         section.setdefault("content_goal", "")
+        section.setdefault("content_angle", "")
         section.setdefault("assigned_keywords", [])
         section.setdefault("content_scope", "")
         section.setdefault("forbidden_elements", [])
@@ -74,7 +76,8 @@ class OutlineGenerator:
             content_type: str,
             content_strategy: Dict[str, Any],
             area: Optional[str],
-            feedback: Optional[str] = None
+            feedback: Optional[str] = None,
+            mandatory_section_types: Optional[List[str]] = None
         ) -> Dict[str, Any]:
 
         prompt = self.template.render(
@@ -87,7 +90,8 @@ class OutlineGenerator:
             content_type=content_type,
             content_strategy=content_strategy,
             area=area,
-            feedback=feedback
+            feedback=feedback,
+            mandatory_section_types = mandatory_section_types or []
         )
 
         logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
@@ -179,9 +183,6 @@ class SectionWriter:
         def clean(value):
             return value if value not in [None, "", "None"] else None
 
-        # primary_keywords = section.get("primary_keywords") or supporting_keywords.get("core", [])
-        # primary_keyword = section.get("primary_keyword") or supporting_keywords.get("primary", "")
-        primary_keywords = section.get("primary_keywords") or global_keywords.get("core", [])
         primary_keyword = section.get("primary_keyword") or global_keywords.get("primary", "")
 
 
@@ -218,11 +219,9 @@ class SectionWriter:
             "brand_mentions": section.get("brand_mentions", []),
             "estimated_word_count_min": section.get("estimated_word_count_min", 300),
             "estimated_word_count_max": section.get("estimated_word_count_max", 600),
-            "primary_keywords": primary_keywords,
+            # "primary_keywords": primary_keywords,
             "article_language": article_language,
             "requires_table": section.get("requires_table", False),
-            "cta_allowed": cta_allowed,
-            "cta_type": section.get("cta_type", "none"),
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
         }

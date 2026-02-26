@@ -27,6 +27,7 @@ If intent is Commercial:
 - Place CTA in first section
 - Include benefits section
 - Avoid neutral tone sections
+- Add FAQ
 
 If intent is Informational:
 - No direct selling
@@ -41,13 +42,22 @@ STRATEGIC FOUNDATION
 You MUST follow the provided content_strategy.
 Structure and angle should reflect the primary_angle and differentiation_focus.
 
+MANDATORY STRUCTURE RULES:
+
+The following section_types are REQUIRED for this article:
+{{ mandatory_section_types }}
+
+If any required section_type is missing:
+- Regenerate the outline automatically.
+
 MANDATORY ANGLE & LOCAL SEO INJECTION:
 If area is defined:
-- The area MUST be included in the Title and the first H2 heading.
+- The first H2 heading must include the area naturally.
 - Content should reflect specific regional trends or challenges of that area.
+- If area is provided, at least one FAQ item MUST include the area in the question or answer.
 
 If content_strategy.primary_angle exists:
-- The first 2 H2 sections MUST express this angle.
+- The first 2 H2 sections should clearly reflect this angle.
 
 Hard Constraints:
 - All headings must be in "{{ article_language }}"
@@ -55,8 +65,10 @@ Hard Constraints:
 - Strict H2 → H3 → H4 hierarchy
 - Each section must declare intent
 - Assign relevant keywords per section
-- Distribute LSI keywords across sections
+
+- Assign relevant keywords to each section (LSI distribution will be enhanced programmatically).
 - Include sections inspired by PAA questions.
+- **FAQ COUNT RULE (Mandatory)**: If adding an FAQ section, you MUST include EXACTLY 4 to 6 questions. No more, no less.
 
 ----------------------------------------------------
 
@@ -78,24 +90,7 @@ Output Schema:
     "content_goal": "The problem this section solves",
     "content_angle": "Specific perspective/framing for this section",
     "assigned_keywords": ["keyword 1", "keyword 2"],
-    "content_scope": "What to include and what to avoid in this section",
-    "forbidden_elements": ["List items that are forbidden in this section"],
-    "allowed_flow_steps": ["Problem", "Promise", "Solution", "Steps", "Examples", "CTA"],
-    "image_plan": {
-      "required": true,
-      "image_type": "diagram | illustration | real-example",
-      "alt_text": "ALT text in article language"
-    },
-    "cta_allowed": true,
-    "cta_type": "soft",
-    "cta_rules": {
-        "placement": "first_paragraph | none",
-        "max_sentences": 1,
-        "mandatory": false
-    },
-    "requires_table": true, 
-    "table_columns": ["Feature", "Traditional Approach", "Recommended Approach"],
-    "target_word_count": 400
+    "cta_allowed": true
   }
 ],
   "keyword_expansion": {

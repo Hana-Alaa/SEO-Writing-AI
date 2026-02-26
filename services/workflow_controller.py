@@ -134,7 +134,7 @@ class AsyncWorkflowController:
         state.setdefault("sections", {})
         state.setdefault("images", [])
         state.setdefault("final_output", {})
-        state.setdefault("content_type", "editorial")
+        state.setdefault("content_type", "informational")
         state.setdefault("brand_link_used", 0)
 
         steps = [
@@ -286,31 +286,45 @@ class AsyncWorkflowController:
         clean = re.sub(r"```json|```", "", raw).strip()
         data = recover_json(clean) or {}
 
-        intent = data.get("intent", "Informational")
+        # intent = data.get("intent", "Informational")
+        intent_raw = data.get("intent", "Informational")
+
         serp_confirmed = (
+            state.get("seo_intelligence", {})
+                 .get("strategic_analysis", {})
+                 .get("intent_analysis", {})
+                 .get("confirmed_intent")
+        )
+
+        confidence = (
             state.get("seo_intelligence", {})
                 .get("strategic_analysis", {})
                 .get("intent_analysis", {})
-                .get("confirmed_intent")
+                .get("intent_confidence_score", 0)
         )
-        confidence = state["seo_intelligence"]["strategic_analysis"]["intent_analysis"]["intent_confidence_score"]
 
-        if confidence > 0.6:
-            intent = serp_confirmed
+        if confidence > 0.6 and serp_confirmed:
+            intent_raw = serp_confirmed
+
+        intent_normalized = intent_raw.strip().lower()
+
+        state["intent"] = intent_normalized
+
+        if any(x in intent_normalized for x in ["commercial", "transactional"]):
+            state["content_type"] = "brand_commercial"
+        elif any(x in intent_normalized for x in ["comparison", "comparative"]):
+            state["content_type"] = "comparison"
+        else:
+            state["content_type"] = "informational"
+
 
         optimized_title = data.get("optimized_title", raw_title)
 
-        state["intent"] = intent
-        if intent in ["Transactional", "Commercial"]:
-            state["content_type"] = "brand"
-        else:
-            state["content_type"] = "editorial"
         # state["content_strategy"] = {
         #     "intent": intent,
         #     "area": state.get("area"),
         #     "competitive_mode": "serp_driven"
         # }
-        state["intent"] = intent
         state["input_data"]["title"] = optimized_title
 
         return state
@@ -459,9 +473,19 @@ class AsyncWorkflowController:
         content_strategy = state.get("content_strategy", {})
         area = state.get("area")
         
-        content_type = state.get("content_type", "editorial") or "editorial"
-        intent = state.get("intent") or "Informational"
+        content_type = state.get("content_type", "informational") or "informational"
+        intent = state.get("intent") or "informational"
         article_language = input_data.get("article_language", "en")
+        content_strategy = state.get("content_strategy", {})
+
+        mandatory = set(self.REQUIRED_STRUCTURE_BY_TYPE[content_type]["mandatory"])
+
+        structural = seo_intelligence.get("strategic_analysis", {}).get("structural_intelligence", {})
+        pricing_ratio = structural.get("pricing_presence_ratio", 0)
+
+        if pricing_ratio > 0.4:
+            mandatory.add("pricing")
+    
         
         feedback = None
         outline = []
@@ -479,7 +503,8 @@ class AsyncWorkflowController:
                 content_type=content_type,
                 content_strategy=content_strategy,
                 area=area,
-                feedback=feedback
+                feedback=feedback,
+                mandatory_section_types = list(mandatory)
             )
 
             if not outline_data or not outline_data.get("outline"):
@@ -536,8 +561,31 @@ class AsyncWorkflowController:
 
         # Final metadata and normalization
         paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
-        self.enforce_paa_sections(outline, paa_questions, min_percent=0.15)
+        paa_check = self.enforce_paa_sections(outline, paa_questions, min_percent=0.15)
+        if not paa_check["paa_ok"]:
+            logger.warning(
+                f"[paa_validate] PAA coverage too low: {paa_check['paa_ratio']:.0%} "
+                f"(missing ~{paa_check['missing_count']} PAA-inspired H2s). "
+                f"Prompt 01_outline_generator.txt should produce ≥15% PAA coverage."
+            )
         
+        # Ensure mandatory sections exist (for logging/debugging)
+        present_types = {(s.get("section_type") or "").lower().strip() for s in outline}
+        if "faq" not in present_types:
+            logger.warning("[outline_validate] Missing section_type='faq'.")
+        if "conclusion" not in present_types:
+            logger.warning("[outline_validate] Missing section_type='conclusion'.")
+
+        # Prevent duplicate H2 headings
+        seen_h2 = set()
+        unique_outline = []
+        for sec in outline:
+            if (sec.get("heading_level") or "").upper() == "H2" and sec["heading_text"] in seen_h2:
+                sec["heading_text"] += f" ({len(seen_h2)+1})"
+            seen_h2.add(sec["heading_text"])
+            unique_outline.append(sec)
+        outline = unique_outline
+
         keyword_expansion = outline_data.get("keyword_expansion", {})
         state["global_keywords"] = keyword_expansion
         
@@ -568,10 +616,8 @@ class AsyncWorkflowController:
             "affiliate_policy": {"max_per_section": 3, "placement": "distributed", "tone": "neutral"}
         }
         
-        primary_keywords = keywords[:]
-        primary_keyword = primary_keywords[0] if primary_keywords else title
+        primary_keyword = keywords[0] if keywords else title
         for sec in outline:
-            sec["primary_keywords"] = primary_keywords
             sec["primary_keyword"] = primary_keyword
             sec["article_language"] = article_language
             if not sec.get("assigned_keywords"):
@@ -579,149 +625,15 @@ class AsyncWorkflowController:
                  sec["assigned_keywords"] = keywords[:3] if keywords else [primary_keyword]
         
         state["outline"] = outline
-        return state
-        content_strategy = state.get("content_strategy", {})
-        area = state.get("area")
-        
-        content_type = state.get("content_type", "editorial") or "editorial"
-        intent = state.get("intent") or "Informational"
-        content_strategy = state.get("content_strategy", {})
-        article_language = input_data.get("article_language", "en")
-        
-        outline_data = await self.outline_gen.generate(
-            title=title,
-            keywords=keywords,
-            urls=urls_raw,
-            article_language=article_language,
-            intent=intent,
-            seo_intelligence=seo_intelligence,
-            content_type=content_type,
-            content_strategy=content_strategy,
-            area=area,
-        )
+        present_types = {sec.get("section_type") for sec in outline}
 
-        if not outline_data:
-            raise RuntimeError("Outline generation returned empty result.")
-        
-        outline = outline_data.get("outline", [])
-        
-        # -----------------------------------
-        # Step 1: Enforce base structure & PAA
-        outline = self._enforce_outline_structure(
-            outline,
-            intent=intent,
-            area=area,
-            content_type=content_type
-        )
-        
-        outline = self._enforce_intent_distribution(
-            outline,
-            state["intent"],
-            state["content_type"]
-        )
+        missing = mandatory - present_types
 
-        outline = self._inject_local_seo(outline, state.get("area"))
+        if missing:
+            logger.error(f"[outline_validate] Missing mandatory sections: {missing}")
+            # we could raise error or just log depending on strictness
+            # raise ValueError(f"Missing mandatory sections: {missing}")
 
-        outline = self._enforce_content_angle(
-            outline,
-            state.get("content_strategy")
-        )
-
-        outline = self._adjust_paa_by_intent(
-            outline,
-            state["intent"]
-        )
-
-        self._validate_outline_quality(outline, state["intent"])
-
-        paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
-        paa_check = self.enforce_paa_sections(outline, paa_questions, min_percent=0.15)
-        if not paa_check["paa_ok"]:
-            logger.warning(
-                f"[paa_validate] PAA coverage too low: {paa_check['paa_ratio']:.0%} "
-                f"(missing ~{paa_check['missing_count']} PAA-inspired H2s). "
-                f"Prompt 01_outline_generator.txt should produce ≥15% PAA coverage."
-            )
-        
-        present_types = {
-            (s.get("section_type") or "").lower().strip() for s in outline
-        }
-        if "faq" not in present_types:
-            logger.warning(
-                "[outline_validate] Missing section_type='faq'. "
-                "Prompt 01_outline_generator.txt must include a faq section."
-            )
-        if "conclusion" not in present_types:
-            logger.warning(
-                "[outline_validate] Missing section_type='conclusion'. "
-                "Prompt 01_outline_generator.txt must include a conclusion section."
-            )
-        
-        # -----------------------------------
-        # Step 4: Prevent duplicate H2 headings
-        seen_h2 = set()
-        unique_outline = []
-        for sec in outline:
-            if (sec.get("heading_level") or "").upper() == "H2" and sec["heading_text"] in seen_h2:
-                sec["heading_text"] += f" ({len(seen_h2)+1})"
-            seen_h2.add(sec["heading_text"])
-            unique_outline.append(sec)
-        outline = unique_outline
-        
-        # -----------------------------------
-        # Step 5: Normalize sections & distribute LSI keywords
-        keyword_expansion = outline_data.get("keyword_expansion", {})
-        state["global_keywords"] = keyword_expansion
-        
-        lsi_keywords = keyword_expansion.get("lsi", [])
-        if lsi_keywords:
-            # Round-robin distribution across sections
-            # for idx, sec in enumerate(outline):
-            #     sec["assigned_keywords"].extend([lsi_keywords[i % len(lsi_keywords)] for i in range(idx, idx+3)])
-        
-            lsi_pool = lsi_keywords.copy()
-
-            for sec in outline:
-                sec_lsi = lsi_pool[:3]
-                sec["assigned_keywords"].extend(sec_lsi)
-                lsi_pool = lsi_pool[3:]
-    
-        for idx, sec in enumerate(outline):
-            self.outline_gen._normalize_section(
-                sec,
-                idx,
-                content_type,
-                content_strategy,
-                area
-            )
-        
-        # -----------------------------------
-        urls_norm = normalize_urls(urls_raw)
-        state["brand_url"] = urls_norm[0].get("link") if urls_norm else None
-        outline = DataInjector.distribute_urls_to_outline(outline, urls_norm, strategy="conservative")
-        
-        state["link_strategy"] = {
-            "internal_topics": [u for u in urls_norm if u.get("type") == "internal"],
-            "authority_topics": [u for u in urls_norm if u.get("type") == "authority"],
-            "affiliate_policy": {
-                "max_per_section": 3,
-                "placement": "distributed",
-                "tone": "neutral"
-            }
-        }
-        
-        primary_keywords = keywords[:]
-        primary_keyword = primary_keywords[0] if primary_keywords else title
-        for sec in outline:
-            sec["primary_keywords"] = primary_keywords
-            sec["primary_keyword"] = primary_keyword
-            sec["article_language"] = article_language
-        
-        for sec in outline:
-            if not sec.get("assigned_keywords"):
-                raise ContentGeneratorError(f"Section {sec.get('section_id')} missing assigned keywords.")
-        
-        state["outline"] = outline
         return state
 
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -737,7 +649,7 @@ class AsyncWorkflowController:
         if not outline:
             raise RuntimeError("No outline found for section writing.")
 
-        content_type = state.get("content_type", "editorial")
+        content_type = state.get("content_type", "informational")
 
         tasks = [
             self._write_single_section(
@@ -771,20 +683,55 @@ class AsyncWorkflowController:
                 sections_content[res["section_id"]] = res
 
         state["sections"] = sections_content
-        if sections_content:
-            first_section = list(sections_content.values())[0]
-            if state.get("area"):
-                if state["area"].lower() not in first_section["generated_content"].lower():
-                    logger.warning("Local area missing in first section content")
+        
+        # Local SEO Enforcement (Retry first section if area is missing)
+        area = state.get("area")
+        if area and sections_content:
+            first_id = outline[0]["section_id"]
+            first_res = sections_content.get(first_id)
+            
+            if first_res and area.lower() not in first_res["generated_content"].lower():
+                logger.info(f"Local area '{area}' missing in first section. Retrying with enforcement...")
+                
+                # Regenerate first section once
+                retry_res = await self._write_single_section(
+                    title,
+                    global_keywords,
+                    outline[0],
+                    intent,
+                    seo_intelligence,
+                    content_type,
+                    link_strategy,
+                    state,
+                    force_local=True
+                )
+                
+                if retry_res:
+                    sections_content[first_id] = retry_res
+                    state["sections"] = sections_content
+                    logger.info("First section regenerated successfully with Local SEO enforcement.")
+                else:
+                    logger.warning("Retry of first section failed.")
 
         logger.info(f"Successfully wrote {len(sections_content)} sections.")
         return state
 
-    async def _write_single_section( self, title: str, global_keywords: Dict[str, Any], section: Dict[str, Any], article_intent: str, seo_intelligence: Dict[str, Any], content_type: str, link_strategy: Dict[str, Any], state: Dict[str, Any],)-> Optional[Dict[str, Any]]:
+    async def _write_single_section(
+        self,
+        title: str,
+        global_keywords: Dict[str, Any],
+        section: Dict[str, Any],
+        article_intent: str,
+        seo_intelligence: Dict[str, Any],
+        content_type: str,
+        link_strategy: Dict[str, Any],
+        state: Dict[str, Any],
+        force_local: bool = False
+    ) -> Optional[Dict[str, Any]]:
         """Worker to write one section."""
         
         section_id = section.get("section_id") or section.get("id")
-        # content_type = state.get("content_type", "editorial")
+        # content_type = state.get("content_type", "informational")
         urls = state.get("input_data", {}).get("urls", [])
         # brand_url = urls[0].get("link") if urls else None
         brand_url = state.get("brand_url")
@@ -797,6 +744,11 @@ class AsyncWorkflowController:
         brand_link_used = state.get("brand_link_used", 0)
 
         execution_plan = self._build_execution_plan(section, state)
+        if force_local:
+            execution_plan["local_context_required"] = True
+            
+        execution_plan["brand_link_allowed"] = (brand_link_used == 0)
+        execution_plan["brand_url"] = brand_url
 
         content = await self.section_writer.write(
             title=title,
@@ -932,6 +884,12 @@ class AsyncWorkflowController:
 
         meta_json = enforce_meta_lengths(meta_json)
 
+        # Enforce H1 Length (Strict)
+        h1 = meta_json.get("h1", "")
+        if h1 and not self.validate_h1_length(h1):
+            logger.error(f"H1 length invalid ({len(h1)} chars).")
+            raise ValueError("H1 length invalid")
+            
         state["seo_meta"] = meta_json
         return state
 
@@ -977,23 +935,20 @@ class AsyncWorkflowController:
         if not ok:
             critical_issues.append(issue)
 
-        if state.get("content_type") == "brand":
-            ratio = self.calculate_sales_density(final_md)
+        if state.get("content_type") == "brand_commercial":
+            structural_intel = state.get("seo_intelligence", {}).get("strategic_analysis", {}).get("structural_intelligence", {})
+            article_language = state.get("article_language", "en")
             
-            # Dynamic threshold based on SERP structural intelligence
-            serp_strat = state.get("seo_intelligence", {}).get("strategic_analysis", {})
-            struct_intel = serp_strat.get("structural_intelligence", {})
-            cta_intensity = str(struct_intel.get("cta_intensity_pattern", "soft")).lower()
+            is_dense_enough = self.calculate_sales_density(
+                final_md, 
+                state.get("intent"), 
+                article_language, 
+                structural_intel
+            )
             
-            threshold_map = {
-                "soft": 0.25,
-                "moderate": 0.35,
-                "aggressive": 0.45
-            }
-            required_ratio = threshold_map.get(cta_intensity, 0.25)
-
-            if ratio < required_ratio:
-                critical_issues.append(f"Sales density too low: {ratio} (Target: {required_ratio} based on {cta_intensity} SERP pattern)")
+            if not is_dense_enough:
+                intensity = structural_intel.get("cta_intensity_pattern", "soft commercial")
+                critical_issues.append(f"Sales density too low for {intensity} mode")
 
         ok, local_issues = self.validate_local_seo(
             final_md,
@@ -1002,12 +957,34 @@ class AsyncWorkflowController:
         )
         critical_issues.extend(local_issues)
 
+        # Enforce Contextual Local SEO (Strict)
+        area = state.get("area")
+        if area:
+            if not self.validate_local_context(final_md, area, article_language):
+                logger.error(f"Weak local contextualization for area '{area}'")
+                raise ValueError("Weak local contextualization")
+
         ok, angle_issue = self.validate_content_angle(
             final_md,
             state.get("content_strategy", {})
         )
         if not ok:
             critical_issues.append(angle_issue)
+
+        # Enforce Final CTA in Conclusion (Commercial Articles)
+        # if state.get("intent") == "Commercial":
+        if state.get("intent", "").lower() == "commercial":
+            if not self.validate_final_cta(final_md, article_language):
+                logger.error("Missing final CTA in conclusion for Commercial article.")
+                raise ValueError("Missing final CTA")
+
+        final_md = self.auto_split_long_paragraphs(final_md)
+        state["final_output"]["final_markdown"] = final_md
+
+        # Enforce Paragraph Length Rules
+        if not self.validate_paragraph_structure(final_md):
+            logger.error("Paragraph structure violation detected.")
+            raise ValueError("Paragraph structure violation")
 
         report_raw = await self.article_validator.validate(
             final_markdown=final_md, 
@@ -1143,33 +1120,45 @@ class AsyncWorkflowController:
 
         return cleaned
 
-    def validate_intent_from_serp(serp_data, ai_intent):
-        top = serp_data.get("top_results", [])
-        if not top:
-            return ai_intent
+    def validate_intent_from_serp(self, serp_analysis: dict) -> str:
+        """Strengthened intent detection based on SERP structural intelligence."""
+        structural = serp_analysis.get("structural_intelligence", {})
 
-        service_like = 0
-        editorial_like = 0
+        page_type = structural.get("dominant_page_type", "")
+        cta_pattern = structural.get("cta_intensity_pattern", "")
+        pricing_ratio = structural.get("pricing_presence_ratio", 0)
+        faq_ratio = structural.get("faq_presence_ratio", 0)
 
-        for r in top:
-            h1 = (r.get("headings", {}).get("h1", "")).lower()
-            cta = r.get("cta_style", "")
-            word_count = r.get("estimated_word_count", 0)
+        commercial_score = 0
+        informational_score = 0
 
-            if cta in ["soft commercial", "aggressive"]:
-                service_like += 1
-            elif word_count > 1200:
-                editorial_like += 1
+        # Page type weight (strongest signal)
+        if page_type in ["service", "homepage"]:
+            commercial_score += 3
+        elif page_type in ["guide", "comparison"]:
+            informational_score += 3
 
-        if service_like >= 2:
-            return "Commercial"
+        # Pricing presence
+        if pricing_ratio > 0.4:
+            commercial_score += 2
 
-        if editorial_like >= 2:
-            return "Informational"
+        # CTA intensity
+        if cta_pattern in ["soft commercial", "aggressive"]:
+            commercial_score += 2
+        else:
+            informational_score += 1
 
-        return ai_intent
+        # FAQ presence
+        if faq_ratio > 0.4:
+            informational_score += 1
 
-    def validate_strategy_alignment(strategy, primary_keyword, area):
+        return "Commercial" if commercial_score >= informational_score else "Informational"
+
+    def validate_h1_length(self, h1: str) -> bool:
+        """Enforces H1 length rules (55-75 chars)."""
+        return 55 <= len(h1) <= 75
+
+    def validate_strategy_alignment(self, strategy, primary_keyword, area):
         angle = strategy.get("primary_angle", "").lower()
         if primary_keyword.lower() not in angle:
             return False, "Primary keyword not reflected in strategy angle"
@@ -1216,7 +1205,48 @@ class AsyncWorkflowController:
 
     _MANDATORY_ROLES: ClassVar[set] = {"introduction", "conclusion"}
     _EDITORIAL_ROLES: ClassVar[set] = {"pros", "cons", "who_for", "who_avoid"}
-    _BRAND_ROLES:     ClassVar[set] = {"benefits"}
+    # _BRAND_ROLES:     ClassVar[set] = {"benefits"}
+
+
+    REQUIRED_STRUCTURE_BY_TYPE = {
+        "brand_commercial": {
+            "mandatory": {
+                "introduction",
+                "benefits",
+                "why_choose_us",
+                "proof",
+                "process",
+                "faq",
+                "conclusion"
+            },
+            "conditional": {
+                "pricing": "if_serp_pricing"
+            }
+        },
+
+        "informational": {
+            "mandatory": {
+                "introduction",
+                "core",
+                "examples_or_use_cases",
+                "pros_cons",
+                "faq",
+                "conclusion"
+            }
+        },
+
+        "comparison": {
+            "mandatory": {
+                "introduction",
+                "comparison",
+                "criteria",
+                "pros_cons_each",
+                "who_should_choose_what",
+                "faq",
+                "conclusion"
+            }
+        }
+    }
 
     def _enforce_outline_structure(self, outline: List[Dict[str, Any]], intent: str, area: Optional[str], content_type: str,) -> List[Dict[str, Any]]:
         """
@@ -1240,21 +1270,26 @@ class AsyncWorkflowController:
                 )
 
         # --- content-type specific roles ---
-        if content_type == "editorial":
+        if content_type == "informational":
             for role in self._EDITORIAL_ROLES:
                 if role not in present_types:
                     logger.warning(
-                        f"[outline_validate] Editorial outline missing section_type='{role}'. "
-                        f"Expected for content_type='editorial'."
+                        f"[outline_validate] Informational outline missing section_type='{role}'. "
+                        f"Expected for content_type='informational'."
                     )
 
-        elif content_type == "brand":
-            for role in self._BRAND_ROLES:
-                if role not in present_types:
-                    logger.warning(
-                        f"[outline_validate] Brand outline missing section_type='{role}'. "
-                        f"Expected for content_type='brand'."
-                    )
+        # elif content_type == "brand_commercial":
+        #     for role in self.REQUIRED_STRUCTURE_BY_TYPE :
+        #         if role not in present_types:
+        #             logger.warning(
+        #                 f"[outline_validate] Brand outline missing section_type='{role}'. "
+        #                 f"Expected for content_type='brand_commercial'."
+        #             )
+        elif content_type == "brand_commercial":
+            required = self.REQUIRED_STRUCTURE_BY_TYPE["brand_commercial"]["mandatory"]
+            missing = required - present_types
+            if missing:
+                raise ValueError(f"Brand outline missing mandatory sections: {missing}")
 
         # --- assign section_ids for any section that is missing one ---
         for i, sec in enumerate(outline):
@@ -1267,7 +1302,7 @@ class AsyncWorkflowController:
         errors = []
         h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
 
-        if content_type == "brand":
+        if content_type == "brand_commercial":
             commercial_sections = [
                 s for s in h2_sections
                 if s.get("section_intent") in ["Commercial", "Transactional"]
@@ -1278,7 +1313,7 @@ class AsyncWorkflowController:
             if ratio < 0.6:
                 errors.append(f"Commercial intent distribution too weak ({ratio:.0%}). Brand articles require at least 60% commercial/transactional H2 sections.")
 
-        if intent == "Informational":
+        if intent.lower() == "informational":
             for s in outline:
                 if s.get("cta_allowed"):
                     errors.append(f"Section '{s.get('heading_text')}' allows CTA but article intent is Informational.")
@@ -1387,6 +1422,13 @@ class AsyncWorkflowController:
         if len(texts) != len(set(texts)):
             errors.append("Duplicate H2 headings detected. Each heading must be unique.")
 
+        # FAQ Count Validation
+        faq_items = [s for s in outline if s.get("section_type") == "faq" or s.get("parent_section") == "sec_faq"]
+        if len(faq_items) > 6:
+            errors.append(f"Too many FAQ items detected ({len(faq_items)}). Maximum allowed is 6.")
+        if 0 < len(faq_items) < 4:
+            errors.append(f"Too few FAQ items detected ({len(faq_items)}). Minimum required is 4.")
+
         return errors
 
     def _build_execution_plan(self, section, state):
@@ -1398,7 +1440,7 @@ class AsyncWorkflowController:
         plan["structure_rule"] = "standard structured paragraphs"
         
         # Writing Mode
-        if content_type == "brand":
+        if content_type == "brand_commercial":
             plan["writing_mode"] = "persuasive"
             plan["tone"] = "authoritative, confident"
             plan["conversion_weight"] = 0.8
@@ -1418,7 +1460,7 @@ class AsyncWorkflowController:
         plan["local_context_required"] = bool(area)
 
         # CTA Rules
-        if content_type == "brand" and section.get("section_type") == "core":
+        if content_type == "brand_commercial" and section.get("section_type") in ["core", "introduction"]:
             # Override with structural insights if available
             structural = state.get("seo_intelligence", {}).get("strategic_analysis", {}).get("structural_intelligence", {})
             plan["cta_position"] = structural.get("cta_position_pattern") or "first_paragraph"
@@ -1457,6 +1499,33 @@ class AsyncWorkflowController:
         plan["cta_pattern"] = structural.get("cta_position_pattern") or None
         plan["cta_intensity"] = structural.get("cta_intensity_pattern") or None
 
+        plan["cta_enabled"] = plan["cta_position"] != "none"
+
+        if plan["cta_enabled"]:
+            plan["cta_type"] = "soft" if plan["cta_strength"] == "medium" else "strong"
+        else:
+            plan["cta_type"] = "none"
+
+        ROLE_EXECUTION_RULES = {
+            "proof": {
+                "structure_rule": "evidence-driven credibility",
+                "writing_mode": "persuasive",
+                "conversion_weight": 0.8
+            },
+            "why_choose_us": {
+                "structure_rule": "differentiation positioning",
+                "writing_mode": "persuasive",
+                "conversion_weight": 0.9
+            },
+            "pricing": {
+                "structure_rule": "roi transparency framing",
+                "writing_mode": "analytical",
+                "conversion_weight": 0.85
+            }
+        }
+        role_rules = ROLE_EXECUTION_RULES.get(section_type, {})
+        plan.update(role_rules)
+
         return plan
 
     def validate_sales_intro(self, markdown: str, intent: str):
@@ -1475,21 +1544,76 @@ class AsyncWorkflowController:
 
         return False, "Missing CTA in first 200 words for sales article"
 
-    def calculate_sales_density(self, markdown: str):
-        sales_terms = [
-            "خدمة", "شركة", "نقدم", "نساعدك", "تواصل",
-            "عرض سعر", "استشارة", "احجز", "أفضل شركة"
-        ]
+    sales_terms_by_language = {
+        "ar": ["اتصل", "تواصل", "احجز", "اطلب", "سعر", "خدمة", "شركة"],
+        "en": ["contact", "call", "book", "order", "price", "service", "agency"]
+    }
 
-        paragraphs = [p.strip() for p in markdown.split("\n") if p.strip()]
-        sales_count = 0
+    local_context_terms = {
+        "ar": ["السوق", "العملاء في", "شركات في", "المنافسة في"],
+        "en": ["market in", "businesses in", "companies in", "competition in"]
+    }
+
+    def calculate_sales_density(self, text: str, intent: str, language: str, structural_intel: dict) -> bool:
+        if intent.lower() != "commercial":
+           return True
+
+        terms = sales_terms_by_language.get(language, [])
+        paragraphs = [p for p in text.split("\n") if len(p.strip()) > 30]
+
+        if not paragraphs:
+            return False
+
+        sales_count = sum(
+            any(term.lower() in p.lower() for term in terms)
+            for p in paragraphs
+        )
+
+        ratio = sales_count / len(paragraphs)
+
+        intensity = structural_intel.get("cta_intensity_pattern", "soft commercial")
+
+        required_ratio = {
+            "aggressive": 0.5,
+            "soft commercial": 0.3
+        }.get(intensity, 0.3)
+
+        return ratio >= required_ratio
+
+    def validate_final_cta(self, text: str, language: str) -> bool:
+        """Enforces a final CTA presence in the last 300 characters of the article."""
+        terms = self.sales_terms_by_language.get(language, [])
+        last_300 = text[-300:].lower()
+        return any(term.lower() in last_300 for term in terms)
+
+    def validate_local_context(self, text: str, area: str, language: str) -> bool:
+        """Enforces a contextual mention of the local area beyond simple keyword presence."""
+        context_terms = self.local_context_terms.get(language, [])
+        text_lower = text.lower()
+
+        if area.lower() not in text_lower:
+            return False
+
+        return any(term.lower() in text_lower for term in context_terms)
+
+    def validate_paragraph_structure(self, text: str) -> bool:
+        paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 40]
 
         for p in paragraphs:
-            if any(term in p for term in sales_terms):
-                sales_count += 1
+            words = p.split()
+            if len(words) < 40 or len(words) > 100:
+                return False
 
-        ratio = sales_count / max(len(paragraphs), 1)
-        return round(ratio, 2)
+            sentences = re.split(r'[.!؟]', p)
+            sentences = [s for s in sentences if len(s.strip()) > 5]
+
+            if len(sentences) < 2 or len(sentences) > 4:
+                return False
+
+            if len(p) > 650: 
+                return False
+
+        return True
 
     def validate_local_seo(self, markdown: str, meta: dict, area: str):
         if not area:
@@ -1530,136 +1654,16 @@ class AsyncWorkflowController:
 
         return True, None
 
-    # async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
-    #     """Generates the article outline using AI."""
-    #     input_data = state.get("input_data", {})
-    #     title = input_data.get("title") or "Untitled"
-    #     keywords = input_data.get("keywords") or []
-    #     urls_raw = input_data.get("urls", [])
-    #     seo_intelligence = state.get("seo_intelligence", {})
-    #     content_strategy = state.get("content_strategy", {})
-    #     area = state.get("area")
+    def validate_outline(outline, article_type):
+        required = REQUIRED_STRUCTURE_BY_TYPE[article_type]["mandatory"]
+        existing = {section["section_type"] for section in outline}
+
+        missing = required - existing
+
+        if missing:
+            raise StructureError(f"Missing mandatory sections: {missing}")
+
         
-    #     content_type = state.get("content_type", "editorial")
-    #     if not content_type:
-    #         content_type = "editorial"
-
-    #     intent = state.get("intent") or "Informational"
-    #     article_language = input_data.get("article_language", "en")
-
-    #     outline_data = await self.outline_gen.generate(
-    #         title=title,
-    #         keywords=keywords,
-    #         urls=urls_raw,
-    #         article_language=article_language,
-    #         intent=intent,
-    #         seo_intelligence=seo_intelligence,
-    #         content_type=content_type,
-    #         content_strategy=content_strategy,
-    #         area=area
-    #     )
-
-    #     if not outline_data:
-    #         raise RuntimeError("Outline generation returned empty result.")
-
-    #     outline = outline_data.get("outline", [])
-
-    #     # enforce first
-    #     outline = self._enforce_outline_structure(
-    #         outline,
-    #         intent=intent,
-    #         area=area,
-    #         content_type=content_type
-    #     )
-    #     paa_questions = seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])
-    #     outline = self.enforce_paa_sections(outline, paa_questions, min_percent=0.3)
-    #     rules = content_strategy.get("rules", {})
-    #     if rules.get("faq_required") and not any("FAQ" in sec["heading_text"] for sec in outline):
-    #         outline.append(self.generate_faq_section(seo_intelligence.get("semantic_assets", {}).get("paa_questions", [])))
-    #     # Force Conclusion if missing
-    #     if not any("خاتمة" in sec.get("heading_text", "") or 
-    #        "Conclusion" in sec.get("heading_text", "")
-    #        for sec in outline):
-
-    #         outline.append({
-    #             "section_id": f"sec_{len(outline)+1:02}",
-    #             "heading_level": "H2",
-    #             "heading_text": "الخاتمة",
-    #             "section_intent": state.get("intent", "Informational"),
-    #             "content_goal": "تلخيص المقال وتوجيه القارئ لاتخاذ القرار",
-    #             "assigned_keywords": [state.get("primary_keyword", "")],
-    #             "content_scope": "تلخيص المزايا والعيوب وتوصية نهائية واضحة",
-    #             "forbidden_elements": [],
-    #             "allowed_flow_steps": ["Summary", "Recommendation", "CTA"],
-    #             "image_plan": {
-    #                 "required": False,
-    #                 "image_type": "none",
-    #                 "alt_text": ""
-    #             },
-    #             "cta_allowed": True,
-    #             "cta_type": "soft",
-    #             "cta_rules": {
-    #                 "placement": "none",
-    #                 "max_sentences": 1,
-    #                 "mandatory": False
-    #             },
-    #             "requires_table": False,
-    #             "table_columns": [],
-    #             "estimated_word_count_min": 150,
-    #             "estimated_word_count_max": 250
-    #         })
-
-    #     for idx, sec in enumerate(outline):
-    #         self.outline_gen._normalize_section(
-    #             sec,
-    #             idx,
-    #             content_type,
-    #             content_strategy,
-    #             area
-    #         )
-
-    #     keyword_expansion = outline_data.get("keyword_expansion", {})
-    #     state["global_keywords"] = keyword_expansion
-
-    #     urls_norm = normalize_urls(urls_raw)
-    #     brand_url = urls_norm[0].get("link") if urls_norm else None
-    #     state["brand_url"] = brand_url
-
-    #     # Use "conservative" strategy for Guest Post / External publishing mode
-    #     outline = DataInjector.distribute_urls_to_outline(outline, urls_norm, strategy="conservative")
-
-    #     state["link_strategy"] = {
-    #         "internal_topics": [u for u in urls_norm if u.get("type") == "internal"],
-    #         "authority_topics": [u for u in urls_norm if u.get("type") == "authority"],
-    #         "affiliate_policy": {
-    #             "max_per_section": 3,
-    #             "placement": "distributed",
-    #             "tone": "neutral"
-    #         }
-    #     }
-
-    #     primary_keywords = keywords[:] 
-    #     primary_keyword = primary_keywords[0] if primary_keywords else title
-
-    #     for sec in outline:
-    #         sec["primary_keywords"] = primary_keywords
-    #         sec["primary_keyword"] = primary_keyword
-    #         sec["article_language"] = article_language
-
-    #     for sec in outline:
-    #         if not sec.get("assigned_keywords"):
-    #             raise ContentGeneratorError(
-    #                 f"Section {sec.get('section_id')} missing assigned keywords."
-    #             )
-
-    #     if not outline:
-    #         raise ContentGeneratorError("AI returned empty outline list.")
-
-    #     state["outline"] = outline
-    #     return state
-
-
-
     # async def _step_4_validate_sections(self, state):
     #     input_data = state.get("input_data", {})
     #     title = input_data.get("title", "Untitled")
@@ -1716,65 +1720,6 @@ class AsyncWorkflowController:
 
     #     return state
 
-    # async def _step_0_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
-    #     """Setup unique directories and sluggification."""
-
-    #     input_data = state.get("input_data", {})
-    #     raw_title = input_data.get("title", "Untitled Article")
-    #     keywords = input_data.get("keywords", [])
-    #     primary_keyword = keywords[0] if keywords else raw_title
-    #     user_lang = input_data.get("article_language")
-    #     article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
-        
-    #     intent = await self._detect_intent_ai(raw_title, primary_keyword)
-
-    #     valid_intents = {"Informational", "Commercial", "Transactional", "Comparative"}
-
-    #     if intent not in valid_intents:
-    #         logger.warning(f"Invalid intent returned: {intent}")
-    #         intent = "Informational"
-
-    #     # competitive_raw = await self.ai_client.send(
-    #     #     f"Provide competitive SERP-style structural insights for the keyword: {primary_keyword}",
-    #     #     step="competitive_analysis"
-    #     # )
-    #     # competitive_insights = recover_json(competitive_raw) or {"notes": competitive_raw}
-
-    #     optimized_title = await self.title_generator.generate(
-    #         raw_title=raw_title,
-    #         primary_keyword=primary_keyword,
-    #         intent=intent,
-    #         article_language=article_language
-    #     )
-
-    #     state["input_data"]["title"] = optimized_title
-        
-    #     # Add timestamp to slug for unique folder
-    #     import datetime
-    #     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    #     slug_base = self._sluggify(optimized_title)
-    #     slug = f"{slug_base}_{timestamp}"
-        
-    #     state["primary_keyword"] = primary_keyword
-    #     state["intent"] = intent
-    #     state["slug"] = slug
-    #     state["input_data"]["article_language"] = article_language
-    #     # state["competitive_insights"] = competitive_insights
-
-    #     article_dir = os.path.join(self.work_dir, "output", slug)
-    #     image_dir = os.path.join(article_dir, "images")
-    #     os.makedirs(image_dir, exist_ok=True)
-
-        
-    #     base_url = "https://yourdomain.com/"
-    #     final_url = base_url + slug
-    #     state["final_url"] = final_url
-
-    #     # Update client storage path
-    #     self.image_client.save_dir = image_dir
-        
-    #     state["output_dir"] = article_dir
-    #     return state
 
     # async def _step_semantic_layer(self, state):
 

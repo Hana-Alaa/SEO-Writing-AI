@@ -29,14 +29,21 @@ INPUT:
 
 TASKS:
 
+0. H1 (ARTICLE HEADLINE)
+- Length: 60–70 characters
+- Must be the primary, search-optimized heading
+- Must include Primary Keyword naturally
+- If Target Area is provided, Title MUST include the area naturally.
+
 1. META TITLE
 - Length: 60–70 characters
 - Must include the Primary Keyword naturally
+- If Target Area is provided, MUST include the area naturally.
 - Must match the Article Intent:
     - Informational → Educational / helpful tone
     - Commercial → Persuasive but not spammy
     - Transactional → Action-focused
-    - Comparative → Neutral comparison tone
+    - Comparison → Neutral comparison tone
 - Do NOT stuff keywords
 - Do NOT use clickbait
 - Respect article language
@@ -44,6 +51,7 @@ TASKS:
 2. META DESCRIPTION
 - Length: 150–160 characters
 - Must include the Primary Keyword naturally
+- If Target Area is provided, MUST include the area naturally.
 - Clear, value-driven, action-oriented
 - Must accurately reflect the article content
 - Respect article language
@@ -87,6 +95,7 @@ OUTPUT:
 Return ONLY valid JSON in this structure:
 
 {
+  "h1": "",
   "meta_title": "",
   "meta_description": "",
   "meta_keywords": "",

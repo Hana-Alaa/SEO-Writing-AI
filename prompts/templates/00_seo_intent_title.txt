@@ -16,8 +16,8 @@ If SERP majority is educational → classify as Informational.
 If more than 60% of SERP titles indicate a specific intent, that intent MUST override raw title meaning.
 
 Step 2: Based strictly on the detected intent above, generate optimized H1.
-If Target Area is provided and intent is Commercial,
-the optimized title SHOULD include the area naturally.
+If Target Area is provided,
+the optimized title MUST include the area naturally (Mandatory).
 
 Intent definitions:
 - Informational → learning
