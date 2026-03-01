@@ -18,6 +18,10 @@ Context:
 
 Validation Checklist:
 
+0. **Total Word Count (CRITICAL)**
+   - Total word count MUST be at least 1000 words. [CRITICAL]
+   - Expand to 3000–5000 words naturally if the topic allows. [WARNING]
+
 1. **Headings**
    - H1 exists, matches article title, length 60–70 chars. [CRITICAL]
    - H2/H3 hierarchy is logical and consistent. [WARNING]

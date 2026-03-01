@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
 
     <style>
@@ -25,16 +25,58 @@
             --border-color: #e2e8f0;
             --code-bg: #1e293b;
             --code-text: #e2e8f0;
+
+            /* Dynamic Fonts */
+            --font-main: {
+                % if dir=='rtl' %
+            }
+
+            'IBM Plex Sans Arabic',
+            'Inter',
+            'Roboto',
+            sans-serif {
+                % else %
+            }
+
+            'Inter',
+            'Roboto',
+            sans-serif {
+                % endif %
+            }
+
+            ;
+
+            --font-heading: {
+                % if dir=='rtl' %
+            }
+
+            'Readex Pro',
+            'Outfit',
+            'Inter',
+            sans-serif {
+                % else %
+            }
+
+            'Outfit',
+            'Inter',
+            sans-serif {
+                % endif %
+            }
+
+            ;
         }
 
         body {
-            font-family: 'Tajawal', 'Cairo', sans-serif;
+            font-family: var(--font-main);
             background-color: var(--bg-color);
             color: var(--text-color);
-            line-height: 1.8;
+            line-height: 1.9;
+            /* Slightly increased for readability */
             margin: 0;
             padding: 0;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         header {
@@ -42,6 +84,7 @@
             border-bottom: 1px solid var(--border-color);
             padding: 2rem 1rem;
             text-align: center;
+            /* H1 inside header will be centered */
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
@@ -59,16 +102,18 @@
         }
 
         h1 {
-            font-family: 'Cairo', sans-serif;
+            font-family: var(--font-heading);
             font-size: 2.5rem;
             color: var(--heading-color);
             margin-bottom: 1.5rem;
             line-height: 1.3;
             font-weight: 700;
+            text-align: center;
+            /* Force center H1 */
         }
 
         h2 {
-            font-family: 'Cairo', sans-serif;
+            font-family: var(--font-heading);
             font-size: 1.8rem;
             color: var(--heading-color);
             margin-top: 2.5rem;
@@ -79,6 +124,7 @@
         }
 
         h3 {
+            font-family: var(--font-heading);
             font-size: 1.4rem;
             color: var(--heading-color);
             margin-top: 2rem;
@@ -86,10 +132,11 @@
         }
 
         p {
-            margin-bottom: 1.5rem;
-            font-size: 1.1rem;
+            margin-bottom: 1.7rem;
+            font-size: 1.15rem;
             text-align: justify;
             text-justify: inter-word;
+            opacity: 0.95;
         }
 
         a {
@@ -123,7 +170,7 @@
             border-radius: 4px;
         }
 
-        /* Images */
+        /* Images and Figures centering */
         img {
             max-width: 100%;
             height: auto;
@@ -133,15 +180,12 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        figure {
-            margin: 0;
-        }
-
         figcaption {
             text-align: center;
             font-size: 0.9rem;
             color: #64748b;
             margin-top: 0.5rem;
+            display: block;
         }
 
         /* Tables */
@@ -157,7 +201,6 @@
             border-collapse: collapse;
             background: var(--card-bg);
             min-width: 600px;
-            /* Force scroll on very small screens */
         }
 
         th,
@@ -185,7 +228,6 @@
             border-radius: 8px;
             overflow-x: auto;
             direction: ltr;
-            /* Code is always LTR */
             text-align: left;
             font-family: 'Fira Code', 'Consolas', monospace;
             margin: 2rem 0;
@@ -198,12 +240,6 @@
             padding: 0.2rem 0.4rem;
             border-radius: 4px;
             font-size: 0.9em;
-        }
-
-        pre code {
-            background-color: transparent;
-            color: inherit;
-            padding: 0;
         }
 
         /* Table of Contents */
@@ -230,10 +266,6 @@
             font-weight: 500;
         }
 
-        .toc a:hover {
-            color: var(--primary-color);
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             article {
@@ -248,6 +280,12 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* Footer centering fix to override global P justification */
+        footer p {
+            text-align: center !important;
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -255,7 +293,6 @@
 
     <header>
         <div class="container">
-            <!-- You can add a logo or site name here -->
             <h1>{{ meta_title }}</h1>
         </div>
     </header>
@@ -266,8 +303,10 @@
         </article>
     </main>
 
-    <footer style="text-align: center; padding: 2rem; color: #64748b; font-size: 0.9rem;">
-        <p>&copy; 2026 جميع الحقوق محفوظة</p>
+    <footer style="padding: 3rem 1rem; border-top: 1px solid var(--border-color); margin-top: 4rem;">
+        <div class="container">
+            <p>{{ copyright_text | default('© 2026 جميع الحقوق محفوظة') }}</p>
+        </div>
     </footer>
 
 </body>

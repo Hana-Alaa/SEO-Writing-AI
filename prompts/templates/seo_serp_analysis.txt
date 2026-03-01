@@ -42,6 +42,7 @@ Extract:
 - faq_presence_ratio (0–1)
 - trust_signal_density (low / medium / high)
 - local_keyword_density (low / medium / high)
+- detected_area (Identify specific city or country if keywords/titles show a clear geographical target. Return "Global" if none found).
 
 STEP 3 — Strategic Intelligence
 Extract:
@@ -87,7 +88,8 @@ Return STRICT JSON only in this structure:
 "pricing_presence_ratio": 0.0,
 "faq_presence_ratio": 0.0,
 "trust_signal_density": "",
-"local_keyword_density": ""
+"local_keyword_density": "",
+"detected_area": ""
 },
 "strategic_intelligence": {
 "content_gaps": [],

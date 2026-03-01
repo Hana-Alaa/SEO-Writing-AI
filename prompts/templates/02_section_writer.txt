@@ -57,17 +57,23 @@ CTA Strength: {{ execution_plan.cta_strength }}
 
 RULES:
 
-1. If writing_mode = persuasive:
+1. For commercial articles:
+- A strong CTA MUST appear in the first 150 words.
+- The conclusion MUST end with a direct CTA.
+- Use action verbs (e.g., تواصل الآن، احصل على عرض سعر).
+- Sales tone must be confident but not exaggerated.
+
+2. If writing_mode = persuasive:
    - Lead with outcome, not definition.
    - Emphasize transformation and value.
    - Avoid generic explanations.
 
-2. If writing_mode = educational:
+3. If writing_mode = educational:
    - Lead with explanation.
    - Use structured logic.
    - Avoid aggressive selling language.
 
-3. If writing_mode = analytical:
+4. If writing_mode = analytical:
    - Use structured evaluation.
    - Compare based on defined criteria.
    - Avoid emotional framing.
@@ -76,26 +82,26 @@ RULES:
    - Use side-by-side evaluation where possible.
    - Avoid neutral generic descriptions.
 
-4. If local_context_required = true:
-   - Mention the area in the first paragraph.
-   - Include at least one sentence describing local market behavior, user needs, or regional challenges.
-   - Avoid generic global framing.
+5. LOCAL CONTEXT RULE (IF APPLICABLE)
+   - Mention area in first paragraph.
+   - Add one contextual sentence about market behavior.
+   - Do not repeat the city excessively.
 
-5. If conversion_weight > 0.7:
+6. If conversion_weight > 0.7:
    - Use stronger benefit-driven framing.
    - Use decisive language.
 
-6. If CTA Position = first_paragraph:
+7. If CTA Position = first_paragraph:
    - Insert CTA sentence inside the first paragraph.
    - It must respect CTA Type.
    - Only one sentence.
 
-7. If content_type == "brand_commercial" AND this is the first section of the article (Introduction):
+8. If content_type == "brand_commercial" AND this is the first section of the article (Introduction):
    - You MUST include a clear CTA in the first paragraph.
    - Start with a strong value-driven hook and follow immediately with a clickable link or button-style CTA.
-   - Do NOT include CTA anywhere.
+   -Do NOT include additional CTAs outside the first paragraph.
 
-8. If Content Angle is defined:
+9. If Content Angle is defined:
    - The section must clearly reflect this positioning.
    - The first paragraph must establish this angle explicitly.
 
@@ -103,19 +109,22 @@ RULES:
    - Support technical claims with references to trusted third-party resources when relevant.
    - Keep outbound links informational, not promotional.
 
-11. Every section must clearly articulate user value.
-   - If no clear benefit exists, restructure the paragraph to make it outcome-driven.
+11. FAQ SECTION LOGIC:
+   - If section_type == "faq" AND questions is present:
+     - You MUST answer ALL questions in the `{{ section.questions | tojson }}` list.
+     - Each question should be a bold H3 heading.
+     - Answers must be concise, direct, and outcome-oriented.
+     - If article_intent == "Commercial":
+       - Questions must address buyer objections (pricing, trust, timeline).
+       - Tone must reduce friction and build confidence.
+     - If article_intent == "Informational":
+       - Focus on clarity, education, and semantic depth.
+       - No selling language.
 
-12. HUMAN PERSUASION RULE
-- The goal is to convince a real human, not search engines.
-- Prioritize clarity, usefulness, and persuasion over keyword repetition.
-- Avoid robotic phrasing.
-- Focus on transformation, improvement, or measurable impact.
-
-13. VALUE GUARANTEE
-- This section must clearly demonstrate user benefit.
-- If no concrete user outcome exists, restructure the content.
-- Avoid filler content.
+12. USER VALUE PRINCIPLE (STRICT)
+- Every paragraph must start with a user outcome.
+- If no concrete benefit exists, rewrite.
+- Avoid filler.
 
 ---------------------------------------------------------
 COMPETITIVE INTELLIGENCE
@@ -142,12 +151,23 @@ STRICT SEO RULES FOR THIS SECTION
 - Avoid repeating the same core "angle" (e.g., "Compound Authority") in EVERY paragraph.
 - Use logical transitions between points.
 - Lead with specific value or data rather than generic marketing jargon.
-- Support claims with industry context (mentioning Saudi digital growth context naturally).
+- Support claims with industry context naturally.
 - Follow allowed_flow_steps as the primary structure.
 - Use H3 or H4 only if needed.
 - Do NOT repeat the section heading in the content.
 
-4. INTENT MATCHING
+4. WRITING RULES (STRICT)
+
+- Each paragraph MUST be 3–4 lines maximum.
+- Each paragraph MUST be between 40 and 800 characters.
+- Do NOT write long blocks.
+- Use short, direct sentences.
+- Use second-person voice appropriate to article_language.
+- Avoid generic statements.
+- Every section must clearly answer:
+  "What benefit does the reader gain?"
+
+5. INTENT MATCHING
 - Strictly follow section_intent tone.
 - If Commercial: emphasize value, benefits, differentiation.
 - If Informational: focus on clarity, education, and depth
@@ -158,41 +178,26 @@ STRICT SEO RULES FOR THIS SECTION
     • Maintain clarity and precision.
     • Avoid promotional persuasion.
 
-5. INTERNAL & EXTERNAL LINKS
-- Use the provided brand URL naturally where relevant.
-- If brand_link_allowed = true, you may include the brand URL once naturally.
-- If brand_link_allowed = false, do not include the brand URL.
-- When mentioning technical concepts (performance, CDN, security, WordPress, speed testing, SEO metrics):
-    • Prefer citing well-known official documentation or tools.
-    • If adding a link, use the official homepage only.
-    • Limit to 1 external authority link in this section.
-    • Do not fabricate URLs.
-    • Only link to high-trust, non-commercial websites.
-- Do NOT invent random promotional links.
-- Do NOT link competitors.
-- Avoid clustering links in a single paragraph.
-- Use only well-known official domains (e.g., wordpress.org, google.com, cloudflare.com). Do not fabricate unknown URLs.
+6. LINK GOVERNANCE (CRITICAL — AUTHORITATIVE)
 
-If allowed, you may include ONE authoritative external link 
-(e.g., official documentation like Google, WordPress, Cloudflare, etc.)
+7. INTERNAL LINKING:
+- Add internal links from `Mandatory Links: {{ section.assigned_links | tojson }}` naturally within the content.
+- **PRIORITY**: Prioritize linking to Service pages, Product pages, and Commercial pillar articles.
+- **DISTRIBUTION**: Do NOT place all internal links in one paragraph; distribute them logically across the section.
+- **ANCHOR TEXT**: Use descriptive, value-driven anchor text that flows naturally.
 
-Rules:
-- Use only real, well-known official domains
-- Maximum 1 external link in this section
-- Do not fabricate unknown domains
-- Do NOT use generic review disclaimers.
-- Avoid cliché neutrality phrases.
-- Write with confident expert positioning.
+12. EXTERNAL LINKING:
+- Provide external links to credible, high-authority sources (e.g., official documentation like Google, WordPress, Cloudflare, etc.).
+- **NO COMPETITORS**: NEVER link to competitors targeting the same primary keyword or industry.
+- **RELEVANCE**: Only add an external link if it provides technical depth or supports a claim (e.g., performance, security, SEO metrics).
+- **LIMIT**: Maximum ONE authoritative external link per section. Only if it adds real value. Otherwise skip external links.
+- **VALIDITY**: Do not fabricate URLs. Use official homepages only.
 
-6. EEAT ENHANCEMENT
-- Include real examples, expert-style insights, practical steps, or data where relevant.
-- Provide depth beyond generic explanations.
-
-7. TABLE RULE
-- If Requires Table = true:
-  • Include ONE relevant markdown table.
-- If false:
-  • Do NOT include any table.
+GENERAL LINK RULES:
+- If `brand_link_allowed = true`, you MAY include the brand URL ({{ execution_plan.brand_url }}) ONCE naturally.
+- If `brand_link_allowed = false`, do NOT include the brand URL link; plain text mention only.
+- PROHIBITED: Do NOT invent random promotional links or add reviews/disclaimers.
+- PROHIBITED: Avoid clustering more than ONE link in a single paragraph.
 
 8. FORBIDDEN
 - Do NOT reference other sections.
@@ -209,36 +214,22 @@ Rules:
 - Apply Differentiation Strategy when appropriate.
 - Add unique angles when possible.
 
-10. Word Count
-- Aim for the target word count.
-- Stay within ±10%.
+10. Word Count (Section Scope Only)
+- Aim for the section-level target_word_count ({{ execution_plan.target_word_count }} words).
+- Stay within ±10% for this section.
 - Prioritize completeness over rigid counting.
-- This section contributes to overall keyword density.
-- Use the primary keyword moderately.
-- Avoid repeating it more than necessary.
+- Note: Total article length (e.g., 3000-5000 words) is NOT your responsibility; it is managed by the master validator.
 
-PROFESSIONAL WRITING ENFORCEMENT (LEVEL 1):
-
-- **ZERO FLUFF POLICY**: Avoid generic marketing jargon and repetitive introductory phrases. Every sentence must carry new data, a specific benefit, or a concrete fact.
-- **PARAGRAPH DENSITY**: 
-  - Strictly 3–4 lines maximum when rendered.
-  - If a paragraph feels "blocky", split it immediately.
-  - 2–3 sentences per paragraph is the target.
-- **NO REPETITION**: Do not repeat the same value point across different paragraphs in the same section.
-- Each paragraph must contain a clear, tangible benefit.
-- Lead with outcomes, not company claims.
-- Address the reader directly as "You".
-- Replace vague statements (e.g., “we provide the best”) with concrete value-driven outcomes (e.g., “you will reduce load times by 40%”).
-- Every section must answer: 
-  → **What does the user gain from this?** (If it doesn't solve a user problem, delete it).
-
-Hard Structural Limits:
-- 2–4 sentences per paragraph (mandatory).
-- 70–100 words per paragraph.
-- If a paragraph exceeds 4 sentences, Long paragraphs will be rejected. Split them immediately.
-- Do NOT write long blocks of text.
-- Each paragraph must feel visually light.
-- Maximum 5 lines when rendered in plain text.
+---------------------------------------------------------
+VISUAL READABILITY & STRUCTURAL COMMANDS (CRITICAL)
+---------------------------------------------------------
+YOU MUST strictly adhere to these limits or the content will be rejected:
+- **SENTENCE LIMIT**: Exactly 2–3 sentences per paragraph.
+- **LINE LIMIT**: Maximum 3–4 lines per paragraph when rendered.
+- **NO DENSE BLOCKS**: If a paragraph exceeds 4 lines or 3 sentences, SPLIT IT immediately.
+- **WHITE SPACE**: Maintain natural white space between every paragraph.
+- **USER VALUE**: Every paragraph MUST start with a benefit or outcome. No fillers.
+- **DIRECT ADDRESS**: Use second-person voice appropriate to article_language.
 
 ---------------------------------------------------------
 OUTPUT FORMAT

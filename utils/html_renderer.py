@@ -58,17 +58,26 @@ def render_html_page(final_result: dict):
     page_title = final_result.get("meta_title") or final_result.get("title", "Untitled")
 
     # 3. Render final HTML
-    article_language = final_result.get("article_language", "ar")
-    # Simple detection: Arabic, Persian, Hebrew are RTL
-    direction = "rtl" if article_language.lower() in ["ar", "fa", "he", "ur"] else "ltr"
+    # Robust Detection: Check if title contains Arabic characters
+    import re
+    has_arabic = bool(re.search(r'[\u0600-\u06FF]', page_title))
     
+    direction = "rtl" if has_arabic else "ltr"
+    
+    # Dynamic Copyright based on direction/language
+    if direction == "rtl":
+        copyright_text = "© 2026 جميع الحقوق محفوظة"
+    else:
+        copyright_text = "© 2026 All Rights Reserved"
+
     try:
         html = template.render(
             meta_title=page_title,
             meta_description=final_result.get("meta_description", ""),
             content=html_content,
-            lang=article_language,
-            dir=direction
+            lang=final_result.get("article_language", "ar"),
+            dir=direction,
+            copyright_text=copyright_text
         )
         logger.info(f"Final rendered HTML length: {len(html)}")
     except Exception as e:

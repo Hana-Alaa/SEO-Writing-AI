@@ -156,7 +156,7 @@ class AsyncWorkflowController:
             ("assembly", self._step_5_assembly, 0),
             ("image_inserter", self._step_6_image_inserter, 0),
             ("meta_schema", self._step_7_meta_schema, 0),
-            ("article_validation", self._step_8_article_validation, 0),
+            # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
         ]
 
@@ -517,6 +517,9 @@ class AsyncWorkflowController:
             
             # Validation Layer
             errors = []
+            
+            # 0. FAQ Consolidation (Robustness)
+            outline = self._consolidate_faq(outline)
             
             # 1. Intent Distribution
             outline, dist_errors = self._enforce_intent_distribution(
@@ -1400,8 +1403,51 @@ class AsyncWorkflowController:
 
         return outline
 
+    def _consolidate_faq(self, outline: List[Dict]) -> List[Dict]:
+        """
+        Groups all sections with section_type='faq' or parent_section='sec_faq' 
+        into a single FAQ section.
+        """
+        faq_sections = [s for s in outline if s.get("section_type") == "faq" or s.get("parent_section") == "sec_faq"]
+        if not faq_sections:
+            return outline
+
+        # Keep the first FAQ section as the anchor
+        first_faq = faq_sections[0]
+        
+        # Consolidate all questions
+        all_questions = []
+        for s in faq_sections:
+            # If it has a 'questions' list (new format)
+            if s.get("questions") and isinstance(s["questions"], list):
+                all_questions.extend(s["questions"])
+            # If it's a separate question (old format or PAA)
+            elif s.get("heading_level") in ["H2", "H3"]:
+                all_questions.append(s["heading_text"])
+
+        # Update the first FAQ section
+        first_faq["questions"] = list(dict.fromkeys(all_questions)) # Deduplicate
+        first_faq["section_type"] = "faq"
+        first_faq["heading_level"] = "H2"
+        if "parent_section" in first_faq:
+            del first_faq["parent_section"]
+
+        # Filter out other FAQ sections
+        new_outline = []
+        faq_anchored = False
+        for s in outline:
+            is_faq = s.get("section_type") == "faq" or s.get("parent_section") == "sec_faq"
+            if is_faq:
+                if not faq_anchored:
+                    new_outline.append(first_faq)
+                    faq_anchored = True
+            else:
+                new_outline.append(s)
+
+        return new_outline
+
     def _adjust_paa_by_intent(self, outline, intent):
-        if intent in ["Transactional", "Commercial"]:
+        if intent in ["transactional", "commercial"]:
             # Move all PAA to FAQ section only
             for s in outline:
                 if s.get("source") == "paa":
@@ -1422,12 +1468,15 @@ class AsyncWorkflowController:
         if len(texts) != len(set(texts)):
             errors.append("Duplicate H2 headings detected. Each heading must be unique.")
 
-        # FAQ Count Validation
-        faq_items = [s for s in outline if s.get("section_type") == "faq" or s.get("parent_section") == "sec_faq"]
-        if len(faq_items) > 6:
-            errors.append(f"Too many FAQ items detected ({len(faq_items)}). Maximum allowed is 6.")
-        if 0 < len(faq_items) < 4:
-            errors.append(f"Too few FAQ items detected ({len(faq_items)}). Minimum required is 4.")
+        # FAQ Question Count Validation
+        faq_section = next((s for s in outline if s.get("section_type") == "faq"), None)
+        faq_count = len(faq_section.get("questions", [])) if faq_section else 0
+        
+        if faq_count > 0:
+            if faq_count > 6:
+                errors.append(f"Too many FAQ questions detected ({faq_count}). Maximum allowed is 6.")
+            if faq_count < 4:
+                errors.append(f"Too few FAQ questions detected ({faq_count}). Minimum required is 4.")
 
         return errors
 

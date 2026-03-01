@@ -63,18 +63,14 @@ class DataInjector:
             if target_section:
                 if primary_link not in target_section["assigned_links"]:
                     target_section["assigned_links"].append(primary_link)
-                    logger.info(f"Conservative Strategy: Primary link '{primary_link.get('anchor_text')}' assigned ONLY to section '{target_section.get('heading_text')}'")
+                    logger.info(f"Conservative Strategy: Primary link '{primary_link.get('anchor_text')}' assigned ONCE to '{target_section.get('heading_text')}'")
+                    logger.info("Brand link ownership DELEGATED TO WRITER. Injector will NOT add brand_mentions to other sections.")
             
-            # 2. Add Brand Mentions to other relevant sections
-            # We add mentions to a few random body sections to keep the brand alive textually
-            body_sections = [s for s in outline if s != target_section]
-            for i, sec in enumerate(body_sections):
-                # Add mention every ~2 sections
-                if i % 2 == 0:
-                    sec["brand_mentions"].append(primary_link.get("anchor_text"))
-                    logger.info(f"Conservative Strategy: Added text mention for '{primary_link.get('anchor_text')}' to section '{sec.get('heading_text')}'")
-
-            # 3. Distribute Secondary Links (Sparately)
+            # NOTE: brand_mentions injection to body sections has been removed.
+            # The Writer (via 02_section_writer.txt prompt) is the sole owner of brand link.
+            # This prevents link duplication across the 3 injection layers.
+            
+            # 2. Distribute Secondary Links Only
             if secondary_links:
                 # Filter sections that don't have the primary link to avoid clustering
                 available_sections = [s for s in outline if not s["assigned_links"]]

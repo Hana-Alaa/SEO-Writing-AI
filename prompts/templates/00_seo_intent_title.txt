@@ -36,6 +36,7 @@ Rules for title:
 - Must include primary keyword exactly
 - Match language
 - Align with detected intent
+- Prefer adding numbers or years (e.g., "2026") when relevant (Commercial keywords).
 - No markdown
 - No extra text
 

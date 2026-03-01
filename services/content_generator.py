@@ -224,6 +224,9 @@ class SectionWriter:
             "requires_table": section.get("requires_table", False),
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
+            "localized_angle": section.get("localized_angle", ""),
+            "section_type": section.get("section_type", "core"),
+            "questions": section.get("questions", []),
         }
 
         prompt = self.template.render(
