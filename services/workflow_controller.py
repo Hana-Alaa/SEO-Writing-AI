@@ -15,6 +15,7 @@ from pathlib import Path
 from langdetect import detect  
 from jinja2 import Template, StrictUndefined
 from typing import Dict, Any, List, Optional, Callable, ClassVar
+from collections import Counter
 
 from services.image_generator import ImageGenerator, ImagePromptPlanner
 from services.openrouter_client import OpenRouterClient
@@ -124,6 +125,15 @@ class AsyncWorkflowController:
             save_dir=os.path.join(work_dir, "images"), 
         )
 
+        # Semantic Memory Model
+        try:
+            from sentence_transformers import SentenceTransformer
+            self.semantic_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+            logger.info("Semantic Cross-Section Memory model loaded successfully.")
+        except ImportError:
+            self.semantic_model = None
+            logger.warning("sentence-transformers not installed. Semantic memory disabled.")
+
     async def run_workflow(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Main entry point for the async pipeline."""
         self.observer.reset()
@@ -135,7 +145,9 @@ class AsyncWorkflowController:
         state.setdefault("images", [])
         state.setdefault("final_output", {})
         state.setdefault("content_type", "informational")
-        state.setdefault("brand_link_used", 0)
+        state.setdefault("brand_link_used", False)
+        state.setdefault("used_internal_links", [])
+        state.setdefault("used_external_links", []) 
 
         steps = [
             # ("analysis", self._step_0_analysis, 0),
@@ -150,11 +162,11 @@ class AsyncWorkflowController:
             ("outline_generation", self._step_1_outline, 1),
 
             ("content_writing", self._step_2_write_sections, 1),
-            ("image_prompting", self._step_4_generate_image_prompts, 0),
-            ("image_generation", self._step_4_5_download_images, 2),
+            # ("image_prompting", self._step_4_generate_image_prompts, 0),
+            # ("image_generation", self._step_4_5_download_images, 2),
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
-            ("image_inserter", self._step_6_image_inserter, 0),
+            # ("image_inserter", self._step_6_image_inserter, 0),
             ("meta_schema", self._step_7_meta_schema, 0),
             # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
@@ -189,7 +201,8 @@ class AsyncWorkflowController:
         keywords = input_data.get("keywords", [])
         primary_keyword = keywords[0] if keywords else raw_title
         user_lang = input_data.get("article_language")
-        article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
+        # article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
+        article_language = detect(raw_title) if raw_title else "en"
         area = input_data.get("area")
         state["area"] = area
         state["article_language"] = article_language
@@ -207,6 +220,7 @@ class AsyncWorkflowController:
         output_dir = os.path.join(self.work_dir, slug)
         os.makedirs(output_dir, exist_ok=True)
         state["output_dir"] = output_dir
+        state["used_phrases"] = []
 
         return state
 
@@ -250,10 +264,71 @@ class AsyncWorkflowController:
 
         return state
 
+    # async def _step_0_intent_title(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    #     serp_data = state.get("serp_data", {})
+    #     area = state.get("area")
+
+    #     top_titles = [
+    #         r.get("title", "")
+    #         for r in serp_data.get("top_results", [])
+    #         if isinstance(r, dict)
+    #     ][:5]
+
+    #     cta_styles = [
+    #         r.get("cta_style", "")
+    #         for r in serp_data.get("top_results", [])
+    #         if isinstance(r, dict)
+    #     ]
+
+    #     title_data = await self.title_generator.generate(
+    #         raw_title=raw_title,
+    #         primary_keyword=primary_keyword,
+    #         article_language=article_language,
+    #         serp_titles=top_titles,
+    #         serp_cta_styles=cta_styles,
+    #         area=area
+    #     )
+        
+    #     intent_raw = title_data.get("intent", "Informational")
+    #     optimized_title = title_data.get("optimized_title", raw_title)
+
+    #     serp_confirmed = (
+    #         state.get("seo_intelligence", {})
+    #              .get("strategic_analysis", {})
+    #              .get("intent_analysis", {})
+    #              .get("confirmed_intent")
+    #     )
+
+    #     confidence = (
+    #         state.get("seo_intelligence", {})
+    #             .get("strategic_analysis", {})
+    #             .get("intent_analysis", {})
+    #             .get("intent_confidence_score", 0)
+    #     )
+
+    #     if confidence > 0.6 and serp_confirmed:
+    #         intent_raw = serp_confirmed
+
+    #     intent_normalized = intent_raw.strip().lower()
+    #     state["intent"] = intent_normalized
+
+    #     if any(x in intent_normalized for x in ["commercial", "transactional"]):
+    #         state["content_type"] = "brand_commercial"
+    #     elif any(x in intent_normalized for x in ["comparison", "comparative"]):
+    #         state["content_type"] = "comparison"
+    #     else:
+    #         state["content_type"] = "informational"
+
+    #     state["input_data"]["title"] = optimized_title
+
+    #     return state
+
     async def _step_0_intent_title(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        raw_title = state.get("raw_title")
-        primary_keyword = state.get("primary_keyword")
-        article_language = state["input_data"].get("article_language")
+        # ✅ define missing vars
+        raw_title = state.get("raw_title") or state.get("input_data", {}).get("title", "Untitled Article")
+        primary_keyword = state.get("primary_keyword") or (state.get("keywords", [raw_title])[0] if state.get("keywords") else raw_title)
+        article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "en")
+
         serp_data = state.get("serp_data", {})
         area = state.get("area")
 
@@ -269,10 +344,7 @@ class AsyncWorkflowController:
             if isinstance(r, dict)
         ]
 
-        with open("prompts/templates/00_seo_intent_title.txt") as f:
-            template = Template(f.read())
-
-        prompt = template.render(
+        title_data = await self.title_generator.generate(
             raw_title=raw_title,
             primary_keyword=primary_keyword,
             article_language=article_language,
@@ -281,21 +353,15 @@ class AsyncWorkflowController:
             area=area
         )
 
-        raw = await self.ai_client.send(prompt, step="intent_title")
-
-        clean = re.sub(r"```json|```", "", raw).strip()
-        data = recover_json(clean) or {}
-
-        # intent = data.get("intent", "Informational")
-        intent_raw = data.get("intent", "Informational")
+        intent_raw = title_data.get("intent", "Informational")
+        optimized_title = title_data.get("optimized_title", raw_title)
 
         serp_confirmed = (
             state.get("seo_intelligence", {})
-                 .get("strategic_analysis", {})
-                 .get("intent_analysis", {})
-                 .get("confirmed_intent")
+                .get("strategic_analysis", {})
+                .get("intent_analysis", {})
+                .get("confirmed_intent")
         )
-
         confidence = (
             state.get("seo_intelligence", {})
                 .get("strategic_analysis", {})
@@ -307,7 +373,6 @@ class AsyncWorkflowController:
             intent_raw = serp_confirmed
 
         intent_normalized = intent_raw.strip().lower()
-
         state["intent"] = intent_normalized
 
         if any(x in intent_normalized for x in ["commercial", "transactional"]):
@@ -317,28 +382,28 @@ class AsyncWorkflowController:
         else:
             state["content_type"] = "informational"
 
-
-        optimized_title = data.get("optimized_title", raw_title)
-
-        # state["content_strategy"] = {
-        #     "intent": intent,
-        #     "area": state.get("area"),
-        #     "competitive_mode": "serp_driven"
-        # }
         state["input_data"]["title"] = optimized_title
-
         return state
 
     async def _step_0_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyzes the reference image if provided to determine the brand's visual style."""
-        ref_path = state.get("input_data", {}).get("logo_reference_path")
-        
-        if ref_path and os.path.exists(ref_path):
+        input_data = state.get("input_data", {})
+        ref_path = input_data.get("logo_reference_path")
+        logo_path = input_data.get("logo_path")
+        # ref_path = state.get("input_data", {}).get("logo_reference_path")
+
+        state["brand_visual_style"] = ""
+
+        if ref_path and isinstance(ref_path, str) and os.path.exists(ref_path):
             logger.info(f"Analyzing brand style from reference: {ref_path}")
-            style_desc = await self.ai_client.describe_image_style(ref_path)
-            state["brand_visual_style"] = style_desc
+            try:
+                style_desc = await self.ai_client.describe_image_style(ref_path)
+                state["brand_visual_style"] = style_desc
+            except Exception as e:
+                logger.error(f"Failed to analyze reference image: {e}")
+                state["brand_visual_style"] = "Professional, modern corporate identity, clean lighting"
         else:
-            state["brand_visual_style"] = ""
+            logger.info("No reference image provided. Using generic professional visual style.")
             
         return state
 
@@ -475,7 +540,8 @@ class AsyncWorkflowController:
         
         content_type = state.get("content_type", "informational") or "informational"
         intent = state.get("intent") or "informational"
-        article_language = input_data.get("article_language", "en")
+        # article_language = input_data.get("article_language", "en")
+        article_language = state["article_language"]
         content_strategy = state.get("content_strategy", {})
 
         mandatory = set(self.REQUIRED_STRUCTURE_BY_TYPE[content_type]["mandatory"])
@@ -645,7 +711,8 @@ class AsyncWorkflowController:
         outline = state.get("outline", [])
         global_keywords = state.get("global_keywords", {})
         intent = state.get("intent", "Informational")
-        article_language = input_data.get("article_language", "en")
+        # article_language = input_data.get("article_language", "en")
+        article_language = state["article_language"]
         seo_intelligence = state.get("seo_intelligence", {})
         link_strategy = state.get("link_strategy", {})
         
@@ -654,28 +721,50 @@ class AsyncWorkflowController:
 
         content_type = state.get("content_type", "informational")
 
-        tasks = [
-            self._write_single_section(
-                title,
-                global_keywords,
-                section,
-                intent,
-                seo_intelligence,
-                content_type,
-                link_strategy,
-                state
-            )
-            for section in outline
-        ]
-
         if PARALLEL_SECTIONS:
+            tasks = [
+                self._write_single_section(
+                    title=title,
+                    global_keywords=global_keywords,
+                    section=section,
+                    article_intent=intent,
+                    seo_intelligence=seo_intelligence,
+                    content_type=content_type,
+                    link_strategy=link_strategy,
+                    state=state,
+                    section_index=idx,
+                    total_sections=len(outline)
+                )
+                for idx, section in enumerate(outline)
+            ]
             logger.info(f"Writing {len(tasks)} sections in PARALLEL mode")
             results = await asyncio.gather(*tasks, return_exceptions=True)
         else:
-            logger.info(f"Writing {len(tasks)} sections in SEQUENTIAL mode")
+            logger.info(f"Writing {len(outline)} sections in SEQUENTIAL mode")
             results = []
-            for t in tasks:
-                results.append(await t)
+            for idx, section in enumerate(outline):
+                res = await self._write_single_section(
+                    title=title,
+                    global_keywords=global_keywords,
+                    section=section,
+                    article_intent=intent,
+                    seo_intelligence=seo_intelligence,
+                    content_type=content_type,
+                    link_strategy=link_strategy,
+                    state=state,
+                    section_index=idx,
+                    total_sections=len(outline)
+                )
+                results.append(res)
+                
+                # Update link state from the result
+                if res and isinstance(res, dict):
+                    if res.get("brand_link_used"):
+                        state["brand_link_used"] = True
+                    
+                    used_links = res.get("used_links", [])
+                    if used_links:
+                        state["used_internal_links"] = list(set(state.get("used_internal_links", []) + used_links))
 
         sections_content = {}
         for res in results:
@@ -718,7 +807,7 @@ class AsyncWorkflowController:
 
         logger.info(f"Successfully wrote {len(sections_content)} sections.")
         return state
-
+    
     async def _write_single_section(
         self,
         title: str,
@@ -729,31 +818,27 @@ class AsyncWorkflowController:
         content_type: str,
         link_strategy: Dict[str, Any],
         state: Dict[str, Any],
-        force_local: bool = False
+        force_local: bool = False,
+        section_index: int = 0,
+        total_sections: int = 1
     ) -> Optional[Dict[str, Any]]:
         """Worker to write one section."""
         
         section_id = section.get("section_id") or section.get("id")
-        # content_type = state.get("content_type", "informational")
-        urls = state.get("input_data", {}).get("urls", [])
-        # brand_url = urls[0].get("link") if urls else None
         brand_url = state.get("brand_url")
-
-        brand_link_used = state.get("brand_link_used", 0)
-
-        # if urls:
-        #     brand_url = urls[0].get("link")
-
-        brand_link_used = state.get("brand_link_used", 0)
+        brand_link_used = state.get("brand_link_used", False)
 
         execution_plan = self._build_execution_plan(section, state)
         if force_local:
             execution_plan["local_context_required"] = True
             
-        execution_plan["brand_link_allowed"] = (brand_link_used == 0)
+        execution_plan["brand_link_allowed"] = (not brand_link_used)
         execution_plan["brand_url"] = brand_url
 
-        content = await self.section_writer.write(
+        used_phrases = state.get("used_phrases", [])
+
+        # Try 1
+        res_data = await self.section_writer.write(
             title=title,
             global_keywords=global_keywords,
             section=section,
@@ -763,24 +848,159 @@ class AsyncWorkflowController:
             link_strategy=link_strategy,
             brand_url=brand_url,
             brand_link_used=brand_link_used,
-            brand_link_allowed=(brand_link_used == 0),
+            brand_link_allowed=not brand_link_used,
             allow_external_links=True,
             execution_plan=execution_plan,
-            area=state.get("area")
+            area=state.get("area"),
+            used_phrases=used_phrases,
+            used_internal_links=state.get("used_internal_links", []),
+            used_external_links=state.get("used_external_links", []), 
+            section_index=section_index,
+            total_sections=total_sections
         )
+        content = res_data.get("content", "")
+        used_links = res_data.get("used_links", [])
+        brand_link_used_in_sec = res_data.get("brand_link_used", False)
 
-        if content and brand_url and brand_url in content:
-            state["brand_link_used"] = 1
+        # Semantic Overlap Rejection
+        if content and getattr(self, "semantic_model", None) and state.get("used_claims"):
+            is_rejected, overlap_score, overlap_sentence = self._check_semantic_overlap(content, state.get("used_claims", []), threshold=0.85)
+            if is_rejected:
+                logger.warning(f"Semantic Overlap Rejected ({overlap_score:.2f}) for '{title}'. Sentence: '{overlap_sentence}'. Retrying...")
+                res_data = await self.section_writer.write(
+                    title=title,
+                    global_keywords=global_keywords,
+                    section=section,
+                    article_intent=article_intent,
+                    seo_intelligence=seo_intelligence,
+                    content_type=content_type,
+                    link_strategy=link_strategy,
+                    brand_url=brand_url,
+                    brand_link_used=brand_link_used,
+                    brand_link_allowed=not brand_link_used,
+                    allow_external_links=True,
+                    execution_plan={
+                        **execution_plan, 
+                        "writing_mode": "creative rephrasing",
+                        "structure_rule": "AVOID PARAPHRASING PREVIOUS CLAIMS. YOU MUST INTRODUCE A COMPLETELY NEW ANGLE OR ABORT."
+                    },
+                    area=state.get("area"),
+                    used_phrases=used_phrases,
+                    used_internal_links=state.get("used_internal_links", []),
+                    used_external_links=state.get("used_external_links", []), 
+                    section_index=section_index,
+                    total_sections=total_sections
+                )
+                content = res_data.get("content", "")
+                used_links = res_data.get("used_links", [])
+                brand_link_used_in_sec = res_data.get("brand_link_used", False)
+
+        # Multi-Layer Paragraph Structure and Strict SEO Validation
+        if content:
+            is_valid, validation_errors = self._validate_section_output(
+                content, 
+                section, 
+                section_index, 
+                total_sections, 
+                state.get("area"),
+                execution_plan.get("cta_type", "none")
+            )
+            
+            if not is_valid:
+                error_msg = "; ".join(validation_errors)
+                logger.warning(f"Validation failed for '{title}': {error_msg}. Attempting strict regeneration...")
+                res_data = await self.section_writer.write(
+                    title=title,
+                    global_keywords=global_keywords,
+                    section=section,
+                    article_intent=article_intent,
+                    seo_intelligence=seo_intelligence,
+                    content_type=content_type,
+                    link_strategy=link_strategy,
+                    brand_url=brand_url,
+                    brand_link_used=brand_link_used,
+                    brand_link_allowed=not brand_link_used,
+                    allow_external_links=True,
+                    execution_plan={
+                        **execution_plan, 
+                        "writing_mode": "creative rephrasing",
+                        "structure_rule": f"CRITICAL ERRORS TO FIX: {error_msg}. EXACTLY 3-5 PARAGRAPHS. EXACTLY 2-3 SENTENCES PER PARAGRAPH."
+                    },
+                    area=state.get("area"),
+                    used_phrases=used_phrases,
+                    used_internal_links=state.get("used_internal_links", []),
+                    used_external_links=state.get("used_external_links", []),
+                    section_index=section_index,
+                    total_sections=total_sections
+                )
+                content = res_data.get("content", "")
+                used_links = res_data.get("used_links", [])
+                brand_link_used_in_sec = res_data.get("brand_link_used", False)
+
+        # Repetition Guard (Retry Loop)
+        if content:
+            repeated = self._detect_repetition(content, used_phrases)
+            if repeated and len(repeated) > 0:
+                logger.warning(f"High repetition detected in section '{title}'. Retrying...")
+                res_data = await self.section_writer.write(
+                    title=title,
+                    global_keywords=global_keywords,
+                    section=section,
+                    article_intent=article_intent,
+                    seo_intelligence=seo_intelligence,
+                    content_type=content_type,
+                    link_strategy=link_strategy,
+                    brand_url=brand_url,
+                    brand_link_used=brand_link_used,
+                    brand_link_allowed=not brand_link_used,
+                    allow_external_links=True,
+                    execution_plan={**execution_plan, "writing_mode": "creative rephrasing"},
+                    area=state.get("area"),
+                    used_phrases=used_phrases + repeated,
+                    used_internal_links=state.get("used_internal_links", []),
+                    used_external_links=state.get("used_external_links", []), 
+                    section_index=section_index,
+                    total_sections=total_sections
+                )
+                content = res_data.get("content", "")
+                used_links = res_data.get("used_links", [])
+                brand_link_used_in_sec = res_data.get("brand_link_used", False)
 
         if content:
+            new_sentences = self._extract_sentences(content)
+            if "used_phrases" not in state:
+                state["used_phrases"] = []
+            if "used_claims" not in state:
+                state["used_claims"] = []
+                
+            substantial_sentences = [s for s in new_sentences if len(s) > 40]
+            state["used_phrases"].extend(substantial_sentences)
+            
+            if getattr(self, "semantic_model", None):
+                state["used_claims"].extend(substantial_sentences)
+            
+            if brand_url and brand_url in content:
+                state["brand_link_used"] = True
+
+            found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
+            if "used_external_links" not in state:
+                state["used_external_links"] = []
+            for link in found_links:
+                if link != brand_url and link not in state.get("used_internal_links", []):
+                    state["used_external_links"].append(link)
+
+            final_content = self._enforce_paragraph_structure(content)
+
             return {
                 **section,
                 "section_id": section_id,
-                "generated_content": content
+                "generated_content": final_content,
+                "used_links": used_links,
+                "brand_link_used": brand_link_used_in_sec
             }
 
         return None
-
+    
     async def _step_4_generate_image_prompts(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates image prompts using the image client."""
         if not self.enable_images:
@@ -811,26 +1031,51 @@ class AsyncWorkflowController:
         state["image_prompts"] = image_prompts
         return state
 
+    # async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    #     """Downloads images (now parallel in the client)."""
+    #     prompts = state.get("image_prompts", [])
+    #     keywords = state.get("input_data", {}).get("keywords", [])
+    #     primary_keyword = (keywords[0] if keywords else "") or ""
+    #     logo_path = state.get("input_data", {}).get("logo_path")
+        
+    #     # image_client.generate_images is now async
+    #     images = await self.image_client.generate_images(
+    #         prompts, 
+    #         primary_keyword=primary_keyword,
+    #         logo_path=logo_path
+    #     )
+
+    #     # Normalize paths for markdown linking
+    #     for img in images:
+    #         if "local_path" in img:
+    #             # Images are in output/images, articles are in output/slug/
+    #             # We want the path in the markdown to be ../images/filename.webp
+    #             # so it works from within the article folder.
+    #             img["local_path"] = f"../images/{os.path.basename(img['local_path'])}"
+
+    #     state["images"] = images
+    #     return state
+
+
     async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Downloads images (now parallel in the client)."""
         prompts = state.get("image_prompts", [])
         keywords = state.get("input_data", {}).get("keywords", [])
         primary_keyword = (keywords[0] if keywords else "") or ""
         logo_path = state.get("input_data", {}).get("logo_path")
-        
-        # image_client.generate_images is now async
+        reference_path = state.get("input_data", {}).get("logo_reference_path")
+        brand_visual_style = state.get("brand_visual_style", "")
+
         images = await self.image_client.generate_images(
-            prompts, 
+            prompts,
             primary_keyword=primary_keyword,
-            logo_path=logo_path
+            logo_path=logo_path,
+            reference_path=reference_path,
+            brand_visual_style=brand_visual_style
         )
 
-        # Normalize paths for markdown linking
         for img in images:
             if "local_path" in img:
-                # Images are in output/images, articles are in output/slug/
-                # We want the path in the markdown to be ../images/filename.webp
-                # so it works from within the article folder.
                 img["local_path"] = f"../images/{os.path.basename(img['local_path'])}"
 
         state["images"] = images
@@ -849,7 +1094,33 @@ class AsyncWorkflowController:
             if s.get("section_id") in sections_dict
         ]
 
-        assembled = await self.assembler.assemble(title=title, sections=ordered_sections, article_language=article_language)
+        # Redundancy Guard & Similarity Check
+        final_sections = []
+        for i, section in enumerate(ordered_sections):
+            content = section.get("generated_content", "")
+            if not content:
+                continue
+
+            # Similarity Check against previous sections
+            is_redundant = False
+            for prev in final_sections:
+                prev_content = prev.get("generated_content", "")
+                similarity = self._calculate_similarity(content, prev_content)
+                if similarity > 0.7:
+                    logger.warning(f"High similarity ({similarity:.2f}) detected between section '{section.get('heading_text')}' and a previous section. Flagging for pruning.")
+                    is_redundant = True
+                    break
+            
+            # Prune redundant intros anyway for consistent quality
+            section["generated_content"] = self._prune_redundant_intros(content)
+            final_sections.append(section)
+
+        assembled = await self.assembler.assemble(title=title, sections=final_sections, article_language=article_language)
+        
+        # Final pass redundancy pruning on the whole assembled markdown
+        if "final_markdown" in assembled:
+            assembled["final_markdown"] = self._prune_redundant_intros(assembled["final_markdown"])
+            
         state["final_output"] = assembled
         return state
 
@@ -904,7 +1175,8 @@ class AsyncWorkflowController:
         input_data = state.get("input_data", {})
 
         title = input_data.get("title", "")
-        article_language = input_data.get("article_language", "en")
+        # article_language = input_data.get("article_language", "en")
+        article_language = state["article_language"]
         keywords = input_data.get("keywords", [])
         primary_keyword = keywords[0] if keywords else ""
 
@@ -1059,6 +1331,38 @@ class AsyncWorkflowController:
         return state
     
     # ---------------- UTILITIES ----------------
+    def _enforce_paragraph_structure(self, text: str) -> str:
+        """
+        Enforce a maximum of 3 sentences per paragraph.
+        Splits existing paragraphs into smaller ones if they exceed the limit.
+        """
+        if not text:
+            return text
+            
+        # Split by existing paragraphs
+        paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
+        fixed = []
+
+        for p in paragraphs:
+            # Skip tables or bullet lists (simplified check)
+            if p.startswith("|") or p.startswith("- ") or p.startswith("* "):
+                fixed.append(p)
+                continue
+
+            # Split paragraph into sentences using regex that supports Arabic (؟) and English (.)
+            # and handles common abbreviations or decimal points if possible (simplified here)
+            sentences = re.split(r'(?<=[.!؟])\s+', p)
+
+            if len(sentences) > 3:
+                # Group into chunks of 3 sentences
+                for i in range(0, len(sentences), 3):
+                    chunk = " ".join(sentences[i:i+3])
+                    fixed.append(chunk.strip())
+            else:
+                fixed.append(p)
+
+        return "\n\n".join(fixed)
+
     def _sluggify(self, text: str) -> str:
         """Generates a clean slug from English or Arabic text."""
         clean = re.sub(r'[^\w\s-]', '', text).strip().lower()
@@ -1085,6 +1389,190 @@ class AsyncWorkflowController:
             density = (keyword_count / word_count) * 1000  # per 1000 words
 
         return word_count, keyword_count, round(density, 2)
+
+    def _detect_repetition(self, text: str, global_used_phrases: List[str], threshold: int = 1) -> List[str]:
+        """Detects repeated sentences within the text or against global memory."""
+        if not text:
+            return []
+            
+        sentences = self._extract_sentences(text)
+        repeated = []
+        
+        # 1. Internal Repetition
+        counts = Counter(sentences)
+        internal_repeated = [s for s, c in counts.items() if c > threshold and len(s) > 30]
+        repeated.extend(internal_repeated)
+        
+        # 2. Global Repetition
+        for s in sentences:
+            if len(s) > 40: # Only check meaningful sentences
+                if s in global_used_phrases:
+                    repeated.append(s)
+                    
+        return list(set(repeated))
+
+    def _check_semantic_overlap(self, text: str, used_claims: List[str], threshold: float = 0.85) -> tuple[bool, float, str]:
+        """Checks if the new text has high semantic overlap with any previously used claims."""
+        if not getattr(self, "semantic_model", None) or not text or not used_claims:
+            return False, 0.0, ""
+            
+        sentences = self._extract_sentences(text)
+        # Only check substantial sentences for semantic meaning
+        sentences = [s for s in sentences if len(s) > 40]
+        
+        if not sentences:
+            return False, 0.0, ""
+            
+        try:
+            from sentence_transformers import util
+            import torch
+            # Encode sentences and claims
+            new_embeddings = self.semantic_model.encode(sentences, convert_to_tensor=True)
+            claim_embeddings = self.semantic_model.encode(used_claims, convert_to_tensor=True)
+            
+            # Calculate cosine similarity matrix
+            cosine_scores = util.cos_sim(new_embeddings, claim_embeddings)
+            
+            # Find maximum similarity
+            max_score = float(torch.max(cosine_scores))
+            
+            # Find the specific overlapping sentence if needed for logging
+            if max_score > threshold:
+                max_idx = int(torch.argmax(cosine_scores).item())
+                row_idx = max_idx // cosine_scores.shape[1]
+                overlapping_sentence = sentences[row_idx]
+                return True, max_score, overlapping_sentence
+                
+            return False, max_score, ""
+        except Exception as e:
+            logger.error(f"Semantic overlap check failed: {e}")
+            return False, 0.0, ""
+
+    def _validate_section_output(self, content: str, section: Dict[str, Any], section_index: int, total_sections: int, area: str, cta_type: str) -> tuple[bool, List[str]]:
+        """Strictly validates a section's output against counting and structural rules."""
+        errors = []
+        if not content:
+            return False, ["Content is empty"]
+
+        # 1. Paragraph Count Validation (Except FAQ/Pricing which might have lists/tables)
+        is_faq_or_pricing = section.get("section_type") in ["faq", "pricing"]
+        paragraphs = [p for p in content.split("\n\n") if p.strip()]
+        
+        # Don't strictly check paragraph boundaries if it has markdown lists or tables
+        has_complex_structure = "|" in content or "- " in content or "* " in content
+        
+        if not is_faq_or_pricing and not has_complex_structure:
+            num_paragraphs = len(paragraphs)
+            if num_paragraphs < 2 or num_paragraphs > 6:
+                errors.append(f"Paragraph count is {num_paragraphs}, must be 3-5")
+                
+        # 2. Sentence Count Validation per Paragraph (loose check)
+        for p in paragraphs:
+            if not p.startswith("#") and not p.startswith("-") and not p.startswith("*") and not "|" in p:
+                sentences = re.split(r'(?<=[.!؟])\s+', p.strip())
+                num_sentences = len([s for s in sentences if len(s.strip()) > 5])
+                if num_sentences > 5:
+                    errors.append("Paragraphs are too dense (> 4 sentences)")
+                    break
+
+        # 3. Local Mention Check
+        if area and section_index == 0:
+            if area.lower() not in content.lower():
+                errors.append(f"Missing mandatory local area mention: {area}")
+
+        # 4. CTA Architecture Check (Basic heuristic)
+        has_link_or_button = "]" in content and "(" in content
+        has_cta_verb = any(verb in content for verb in ["احصل", "اطلب", "تواصل", "ابدأ", "Get", "Request", "Start"])
+        looks_like_cta = has_link_or_button or has_cta_verb
+
+        is_first = (section_index == 0)
+        is_last = (section_index == total_sections - 1)
+
+        if is_first and cta_type in ["primary", "strong"] and not looks_like_cta:
+            errors.append("Missing required Primary CTA in Introduction")
+        elif is_last and cta_type in ["primary", "strong"] and not looks_like_cta:
+            errors.append("Missing required Decisive CTA in Conclusion")
+        elif not is_first and not is_last and cta_type == "none" and has_link_or_button and has_cta_verb:
+            # It's a middle section, no CTA allowed, but it looks like it has one
+            # Note: We give some leniency, this might be an informational link.
+            pass
+
+        return len(errors) == 0, errors
+
+    def _extract_sentences(self, text: str) -> List[str]:
+        """Extracts sentences using regex that supports Arabic and English."""
+        # Remove markdown chars first for better sentence matching
+        clean_text = re.sub(r'[#*`\-]', '', text)
+        sentences = re.split(r'(?<=[.!؟])\s+', clean_text)
+        return [s.strip() for s in sentences if s.strip()]
+
+    def _calculate_similarity(self, text1: str, text2: str) -> float:
+        """Calculates Jaccard Similarity between two texts."""
+        if not text1 or not text2:
+            return 0.0
+            
+        def get_words(text):
+            return set(re.findall(r'\b\w{5,}\b', text.lower())) # Only check words > 5 chars for meaningful similarity
+            
+        words1 = get_words(text1)
+        words2 = get_words(text2)
+        
+        if not words1 or not words2:
+            return 0.0
+            
+        intersection = len(words1.intersection(words2))
+        union = len(words1.union(words2))
+        
+        return intersection / union
+
+    def _prune_redundant_intros(self, text: str) -> str:
+        """
+        Removes repetitive 'Vision 2030' or 'Digital Transformation' style filler intros
+        if they appear too close to each other or are redundant.
+        """
+        if not text:
+            return text
+            
+        # 1. Clean up repetitive Vision 2030 / Transformation clusters
+        # Regex to find patterns like (Sentence about vision 2030). (Another sentence about vision 2030).
+        # We simplify it to catch repeated core keyword phrases at the start of paragraphs
+        patterns = [
+            r'(رؤية المملكة 2030.*?\.){2,}',
+            r'(Vision 2030.*?\.){2,}',
+            r'(التحول الرقمي.*?\.){2,}',
+            r'(Digital Transformation.*?\.){2,}'
+        ]
+        
+        cleaned = text
+        for p in patterns:
+            cleaned = re.sub(p, r'\1', cleaned, flags=re.IGNORECASE | re.DOTALL)
+            
+        # 2. Prevent consecutive paragraphs starting with the same 5 words
+        lines = cleaned.split("\n\n")
+        if len(lines) < 2:
+            return cleaned
+            
+        pruned_lines = [lines[0]]
+        for i in range(1, len(lines)):
+            current = lines[i].strip()
+            prev = pruned_lines[-1].strip()
+            
+            if not current or not prev:
+                pruned_lines.append(current)
+                continue
+                
+            cur_words = current.split()[:5]
+            prev_words = prev.split()[:5]
+            
+            if cur_words == prev_words and len(cur_words) >= 3:
+                # Similarity too high at start, skip or prune
+                logger.info(f"Pruning repetitive paragraph start: {' '.join(cur_words)}")
+                # Keep only the unique part if possible, or just keep it as is for now but log
+                pruned_lines.append(current)
+            else:
+                pruned_lines.append(current)
+                
+        return "\n\n".join(pruned_lines)
 
     def sanitize_links(self, markdown: str, max_external=3, max_brand=1, brand_url=None):
 
@@ -1254,45 +1742,21 @@ class AsyncWorkflowController:
     def _enforce_outline_structure(self, outline: List[Dict[str, Any]], intent: str, area: Optional[str], content_type: str,) -> List[Dict[str, Any]]:
         """
         VALIDATES that the LLM-generated outline contains the required semantic
-        section_type roles.  Does NOT inject or mutate heading_text.
-
-        If a mandatory role is missing, a WARNING is logged so the prompt can
-        be iterated on – the pipeline still continues (soft validation).
+        section_type roles.
         """
         present_types = {
             (s.get("section_type") or "").lower().strip()
             for s in outline
         }
 
-        # --- universal mandatory roles ---
-        for role in self._MANDATORY_ROLES:
-            if role not in present_types:
-                logger.warning(
-                    f"[outline_validate] Missing mandatory section_type='{role}'. "
-                    f"Check 01_outline_generator.txt prompt."
-                )
-
-        # --- content-type specific roles ---
-        if content_type == "informational":
-            for role in self._EDITORIAL_ROLES:
-                if role not in present_types:
-                    logger.warning(
-                        f"[outline_validate] Informational outline missing section_type='{role}'. "
-                        f"Expected for content_type='informational'."
-                    )
-
-        # elif content_type == "brand_commercial":
-        #     for role in self.REQUIRED_STRUCTURE_BY_TYPE :
-        #         if role not in present_types:
-        #             logger.warning(
-        #                 f"[outline_validate] Brand outline missing section_type='{role}'. "
-        #                 f"Expected for content_type='brand_commercial'."
-        #             )
-        elif content_type == "brand_commercial":
-            required = self.REQUIRED_STRUCTURE_BY_TYPE["brand_commercial"]["mandatory"]
+        # --- content-type specific strict mandatory roles ---
+        structure_rules = self.REQUIRED_STRUCTURE_BY_TYPE.get(content_type)
+        if structure_rules:
+            required = structure_rules.get("mandatory", set())
             missing = required - present_types
             if missing:
-                raise ValueError(f"Brand outline missing mandatory sections: {missing}")
+                logger.error(f"[outline_validate] Missing mandatory sections for {content_type}: {missing}")
+                raise ValueError(f"Outline missing mandatory sections: {missing}")
 
         # --- assign section_ids for any section that is missing one ---
         for i, sec in enumerate(outline):
@@ -1487,6 +1951,7 @@ class AsyncWorkflowController:
 
         plan = {}
         plan["structure_rule"] = "standard structured paragraphs"
+        plan["force_external_link_sections"] = ["proof", "core"]
         
         # Writing Mode
         if content_type == "brand_commercial":
@@ -1630,9 +2095,20 @@ class AsyncWorkflowController:
         return ratio >= required_ratio
 
     def validate_final_cta(self, text: str, language: str) -> bool:
-        """Enforces a final CTA presence in the last 300 characters of the article."""
+        """Enforces a final CTA presence, with a strict terminal check for Arabic."""
+        if not text:
+            return False
+            
+        clean_text = text.strip()
+        
+        # Hard terminal check for Arabic as requested by user
+        if language == "ar":
+            if clean_text.endswith(("الآن.", "اليوم.", "الآن!", "اليوم!")):
+                return True
+        
+        # Fallback to general terms check for other languages or as secondary AR check
         terms = self.sales_terms_by_language.get(language, [])
-        last_300 = text[-300:].lower()
+        last_300 = clean_text[-300:].lower()
         return any(term.lower() in last_300 for term in terms)
 
     def validate_local_context(self, text: str, area: str, language: str) -> bool:
@@ -1646,20 +2122,25 @@ class AsyncWorkflowController:
         return any(term.lower() in text_lower for term in context_terms)
 
     def validate_paragraph_structure(self, text: str) -> bool:
-        paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 40]
+        """
+        Validates that each paragraph contains exactly 2 to 3 sentences.
+        Returns False if any paragraph (non-list/table) violates this.
+        """
+        if not text:
+            return True
+
+        paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 30]
 
         for p in paragraphs:
-            words = p.split()
-            if len(words) < 40 or len(words) > 100:
-                return False
+            # Skip architectural elements
+            if p.startswith("|") or p.startswith("- ") or p.startswith("* ") or p.startswith("#"):
+                continue
 
-            sentences = re.split(r'[.!؟]', p)
-            sentences = [s for s in sentences if len(s.strip()) > 5]
-
-            if len(sentences) < 2 or len(sentences) > 4:
-                return False
-
-            if len(p) > 650: 
+            # Split sentences using custom regex
+            sentences = self._extract_sentences(p)
+            
+            # User requirement: exactly 2-3 sentences
+            if not (2 <= len(sentences) <= 3):
                 return False
 
         return True

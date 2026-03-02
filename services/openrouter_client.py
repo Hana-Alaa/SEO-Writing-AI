@@ -221,18 +221,32 @@ class OpenRouterClient(BaseAIClient):
     #         logger.error(f"Image generation failed: {e}")
     #         return None
 
-    async def send_image(self, prompt: str, width=1024, height=1024, save_dir: str = None):
+    async def send_image(self, prompt: str, width=1024, height=1024, save_dir: str = None, seed: int = None, reference_path: str = None):
         """Generate an image and save it to save_dir (or default output/images if not given)."""
         payload = {
-            "model": OPENROUTER["models"]["image"],  # flux.2-pro
+            "model": OPENROUTER["models"]["image"],
             "messages": [
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": [
+                        {"type": "text", "text": prompt}
+                    ]
                 }
             ],
             "modalities": ["image"]
         }
+        
+        if seed is not None:
+            payload["seed"] = seed
+            
+        if reference_path and os.path.exists(reference_path):
+            with open(reference_path, "rb") as f:
+                base64_image = base64.b64encode(f.read()).decode("utf-8")
+                # Add image reference to messages if supported by model (OpenRouter standard for some models)
+                payload["messages"][0]["content"].append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{base64_image}"}
+                })
 
         data = await self._post_with_retry(
             self.base_url_chat,
@@ -252,8 +266,15 @@ class OpenRouterClient(BaseAIClient):
         image_url = message["images"][0]["image_url"]["url"]
 
         # data:image/png;base64,xxxxxx
-        header, encoded = image_url.split(",", 1)
-        image_bytes = base64.b64decode(encoded)
+        if "," in image_url:
+            header, encoded = image_url.split(",", 1)
+            image_bytes = base64.b64decode(encoded)
+        else:
+            # Handle potential direct URL if OpenRouter returns one
+            async with httpx.AsyncClient() as client:
+                r = await client.get(image_url)
+                r.raise_for_status()
+                image_bytes = r.content
 
         # Use provided save_dir or fall back to default
         target_dir = save_dir or "output/images"

@@ -98,7 +98,7 @@ async def main():
     }
 
     try:
-        print("\n🚀 Starting SEO Article Generation Pipeline...")
+        print("\nStarting SEO Article Generation Pipeline...")
         final_result = await controller.run_workflow(state)
         
         final_markdown = final_result.get("final_markdown", "")
@@ -112,11 +112,8 @@ async def main():
         md_file_path = os.path.join(output_dir, "final_article.md")
         with open(md_file_path, "w", encoding="utf-8") as f:
             f.write(final_markdown)
-        
-        print(f"\n✅ Pipeline completed successfully!")
-        print(f"📄 Markdown file saved at: {md_file_path}")
-
-        # Summary of results
+        print(f"\nPipeline completed successfully!")
+        print(f"Markdown file saved at: {md_file_path}")
         summary = {
             "title": final_result.get("title"),
             "slug": final_result.get("slug"),

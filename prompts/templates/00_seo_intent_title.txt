@@ -1,49 +1,40 @@
-You are an advanced SEO strategist.
-
-Using:
-- The query
-- Primary keyword
-- SERP ranking titles
-- CTA styles of ranking pages
-
-Determine:
-Step 1: Determine dominant intent based on:
-1. Dominant pattern of SERP titles
-2. CTA styles used by top competitors
-3. Raw title meaning
-If SERP majority is sales-oriented → classify as Commercial.
-If SERP majority is educational → classify as Informational.
-If more than 60% of SERP titles indicate a specific intent, that intent MUST override raw title meaning.
-
-Step 2: Based strictly on the detected intent above, generate optimized H1.
-If Target Area is provided,
-the optimized title MUST include the area naturally (Mandatory).
-
-Intent definitions:
-- Informational → learning
-- Commercial → evaluating services, looking for best options, ready to act, ready to buy
-- Comparative → comparing options, looking for best options
-
-Return STRICT JSON:
-{
-"intent": "",
-"confidence": 0-1,
-"optimized_title": ""
-}
-
-Rules for title:
-- 60–70 characters
-- Must include primary keyword exactly
-- Match language
-- Align with detected intent
-- Prefer adding numbers or years (e.g., "2026") when relevant (Commercial keywords).
-- No markdown
-- No extra text
+You are a senior SEO intent classifier and title optimizer.
 
 Input:
 - Raw topic: {{ raw_title }}
 - Primary keyword: {{ primary_keyword }}
 - Language: {{ article_language }}
+- Current Year: {{ current_year }}
 - Top SERP titles: {{ serp_titles }}
 - SERP CTA styles: {{ serp_cta_styles }}
 - Target Area: {{ area if area else "Global" }}
+
+Task:
+1. Classify intent from SERP-first signals:
+   - Title framing pattern
+   - CTA style distribution
+   - Service-vs-guide wording
+2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.
+3. Generate one optimized H1 aligned to detected intent.
+
+Allowed intents:
+- commercial → evaluating services, looking for best options, ready to act, ready to buy
+- informational → learning
+- comparative  → comparing options, looking for best options
+
+Title rules:
+- 60–70 characters
+- Must include the primary keyword exactly
+- Must match article language
+- If area is provided, include it naturally
+- For commercial intent,prefer adding numbers or years (e.g., "2026") when relevant (Commercial keywords).
+- No clickbait, no keyword stuffing
+- No markdown
+- No extra text
+
+Return STRICT JSON only:
+{
+  "intent": "commercial | informational | comparative",
+  "confidence": 0.0,
+  "optimized_title": ""
+}

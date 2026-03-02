@@ -3,6 +3,7 @@ import logging
 import asyncio
 import re
 from typing import List, Dict, Any, Optional
+from datetime import datetime
 from jinja2 import Template, StrictUndefined
 from utils.safe_json import recover_json
 
@@ -25,6 +26,8 @@ class OutlineGenerator:
         section.setdefault("heading_text", "Untitled Section")
         section.setdefault("section_type", "core")
         section.setdefault("section_intent", "Informational")
+        section.setdefault("decision_layer", "Market Reality")
+        section.setdefault("sales_intensity", "medium")
         section.setdefault("content_goal", "")
         section.setdefault("content_angle", "")
         section.setdefault("assigned_keywords", [])
@@ -80,6 +83,7 @@ class OutlineGenerator:
             mandatory_section_types: Optional[List[str]] = None
         ) -> Dict[str, Any]:
 
+        current_year = str(datetime.now().year)
         prompt = self.template.render(
             title=title,
             keywords=keywords,
@@ -91,7 +95,8 @@ class OutlineGenerator:
             content_strategy=content_strategy,
             area=area,
             feedback=feedback,
-            mandatory_section_types = mandatory_section_types or []
+            mandatory_section_types = mandatory_section_types or [],
+            current_year=current_year
         )
 
         logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
@@ -175,10 +180,15 @@ class SectionWriter:
         brand_url: str,
         brand_link_used: int,
         brand_link_allowed: bool,
-        allow_external_links: bool,  
+        allow_external_links: bool,
         execution_plan: Dict[str, Any],
-        area: str
-    ) -> str:
+        area: str,
+        used_phrases: List[str] = None,
+        used_internal_links: List[str] = None,
+        used_external_links: List[str] = None,
+        section_index: int = 0,
+        total_sections: int = 1
+    ) -> Dict[str, Any]:
 
         def clean(value):
             return value if value not in [None, "", "None"] else None
@@ -225,9 +235,14 @@ class SectionWriter:
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
             "localized_angle": section.get("localized_angle", ""),
+            "content_goal": section.get("content_goal", ""),
             "section_type": section.get("section_type", "core"),
+            "decision_layer": section.get("decision_layer", "Market Reality"),
+            "sales_intensity": section.get("sales_intensity", "medium"),
             "questions": section.get("questions", []),
         }
+
+        current_year = str(datetime.now().year)
 
         prompt = self.template.render(
             title=title,
@@ -241,10 +256,18 @@ class SectionWriter:
             link_strategy=link_strategy,
             content_type=content_type,
             brand_url=brand_url,
+            brand_link_used=brand_link_used,
             brand_link_allowed=brand_link_allowed,
             allow_external_links=allow_external_links,
             execution_plan=execution_plan,
             area=area,
+            used_phrases=used_phrases or [],
+            used_internal_links=used_internal_links or [],
+            used_external_links=used_external_links or [], 
+            section_index=section_index,
+            total_sections=total_sections,
+            is_first_section=(section_index == 0),
+            is_last_section=(section_index == total_sections - 1)
         )
 
         logger.info("\n================ FINAL PROMPT (SectionWriter) ================\n")
@@ -257,8 +280,18 @@ class SectionWriter:
             content = await self.ai_client.send(prompt, step="section")
             if not content:
                 logger.warning(f"AI returned empty content for section {section.get('section_id')}")
-                return ""
-            return content.strip().removeprefix("```").removesuffix("```").strip()
+                return {"content": "", "used_links": [], "brand_link_used": False}
+            
+            clean_content = content.strip().removeprefix("```").removesuffix("```").strip()
+            
+            # Detect used links
+            found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', clean_content)
+            
+            return {
+                "content": clean_content,
+                "used_links": found_links,
+                "brand_link_used": any(brand_url in l for l in found_links) if brand_url else False
+            }
         except Exception as e:
             logger.error(f"Error writing section {section.get('section_id', 'unknown')}: {e}")
             raise ContentGeneratorError(f"Section writing failed: {e}")
