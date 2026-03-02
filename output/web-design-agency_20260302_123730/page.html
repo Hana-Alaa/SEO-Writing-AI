@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Design Agency Riad: Top-Lösungen für Ihr Business 2026</title>
+    <meta name="description" content="">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #334155;
+            --heading-color: #1e293b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+
+            /* Dynamic Fonts */
+            --font-main: {
+                % if dir=='rtl' %
+            }
+
+            'IBM Plex Sans Arabic',
+            'Inter',
+            'Roboto',
+            sans-serif {
+                % else %
+            }
+
+            'Inter',
+            'Roboto',
+            sans-serif {
+                % endif %
+            }
+
+            ;
+
+            --font-heading: {
+                % if dir=='rtl' %
+            }
+
+            'Readex Pro',
+            'Outfit',
+            'Inter',
+            sans-serif {
+                % else %
+            }
+
+            'Outfit',
+            'Inter',
+            sans-serif {
+                % endif %
+            }
+
+            ;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.9;
+            /* Slightly increased for readability */
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 2rem 1rem;
+            text-align: center;
+            /* H1 inside header will be centered */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        article {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            color: var(--heading-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+            font-weight: 700;
+            text-align: center;
+            /* Force center H1 */
+        }
+
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--heading-color);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            border-inline-start: 4px solid var(--primary-color);
+            padding-inline-start: 12px;
+        }
+
+        h3 {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            color: var(--heading-color);
+            margin-top: 2rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 1.7rem;
+            font-size: 1.15rem;
+            text-align: justify;
+            text-justify: inter-word;
+            opacity: 0.95;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 1.5rem;
+            padding-inline-start: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            text-align: justify;
+        }
+
+        blockquote {
+            background-color: #f1f5f9;
+            border-inline-start: 4px solid var(--primary-color);
+            margin: 2rem 0;
+            padding: 1.5rem;
+            font-style: italic;
+            border-radius: 4px;
+        }
+
+        /* Images and Figures centering */
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 2rem auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        figcaption {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            min-width: 600px;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: start;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: var(--heading-color);
+        }
+
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            margin: 2rem 0;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            background-color: #eff6ff;
+            color: #1e3a8a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .toc ul {
+            list-style-type: none;
+            padding-inline-start: 0;
+            margin-bottom: 0;
+        }
+
+        .toc li {
+            margin-bottom: 0.8rem;
+        }
+
+        .toc a {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            article {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Footer centering fix to override global P justification */
+        footer p {
+            text-align: center !important;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Web Design Agency Riad: Top-Lösungen für Ihr Business 2026</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <article>
+            
+        </article>
+    </main>
+
+    <footer style="padding: 3rem 1rem; border-top: 1px solid var(--border-color); margin-top: 4rem;">
+        <div class="container">
+            <p>© 2026 All Rights Reserved</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>

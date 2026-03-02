@@ -27,43 +27,8 @@
             --code-text: #e2e8f0;
 
             /* Dynamic Fonts */
-            --font-main: {
-                % if dir=='rtl' %
-            }
-
-            'IBM Plex Sans Arabic',
-            'Inter',
-            'Roboto',
-            sans-serif {
-                % else %
-            }
-
-            'Inter',
-            'Roboto',
-            sans-serif {
-                % endif %
-            }
-
-            ;
-
-            --font-heading: {
-                % if dir=='rtl' %
-            }
-
-            'Readex Pro',
-            'Outfit',
-            'Inter',
-            sans-serif {
-                % else %
-            }
-
-            'Outfit',
-            'Inter',
-            sans-serif {
-                % endif %
-            }
-
-            ;
+            --font-main: {% if dir == 'rtl' %}'IBM Plex Sans Arabic', 'Inter', 'Roboto', sans-serif{% else %}'Inter', 'Roboto', sans-serif{% endif %};
+            --font-heading: {% if dir == 'rtl' %}'Readex Pro', 'Outfit', 'Inter', sans-serif{% else %}'Outfit', 'Inter', sans-serif{% endif %};
         }
 
         body {
@@ -191,23 +156,27 @@
         /* Tables */
         .table-wrapper {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             margin: 2rem 0;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--card-bg);
-            min-width: 600px;
+            table-layout: auto;
+            min-width: 640px;
         }
 
-        th,
-        td {
+        th, td {
             padding: 1rem;
-            text-align: start;
             border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+            word-break: break-word;
+        }
+
+        html[dir="rtl"] th,
+        html[dir="rtl"] td {
+            text-align: right;
         }
 
         th {

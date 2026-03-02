@@ -53,6 +53,11 @@ class OutlineGenerator:
         section.setdefault("content_type", content_type)
         section.setdefault("content_strategy", content_strategy)
         section.setdefault("area", area)
+        section.setdefault("requires_table", False)
+        section.setdefault("table_type", "none")
+        section.setdefault("requires_list", False)
+        section.setdefault("list_type", "none")
+        section.setdefault("cta_position", "none")
     
     def _validate_outline_schema(self, outline: List[Dict[str, Any]]) -> bool:
         required_keys = {
@@ -232,6 +237,11 @@ class SectionWriter:
             # "primary_keywords": primary_keywords,
             "article_language": article_language,
             "requires_table": section.get("requires_table", False),
+            "table_type": section.get("table_type", "none"),
+            "requires_list": section.get("requires_list", False),
+            "list_type": section.get("list_type", "none"),
+            "cta_position": section.get("cta_position", "none"),
+
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
             "localized_angle": section.get("localized_angle", ""),

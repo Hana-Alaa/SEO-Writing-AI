@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Web Design Agency in Riyadh | Expert Digital Solutions 2026</title>
+    <meta name="description" content="Work with the leading Web Design Agency in Riyadh. We deliver high-performance UI/UX design and digital marketing to scale your business in Saudi Arabia.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #334155;
+            --heading-color: #1e293b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+
+            /* Dynamic Fonts */
+            --font-main: {
+                % if dir=='rtl' %
+            }
+
+            'IBM Plex Sans Arabic',
+            'Inter',
+            'Roboto',
+            sans-serif {
+                % else %
+            }
+
+            'Inter',
+            'Roboto',
+            sans-serif {
+                % endif %
+            }
+
+            ;
+
+            --font-heading: {
+                % if dir=='rtl' %
+            }
+
+            'Readex Pro',
+            'Outfit',
+            'Inter',
+            sans-serif {
+                % else %
+            }
+
+            'Outfit',
+            'Inter',
+            sans-serif {
+                % endif %
+            }
+
+            ;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.9;
+            /* Slightly increased for readability */
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 2rem 1rem;
+            text-align: center;
+            /* H1 inside header will be centered */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        article {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            color: var(--heading-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+            font-weight: 700;
+            text-align: center;
+            /* Force center H1 */
+        }
+
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--heading-color);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            border-inline-start: 4px solid var(--primary-color);
+            padding-inline-start: 12px;
+        }
+
+        h3 {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            color: var(--heading-color);
+            margin-top: 2rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 1.7rem;
+            font-size: 1.15rem;
+            text-align: justify;
+            text-justify: inter-word;
+            opacity: 0.95;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 1.5rem;
+            padding-inline-start: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            text-align: justify;
+        }
+
+        blockquote {
+            background-color: #f1f5f9;
+            border-inline-start: 4px solid var(--primary-color);
+            margin: 2rem 0;
+            padding: 1.5rem;
+            font-style: italic;
+            border-radius: 4px;
+        }
+
+        /* Images and Figures centering */
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 2rem auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        figcaption {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            min-width: 600px;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: start;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: var(--heading-color);
+        }
+
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            margin: 2rem 0;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            background-color: #eff6ff;
+            color: #1e3a8a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .toc ul {
+            list-style-type: none;
+            padding-inline-start: 0;
+            margin-bottom: 0;
+        }
+
+        .toc li {
+            margin-bottom: 0.8rem;
+        }
+
+        .toc a {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            article {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Footer centering fix to override global P justification */
+        footer p {
+            text-align: center !important;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Top Web Design Agency in Riyadh | Expert Digital Solutions 2026</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <article>
+            <h2 id="web-design-agency-in-riyadh-digitale-exzellenz-fur-die-vision-2030">Web Design Agency in Riyadh: Digitale Exzellenz für die Vision 2030</h2>
+<!-- section_id: sec_01 -->
+
+<p>In einem Marktumfeld, das so dynamisch ist wie der saudi-arabische Wirtschaftsraum, entscheidet die Qualität Ihrer digitalen Präsenz über den langfristigen Markterfolg. Als führende <strong>Web Design Agency</strong> in Riad entwickeln wir maßgeschneiderte Lösungen, die technologische Innovation mit den kulturellen Anforderungen der Region verbinden. <a href="None">Sichern Sie sich jetzt Ihren Wettbewerbsvorteil auf dem saudi-arabischen Markt und vereinbaren Sie ein Beratungsgespräch</a>.</p>
+<p>Der Wettbewerb in Riad verschärft sich im Zuge der Saudi Vision 2030 massiv, was erstklassiges <strong>Web Design Riyadh</strong> zu einer geschäftskritischen Notwendigkeit macht. Unternehmen benötigen heute leistungsstarke <strong>E-Commerce-Plattformen</strong> und ein durchgehend <strong>responsives Design</strong>, um die technikaffine Bevölkerung des Königreichs effektiv zu erreichen. Die strategische Umsetzung lokaler Marktgegebenheiten sorgt dafür, dass Ihre Marke nicht nur sichtbar ist, sondern echtes Vertrauen bei der Zielgruppe aufbaut.</p>
+<p>Durch eine optimierte <strong>Benutzererfahrung</strong> (UX) verwandeln wir Besucher in loyale Kunden und steigern nachhaltig Ihre Konversionsraten. Die Experten der <a href="https://cems-it.com/">CEMS IT Official Website</a> verstehen die Komplexität der digitalen Transformation und setzen internationale Standards direkt vor Ort in Riad um. Wir schaffen digitale Ökosysteme, die skalierbar sind und Ihre Vision präzise im Herzen Saudi-Arabiens repräsentieren.</p>
+<h2 id="warum-standard-webseiten-in-saudi-arabien-scheitern">Warum Standard-Webseiten in Saudi-Arabien scheitern</h2>
+<!-- section_id: sec_02 -->
+
+<p>In einem kompetitiven Marktumfeld wie Riad bergen generische Templates erhebliche geschäftliche Risiken, da sie die spezifischen Anforderungen des saudi-arabischen Marktes ignorieren. Eine erfahrene Web Design Agency weiß, dass Standardlösungen oft an der mangelnden Unterstützung für Rechts-nach-Links-Layouts (RTL) scheitern, was die Nutzererfahrung massiv beeinträchtigt. Ohne eine tiefgreifende Lokalisierung riskieren Unternehmen, potenzielle Kunden bereits beim ersten Seitenaufruf an professionellere Wettbewerber zu verlieren.</p>
+<p>Die technische Unzulänglichkeit vieler Baukastensysteme führt zudem zu kritischen Sicherheitslücken und Performance-Einbußen, die in der Region nicht toleriert werden. Wenn Ladezeiten aufgrund überladener Codes oder fehlender lokaler Server-Optimierung steigen, sinkt die Sichtbarkeit in den Suchmaschinen drastisch. Ein strategisches <strong>UI/UX Design</strong> ist daher kein Luxus, sondern eine notwendige Absicherung gegen den digitalen Relevanzverlust.</p>
+<ul>
+<li>
+<p><strong>Mangelnde Mada-Integration:</strong> Fehlende Schnittstellen zu lokalen Zahlungssystemen führen zu hohen Abbruchraten im Checkout-Prozess.</p>
+</li>
+<li>
+<p><strong>Performance-Defizite:</strong> Ohne gezielte <strong>Performance-Optimierung</strong> werden mobile Nutzer in Saudi-Arabien aufgrund schwankender Verbindungsgeschwindigkeiten ausgeschlossen.</p>
+</li>
+<li>
+<p><strong>Sicherheitsrisiken:</strong> Veraltete Plugins in Standard-Templates gefährden die <strong>Sicherheit</strong> sensibler Kundendaten und verstoßen gegen lokale Datenschutzrichtlinien.</p>
+</li>
+<li>
+<p><strong>KI-Lösungen:</strong> Das Fehlen moderner <strong>KI-Lösungen</strong> zur Automatisierung des Kundensupports mindert die Skalierbarkeit Ihres Geschäftsmodells.</p>
+</li>
+</ul>
+<p>Unternehmen, die auf eine spezialisierte <strong>Digital Marketing Agency Saudi Arabia</strong> verzichten, setzen ihr gesamtes Werbebudget aufs Spiel, da minderwertige Landingpages die Konversionsraten ruinieren. Die technische Architektur muss von Grund auf so konzipiert sein, dass sie künftigen technologischen Sprüngen standhält und nicht bereits nach wenigen Monaten teuer saniert werden muss. Wer hier am falschen Ende spart, zahlt langfristig durch entgangene Marktanteile und hohe Reparaturkosten für die digitale Infrastruktur.</p>
+<h2 id="cems-it-technologische-uberlegenheit-fur-den-markt-in-riad">CEMS IT: Technologische Überlegenheit für den Markt in Riad</h2>
+<!-- section_id: sec_03 -->
+
+<p>Als technologisch führende Web Design Agency setzen wir in Riad neue Maßstäbe durch eine Architektur, die auf maximale Belastbarkeit und Geschwindigkeit ausgelegt ist. Die IT-Infrastruktur im Königreich erfordert Systeme, die nicht nur globalen Standards entsprechen, sondern spezifisch auf die Netztopologie Saudi-Arabiens optimiert sind. <strong>CEMS IT</strong> implementiert hierbei fortschrittliche Backend-Strukturen, die eine nahtlose Skalierung bei steigenden Nutzerzahlen garantieren.</p>
+<p>Unsere technischen Lösungen gehen weit über einfache Oberflächen hinaus und konzentrieren sich auf die Kernstabilität Ihrer Plattform. Wir integrieren hochsichere Schnittstellen und automatisierte Prozesse, um die Digitale Transformation Ihres Unternehmens auf ein neues Level zu heben.</p>
+<ul>
+<li>
+<p><strong>Rechtssicherheit:</strong> Vollständige Konformität mit dem saudi-arabischen E-Commerce-Gesetz und den CITC-Richtlinien für Datensicherheit.</p>
+</li>
+<li>
+<p><strong>Performance-Hosting:</strong> Nutzung lokaler Cloud-Migration und Serverstandorte in der Region für Latenzzeiten unter 30 Millisekunden.</p>
+</li>
+<li>
+<p><strong>Sichtbarkeit:</strong> Tiefgreifende SEO-Services, die direkt in den Quellcode eingebettet sind, um technische Barrieren in Suchmaschinen zu eliminieren.</p>
+</li>
+<li>
+<p><strong>Schnittstellen-Management:</strong> Native Integration von Mada, STC Pay und lokalen Logistik-APIs für reibungslose Transaktionen.</p>
+</li>
+</ul>
+<p>Durch den Einsatz moderner Microservices und einer Headless-Architektur stellen wir sicher, dass Ihre Anwendung zukunftssicher bleibt. Jedes System wird strengen Belastungstests unterzogen, um sicherzustellen, dass Sicherheitsupdates und Funktionserweiterungen ohne Ausfallzeiten eingespielt werden können. Die technische Überlegenheit von <strong>CEMS IT</strong> bietet Ihnen die notwendige Sicherheit, um in einem hochkompetitiven Markt wie Riad dauerhaft die technologische Führung zu übernehmen.</p>
+<h2 id="unser-6-stufen-prozess-fur-ihren-digitalen-erfolg">Unser 6-Stufen-Prozess für Ihren digitalen Erfolg</h2>
+<!-- section_id: sec_04 -->
+
+<p>Eine professionelle Web Design Agency für den Standort Riad zeichnet sich durch einen strukturierten Projektablauf aus, der die lokalen Marktbesonderheiten berücksichtigt. Unser Prozess ist darauf ausgelegt, technische Exzellenz mit den kulturellen Anforderungen Saudi-Arabiens zu harmonisieren, um messbare Ergebnisse zu erzielen. Dabei legen wir besonderen Wert auf eine transparente Kommunikation, die sich nahtlos in den Geschäftsalltag der Region integriert.</p>
+<p>In der Umsetzungsphase verschmelzen wir präzises <strong>User Interface Design</strong> mit einer robusten Architektur, um eine intuitive Bedienung zu gewährleisten. Ein durchdachtes <strong>UI/UX Design</strong> bildet hierbei das Fundament, um die hohen Erwartungen der technikaffinen Zielgruppe in Riad zu erfüllen. Die folgende Übersicht verdeutlicht die einzelnen Etappen unserer Zusammenarbeit von der ersten Analyse bis zum kontinuierlichen Support nach dem Go-Live.</p>
+<p>| Phase | Fokus &amp; Aktivitäten | Ergebnis |</p>
+<p>| :&mdash; | :&mdash; | :&mdash; |</p>
+<p>| 1. Discovery | Analyse der Geschäftsziele und Zielgruppen in Saudi-Arabien. | Strategisches Projekt-Briefing |</p>
+<p>| 2. Konzeption | Erstellung von Wireframes und Informationsarchitektur (Sitemap). | UX-Prototyp &amp; Strukturplan |</p>
+<p>| 3. UI/UX Design | Visuelle Gestaltung unter Berücksichtigung von RTL-Layouts und Branding. | Finales User Interface Design |</p>
+<p>| 4. Entwicklung | Clean-Code-Programmierung und Anbindung lokaler Schnittstellen. | Funktionale Beta-Version |</p>
+<p>| 5. Quality Assurance | Intensive Tests auf Performance, Sicherheit und Browser-Kompatibilität. | Fehlerfreie Live-Umgebung |</p>
+<p>| 6. Launch &amp; Support | Kontrollierte Veröffentlichung und fortlaufende Wartung der Plattform. | Optimierte digitale Präsenz |</p>
+<p>Nach der technischen Abnahme begleiten wir Ihr Unternehmen durch eine dedizierte Hypercare-Phase, um auf Feedbackzyklen der Nutzer unmittelbar reagieren zu können. Diese enge Betreuung stellt sicher, dass Ihre Webseite auch bei steigenden Zugriffszahlen stabil bleibt und Sicherheitsupdates zeitnah implementiert werden. Wir verstehen uns als langfristiger Partner, der die Skalierbarkeit Ihrer digitalen Infrastruktur im dynamischen Umfeld von Riad dauerhaft absichert.</p>
+<h2 id="messbare-ergebnisse-performance-metriken-lokaler-branchenfuhrer">Messbare Ergebnisse: Performance-Metriken lokaler Branchenführer</h2>
+<!-- section_id: sec_05 -->
+
+<p>Harte Daten untermauern unsere Position als führende Web Design Agency in Riad und belegen die Effektivität unserer Strategien für den saudi-arabischen Markt. In einer Region, die durch die Vision 2030 geprägt ist, liefern wir messbare Erfolge, die weit über ästhetische Ansprüche hinausgehen. Durch die gezielte Optimierung der Ladezeiten und Konversionspfade haben wir für lokale Branchenführer im Immobiliensektor eine Steigerung der qualifizierten Anfragen um bis zu 140 % erzielt.</p>
+<p>Unsere Expertise als Digital Marketing Agency Saudi Arabia zeigt sich besonders deutlich in der Transformation von Fintech-Plattformen. Hier konnten wir durch die Implementierung hochsicherer Transaktionsprozesse und einer intuitiven Benutzerführung die Abbruchraten im Checkout-Prozess signifikant senken. Diese Projekte demonstrieren, wie tiefgreifendes technisches Verständnis und lokale Marktkenntnis direkt in wirtschaftliches Wachstum für unsere Kunden übersetzt werden.</p>
+<p>Die Validierung erfolgt durch kontinuierliches Monitoring der Key Performance Indicators (KPIs), die speziell auf das Nutzerverhalten in Saudi-Arabien zugeschnitten sind. Ein herausragendes Beispiel für Web Design Riyadh ist die Neugestaltung eines Regierungsportals, bei dem die Nutzerinteraktion nach der Optimierung des RTL-Layouts und der mobilen Erreichbarkeit um über 200 % anstieg. Solche Ergebnisse bestätigen die Zuverlässigkeit unserer Systeme unter realen Hochlastbedingungen im Herzen des Königreichs.</p>
+<h2 id="haufig-gestellte-fragen-zu-web-design-in-riad">Häufig gestellte Fragen zu Web Design in Riad</h2>
+<!-- section_id: sec_06 -->
+
+<h3 id="wie-wird-die-datenresidenz-gema-saudi-arabischem-recht-gewahrleistet">Wie wird die Datenresidenz gemäß saudi-arabischem Recht gewährleistet?</h3>
+<p>Unternehmen, die mit einer <strong>Web Design Agency</strong> in Riad zusammenarbeiten, müssen die Vorschriften der National Cybersecurity Authority (NCA) und der Cloud Computing Regulatory Framework (CCRF) beachten. In der Marktrealität bedeutet dies, dass personenbezogene Daten von saudi-arabischen Staatsbürgern primär auf Servern innerhalb des Königreichs gespeichert werden sollten. Professionelle Hosting-Lösungen nutzen lokale Rechenzentren von Anbietern wie Oracle oder Google Cloud in Saudi-Arabien, um Latenzzeiten zu minimieren und die gesetzliche Konformität sicherzustellen.</p>
+<h3 id="welche-anforderungen-bestehen-fur-die-integration-von-stc-pay">Welche Anforderungen bestehen für die Integration von STC Pay?</h3>
+<p>Für den E-Commerce-Sektor in Riad ist die Einbindung lokaler Zahlungsmethoden wie STC Pay und Mada eine technische Grundvoraussetzung. Die Integration erfolgt über spezialisierte Payment Gateway Provider, die eine direkte API-Anbindung an das saudi-arabische Bankensystem ermöglichen. Da mobile Zahlungen im Königreich dominieren, muss die technische Architektur der Webseite auf eine nahtlose mobile Authentifizierung ausgelegt sein, um die Abbruchraten im Checkout-Prozess gering zu halten.</p>
+<h3 id="warum-ist-web-design-riyadh-fur-die-mobile-nutzung-so-kritisch">Warum ist Web Design Riyadh für die mobile Nutzung so kritisch?</h3>
+<p>In Saudi-Arabien erfolgt der Großteil des Internetverkehrs über mobile Endgeräte, was <strong>Web Design Riyadh</strong> vor spezifische technische Herausforderungen stellt. Die Netztopologie in der Region variiert zwischen hochmodernen 5G-Clustern in den Stadtzentren und schwächeren Verbindungen in ländlichen Gebieten, weshalb eine aggressive Performance-Optimierung notwendig ist. Eine <strong>Digital Marketing Agency Saudi Arabia</strong> achtet zudem darauf, dass die Benutzeroberflächen nativ für die Rechts-nach-Links-Leseweise (RTL) codiert sind, um die Nutzererfahrung der lokalen Bevölkerung zu optimieren.</p>
+<h2 id="starten-sie-ihre-digitale-transformation-in-riad-mit-cems-it">Starten Sie Ihre digitale Transformation in Riad mit CEMS IT</h2>
+<!-- section_id: sec_07 -->
+
+<p>Die Entscheidung für eine professionelle <strong>Web Design Agency</strong> in Riad markiert den Beginn einer präzisen technischen Implementierung, die Ihre Vision in ein leistungsstarkes digitales Werkzeug verwandelt. Unser Team stellt sicher, dass jede Phase des Rollouts – von der initialen Architektur bis zur finalen Schnittstellenkonfiguration – exakt auf die infrastrukturellen Gegebenheiten des saudi-arabischen Marktes abgestimmt ist. Durch diesen strukturierten Ansatz minimieren wir technische Reibungsverluste und garantieren eine punktgenaue Bereitstellung Ihrer neuen Plattform.</p>
+<p><strong>CEMS IT</strong> begleitet Sie dabei durch einen Validierungsprozess, der über die bloße Programmierung hinausgeht und die langfristige Stabilität Ihres digitalen Ökosystems sichert. Wir integrieren fortschrittliche Monitoring-Systeme und führen umfassende Lasttests durch, um die Belastbarkeit unter realen Bedingungen im Kölner Raum der Vision 2030 zu gewährleisten. Diese methodische Umsetzung stellt sicher, dass Ihre Webpräsenz nicht nur heute überzeugt, sondern auch künftigen technologischen Anforderungen und steigenden Nutzerzahlen souverän standhält.</p>
+<p>Der Fokus liegt dabei auf einer nahtlosen Verzahnung Ihrer Geschäftsprozesse mit modernen Webtechnologien, um eine maximale Effizienz im operativen Betrieb zu erreichen. Wir transformieren komplexe Anforderungen in intuitive Benutzerführungen und hochperformante Backends, die Ihre Marktposition in Saudi-Arabien nachhaltig festigen. <a href="None">Sichern Sie sich jetzt die technologische Marktführerschaft und lassen Sie uns gemeinsam Ihr Projekt in Riad realisieren</a>.</p>
+        </article>
+    </main>
+
+    <footer style="padding: 3rem 1rem; border-top: 1px solid var(--border-color); margin-top: 4rem;">
+        <div class="container">
+            <p>© 2026 All Rights Reserved</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>

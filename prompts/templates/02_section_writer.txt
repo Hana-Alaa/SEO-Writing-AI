@@ -25,25 +25,60 @@ ARTICLE CONTEXT
 - Mandatory Internal Links: {{ section.assigned_links | tojson }}
 - Used Internal Links: {{ used_internal_links | tojson }}
 - Used External Links: {{ used_external_links | tojson }}
+- Requires Table: {{ section.requires_table }}
+- Table Type: "{{ section.table_type | default('none') }}"
+- Requires List: {{ section.requires_list | default(false) }}
+- List Type: "{{ section.list_type | default('none') }}"
 
 STRICT WRITING RULES
 1. Language lock:
    - Write strictly in {{ article_language }}.
+   1.1 Perspective & Pronouns (MANDATORY):
+      - Address the reader directly in SECOND PERSON in the target language.
+      - Use natural second-person pronouns:
+      Arabic: "أنت / لك / لديك / عملك / شركتك"
+      English: "you / your"
+      French: "vous / votre"
+      German: "Sie / Ihr"
+      Spanish: "tú/usted / tu/su"
+      Turkish: "sen/siz / sizin"
+      - At least one second-person construction in each paragraph.
+      - Avoid detached third-person style like "businesses should..." unless used briefly for contrast.
 2. Structure:
-   - 3 to 4 short paragraphs.
-   - Each paragraph: exactly 2–3 sentences no more.
-   - Natural transitions allowed (do NOT write choppy text).
-3. Keyword usage:
-   - Primary keyword appears naturally once in first paragraph.
-   - No keyword stuffing, no forced bolding.
+   - Base structure: 2 short paragraphs, each exactly 2–3 sentences.
+   - If requires_list = true: add ONE markdown list (3–5 items) after paragraph 2.
+   - If requires_table = true: add ONE markdown table (3+ rows) after paragraph 2.
+   - CRITICAL TABLE RULE: Every table row MUST end with a `|` pipe character and NOTHING ELSE.
+     - CORRECT: `| Cell 1 | Cell 2 | Cell 3 |`
+     - WRONG:   `| Cell 1 | Cell 2 | Cell 3 | Some extra text here`
+     - After the last `|` of any table row, the line MUST end immediately with no additional text.
+     - A table MUST start on a NEW LINE and MUST be preceded by a blank line.
+     - Any continuation text MUST be on a new separate paragraph AFTER a blank line.
+   - FAQ sections keep H3 Q&A format only.
+3. Keyword usage (Density target: 1.2%–1.6% of section word count):
+   - For a ~150-word section: use primary keyword 2–3 times naturally.
+   - First mention MUST be in the first paragraph.
+   - At least one mention should be bolded (**keyword**) — but ONCE only per section.
+   - Support with semantic synonyms and related phrases from "Required Keywords".
+   - Never stuff: if keyword already has 2 mentions, switch to synonyms.
+   - NO keyword in FAQ question headings — keep them question-form only.
 4. Local SEO:
    - If area exists, mention area once in first paragraph + one contextual local market sentence.
    - Do not repeat area excessively.
 5. CTA policy:
-   - If CTA Type = none -> no CTA.
-   - If CTA Type = primary/strong -> exactly one clear CTA sentence.
-   - For commercial intro: CTA inside first paragraph.
-   - For conclusion: end with CTA.
+   - CTA sentence MUST directly address the reader in second person.
+   - Decide based on CTA Type assigned to this section:
+     * "none"     → Write NO CTA at all.
+     * "soft"     → One low-pressure sentence (e.g. "Explore our full guide", "Learn more about our approach"). No hard sell.
+     * "primary"  → One clear action CTA in the FIRST PARAGRAPH (e.g. "Request a free consultation today", "Start your project with us"). Wrap in brand link if Brand Link Used = false.
+     * "moderate" → One action CTA at the END of the section. Can be: service mention, offer, contact/WhatsApp invite, product link. Wrap in a relevant URL if available.
+     * "strong"   → One high-urgency CTA as the VERY LAST SENTENCE only (e.g. "Contact us now to secure your spot", "Start your digital transformation today"). Wrap in brand link if Brand Link Used = false.
+   - CTA tone depends on intent:
+     * commercial/transactional → direct, benefit-driven, action-urgent.
+     * informational → educational, resource-oriented, no pressure.
+   - If Brand Link Used = false: wrap the CTA text as a markdown link using: {{ brand_url }}
+   - If Brand Link Used = true: write the CTA without adding the brand link again.
+   - Never output "(None)" or a broken link. If you have no valid URL, write the CTA as plain text.
 6. Anti-robotic style:
    - Avoid repetitive openings like:
      "Maximize your", "Accelerate your", "Elevate your", "Drive sustainable growth".
@@ -57,14 +92,19 @@ STRICT WRITING RULES
    - medium: Balanced tone. Informative but with subtle sales nudges.
    - low: Strictly educational and objective. No sales pressure.
 9. Links:
-   - Add 1–2 internal links naturally if provided in "Mandatory Internal Links".
-   - CRITICAL: Skip any link already present in "Used Internal Links".
-   - CRITICAL: If "Brand Link Used" is True, do NOT use the Brand URL again.
-   - Never link competitors.
-   - External Link Rule (USE SPARINGLY):
-      - ONLY if the section relies heavily on specific statistics, regulations, or government benchmarks, you MAY add exactly ONE highly authoritative external link (e.g., .gov, .edu, Statista).
-      - CRITICAL: Do NOT repeat external links used in previous sections.
-      - Never force an external link if it doesn't fit 100% naturally.
+   A. Internal Links (User-Provided):
+      - All URLs in "Mandatory Internal Links" and "Brand URL" are INTERNAL. Never treat them as external.
+      - Add internal links naturally in the text. Maximum 1–2 per section.
+      - CRITICAL: Any URL that already appears in "Used Internal Links" MUST be skipped entirely — never repeat it.
+      - CRITICAL: If "Brand Link Used" is True, skip the Brand URL entirely.
+
+   B. External Links (AI-Provided — HELPFUL & CREDIBLE):
+      - You MUST add at least 2–3 external links throughout the entire article (not necessarily in every section).
+      - Choose a genuinely credible, non-competitor source (e.g., statista.com, data.gov, worldbank.org, mckinsey.com, local .gov.sa sites).
+      - The link must serve as a "Helpful Resource" for the reader to better understand a complex point, statistic, or regulation.
+      - CRITICAL: STRICTLY FORBIDDEN to link to any direct competitor targeting the same keywords (e.g., other web design agencies if the topic is web design).
+      - Format as natural inline markdown: [Helpful Resource: Fact or Data Title](https://actual-url.com)
+      - Never fabricate URLs. If you don't have a specific real URL for a valid source, do not add an external link.
 10. FAQ behavior:
    - If section_type = faq, answer each question under H3 heading concisely.
    - Commercial FAQ = objection handling.

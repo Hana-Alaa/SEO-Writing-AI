@@ -25,7 +25,10 @@ Rules:
 - If area exists:
   - Include local differentiation (market behavior, trust factors, payment/regulatory context)
 
-Return STRICT JSON:
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
 {
   "primary_angle": "",
   "strategic_positioning": "",
