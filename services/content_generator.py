@@ -155,7 +155,7 @@ class OutlineGenerator:
         if not isinstance(keyword_expansion, dict):
             keyword_expansion = {}
 
-        keyword_expansion.setdefault("primary", keywords[0] if keywords else title)
+        keyword_expansion["primary"] = keywords[0] if keywords else title
         keyword_expansion.setdefault("core", keywords)
         keyword_expansion.setdefault("lsi", [])
         keyword_expansion.setdefault("semantic", [])

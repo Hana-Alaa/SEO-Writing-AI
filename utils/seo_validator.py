@@ -186,8 +186,8 @@ class SEOValidator:
             items = re.findall(r'(\d+\.|\*|-|###)\s+.*', faq_text)
             q_marks = faq_text.count('?')
             q_count = max(len(items), q_marks)
-            if q_count < 3:
-                report["errors"].append(f"FAQ section too thin ({q_count} items). Minimum 3 required.")
+            if q_count < 4 or q_count > 6:
+                report["errors"].append(f"FAQ section must have 4-6 items (found {q_count}).")
                 report["passed"] = False
         else:
             report["errors"].append("FAQ section missing.")

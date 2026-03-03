@@ -44,8 +44,11 @@ STRICT WRITING RULES
       Turkish: "sen/siz / sizin"
       - At least one second-person construction in each paragraph.
       - Avoid detached third-person style like "businesses should..." unless used briefly for contrast.
+
 2. Structure:
-   - Base structure: 2 short paragraphs, each exactly 2–3 sentences.
+   - Base structure: 2-3 short paragraphs per section.
+   - PARAGRAPH LENGTH LIMIT (CRITICAL): Each paragraph MUST be exactly 3 to 4 lines maximum (roughly 2-3 sentences). 
+   - DO NOT write long "wall-of-text" paragraphs. If a paragraph exceeds 4 lines of thought, break it into a new paragraph immediately.
    - If requires_list = true: add ONE markdown list (3–5 items) after paragraph 2.
    - If requires_table = true: add ONE markdown table (3+ rows) after paragraph 2.
    - CRITICAL TABLE RULE: Every table row MUST end with a `|` pipe character and NOTHING ELSE.
@@ -55,16 +58,19 @@ STRICT WRITING RULES
      - A table MUST start on a NEW LINE and MUST be preceded by a blank line.
      - Any continuation text MUST be on a new separate paragraph AFTER a blank line.
    - FAQ sections keep H3 Q&A format only.
+
 3. Keyword usage (Density target: 1.2%–1.6% of section word count):
    - For a ~150-word section: use primary keyword 2–3 times naturally.
    - First mention MUST be in the first paragraph.
    - At least one mention should be bolded (**keyword**) — but ONCE only per section.
    - Support with semantic synonyms and related phrases from "Required Keywords".
    - Never stuff: if keyword already has 2 mentions, switch to synonyms.
-   - NO keyword in FAQ question headings — keep them question-form only.
+   - FAQ question headings should include keyword variations naturally (do NOT avoid the keyword entirely).
+
 4. Local SEO:
    - If area exists, mention area once in first paragraph + one contextual local market sentence.
    - Do not repeat area excessively.
+
 5. CTA policy:
    - CTA sentence MUST directly address the reader in second person.
    - Decide based on CTA Type assigned to this section:
@@ -72,44 +78,62 @@ STRICT WRITING RULES
      * "soft"     → One low-pressure sentence (e.g. "Explore our full guide", "Learn more about our approach"). No hard sell.
      * "primary"  → One clear action CTA in the FIRST PARAGRAPH (e.g. "Request a free consultation today", "Start your project with us"). Wrap in brand link if Brand Link Used = false.
      * "moderate" → One action CTA at the END of the section. Can be: service mention, offer, contact/WhatsApp invite, product link. Wrap in a relevant URL if available.
-     * "strong"   → One high-urgency CTA as the VERY LAST SENTENCE only (e.g. "Contact us now to secure your spot", "Start your digital transformation today"). Wrap in brand link if Brand Link Used = false.
+     * "strong"   → One high-urgency, conversion-focused CTA as the VERY LAST SENTENCE only (e.g. "Request a free consultation today", "Get your tailored proposal", "Book your strategy session", "Call us now"). Do NOT use purely motivational closings. Wrap in brand link if Brand Link Used = false.
    - CTA tone depends on intent:
-     * commercial/transactional → direct, benefit-driven, action-urgent.
+     * commercial/transactional → direct, benefit-driven, action-urgent, conversion-focused.
      * informational → educational, resource-oriented, no pressure.
+   - STRICT ANCHOR TEXT RULE: Never use weak, generic anchor texts like "Let's talk", "Contact Us", "See All Posts", or "Click Here". 
+     Instead, the linked text MUST be highly descriptive, benefit-driven, and context-specific (e.g., "Get Your Custom Web Design Proposal", "Schedule Your Free SEO Strategy Session").
    - If Brand Link Used = false: wrap the CTA text as a markdown link using: {{ brand_url }}
    - If Brand Link Used = true: write the CTA without adding the brand link again.
    - Never output "(None)" or a broken link. If you have no valid URL, write the CTA as plain text.
-6. Anti-robotic style:
-   - Avoid repetitive openings like:
-     "Maximize your", "Accelerate your", "Elevate your", "Drive sustainable growth".
-   - Do not repeat the same promise from previous sections.
+
+6. Human-First & Anti-robotic style (CRITICAL):
+   - VERY IMPORTANT: Write in a natural, empathetic, and conversational human tone.
+   - BANNED AI WORDS: Do NOT use obvious AI tells such as: "Moreover", "Furthermore", "In conclusion", "It is important to note", "Delve into", "Testament to", "Unleash", "Elevate", "Navigate".
+   - Strictly AVOID being "over-corporate" or using stiff business jargon (e.g., "synergy", "paradigm shift", "leverage our expertise").
+   - Avoid repetitive openings like: "Maximize your", "Accelerate your", "Drive sustainable growth", "In today's fast-paced digital landscape".
+   - DO NOT repeat the same concepts, promises, or phrasing from previous sections. Every sentence must offer NEW information.
+   - Act like a senior consultant explaining a concept across a table. Use varied sentence lengths (a mix of short, punchy statements and longer explanatory sentences).
+   - Use transition words naturally (e.g., "But", "And", "Because of this", "Here's why") instead of academic connectors.
+
 7. Decision Layer Enforcement:
    - Strictly adhere to the assigned Decision Layer: {{ section.decision_layer }}.
    - Do NOT cover themes belonging to other layers (e.g., if layer is Technical Systems, do not discuss Market Trends or ROI).
+
 8. Sales Intensity & Tone:
    - Adjust writing tone based on Sales Intensity: {{ section.sales_intensity }}.
    - high: Use persuasive, benefit-driven language. Strong focus on value and conversion.
    - medium: Balanced tone. Informative but with subtle sales nudges.
    - low: Strictly educational and objective. No sales pressure.
+
 9. Links:
-   A. Internal Links (User-Provided):
-      - All URLs in "Mandatory Internal Links" and "Brand URL" are INTERNAL. Never treat them as external.
-      - Add internal links naturally in the text. Maximum 1–2 per section.
-      - CRITICAL: Any URL that already appears in "Used Internal Links" MUST be skipped entirely — never repeat it.
-      - CRITICAL: If "Brand Link Used" is True, skip the Brand URL entirely.
+   A. Internal Links:
+      - All links in "Mandatory Internal Links" and "Brand URL" are INTERNAL.
+      - MUST strategically insert 1–2 of these links per section ONLY where they provide direct value to the reader (e.g., linking a service exactly when solving a pain point).
+      - Do NOT force links if they don't fit the context naturally. 
+      - Use highly descriptive anchor text (e.g., [Innovative E-Business Solutions](https://...)).
+      - CRITICAL: Skip any URL that already appears in "Used Internal Links".
    
-   B. External Links (AI-Provided — HELPFUL & CREDIBLE):
-      - You MUST add at least 2–3 external links throughout the entire article (not necessarily in every section).
-      - Choose a genuinely credible, non-competitor source (e.g., statista.com, data.gov, worldbank.org, mckinsey.com, local .gov.sa sites).
-      - The link must serve as a "Helpful Resource" for the reader to better understand a complex point, statistic, or regulation.
-      - CRITICAL: STRICTLY FORBIDDEN to link to any direct competitor targeting the same keywords (e.g., other web design agencies if the topic is web design).
-      - Format as natural inline markdown: [Helpful Resource: Fact or Data Title](https://actual-url.com)
-      - Never fabricate URLs. If you don't have a specific real URL for a valid source, do not add an external link.
+   B. External Links (Authority & Credible Resources):
+      - You MUST include 1-2 external links in the article (specifically in Informational, Technical, or Market Reality sections).
+      - To avoid broken links, ONLY link to high-profile, undeniable authority homepages or main directories (e.g., `https://www.statista.com`, `https://www.mckinsey.com`, `https://en.wikipedia.org`).
+      - Do NOT attempt to link to specific deep articles/sub-pages unless provided in the input, as they often break (404).
+      - Each link MUST back a specific market fact, broad statistic, or trend.
+      - CRITICAL: NO COMPETITORS.
+      - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
+      
 10. FAQ behavior:
-   - If section_type = faq, answer each question under H3 heading concisely.
+   - If section_type = faq, you MUST answer EVERY question listed in the "Questions" array.
+   - Use an H3 heading for each question, followed by a concise, unique, and helpful answer. Exactly 4-6 questions MUST be present.
    - Commercial FAQ = objection handling.
    - Informational FAQ = educational clarity, no selling.
+   - Apply FAQ Schema (HTML Microdata) to the questions and answers when possible.
 
+11. Conclusion Behavior:
+    - If section_type = conclusion, the final paragraph MUST NOT be a weak motivational sign-off.
+    - Instead, it MUST culminate in a high-urgency, conversion-focused directive.
+    - Follow the strict anchor text rule (highly descriptive, benefit-driven).
 
 OUTPUT
 - Markdown only

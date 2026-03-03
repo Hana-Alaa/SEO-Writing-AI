@@ -157,6 +157,7 @@ class AsyncWorkflowController:
             # ("web_research", self._step_web_research, 1),  
             # ("semantic_layer", self._step_semantic_layer, 1),
             ("analysis_init", self._step_0_init, 0),
+            ("brand_discovery", self._step_0_brand_discovery, 1),
             ("web_research", self._step_0_web_research, 1),
             ("serp_analysis", self._step_0_serp_analysis, 1),
             ("intent_title", self._step_0_intent_title, 0),
@@ -202,6 +203,9 @@ class AsyncWorkflowController:
         input_data = state.get("input_data", {})
         raw_title = input_data.get("title", "Untitled Article")
         keywords = input_data.get("keywords", [])
+        if isinstance(keywords, str):
+            keywords = [k.strip() for k in keywords.split(",") if k.strip()]
+        
         primary_keyword = keywords[0] if keywords else raw_title
         user_lang = input_data.get("article_language")
         # article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
@@ -217,6 +221,7 @@ class AsyncWorkflowController:
         # keep input_data in sync for downstream steps
         state.setdefault("input_data", {})
         state["input_data"]["article_language"] = article_language
+        state["input_data"]["keywords"] = keywords
 
         # Generate slug and directory
         import datetime
@@ -230,6 +235,84 @@ class AsyncWorkflowController:
         state["output_dir"] = output_dir
         state["used_phrases"] = []
 
+        return state
+
+    async def _step_0_brand_discovery(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Automatically discovers internal links from the brand_url."""
+        brand_url = state.get("brand_url")
+        if not brand_url:
+            urls = state.get("input_data", {}).get("urls", [])
+            if urls:
+                brand_url = urls[0].get("link")
+        
+        if not brand_url or not brand_url.startswith("http"):
+            logger.info("Skipping brand discovery: No valid brand_url found.")
+            return state
+
+        logger.info(f"Starting brand discovery for: {brand_url}")
+        domain = self._domain(brand_url)
+        
+        try:
+            # We use a simple fetch + regex to avoid heavy browser overhead for just links
+            import requests
+            from bs4 import BeautifulSoup
+            
+            response = requests.get(brand_url, timeout=15, headers={"User-Agent": "Mozilla/5.0 (SEO-Engine-Bot)"})
+            if response.status_code != 200:
+                logger.warning(f"Brand discovery failed (status {response.status_code})")
+                return state
+                
+            soup = BeautifulSoup(response.text, 'html.parser')
+            discovered_resources = {} # url -> anchor text
+            
+            # Keywords that usually indicate useful internal pages
+            useful_patterns = ["blog", "service", "project", "about", "contact", "solution", "work", "portfolio", "offer"]
+            
+            for a in soup.find_all('a', href=True):
+                href = a['href']
+                text = a.get_text(strip=True)
+                
+                # Clean and resolve relative links
+                from urllib.parse import urljoin
+                full_url = urljoin(brand_url, href)
+                
+                # Check if it's internal
+                if self._domain(full_url) == domain:
+                    canon = self._canon_url(full_url)
+                    # Filter for useful patterns and ensure text isn't empty or too long
+                    if any(p in canon for p in useful_patterns) and text and len(text) > 3 and len(text) < 60:
+                        # Prefer longer/descriptive text if we find the same link twice
+                        if canon not in discovered_resources or len(text) > len(discovered_resources[canon]):
+                            discovered_resources[canon] = text
+            
+            # Filter and add original input URLs as well
+            if "internal_resources" not in state:
+                state["internal_resources"] = []
+            
+            input_urls = state.get("input_data", {}).get("urls", [])
+            seen_canons = set()
+            for u in input_urls:
+                link = u.get("link", "")
+                if link:
+                    canon = self._canon_url(link)
+                    seen_canons.add(canon)
+                    state["internal_resources"].append({"link": link, "text": u.get("text") or "Internal Resource"})
+
+            # Add top 10 discovery results
+            added_count = 0
+            for url, text in discovered_resources.items():
+                if url not in seen_canons:
+                    state["internal_resources"].append({"link": url, "text": text})
+                    seen_canons.add(url)
+                    added_count += 1
+                if added_count >= 10:
+                    break
+                    
+            logger.info(f"Discovered {added_count} new internal resources from brand_url.")
+                
+        except Exception as e:
+            logger.error(f"Error during brand discovery: {e}")
+            
         return state
 
     async def _step_0_web_research(self, state):
@@ -495,7 +578,13 @@ class AsyncWorkflowController:
         title = input_data.get("title") or "Untitled"
         keywords = input_data.get("keywords") or []
         urls_raw = input_data.get("urls", [])
-        urls_norm = normalize_urls(urls_raw) or []
+        urls_norm = []
+        
+        # We use state["internal_resources"] which was populated in brand_discovery
+        internal_resources = state.get("internal_resources", [])
+        for res in internal_resources:
+            urls_norm.append({"text": res.get("text", "Internal Resource"), "link": res.get("link")})
+
         for u in urls_norm:
             u["type"] = "internal" 
 
@@ -700,105 +789,6 @@ class AsyncWorkflowController:
             # raise ValueError(f"Missing mandatory sections: {missing}")
 
         return state
-
-    # async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
-    #     input_data = state.get("input_data", {})
-    #     title = input_data.get("title", "Untitled")
-    #     outline = state.get("outline", [])
-    #     global_keywords = state.get("global_keywords", {})
-    #     intent = state.get("intent", "Informational")
-    #     # article_language = input_data.get("article_language", "en")
-    #     # article_language = state.get("article_language", "en")
-    #     article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "en")
-    #     seo_intelligence = state.get("seo_intelligence", {})
-    #     link_strategy = state.get("link_strategy", {})
-        
-    #     if not outline:
-    #         raise RuntimeError("No outline found for section writing.")
-
-    #     content_type = state.get("content_type", "informational")
-
-    #     if PARALLEL_SECTIONS:
-    #         tasks = [
-    #             self._write_single_section(
-    #                 title=title,
-    #                 global_keywords=global_keywords,
-    #                 section=section,
-    #                 article_intent=intent,
-    #                 seo_intelligence=seo_intelligence,
-    #                 content_type=content_type,
-    #                 link_strategy=link_strategy,
-    #                 state=state,
-    #                 section_index=idx,
-    #                 total_sections=len(outline)
-    #             )
-    #             for idx, section in enumerate(outline)
-    #         ]
-    #         logger.info(f"Writing {len(tasks)} sections in PARALLEL mode")
-    #         results = await asyncio.gather(*tasks, return_exceptions=True)
-    #     else:
-    #         logger.info(f"Writing {len(outline)} sections in SEQUENTIAL mode")
-    #         results = []
-    #         for idx, section in enumerate(outline):
-    #             res = await self._write_single_section(
-    #                 title=title,
-    #                 global_keywords=global_keywords,
-    #                 section=section,
-    #                 article_intent=intent,
-    #                 seo_intelligence=seo_intelligence,
-    #                 content_type=content_type,
-    #                 link_strategy=link_strategy,
-    #                 state=state,
-    #                 section_index=idx,
-    #                 total_sections=len(outline)
-    #             )
-    #             results.append(res)
-                
-    #             # Update link state from the result
-    #     if res and isinstance(res, dict) and res.get("brand_link_used"):
-    #         state["brand_link_used"] = True
-
-    #     sections_content = {}
-    #     for res in results:
-    #         if isinstance(res, Exception):
-    #             logger.error(f"Section failed: {res}")
-    #             continue
-    #         if res:
-    #             sections_content[res["section_id"]] = res
-
-    #     state["sections"] = sections_content
-        
-    #     # Local SEO Enforcement (Retry first section if area is missing)
-    #     area = state.get("area")
-    #     if area and sections_content:
-    #         first_id = outline[0]["section_id"]
-    #         first_res = sections_content.get(first_id)
-            
-    #         if first_res and area.lower() not in first_res["generated_content"].lower():
-    #             logger.info(f"Local area '{area}' missing in first section. Retrying with enforcement...")
-                
-    #             # Regenerate first section once
-    #             retry_res = await self._write_single_section(
-    #                 title,
-    #                 global_keywords,
-    #                 outline[0],
-    #                 intent,
-    #                 seo_intelligence,
-    #                 content_type,
-    #                 link_strategy,
-    #                 state,
-    #                 force_local=True
-    #             )
-                
-    #             if retry_res:
-    #                 sections_content[first_id] = retry_res
-    #                 state["sections"] = sections_content
-    #                 logger.info("First section regenerated successfully with Local SEO enforcement.")
-    #             else:
-    #                 logger.warning("Retry of first section failed.")
-
-    #     logger.info(f"Successfully wrote {len(sections_content)} sections.")
-    #     return state
     
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
         input_data = state.get("input_data", {})
@@ -1428,38 +1418,6 @@ class AsyncWorkflowController:
         return state
     
     # ---------------- UTILITIES ----------------
-    # def _enforce_paragraph_structure(self, text: str) -> str:
-    #     """
-    #     Enforce a maximum of 3 sentences per paragraph.
-    #     Splits existing paragraphs into smaller ones if they exceed the limit.
-    #     """
-    #     if not text:
-    #         return text
-            
-    #     # Split by existing paragraphs
-    #     paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
-    #     fixed = []
-
-    #     for p in paragraphs:
-    #         # Skip tables or bullet lists (simplified check)
-    #         if p.startswith("|") or p.startswith("- ") or p.startswith("* "):
-    #             fixed.append(p)
-    #             continue
-
-    #         # Split paragraph into sentences using regex that supports Arabic (؟) and English (.)
-    #         # and handles common abbreviations or decimal points if possible (simplified here)
-    #         sentences = re.split(r'(?<=[.!؟])\s+', p)
-
-    #         if len(sentences) > 3:
-    #             # Group into chunks of 3 sentences
-    #             for i in range(0, len(sentences), 3):
-    #                 chunk = " ".join(sentences[i:i+3])
-    #                 fixed.append(chunk.strip())
-    #         else:
-    #             fixed.append(p)
-
-    #     return "\n\n".join(fixed)
-
     def _enforce_paragraph_structure(self, text: str) -> str:
         """
         Enforce max 3 sentences per paragraph WITHOUT breaking markdown tables/lists.
@@ -1853,43 +1811,6 @@ class AsyncWorkflowController:
                 pruned_lines.append(current)
                 
         return "\n\n".join(pruned_lines)
-
-    # def sanitize_links(self, markdown: str, max_external=3, max_brand=1, brand_url=None):
-
-    #     links = re.findall(r'\[(.*?)\]\((https?://.*?)\)', markdown)
-
-    #     used_urls = set()
-    #     external_count = 0
-    #     brand_count = 0
-
-    #     def replace_link(match):
-    #         nonlocal external_count, brand_count
-    #         text = match.group(1)
-    #         url = match.group(2)
-
-    #         if url in used_urls:
-    #             return text
-
-    #         if brand_url and url.startswith(brand_url):
-    #             if brand_count >= max_brand:
-    #                 return text
-    #             brand_count += 1
-
-    #         else:
-    #             if external_count >= max_external:
-    #                 return text
-    #             external_count += 1
-
-    #         used_urls.add(url)
-    #         return match.group(0)
-
-    #     cleaned = re.sub(
-    #         r'\[(.*?)\]\((https?://.*?)\)',
-    #         replace_link,
-    #         markdown
-    #     )
-
-    #     return cleaned
 
     def sanitize_links(
         self,
@@ -2347,7 +2268,7 @@ class AsyncWorkflowController:
             plan["structure_rule"] = "question-driven concise answers"
 
         elif section_type == "conclusion":
-            plan["structure_rule"] = "recap + final CTA"
+            plan["structure_rule"] = "recap + high-urgency conversion CTA block (MUST use descriptive anchor text, no generic 'contact us')"
 
         # Apply Structural Intelligence Words & Patterns
         serp_strat = state.get("seo_intelligence", {}).get("strategic_analysis", {})
@@ -2472,8 +2393,8 @@ class AsyncWorkflowController:
 
     def validate_paragraph_structure(self, text: str) -> bool:
         """
-        Validates that each paragraph contains exactly 2 to 3 sentences.
-        Returns False if any paragraph (non-list/table) violates this.
+        Validates that each paragraph contains between 1 and 4 sentences.
+        Returns False if any paragraph (non-list/table) violates this upper limit.
         """
         if not text:
             return True
@@ -2488,8 +2409,8 @@ class AsyncWorkflowController:
             # Split sentences using custom regex
             sentences = self._extract_sentences(p)
             
-            # User requirement: exactly 2-3 sentences
-            if not (2 <= len(sentences) <= 3):
+            # User requirement: no huge wall-of-text paragraphs (max 4 sentences)
+            if len(sentences) > 4:
                 return False
 
         return True
@@ -2580,57 +2501,6 @@ class AsyncWorkflowController:
             return True
         return domain.endswith(".gov") or domain.endswith(".gov.sa") or domain.endswith(".edu") or domain.endswith(".org")
         
-    # def _sanitize_section_links(self, content: str, state: Dict[str, Any], brand_url: str, max_external: int = 1) -> str:
-    #     if not content:
-    #         return content
-
-    #     internal_set = state.get("internal_url_set", set()) or set()
-    #     blocked_domains = state.get("blocked_external_domains", set()) or set()
-    #     allowed_domains = state.get("allowed_external_domains", set()) or set()
-    #     max_external = state.get("max_external_links", 3)
-
-    #     used_external = set(state.get("used_external_links", []))
-    #     external_count = 0
-
-    #     pattern = r'\[([^\]]+)\]\(([^)]+)\)'
-
-    #     def repl(m):
-    #         nonlocal external_count
-    #         text, raw_url = m.group(1), m.group(2).strip()
-
-    #         # kill invalid markdown links
-    #         if raw_url.lower() in {"none", "null", ""}:
-    #             return text
-
-    #         if not raw_url.startswith("http"):
-    #             return text
-
-    #         cu = self._canon_url(raw_url)
-    #         dom = self._domain(cu)
-
-    #         # INTERNAL by exact set OR same site
-    #         if cu in internal_set or self._is_same_site(cu, brand_url):
-    #             return f"[{text}]({raw_url})"
-
-    #         # external rules
-    #         if dom in blocked_domains:
-    #             return text
-    #         if not self._is_authority_domain(dom, allowed_domains):
-    #             return text
-    #         if cu in used_external:
-    #             return text
-    #         # if external_count >= max_external:
-    #         if len(used_external) >= max_external:
-    #             return text
-
-    #         external_count += 1
-    #         used_external.add(cu)
-    #         return f"[{text}]({raw_url})"
-
-    #     cleaned = re.sub(pattern, repl, content)
-    #     state["used_external_links"] = list(used_external)
-    #     return cleaned
-
     def _sanitize_section_links(self, content: str, state: Dict[str, Any], brand_url: str, max_external: int = None) -> str:
         if not content:
             return content
@@ -2638,17 +2508,27 @@ class AsyncWorkflowController:
         if brand_url in {"None", "", None}:
             brand_url = ""
 
+        # Initialize global link tracking if not exists
+        if "used_all_urls" not in state:
+            state["used_all_urls"] = set()
+            # Mark URLs already used in previous sections
+            for u in state.get("used_internal_links", []):
+                state["used_all_urls"].add(self._canon_url(u))
+            for u in state.get("used_external_links", []):
+                state["used_all_urls"].add(self._canon_url(u))
+
         internal_set = state.get("internal_url_set", set()) or set()
         blocked_domains = state.get("blocked_external_domains", set()) or set()
         allowed_domains = state.get("allowed_external_domains", set()) or set()
 
-        used_external = set(state.get("used_external_links", []))
+        used_external_count = len(state.get("used_external_links", []))
         if max_external is None:
             max_external = state.get("max_external_links", 3)
 
         pattern = r'\[([^\]]+)\]\(([^)]+)\)'
 
         def repl(m):
+            nonlocal used_external_count
             text, raw_url = m.group(1), m.group(2).strip()
 
             if raw_url.lower() in {"none", "null", ""}:
@@ -2660,27 +2540,30 @@ class AsyncWorkflowController:
             cu = self._canon_url(raw_url)
             dom = self._domain(cu)
 
-            # internal
-            if cu in internal_set or (brand_url and self._is_same_site(cu, brand_url)):
+            # 1. Global Uniqueness Check (CRITICAL)
+            if cu in state["used_all_urls"]:
+                return text
+
+            # 2. Category logic
+            is_internal = cu in internal_set or (brand_url and self._is_same_site(cu, brand_url))
+
+            if is_internal:
+                state["used_all_urls"].add(cu)
+                return f"[{text}]({raw_url})"
+            else:
+                # External checks
+                if dom in blocked_domains:
+                    return text
+                if allowed_domains and dom not in allowed_domains:
+                    return text
+                if used_external_count >= max_external:
+                    return text
+                
+                state["used_all_urls"].add(cu)
+                used_external_count += 1
                 return f"[{text}]({raw_url})"
 
-            # blocked
-            if dom in blocked_domains:
-                return text
-
-            # strict whitelist
-            if allowed_domains and dom not in allowed_domains:
-                return text
-
-            # global limit
-            if cu in used_external or len(used_external) >= max_external:
-                return text
-
-            used_external.add(cu)
-            return f"[{text}]({raw_url})"
-
         cleaned = re.sub(pattern, repl, content)
-        state["used_external_links"] = list(used_external)
         return cleaned
 
     # async def _step_4_validate_sections(self, state):

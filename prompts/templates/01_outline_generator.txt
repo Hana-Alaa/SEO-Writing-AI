@@ -18,6 +18,7 @@ Generate OUTLINE ONLY.
 
 Hard Rules:
 1. Language: all headings in {{ article_language }} only.
+
 2. Intent Distribution (MANDATORY):
    - brand_commercial (Sales):
      * Ratio: 70% Commercial/Transactional sections, 30% Informational.
@@ -27,11 +28,14 @@ Hard Rules:
      * Ratio: 100% Educational/Informational.
      * NO CTAs allowed in body sections.
      * Focus: Topical authority and user value.
-2. FAQ Section Rules:
-   - Exactly ONE FAQ section (H2) with 4–6 questions (no more, no less).
-   - FAQ questions must be question-form and NOT include the primary keyword.
+
+3. FAQ Section Rules:
+   - Exactly ONE FAQ section (H2) with 4 to 6 FAQs related to the primary keyword.
+   - Each FAQ must be unique, helpful, and include keyword variations.
    - At least one FAQ question MUST address a local market need/context.
-3. No duplicate H2 meanings.
+
+4. No duplicate H2 meanings.
+
 5. Domain Separation: 
    - Each H2 must focus on a distinct "Decision Layer" to prevent semantic overlap.:
      - Market Reality: Landscape/Trends.
@@ -40,21 +44,29 @@ Hard Rules:
      - Proof Layer: Evidence, ROI, history.
      - Implementation: Steps/Next actions.
 
-5. Decision Layers (Assign one per section):
+6. Decision Layers (Assign one per section):
    - Market Reality: External trends/landscape.
    - Business Risk: Why generic fails (Urgency).
    - Technical Systems: Unique mechanisms/frameworks (The "How").
    - Proof Layer: ROI, metrics, trust.
    - Implementation Process: Operational path/next steps.
-6. If area exists:
+
+7. If area exists:
    - First H2 must include area naturally.
    - Each section must have a different localized_angle.
-6b. Primary Keyword in Headings:
-   - The primary keyword (or a close semantic variant) MUST appear in at least 2 heading_text values.
-   - It MUST appear in the introduction heading_text.
-   - It MUST appear in at least one other H2 (e.g., Proof Layer or Technical Systems).
+   7b. Primary Keyword in Headings:
+      - The primary keyword (or a close semantic variant) MUST appear in at least 2 heading_text values.
+      - It MUST appear in the introduction heading_text.
+      - It MUST appear in at least one other H2 (e.g., Proof Layer or Technical Systems).
+
+8. Human-First & Anti-Robotic Style:
+   - Headings (heading_text) MUST sound natural, conversational, and human. 
+   - STRICTLY AVOID over-corporate jargon (e.g., "Synergistic Marketing Solutions", "Unlocking Paradigm Shifts").
+   - DO NOT create repetitive heading structures (e.g., avoid starting multiple headings with "The Importance of...", "Benefits of...").
+   - AVOID typical AI heading patterns like "Navigating the complexities of...".
    - In remaining sections use semantic variations naturally in the heading text.
-7. CTA Policy (distribute across article based on intent):
+
+8. CTA Policy (distribute across article based on intent):
    For brand_commercial:
       - section_type = introduction: cta_type = "primary", cta_position = "first_paragraph".
         CTA must be a direct call (e.g. "request a consultation", "start your project") + brand URL.
@@ -73,40 +85,49 @@ Hard Rules:
         Soft CTA = "Learn more", "Explore the full guide", or resource link. No hard sell.
       - section_type = conclusion: cta_type = "soft", cta_position = "last_sentence".
       - All other sections: cta_type = "none".
+
 9. Sales Intensity (Distribute across sections):
    - high: strong persuasive tone, clear value proposition (e.g., Intro, Proof, Conclusion).
    - medium: balanced education and selling (e.g., Technical Systems).
    - low: purely educational, no selling (e.g., FAQ, Market Reality).
+
 10. Rich-format requirement:
    - At least ONE non-FAQ section must have requires_table = true.
    - At least TWO non-FAQ sections must have requires_list = true.
    - Exactly ONE table (comparison or process) in a core section.
    - At least TWO bulleted/numbered lists.
+
 11. Conclusion enforcement:
    - Conclusion section must be section_type = "conclusion", cta_type = "strong", cta_position = "last_sentence".
+
 12. Table placement:
    - Prefer table in "Proof Layer" or "Implementation Process" only.
+
 13. Mandatory section types enforcement:
    - You MUST include every section_type listed in Mandatory Section Types exactly as-is.
    - Do not rename, paraphrase, or merge them.
-13b. Superlative Justification (Proof Layer):
-   - If Article Title uses "Top", "Best", "Leading", or "#1", the "Proof Layer" section MUST include a `content_goal` to justify this claim.
-   - Justification must focus on: Years of experience, Number of successful projects, Unique proprietary methodology, or measurable ROI results.
-13c. Mandatory Section Separation:
-   - "Why Choose Us" (why_choose_us) and "Proof" (proof) are separate entities.
-   - why_choose_us focuses on the USER'S benefits and unique value proposition.
-   - proof focuses on OBJECTIVE evidence (metrics, history, data).
-   - NEVER merge these into a single section.
-15. Hierarchical Depth (Featured Snippets):
+   13b. Superlative Justification (Proof Layer):
+      - If Article Title uses "Top", "Best", "Leading", or "#1", the "Proof Layer" section MUST include a `content_goal` to justify this claim.
+      - Justification must focus on: Years of experience, Number of successful projects, Unique proprietary methodology, or measurable ROI results.
+   13c. Mandatory Section Separation:
+      - "Why Choose Us" (why_choose_us) and "Proof" (proof) are separate entities.
+      - why_choose_us focuses on the USER'S benefits and unique value proposition.
+      - proof focuses on OBJECTIVE evidence (metrics, history, data).
+      - NEVER merge these into a single section.
+
+14. Hierarchical Depth (Featured Snippets):
    - At least 2 non-FAQ H2 sections MUST have 1-2 internal H3 subheadings.
    - Use H3 to break down: "Comparison of services", "Technical components", "Step-by-step processes", or "Specific customer categories".
    - H3 headings must directly support the parent H2 and follow it immediately in the JSON list.
    - This prevents flat content and maximizes Featured Snippet potential.
-16. Strategic Linking (Internal):
-   - You are provided with a list of "Internal Links" (URLs).
+
+15. Strategic Linking (Internal):
+   - You are provided with a list of "Internal Links" (URLs) which include high-quality "Discovered Resources" (blogs, service pages) from the brand's own site.
+   - Use the provided "text" label for each link as its natural anchor text (e.g., if text is "E-Business Solutions", the article should link that specific phrase).
    - Strategically assign these links to the most relevant H2/H3 sections by adding them to the `assigned_links` array in the JSON.
-   - Do not dump all links in one section; distribute them naturally where they add most value to the topic.
-17. Reader Addressing:
+   - Do not dump all links in one section; distribute them naturally to provide depth and helpfulness.
+
+16. Reader Addressing:
    - content_goal and content_angle must be reader-directed (second-person oriented), not generic third-person.
 
 
