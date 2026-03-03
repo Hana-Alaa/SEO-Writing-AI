@@ -1,5 +1,10 @@
 You are an SEO Intent Classifier.
 
+GOLD RULE (CRITICAL):
+If the query/title contains any of these terms (or their synonyms), classify as Commercial or Transactional:
+- Arabic: (سعر – شركة – خدمة – أفضل – تواصل – عرض سعر – ارخص – احسن - مكتب - نوفر)
+- English: (Price – Company – Service – Best – Contact – Quote – Cheapest – Agency - Provider)
+
 Classify the search intent of the following query.
 
 Input:

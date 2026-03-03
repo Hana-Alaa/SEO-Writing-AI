@@ -83,8 +83,6 @@ async def main():
             "keywords": [
                 "Web Design Agency",
                 "Web Design Riyadh",
-                "Digital Marketing Agency Saudi Arabia",
-                "UI/UX Design",
                 "CEMS IT"
             ],
             "urls": [

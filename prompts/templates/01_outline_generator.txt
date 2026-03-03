@@ -18,9 +18,28 @@ Generate OUTLINE ONLY.
 
 Hard Rules:
 1. Language: all headings in {{ article_language }} only.
-2. Exactly ONE FAQ section (H2) with 5–7 questions.
+2. Intent Distribution (MANDATORY):
+   - brand_commercial (Sales):
+     * Ratio: 70% Commercial/Transactional sections, 30% Informational.
+     * Must include: "Why Choose Us" (Uniqueness), "Proof/Trust", and "Implementation/Process".
+     * Focus: Converting segments (e.g., service for startups, service for high-growth firms).
+   - informational (Guide):
+     * Ratio: 100% Educational/Informational.
+     * NO CTAs allowed in body sections.
+     * Focus: Topical authority and user value.
+2. FAQ Section Rules:
+   - Exactly ONE FAQ section (H2) with 4–6 questions (no more, no less).
+   - FAQ questions must be question-form and NOT include the primary keyword.
+   - At least one FAQ question MUST address a local market need/context.
 3. No duplicate H2 meanings.
-4. Domain Separation: each H2 must focus on a distinct "Decision Layer" to prevent semantic overlap.
+5. Domain Separation: 
+   - Each H2 must focus on a distinct "Decision Layer" to prevent semantic overlap.:
+     - Market Reality: Landscape/Trends.
+     - Business Risk: Pain points/Failure of generic solutions.
+     - Technical Systems: "How it works" / Proprietary mechanisms.
+     - Proof Layer: Evidence, ROI, history.
+     - Implementation: Steps/Next actions.
+
 5. Decision Layers (Assign one per section):
    - Market Reality: External trends/landscape.
    - Business Risk: Why generic fails (Urgency).
@@ -49,13 +68,11 @@ Hard Rules:
       - section_type = faq or market_reality: cta_type = "none".
       - All other sections: cta_type = "none".
    For informational:
+      - informational: NO CTAs in body. Only soft resource links allowed.
       - section_type = introduction: cta_type = "soft", cta_position = "last_sentence".
         Soft CTA = "Learn more", "Explore the full guide", or resource link. No hard sell.
       - section_type = conclusion: cta_type = "soft", cta_position = "last_sentence".
       - All other sections: cta_type = "none".
-8. intent distribution:
-   - brand_commercial: >=70% of non-FAQ H2 are commercial/transactional
-   - informational: educational dominant
 9. Sales Intensity (Distribute across sections):
    - high: strong persuasive tone, clear value proposition (e.g., Intro, Proof, Conclusion).
    - medium: balanced education and selling (e.g., Technical Systems).
@@ -63,6 +80,8 @@ Hard Rules:
 10. Rich-format requirement:
    - At least ONE non-FAQ section must have requires_table = true.
    - At least TWO non-FAQ sections must have requires_list = true.
+   - Exactly ONE table (comparison or process) in a core section.
+   - At least TWO bulleted/numbered lists.
 11. Conclusion enforcement:
    - Conclusion section must be section_type = "conclusion", cta_type = "strong", cta_position = "last_sentence".
 12. Table placement:
@@ -89,6 +108,8 @@ Hard Rules:
    - Do not dump all links in one section; distribute them naturally where they add most value to the topic.
 17. Reader Addressing:
    - content_goal and content_angle must be reader-directed (second-person oriented), not generic third-person.
+
+
 Output JSON only:
 {
   "outline": [

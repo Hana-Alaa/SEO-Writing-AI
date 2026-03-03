@@ -195,9 +195,7 @@ class SectionWriter:
         total_sections: int = 1
     ) -> Dict[str, Any]:
 
-        def clean(value):
-            return value if value not in [None, "", "None"] else None
-
+        brand_url = brand_url if brand_url not in ["None", ""] else None
         primary_keyword = section.get("primary_keyword") or global_keywords.get("primary", "")
 
 
@@ -250,7 +248,10 @@ class SectionWriter:
             "decision_layer": section.get("decision_layer", "Market Reality"),
             "sales_intensity": section.get("sales_intensity", "medium"),
             "questions": section.get("questions", []),
+            "assigned_links": section.get("assigned_links", []),
         }
+
+        print("Assigned links:", safe_section["assigned_links"])
 
         current_year = str(datetime.now().year)
 

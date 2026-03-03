@@ -150,6 +150,7 @@ class AsyncWorkflowController:
         state.setdefault("brand_link_used", False)
         state.setdefault("used_internal_links", [])
         state.setdefault("used_external_links", []) 
+        state["max_external_links"] = 3
 
         steps = [
             # ("analysis", self._step_0_analysis, 0),
@@ -164,11 +165,11 @@ class AsyncWorkflowController:
             ("outline_generation", self._step_1_outline, 1),
 
             ("content_writing", self._step_2_write_sections, 1),
-            ("image_prompting", self._step_4_generate_image_prompts, 0),
-            ("image_generation", self._step_4_5_download_images, 2),
+            # ("image_prompting", self._step_4_generate_image_prompts, 0),
+            # ("image_generation", self._step_4_5_download_images, 2),
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
-            ("image_inserter", self._step_6_image_inserter, 0),
+            # ("image_inserter", self._step_6_image_inserter, 0),
             ("meta_schema", self._step_7_meta_schema, 0),
             # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
@@ -426,54 +427,6 @@ class AsyncWorkflowController:
         }
         return state
 
-    # async def _step_0_content_strategy(self, state: Dict[str, Any]) -> Dict[str, Any]:
-
-    #     primary_keyword = state.get("primary_keyword")
-    #     intent = state.get("intent")
-    #     seo_intelligence = state.get("seo_intelligence", {})
-    #     content_type = state.get("content_type")
-    #     area = state.get("area") or "Global"
-    #     # area = state.get("input_data", {}).get("area", "Global")
-    #     full_intel = seo_intelligence.get("strategic_analysis", {})
-
-    #     intent_layer = full_intel.get("intent_analysis", {})
-    #     structural_layer = full_intel.get("structural_intelligence", {})
-    #     strategic_layer = full_intel.get("strategic_intelligence", {})
-
-    #     clusters = strategic_layer.get("keyword_clusters", [])
-    #     if not clusters:
-    #         # Safety Fallback: Reconstruct from semantic assets if clusters are missing
-    #         semantic = full_intel.get("semantic_assets", {})
-    #         lsi = semantic.get("lsi_keywords", [])
-    #         related = semantic.get("related_searches", [])
-    #         fallback_keywords = [primary_keyword] + lsi[:5] + related[:5]
-    #         clusters = [{
-    #             "cluster_name": "Semantic Keywords Cluster (Safety Fallback)",
-    #             "keywords": list(dict.fromkeys(fallback_keywords))
-    #         }]
-
-    #     prompt = self.content_strategy.render(
-    #         primary_keyword=primary_keyword,
-    #         intent=intent,
-    #         serp_intent_analysis=json.dumps(intent_layer),
-    #         serp_structural_intelligence=json.dumps(structural_layer),
-    #         serp_strategic_intelligence=json.dumps(strategic_layer),
-    #         keyword_clusters=json.dumps(clusters),
-    #         content_type=content_type,
-    #         area=area
-    #     )
-
-    #     raw = await self.ai_client.send(prompt, step="content_strategy")
-
-    #     clean = re.sub(r"```json|```", "", raw).strip()
-    #     data = recover_json(clean) or {}
-
-    #     state["content_strategy"] = data
-
-    #     logger.info(f"CONTENT STRATEGY GENERATED:\n{json.dumps(data, indent=2)}")
-
-    #     return state
-
     async def _step_0_content_strategy(self, state: Dict[str, Any]) -> Dict[str, Any]:
         primary_keyword = state.get("primary_keyword")
         intent = state.get("intent")
@@ -693,7 +646,7 @@ class AsyncWorkflowController:
                 sec["assigned_keywords"].extend(sec_lsi)
                 lsi_pool = lsi_pool[3:]
 
-        state["brand_url"] = urls_norm[0].get("link") if urls_norm else ""
+        # state["brand_url"] = urls_norm[0].get("link") if urls_norm else ""
 
         state["internal_url_set"] = {
             self._canon_url(u.get("link", ""))
@@ -702,7 +655,7 @@ class AsyncWorkflowController:
 
         state["blocked_external_domains"] = self._extract_competitor_domains(
             state.get("serp_data", {}),
-            brand_url=state.get("brand_url", "")
+            brand_url=urls_norm[0].get("link", "") if urls_norm else ""
         )
 
         state["allowed_external_domains"] = {
@@ -718,7 +671,8 @@ class AsyncWorkflowController:
             "affiliate_policy": {"max_per_section": 3, "placement": "distributed", "tone": "neutral"}
         }
                 
-        primary_keyword = keywords[0] if keywords else title
+        # primary_keyword = keywords[0] if keywords else title
+        primary_keyword = state.get("primary_keyword")
         for sec in outline:
             sec["primary_keyword"] = primary_keyword
             sec["article_language"] = article_language
@@ -728,6 +682,15 @@ class AsyncWorkflowController:
         
         state["outline"] = outline
         present_types = {sec.get("section_type") for sec in outline}
+
+        user_urls = state.get("input_data", {}).get("urls", [])
+
+        internal_links = [
+            u["link"] for u in user_urls if u.get("link")
+        ]
+
+        state["internal_url_set"] = set(internal_links)
+        state["brand_url"] = internal_links[0] if internal_links else None
 
         missing = mandatory - present_types
 
@@ -975,7 +938,7 @@ class AsyncWorkflowController:
             seo_intelligence=seo_intelligence,
             content_type=content_type,
             link_strategy=link_strategy,
-            brand_url=brand_url,
+            # brand_url=brand_url,
             brand_link_used=brand_link_used,
             brand_link_allowed=can_use_brand_link,
             allow_external_links=True,
@@ -985,7 +948,8 @@ class AsyncWorkflowController:
             used_internal_links=state.get("used_internal_links", []),
             used_external_links=state.get("used_external_links", []), 
             section_index=section_index,
-            total_sections=total_sections
+            total_sections=total_sections,
+            brand_url=state.get("brand_url")
         )
         content = res_data.get("content", "")
         used_links = res_data.get("used_links", [])
@@ -1177,7 +1141,8 @@ class AsyncWorkflowController:
         """Downloads images (now parallel in the client)."""
         prompts = state.get("image_prompts", [])
         keywords = state.get("input_data", {}).get("keywords", [])
-        primary_keyword = (keywords[0] if keywords else "") or ""
+        # primary_keyword = (keywords[0] if keywords else "") or ""
+        primary_keyword = state.get("primary_keyword")
         logo_path = state.get("input_data", {}).get("logo_path")
         reference_path = state.get("input_data", {}).get("logo_reference_path")
         brand_visual_style = state.get("brand_visual_style", "")
@@ -1295,7 +1260,8 @@ class AsyncWorkflowController:
         # article_language = state.get("article_language", "en")
         article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "en")
         keywords = input_data.get("keywords", [])
-        primary_keyword = keywords[0] if keywords else ""
+        # primary_keyword = keywords[0] if keywords else ""
+        primary_keyword = state.get("primary_keyword")
 
         if not final_md:
             state["seo_report"] = {
@@ -1983,7 +1949,8 @@ class AsyncWorkflowController:
                 return text
             if cu in used_external:
                 return text
-            if external_count >= max_external:
+            # if external_count >= max_external:
+            if len(used_external) >= max_external:
                 return text
 
             external_count += 1
@@ -2027,8 +1994,8 @@ class AsyncWorkflowController:
         return "Commercial" if commercial_score >= informational_score else "Informational"
 
     def validate_h1_length(self, h1: str) -> bool:
-        """Enforces H1 length rules (55-75 chars)."""
-        return 55 <= len(h1) <= 75
+        """Enforces H1 length rules (60-70 chars) as per the framework."""
+        return 60 <= len(h1) <= 70
 
     def validate_strategy_alignment(self, strategy, primary_keyword, area):
         angle = strategy.get("primary_angle", "").lower()
@@ -2613,24 +2580,77 @@ class AsyncWorkflowController:
             return True
         return domain.endswith(".gov") or domain.endswith(".gov.sa") or domain.endswith(".edu") or domain.endswith(".org")
         
-    def _sanitize_section_links(self, content: str, state: Dict[str, Any], brand_url: str, max_external: int = 1) -> str:
+    # def _sanitize_section_links(self, content: str, state: Dict[str, Any], brand_url: str, max_external: int = 1) -> str:
+    #     if not content:
+    #         return content
+
+    #     internal_set = state.get("internal_url_set", set()) or set()
+    #     blocked_domains = state.get("blocked_external_domains", set()) or set()
+    #     allowed_domains = state.get("allowed_external_domains", set()) or set()
+    #     max_external = state.get("max_external_links", 3)
+
+    #     used_external = set(state.get("used_external_links", []))
+    #     external_count = 0
+
+    #     pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+
+    #     def repl(m):
+    #         nonlocal external_count
+    #         text, raw_url = m.group(1), m.group(2).strip()
+
+    #         # kill invalid markdown links
+    #         if raw_url.lower() in {"none", "null", ""}:
+    #             return text
+
+    #         if not raw_url.startswith("http"):
+    #             return text
+
+    #         cu = self._canon_url(raw_url)
+    #         dom = self._domain(cu)
+
+    #         # INTERNAL by exact set OR same site
+    #         if cu in internal_set or self._is_same_site(cu, brand_url):
+    #             return f"[{text}]({raw_url})"
+
+    #         # external rules
+    #         if dom in blocked_domains:
+    #             return text
+    #         if not self._is_authority_domain(dom, allowed_domains):
+    #             return text
+    #         if cu in used_external:
+    #             return text
+    #         # if external_count >= max_external:
+    #         if len(used_external) >= max_external:
+    #             return text
+
+    #         external_count += 1
+    #         used_external.add(cu)
+    #         return f"[{text}]({raw_url})"
+
+    #     cleaned = re.sub(pattern, repl, content)
+    #     state["used_external_links"] = list(used_external)
+    #     return cleaned
+
+    def _sanitize_section_links(self, content: str, state: Dict[str, Any], brand_url: str, max_external: int = None) -> str:
         if not content:
             return content
+
+        if brand_url in {"None", "", None}:
+            brand_url = ""
 
         internal_set = state.get("internal_url_set", set()) or set()
         blocked_domains = state.get("blocked_external_domains", set()) or set()
         allowed_domains = state.get("allowed_external_domains", set()) or set()
 
         used_external = set(state.get("used_external_links", []))
-        external_count = 0
+        if max_external is None:
+            max_external = state.get("max_external_links", 3)
 
         pattern = r'\[([^\]]+)\]\(([^)]+)\)'
 
         def repl(m):
-            nonlocal external_count
             text, raw_url = m.group(1), m.group(2).strip()
 
-            # kill invalid markdown links
             if raw_url.lower() in {"none", "null", ""}:
                 return text
 
@@ -2640,21 +2660,22 @@ class AsyncWorkflowController:
             cu = self._canon_url(raw_url)
             dom = self._domain(cu)
 
-            # INTERNAL by exact set OR same site
-            if cu in internal_set or self._is_same_site(cu, brand_url):
+            # internal
+            if cu in internal_set or (brand_url and self._is_same_site(cu, brand_url)):
                 return f"[{text}]({raw_url})"
 
-            # external rules
+            # blocked
             if dom in blocked_domains:
                 return text
-            if not self._is_authority_domain(dom, allowed_domains):
-                return text
-            if cu in used_external:
-                return text
-            if external_count >= max_external:
+
+            # strict whitelist
+            if allowed_domains and dom not in allowed_domains:
                 return text
 
-            external_count += 1
+            # global limit
+            if cu in used_external or len(used_external) >= max_external:
+                return text
+
             used_external.add(cu)
             return f"[{text}]({raw_url})"
 
