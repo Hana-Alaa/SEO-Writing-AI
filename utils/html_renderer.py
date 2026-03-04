@@ -355,6 +355,7 @@ def render_html_page(final_result: dict):
         html = template.render(
             meta_title=page_title,
             meta_description=final_result.get("meta_description", ""),
+            meta_keywords=final_result.get("meta_keywords", ""),
             content=html_content,
             lang=final_result.get("article_language", "ar"),
             dir=direction,

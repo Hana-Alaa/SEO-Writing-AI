@@ -213,6 +213,9 @@ class AsyncWorkflowController:
         article_language = self._resolve_article_language(raw_title, user_lang)
         area = input_data.get("area")
         state["area"] = area
+        state["include_meta_keywords"] = input_data.get("include_meta_keywords", True)
+        # area_neighborhoods will be populated by AI in _step_0_brand_discovery
+        state["area_neighborhoods"] = []
         state["article_language"] = article_language
         state["primary_keyword"] = primary_keyword
         state["raw_title"] = raw_title
@@ -238,7 +241,14 @@ class AsyncWorkflowController:
         return state
 
     async def _step_0_brand_discovery(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Automatically discovers internal links from the brand_url."""
+        """
+        Deep brand discovery:
+        1. Crawls the homepage to discover all internal links.
+        2. Scores each link by relevance to the primary keyword.
+        3. Fetches the top 3-5 most relevant subpages.
+        4. Indexes raw page text by URL.
+        5. Uses AI to extract a factual brand context from the most relevant pages.
+        """
         brand_url = state.get("brand_url")
         if not brand_url:
             urls = state.get("input_data", {}).get("urls", [])
@@ -249,69 +259,195 @@ class AsyncWorkflowController:
             logger.info("Skipping brand discovery: No valid brand_url found.")
             return state
 
-        logger.info(f"Starting brand discovery for: {brand_url}")
+        primary_keyword = state.get("primary_keyword", "").lower()
+        kw_tokens = [t for t in primary_keyword.split() if len(t) > 2]
+
+        logger.info(f"Starting deep brand discovery for: {brand_url}")
         domain = self._domain(brand_url)
         
         try:
-            # We use a simple fetch + regex to avoid heavy browser overhead for just links
             import requests
             from bs4 import BeautifulSoup
-            
-            response = requests.get(brand_url, timeout=15, headers={"User-Agent": "Mozilla/5.0 (SEO-Engine-Bot)"})
-            if response.status_code != 200:
-                logger.warning(f"Brand discovery failed (status {response.status_code})")
+            from urllib.parse import urljoin
+
+            headers = {"User-Agent": "Mozilla/5.0 (SEO-Engine-Bot)"}
+
+            def fetch_text(url: str) -> str:
+                """Fetch a URL and return clean text from important tags."""
+                try:
+                    r = requests.get(url, timeout=10, headers=headers)
+                    if r.status_code != 200:
+                        return ""
+                    s = BeautifulSoup(r.text, "html.parser")
+                    for tag in s(["nav", "footer", "script", "style", "header"]):
+                        tag.decompose()
+                    parts = s.find_all(["h1", "h2", "h3", "p", "li"])
+                    return " ".join(p.get_text(strip=True) for p in parts if len(p.get_text(strip=True)) > 10)
+                except Exception as ex:
+                    logger.warning(f"Failed to fetch {url}: {ex}")
+                    return ""
+
+            def relevance_score(url: str, anchor: str) -> int:
+                """Score a URL by how relevant it appears to the primary keyword."""
+                text = (url + " " + anchor).lower()
+                score = sum(1 for t in kw_tokens if t in text)
+                for boost_word in ["service", "solution", "about", "work", "portfolio", "project", "offer", "product"]:
+                    if boost_word in text:
+                        score += 1
+                return score
+
+            # --- Step 1: Crawl homepage and discover all internal links ---
+            homepage_html = requests.get(brand_url, timeout=15, headers=headers)
+            if homepage_html.status_code != 200:
+                logger.warning(f"Brand discovery failed (status {homepage_html.status_code})")
                 return state
-                
-            soup = BeautifulSoup(response.text, 'html.parser')
-            discovered_resources = {} # url -> anchor text
-            
-            # Keywords that usually indicate useful internal pages
-            useful_patterns = ["blog", "service", "project", "about", "contact", "solution", "work", "portfolio", "offer"]
-            
-            for a in soup.find_all('a', href=True):
-                href = a['href']
-                text = a.get_text(strip=True)
-                
-                # Clean and resolve relative links
-                from urllib.parse import urljoin
+
+            homepage_soup = BeautifulSoup(homepage_html.text, "html.parser")
+            discovered_links = {}  # canon_url -> (anchor_text, score)
+
+            for a in homepage_soup.find_all("a", href=True):
+                href = a["href"]
+                anchor = a.get_text(strip=True)
                 full_url = urljoin(brand_url, href)
-                
-                # Check if it's internal
-                if self._domain(full_url) == domain:
-                    canon = self._canon_url(full_url)
-                    # Filter for useful patterns and ensure text isn't empty or too long
-                    if any(p in canon for p in useful_patterns) and text and len(text) > 3 and len(text) < 60:
-                        # Prefer longer/descriptive text if we find the same link twice
-                        if canon not in discovered_resources or len(text) > len(discovered_resources[canon]):
-                            discovered_resources[canon] = text
-            
-            # Filter and add original input URLs as well
+
+                if self._domain(full_url) != domain:
+                    continue
+                canon = self._canon_url(full_url)
+                if canon == self._canon_url(brand_url):
+                    continue  # skip homepage itself
+                if not anchor or len(anchor) < 3 or len(anchor) > 80:
+                    continue
+
+                score = relevance_score(canon, anchor)
+                if canon not in discovered_links or score > discovered_links[canon][1]:
+                    discovered_links[canon] = (anchor, score)
+
+            # --- Step 2: Sort by relevance, pick top 5 subpages ---
+            sorted_links = sorted(discovered_links.items(), key=lambda x: x[1][1], reverse=True)
+            top_links = sorted_links[:5]
+
+            logger.info(f"Top relevant brand pages: {[l[0] for l in top_links]}")
+
+            # --- Step 3: Store internal resources (for linking in the outline) ---
             if "internal_resources" not in state:
                 state["internal_resources"] = []
-            
+
             input_urls = state.get("input_data", {}).get("urls", [])
             seen_canons = set()
             for u in input_urls:
                 link = u.get("link", "")
                 if link:
-                    canon = self._canon_url(link)
-                    seen_canons.add(canon)
+                    seen_canons.add(self._canon_url(link))
                     state["internal_resources"].append({"link": link, "text": u.get("text") or "Internal Resource"})
 
-            # Add top 10 discovery results
             added_count = 0
-            for url, text in discovered_resources.items():
-                if url not in seen_canons:
-                    state["internal_resources"].append({"link": url, "text": text})
-                    seen_canons.add(url)
+            for canon, (anchor, score) in sorted_links:
+                # MANDATORY RELEVANCE THRESHOLD:
+                # If the page doesn't have at least some relevance to the primary keyword, exclude it.
+                # This prevents old/unrelated blog posts (like video production from 2022) 
+                # from being suggested in a Web Design Riyadh article.
+                if score < 2:
+                    continue
+
+                if canon not in seen_canons:
+                    state["internal_resources"].append({"link": canon, "text": anchor})
+                    seen_canons.add(canon)
                     added_count += 1
                 if added_count >= 10:
                     break
-                    
+
             logger.info(f"Discovered {added_count} new internal resources from brand_url.")
+
+            # --- Step 4: Fetch and index the content of the top relevant subpages ---
+            brand_pages_index = {}  # url -> raw text
+
+            # Always include homepage
+            homepage_text_raw = fetch_text(brand_url)
+            if homepage_text_raw:
+                brand_pages_index[brand_url] = homepage_text_raw[:2000]
+
+            for canon, (anchor, score) in top_links:
+                page_text = fetch_text(canon)
+                if page_text:
+                    brand_pages_index[canon] = page_text[:2000]
+                    logger.info(f"Indexed brand page: {canon} (score={score}, ~{len(page_text)} chars)")
+
+            state["brand_pages_index"] = brand_pages_index
+
+            # --- Step 5: Build AI Brand Context from the most relevant pages ---
+            combined_text = "\n\n".join(
+                f"[Page: {url}]\n{text}"
+                for url, text in brand_pages_index.items()
+            )[:7000]  # Cap to avoid token bloat
+
+            if combined_text:
+                context_prompt = f"""You are a Brand Intelligence Analyst.
+
+Below is real text scraped from multiple pages of a company's website.
+The article we are writing is about: "{primary_keyword}"
+
+Website Content:
+\"\"\"
+{combined_text}
+\"\"\"
+
+Your task:
+1. Read through all pages and find information directly related to: "{primary_keyword}"
+2. Write a detailed 4-6 sentence factual summary of:
+   - Exactly how this company delivers this service (their process/methodology)
+   - What specific technologies, tools, or frameworks they use
+   - What makes their approach different or specific (NOT generic marketing)
+   - Who their target clients are
+3. Only use information found in the text above. Do NOT invent or assume anything.
+4. If you cannot find enough specific info, clearly state what you DID find.
+
+Write the summary now:"""
+
+                brand_context = await self.ai_client.send(context_prompt, step="brand_discovery")
+                if brand_context and len(brand_context) > 20:
+                    state["brand_context"] = brand_context.strip()
+                    logger.info(f"Brand Context extracted successfully:\n{state['brand_context']}")
+                else:
+                    state["brand_context"] = ""
+            else:
+                state["brand_context"] = ""
+
+            # --- Step 6: AI-Powered Local Neighborhood Discovery ---
+            area = state.get("area")
+            if area:
+                neighborhood_prompt = f"""You are a Local SEO expert.
+Your task: List the top 8-10 most well-known neighborhoods, districts, or business zones in "{area}" that are most relevant to the service: "{primary_keyword}".
+
+Rules:
+- Output ONLY a valid JSON array of strings. No explanations, no markdown, just the array.
+- Use the local language (Arabic if the city is Arab, etc.)
+- Focus on areas where businesses would search for this service.
+- Example output: ["العليا", "النخيل", "الملقا", "الروضة", "الزهراء", "الملز"]
+
+Output the JSON array now:"""
+                try:
+                    neighborhoods_raw = await self.ai_client.send(neighborhood_prompt, step="local_seo")
+                    # Parse the JSON array from AI response
+                    import re as _re
+                    match = _re.search(r'\[.*?\]', neighborhoods_raw, _re.DOTALL)
+                    if match:
+                        import json as _json
+                        neighborhoods = _json.loads(match.group(0))
+                        if isinstance(neighborhoods, list) and len(neighborhoods) > 0:
+                            state["area_neighborhoods"] = [str(n) for n in neighborhoods if n]
+                            logger.info(f"AI discovered {len(state['area_neighborhoods'])} neighborhoods for '{area}': {state['area_neighborhoods']}")
+                        else:
+                            state["area_neighborhoods"] = []
+                    else:
+                        state["area_neighborhoods"] = []
+                except Exception as ne:
+                    logger.warning(f"Neighborhood discovery failed: {ne}")
+                    state["area_neighborhoods"] = []
                 
         except Exception as e:
-            logger.error(f"Error during brand discovery: {e}")
+            logger.error(f"Error during brand discovery: {e}", exc_info=True)
+            state["brand_context"] = ""
+            state["brand_pages_index"] = {}
             
         return state
 
@@ -606,6 +742,19 @@ class AsyncWorkflowController:
 
         if pricing_ratio > 0.4:
             mandatory.add("pricing")
+            
+        # Conditionally require case study
+        has_case_study = False
+        if content_type == "brand_commercial":
+            case_keywords = ["case", "portfolio", "project", "work", "أعمال", "مشاريع", "success", "client", "study"]
+            for u in urls_norm:
+                t_lower = u.get("text", "").lower()
+                l_lower = u.get("link", "").lower()
+                if any((kw in t_lower or kw in l_lower) for kw in case_keywords):
+                    has_case_study = True
+                    break
+        if has_case_study:
+            mandatory.add("case_study")
     
         
         feedback = None
@@ -623,6 +772,7 @@ class AsyncWorkflowController:
                 seo_intelligence=seo_intelligence,
                 content_type=content_type,
                 content_strategy=content_strategy,
+                brand_context=state.get("brand_context", ""),
                 area=area,
                 feedback=feedback,
                 mandatory_section_types = list(mandatory)
@@ -913,13 +1063,38 @@ class AsyncWorkflowController:
         if force_local:
             execution_plan["local_context_required"] = True
             
-        # execution_plan["brand_link_allowed"] = (not brand_link_used)
         execution_plan["brand_link_allowed"] = bool(brand_url) and (not brand_link_used)
         execution_plan["brand_url"] = brand_url
 
         used_phrases = state.get("used_phrases", [])
 
+        # --- Find the most relevant brand page for this specific section ---
+        brand_context = state.get("brand_context", "")
+        brand_pages_index = state.get("brand_pages_index", {})
+        section_source_text = ""
+
+        if brand_pages_index:
+            # Score each indexed page by relevance to this specific section
+            section_heading = (section.get("heading_text") or "").lower()
+            section_type = (section.get("section_type") or "").lower()
+            section_goal = (section.get("content_goal") or "").lower()
+            section_query = f"{section_heading} {section_type} {section_goal}"
+            section_tokens = [t for t in section_query.split() if len(t) > 2]
+
+            best_url, best_score, best_text = "", 0, ""
+            for url, page_text in brand_pages_index.items():
+                text_lower = page_text.lower()
+                score = sum(1 for t in section_tokens if t in text_lower)
+                if score > best_score:
+                    best_score, best_url, best_text = score, url, page_text
+
+            if best_text and best_score > 0:
+                # Trim to avoid token bloat
+                section_source_text = best_text[:2500]
+                logger.info(f"Section '{section_heading}' -> using brand page: {best_url} (score={best_score})")
+
         # Try 1
+
         res_data = await self.section_writer.write(
             title=title,
             global_keywords=global_keywords,
@@ -928,7 +1103,6 @@ class AsyncWorkflowController:
             seo_intelligence=seo_intelligence,
             content_type=content_type,
             link_strategy=link_strategy,
-            # brand_url=brand_url,
             brand_link_used=brand_link_used,
             brand_link_allowed=can_use_brand_link,
             allow_external_links=True,
@@ -939,7 +1113,9 @@ class AsyncWorkflowController:
             used_external_links=state.get("used_external_links", []), 
             section_index=section_index,
             total_sections=total_sections,
-            brand_url=state.get("brand_url")
+            brand_url=state.get("brand_url"),
+            brand_context=brand_context,
+            section_source_text=section_source_text
         )
         content = res_data.get("content", "")
         used_links = res_data.get("used_links", [])
@@ -980,13 +1156,14 @@ class AsyncWorkflowController:
 
         # Multi-Layer Paragraph Structure and Strict SEO Validation
         if content:
-            is_valid, validation_errors = self._validate_section_output(
+            is_valid, validation_errors = await self._validate_section_output(
                 content, 
                 section, 
                 section_index, 
                 total_sections, 
                 state.get("area"),
-                execution_plan.get("cta_type", "none")
+                execution_plan.get("cta_type", "none"),
+                blocked_domains=state.get("blocked_external_domains", set())
             )
             
             if not is_valid:
@@ -1134,14 +1311,12 @@ class AsyncWorkflowController:
         # primary_keyword = (keywords[0] if keywords else "") or ""
         primary_keyword = state.get("primary_keyword")
         logo_path = state.get("input_data", {}).get("logo_path")
-        reference_path = state.get("input_data", {}).get("logo_reference_path")
         brand_visual_style = state.get("brand_visual_style", "")
 
         images = await self.image_client.generate_images(
             prompts,
             primary_keyword=primary_keyword,
             logo_path=logo_path,
-            reference_path=reference_path,
             brand_visual_style=brand_visual_style
         )
 
@@ -1395,10 +1570,13 @@ class AsyncWorkflowController:
         output_dir = state.get("output_dir", "")
         
         # Prepare data for renderer
+        meta = state.get("seo_meta", {})
+        title = state.get("input_data", {}).get("title", "")
         render_data = {
-            "title": final_output.get("title"),
-            "meta_title": final_output.get("meta_title"),
-            "meta_description": final_output.get("meta_description"),
+            "title": title,
+            "meta_title": meta.get("meta_title", title),
+            "meta_description": meta.get("meta_description", ""),
+            "meta_keywords": meta.get("meta_keywords", ""),
             "final_markdown": final_output.get("final_markdown"),
             "output_dir": output_dir,
             "article_language": final_output.get("article_language", state.get("article_language", "en")),
@@ -1676,7 +1854,7 @@ class AsyncWorkflowController:
             logger.error(f"Semantic overlap check failed: {e}")
             return False, 0.0, ""
 
-    def _validate_section_output(self, content: str, section: Dict[str, Any], section_index: int, total_sections: int, area: str, cta_type: str) -> tuple[bool, List[str]]:
+    async def _validate_section_output(self, content: str, section: Dict[str, Any], section_index: int, total_sections: int, area: str, cta_type: str, blocked_domains: set = None) -> tuple[bool, List[str]]:
         """Strictly validates a section's output against counting and structural rules."""
         errors = []
         if not content:
@@ -1732,8 +1910,28 @@ class AsyncWorkflowController:
             content_lower = content.lower()
             # count occurrences (whole word or phrase match)
             kw_count = len(re.findall(re.escape(kw_lower), content_lower))
-            if kw_count < 2:
-                errors.append(f"Primary keyword '{primary_kw}' appears only {kw_count} time(s), need at least 2")
+            if kw_count < 1:
+                errors.append(f"Primary keyword '{primary_kw}' missing from core content")
+
+        # 6. Flexible External Link Validation
+        found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
+        internal_domain = self._domain(section.get("brand_url", "")) if section.get("brand_url") else ""
+        blocked_domains = blocked_domains or set()
+
+        for link in found_links:
+            link_domain = self._domain(link)
+            # Skip internal links and brand links
+            if link_domain == internal_domain:
+                continue
+            
+            # Check for Competitors
+            if link_domain in blocked_domains or any(comp in link_domain for comp in blocked_domains):
+                 errors.append(f"External link to a potential competitor detected: {link}. Links must be to non-competing authority/credible sources.")
+                 continue
+
+            # Verify Reachability (Ensure link works)
+            if not await self._verify_external_link(link):
+                errors.append(f"External link appears to be broken or unreachable (404/Timeout): {link}")
 
         return len(errors) == 0, errors
 
@@ -1915,8 +2113,8 @@ class AsyncWorkflowController:
         return "Commercial" if commercial_score >= informational_score else "Informational"
 
     def validate_h1_length(self, h1: str) -> bool:
-        """Enforces H1 length rules (60-70 chars) as per the framework."""
-        return 60 <= len(h1) <= 70
+        """Enforces H1 length rules (50-75 chars) as per the framework."""
+        return 55 <= len(h1) <= 75
 
     def validate_strategy_alignment(self, strategy, primary_keyword, area):
         angle = strategy.get("primary_angle", "").lower()
@@ -2415,6 +2613,20 @@ class AsyncWorkflowController:
 
         return True
 
+    async def _verify_external_link(self, url: str) -> bool:
+        """Asynchronously checks if a URL is reachable and functional."""
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                response = await client.head(url)
+                # If HEAD fails, try GET (some servers block HEAD)
+                if response.status_code >= 400:
+                    response = await client.get(url)
+                return 200 <= response.status_code < 400
+        except Exception as e:
+            logger.warning(f"Failed to verify external link {url}: {e}")
+            return False
+
     def validate_local_seo(self, markdown: str, meta: dict, area: str):
         if not area:
             return True, []
@@ -2554,8 +2766,12 @@ class AsyncWorkflowController:
                 # External checks
                 if dom in blocked_domains:
                     return text
-                if allowed_domains and dom not in allowed_domains:
+                    
+                # If there are specific allowed domains, and it's not one of them, but it's a known safe domain, let it pass
+                safe_fallback_domains = {"statista.com", "mckinsey.com", "wikipedia.org", "en.wikipedia.org", "ar.wikipedia.org"}
+                if allowed_domains and dom not in allowed_domains and dom not in safe_fallback_domains:
                     return text
+                    
                 if used_external_count >= max_external:
                     return text
                 

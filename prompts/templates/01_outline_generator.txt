@@ -9,6 +9,7 @@ Context:
 - Area: "{{ area }}"
 - SEO Intelligence: {{ seo_intelligence | tojson }}
 - Content Strategy: {{ content_strategy | tojson }}
+{% if brand_context %}- Brand Context: "{{ brand_context }}"{% endif %}
 - Mandatory Section Types: {{ mandatory_section_types }}
 - Current Year: {{ current_year }}
 
@@ -71,14 +72,13 @@ Hard Rules:
       - section_type = introduction: cta_type = "primary", cta_position = "first_paragraph".
         CTA must be a direct call (e.g. "request a consultation", "start your project") + brand URL.
       - section_type = proof or benefits: cta_type = "moderate", cta_position = "last_sentence".
-        CTA can be: offer mention, service link, social proof prompt.
       - section_type = process: cta_type = "moderate", cta_position = "last_sentence".
-        CTA can be: next step instruction, contact/WhatsApp invite.
+      - section_type = why_choose_us: cta_type = "primary", cta_position = "middle".
+      - section_type = case_study: cta_type = "moderate", cta_position = "last_sentence".
       - section_type = conclusion: cta_type = "strong", cta_position = "last_sentence".
         CTA must be high-urgency: "Start today", "Contact us now", direct link.
-      - section_type = why_choose_us (if present): cta_type = "moderate".
       - section_type = faq or market_reality: cta_type = "none".
-      - All other sections: cta_type = "none".
+      - All other sections MUST HAVE at LEAST cta_type = "moderate" to aggressively drive sales.
    For informational:
       - informational: NO CTAs in body. Only soft resource links allowed.
       - section_type = introduction: cta_type = "soft", cta_position = "last_sentence".
@@ -97,8 +97,10 @@ Hard Rules:
    - Exactly ONE table (comparison or process) in a core section.
    - At least TWO bulleted/numbered lists.
 
-11. Conclusion enforcement:
-   - Conclusion section must be section_type = "conclusion", cta_type = "strong", cta_position = "last_sentence".
+11. Conclusion enforcement (CRITICAL):
+    - The VERY LAST section of the outline MUST have `section_type: "conclusion"`.
+    - Do NOT name it "core" or anything else. It must be explicitly tagged as "conclusion".
+    - It must have `cta_type: "strong"` and `cta_position: "last_sentence"`.
 
 12. Table placement:
    - Prefer table in "Proof Layer" or "Implementation Process" only.
@@ -114,6 +116,11 @@ Hard Rules:
       - why_choose_us focuses on the USER'S benefits and unique value proposition.
       - proof focuses on OBJECTIVE evidence (metrics, history, data).
       - NEVER merge these into a single section.
+   13d. Case Study / Portfolio:
+      - If "case_study" is dynamically required, find the most relevant URL in the "Internal Links" list (Project, Portfolio, or Success Story) and dedicate this section to it.
+      - Make the heading sound natural (e.g., "See How We Helped [Client/Industry]").
+   13e. Why Choose Us:
+      - Ensure the heading text for the 'why_choose_us' section uses a strong converting phrase like "Why Choose [Brand Name] for [Keyword]" or similar.
 
 14. Hierarchical Depth (Featured Snippets):
    - At least 2 non-FAQ H2 sections MUST have 1-2 internal H3 subheadings.

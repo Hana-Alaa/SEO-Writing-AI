@@ -83,7 +83,9 @@ class OutlineGenerator:
             seo_intelligence: Dict[str, Any],
             content_type: str,
             content_strategy: Dict[str, Any],
+            brand_context: str,
             area: Optional[str],
+            area_neighborhoods: Optional[List[str]] = None,
             feedback: Optional[str] = None,
             mandatory_section_types: Optional[List[str]] = None
         ) -> Dict[str, Any]:
@@ -98,7 +100,9 @@ class OutlineGenerator:
             seo_intelligence=seo_intelligence,
             content_type=content_type,
             content_strategy=content_strategy,
+            brand_context=brand_context,
             area=area,
+            area_neighborhoods=area_neighborhoods or [],
             feedback=feedback,
             mandatory_section_types = mandatory_section_types or [],
             current_year=current_year
@@ -192,7 +196,9 @@ class SectionWriter:
         used_internal_links: List[str] = None,
         used_external_links: List[str] = None,
         section_index: int = 0,
-        total_sections: int = 1
+        total_sections: int = 1,
+        brand_context: str = "",
+        section_source_text: str = ""
     ) -> Dict[str, Any]:
 
         brand_url = brand_url if brand_url not in ["None", ""] else None
@@ -277,6 +283,8 @@ class SectionWriter:
             used_external_links=used_external_links or [], 
             section_index=section_index,
             total_sections=total_sections,
+            brand_context=brand_context,
+            section_source_text=section_source_text,
             is_first_section=(section_index == 0),
             is_last_section=(section_index == total_sections - 1)
         )

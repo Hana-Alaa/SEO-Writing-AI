@@ -29,8 +29,23 @@ ARTICLE CONTEXT:
 - Table Type: "{{ section.table_type | default('none') }}"
 - Requires List: {{ section.requires_list | default(false) }}
 - List Type: "{{ section.list_type | default('none') }}"
+{% if brand_context %}- Brand Context (CRITICAL): "{{ brand_context }}"{% endif %}
+{% if section_source_text %}- Brand Source Text (real content from brand site - USE THIS!):
+"""
+{{ section_source_text }}
+"""
+{% endif %}
 
 STRICT WRITING RULES
+{% if section_source_text %}0. Source-Grounded Writing (HIGHEST PRIORITY):
+   - Real text from the brand's website is provided above (Brand Source Text).
+   - Extract specific facts, methodologies, or features RELEVANT to this section from that text.
+   - Every major claim MUST be grounded in the Brand Source Text. Do NOT invent capabilities.
+   - For 'Why Choose Us' or 'Case Study' sections: your reasons MUST come from the Source Text.
+{% elif brand_context %}0. Brand Personalization (CRITICAL):
+   - You MUST use the facts provided in 'Brand Context' to write highly specific, personalized content.
+   - NEVER write generic fluff. Instead, state EXACTLY what the brand does based on the context.
+{% endif %}
 1. Language lock:
    - Write strictly in {{ article_language }}.
    1.1 Perspective & Pronouns (MANDATORY):
@@ -47,8 +62,11 @@ STRICT WRITING RULES
 
 2. Structure:
    - Base structure: 2-3 short paragraphs per section.
-   - PARAGRAPH LENGTH LIMIT (CRITICAL): Each paragraph MUST be exactly 3 to 4 lines maximum (roughly 2-3 sentences). 
-   - DO NOT write long "wall-of-text" paragraphs. If a paragraph exceeds 4 lines of thought, break it into a new paragraph immediately.
+   - PARAGRAPH WORD LIMIT (ABSOLUTE RULE): Each paragraph MUST NOT exceed 40 words.
+     * Count your words. If a paragraph reaches 40 words → STOP and start a new paragraph immediately.
+     * A line = ~14 words. So 40 words ≈ 3 short lines. This is the hard ceiling.
+     * NEVER merge two paragraphs. NEVER write a 70-word paragraph split into two sentences.
+   - DO NOT write wall-of-text paragraphs. Short = readable = better SEO.
    - If requires_list = true: add ONE markdown list (3–5 items) after paragraph 2.
    - If requires_table = true: add ONE markdown table (3+ rows) after paragraph 2.
    - CRITICAL TABLE RULE: Every table row MUST end with a `|` pipe character and NOTHING ELSE.
@@ -73,17 +91,25 @@ STRICT WRITING RULES
 
 5. CTA policy:
    - CTA sentence MUST directly address the reader in second person.
+   - For commercial/transactional sections, YOU MUST AGGRESSIVELY INJECT CTAs.
    - Decide based on CTA Type assigned to this section:
      * "none"     → Write NO CTA at all.
      * "soft"     → One low-pressure sentence (e.g. "Explore our full guide", "Learn more about our approach"). No hard sell.
-     * "primary"  → One clear action CTA in the FIRST PARAGRAPH (e.g. "Request a free consultation today", "Start your project with us"). Wrap in brand link if Brand Link Used = false.
-     * "moderate" → One action CTA at the END of the section. Can be: service mention, offer, contact/WhatsApp invite, product link. Wrap in a relevant URL if available.
-     * "strong"   → One high-urgency, conversion-focused CTA as the VERY LAST SENTENCE only (e.g. "Request a free consultation today", "Get your tailored proposal", "Book your strategy session", "Call us now"). Do NOT use purely motivational closings. Wrap in brand link if Brand Link Used = false.
+     * "primary"  → INJECT an urgent action CTA in the FIRST PARAGRAPH, and ADD ANOTHER CTA between paragraph 1 and 2. (e.g. "Request a free consultation today to secure your spot").
+     * "moderate" → INJECT a clear action CTA in the MIDDLE of the section (e.g., end of Paragraph 1 or start of Paragraph 2), PLUS another contextual CTA sentence at the very end of the section.
+     * "strong"   → INJECT a high-converting CTA in the FIRST PARAGRAPH, AND a highly aggressive, conversion-focused directive as the VERY LAST SENTENCE. (e.g. "Get your tailored proposal", "Book your strategy session now").
    - CTA tone depends on intent:
-     * commercial/transactional → direct, benefit-driven, action-urgent, conversion-focused.
+     * commercial/transactional → hyper-direct, heavily benefit-driven, action-urgent, conversion-focused. NEVER bury the CTA; make it visually prominent in the flow.
+     * INFUSE URGENCY (For Commercial/Transactional): You MUST use urgency triggers to compel the reader. 
+       - Examples of Urgency Triggers: 
+         1. Scarcity: "Only a few spots left for Q2 strategy sessions."
+         2. Time-Sensitivity: "Get your proposal today to start seeing results by next month."
+         3. Competitive Advantage: "Don't let your competitors take your 2026 market share - launch now."
+         4. Immediate Value: "Receive your free technical audit within 24 hours."
      * informational → educational, resource-oriented, no pressure.
    - STRICT ANCHOR TEXT RULE: Never use weak, generic anchor texts like "Let's talk", "Contact Us", "See All Posts", or "Click Here". 
-     Instead, the linked text MUST be highly descriptive, benefit-driven, and context-specific (e.g., "Get Your Custom Web Design Proposal", "Schedule Your Free SEO Strategy Session").
+     * Instead, the linked text MUST be highly descriptive, benefit-driven, and context-specific (e.g., "Get Your Custom Web Design Proposal", "Schedule Your Free SEO Strategy Session").
+     * NEVER include dates (e.g., 2024, 2025, 2026) in anchor text. Focus on the service, benefit, or keyword instead.
    - If Brand Link Used = false: wrap the CTA text as a markdown link using: {{ brand_url }}
    - If Brand Link Used = true: write the CTA without adding the brand link again.
    - Never output "(None)" or a broken link. If you have no valid URL, write the CTA as plain text.
@@ -112,17 +138,17 @@ STRICT WRITING RULES
       - All links in "Mandatory Internal Links" and "Brand URL" are INTERNAL.
       - MUST strategically insert 1–2 of these links per section ONLY where they provide direct value to the reader (e.g., linking a service exactly when solving a pain point).
       - Do NOT force links if they don't fit the context naturally. 
+      - STRICT TOPICAL RELEVANCE: Only insert a link if its topic is directly and semantically related to the specific context of the current section. You MUST skip any link that belongs to a different service line, industry, or irrelevant sub-topic, even if it is provided in the available links list. Maintain logical topical purity at all costs.
       - Use highly descriptive anchor text (e.g., [Innovative E-Business Solutions](https://...)).
+      - NEVER include dates (e.g., 2024, 2025, 2026) in anchor text. Focus on semantic keywords instead.
       - CRITICAL: Skip any URL that already appears in "Used Internal Links".
    
-   B. External Links (Authority & Credible Resources):
-      - You MUST include 1-2 external links in the article (specifically in Informational, Technical, or Market Reality sections).
-      - To avoid broken links, ONLY link to high-profile, undeniable authority homepages or main directories (e.g., `https://www.statista.com`, `https://www.mckinsey.com`, `https://en.wikipedia.org`).
-      - Do NOT attempt to link to specific deep articles/sub-pages unless provided in the input, as they often break (404).
-      - Each link MUST back a specific market fact, broad statistic, or trend.
-      - CRITICAL: NO COMPETITORS.
+   B. External Links:
+      - Provide external links to credible sources (e.g., official organizations, well-known news outlets, or high-authority educational/research sites).
+      - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword }}".
+      - External links MUST add significant value and support the reader's understanding of the topic.
+      - QUALITY OVER QUANTITY: Do not add a link unless it is truly relevant. Broken links or links to low-quality/spam sites will cause the section to be REJECTED.
       - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
-      
 10. FAQ behavior:
    - If section_type = faq, you MUST answer EVERY question listed in the "Questions" array.
    - Use an H3 heading for each question, followed by a concise, unique, and helpful answer. Exactly 4-6 questions MUST be present.
@@ -134,6 +160,11 @@ STRICT WRITING RULES
     - If section_type = conclusion, the final paragraph MUST NOT be a weak motivational sign-off.
     - Instead, it MUST culminate in a high-urgency, conversion-focused directive.
     - Follow the strict anchor text rule (highly descriptive, benefit-driven).
+
+12. Case Study Behavior:
+    - If section_type = case_study, you MUST highlight the project/portfolio link assigned to this section (if any).
+    - Describe the real-world impact, process, and results in a confident, story-driven way.
+    - Do NOT make up fake metrics; focus on the proven capability to deliver high-end solutions.
 
 OUTPUT
 - Markdown only

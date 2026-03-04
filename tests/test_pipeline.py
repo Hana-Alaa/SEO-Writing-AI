@@ -90,10 +90,10 @@ async def main():
             ],
             "area": "Riyadh",
             # Source assets for the test
-            "logo_path": "images/logo.png",
-            "logo_reference_path": "images/reference.webp"
+            "logo_path": "output/images/logo.png"
         }
-    }
+    }       
+            # "logo_reference_path": "output/images/reference.webp"
 
     try:
         print("\nStarting SEO Article Generation Pipeline...")

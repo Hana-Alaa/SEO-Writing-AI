@@ -180,10 +180,10 @@ class ImageGenerator:
     """
 
     STYLE_PREFIXES = {
-        "Featured": "High-quality photorealistic featured image, professional lighting, ultra realistic, highly detailed,",
-        "Infographic": "Clean infographic style illustration, flat design, clear visual hierarchy, professional vector graphics,",
-        "Illustration": "Minimalist conceptual illustration, modern style, soft transitions, professional digital art,",
-        "Mockup": "Professional minimalist product mockup, clean desk setting, premium presentation, high quality 3D render,"
+        "Featured": "High-quality photorealistic featured image, professional lighting, ultra realistic, highly detailed, NO TEXT, NO GIBBERISH LETTERS,",
+        "Infographic": "Clean infographic style illustration, flat design, clear visual hierarchy, professional vector graphics, ONLY valid English text if any, NO GIBBERISH,",
+        "Illustration": "Minimalist conceptual illustration, modern style, soft transitions, professional digital art, NO TEXT, NO TYPOGRAPHY,",
+        "Mockup": "Professional minimalist product mockup, clean desk setting, premium presentation, high quality 3D render, NO TEXT, NO GIBBERISH,"
     }
 
     def __init__(self, ai_client, save_dir: str = "output/images", logo_path: str = None):
@@ -192,7 +192,7 @@ class ImageGenerator:
         self.logo_path = logo_path
         os.makedirs(self.save_dir, exist_ok=True)
 
-    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None, logo_path: str = None, reference_path: str = None, brand_visual_style: str = "") -> List[Dict[str, Any]]:
+    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None, logo_path: str = None, brand_visual_style: str = "") -> List[Dict[str, Any]]:
         """
         Generates actual images using Stability.ai for a list of prompts in parallel.
         """
@@ -212,7 +212,6 @@ class ImageGenerator:
                 item=item,
                 primary_keyword=primary_keyword,
                 logo_path=logo_path or self.logo_path,
-                reference_path=reference_path,
                 brand_visual_style=brand_visual_style
             )
             for item in image_prompts
@@ -314,8 +313,7 @@ class ImageGenerator:
                     1024,
                     1024,
                     save_dir=self.save_dir,
-                    seed=seed,
-                    reference_path=reference_path
+                    seed=seed
                 )
             except TypeError:
                 filepath = await self.ai_client.send_image(
@@ -355,14 +353,24 @@ class ImageGenerator:
         #     logger.error(f"Processing image {filepath} failed: {e}")
 
     def _process_image_versions(self, filepath: str, logo_path: str = None, apply_logo: bool = True) -> str:
+        logger.info(f"[_process_image_versions] Processing: {filepath} | Logo Path: {logo_path} | Apply Logo: {apply_logo}")
+        
         with Image.open(filepath) as img:
             img = img.convert("RGBA").resize((1200, 675), Image.Resampling.LANCZOS)
 
-            if apply_logo and logo_path and os.path.exists(logo_path):
-                img = self._add_logo(img, logo_path)
+            abs_logo_path = os.path.abspath(logo_path) if logo_path else None
+            logo_exists = os.path.exists(abs_logo_path) if abs_logo_path else False
+            
+            logger.info(f"[_process_image_versions] Absolute Logo Path: {abs_logo_path} | Exists: {logo_exists}")
+
+            if apply_logo and logo_exists:
+                logger.info(f"[_process_image_versions] EXECUTING LOGO OVERLAY NOW")
+                img = self._add_logo(img, abs_logo_path)
+            else:
+                logger.warning(f"[_process_image_versions] Logo Skipped. apply_logo={apply_logo}, logo_exists={logo_exists}")
 
             webp_path = os.path.splitext(filepath)[0] + ".webp"
-            img.convert("RGB").save(webp_path, format="WEBP", quality=85, optimize=True)
+            img.convert("RGB").save(webp_path, format="WEBP", quality=95, method=6, optimize=True)
 
         if os.path.exists(filepath) and filepath != webp_path:
             os.remove(filepath)

@@ -59,7 +59,9 @@ TASKS:
 3. META KEYWORDS
 - ONLY generate if Include Meta Keywords = true
 - Include primary + relevant secondary keywords
+- Keywords MUST be comma-separated in the output string.
 - Do NOT exceed 10 keywords
+- Do NOT exceed 255 characters total
 - Do NOT stuff
 
 4. ARTICLE SCHEMA (JSON-LD)
