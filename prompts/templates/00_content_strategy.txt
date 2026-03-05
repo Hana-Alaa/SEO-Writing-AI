@@ -12,7 +12,8 @@ Create a practical content strategy that can be directly translated into an outl
 No theory, no generic frameworks, no outline generation.
 
 Rules:
-- Stay strictly on primary keyword topic
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
 - Use SERP evidence only
 - If content_type = brand_commercial:
   - 70% conversion focus / 30% education

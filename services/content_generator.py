@@ -5,13 +5,97 @@ import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from jinja2 import Template, StrictUndefined
-from utils.safe_json import recover_json
+from utils.json_utils import recover_json
 
 logger = logging.getLogger(__name__)
 
 class ContentGeneratorError(Exception):
     """Base exception for content generation errors."""
     pass
+
+
+def _enforce_paragraph_word_limit(content: str, max_words: int = 40) -> str:
+    """
+    Post-processing function that enforces a maximum word count per paragraph.
+    Paragraphs exceeding max_words are split at sentence boundaries (Arabic & English).
+    Skips table rows, headings, list items, code blocks, and HTML comments.
+    """
+    if not content:
+        return content
+
+    lines = content.split("\n")
+    in_code_block = False
+    in_table = False
+    result_lines = []
+
+    for line in lines:
+        stripped = line.strip()
+        
+        # Track code blocks — skip enforcement inside them.
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            result_lines.append(line)
+            continue
+        if in_code_block:
+            result_lines.append(line)
+            continue
+        
+        # Track tables — rows start with '|' (or are the alignment row '|-')
+        if stripped.startswith("|") or (stripped.startswith("-") and "|" in stripped):
+            in_table = True
+            result_lines.append(line)
+            continue
+        else:
+            # If we were in a table and hit a non-empty line that isn't a table row, 
+            # it might be a broken table or just the end of the table.
+            if in_table and stripped:
+                in_table = False 
+            elif not stripped:
+                in_table = False
+
+        # Skip headings, list items, HTML comments, blank lines
+        if (
+            not stripped  # blank line
+            or stripped.startswith("#")  # heading
+            or stripped.startswith("-") or stripped.startswith("*") or stripped.startswith("+") # lists
+            or stripped.startswith(">")
+            or stripped.startswith("<!")
+            or stripped.startswith("[")  # link-only lines (CTAs)
+        ):
+            result_lines.append(line)
+            continue
+
+        # Count words (works for Arabic and English)
+        words = stripped.split()
+        if len(words) <= max_words:
+            result_lines.append(line)
+            continue
+
+        # --- Paragraph too long: split at sentence boundaries ---
+        # Sentence boundaries: period, question mark, exclamation for English/Arabic,
+        # Arabic period '\u06D4', Arabic comma '\u060C'.
+        sentences = re.split(r'(?<=[.!?\u06D4])\s+', stripped)
+        
+        current_para = []
+        current_count = 0
+
+        for sentence in sentences:
+            s_words = sentence.split()
+            if current_count + len(s_words) > max_words and current_para:
+                # Emit current paragraph and start a new one
+                result_lines.append(" ".join(current_para))
+                result_lines.append("")  # blank line between paragraphs
+                current_para = s_words
+                current_count = len(s_words)
+            else:
+                current_para.extend(s_words)
+                current_count += len(s_words)
+        
+        if current_para:
+            result_lines.append(" ".join(current_para))
+
+    return "\n".join(result_lines)
+
 
 class OutlineGenerator:
     def __init__(self, ai_client: Any, template_path: str = "prompts/templates/01_outline_generator.txt"):
@@ -127,6 +211,7 @@ class OutlineGenerator:
         data = recover_json(response)
 
         if not data or not isinstance(data, dict):
+            logger.error(f"CRITICAL: Failed to parse AI response as JSON for outline. Step: outline. Raw response:\n{response}")
             raise ContentGeneratorError("Invalid structure returned by AI.")
 
         outline = data.get("outline")
@@ -302,6 +387,7 @@ class SectionWriter:
                 return {"content": "", "used_links": [], "brand_link_used": False}
             
             clean_content = content.strip().removeprefix("```").removesuffix("```").strip()
+            clean_content = _enforce_paragraph_word_limit(clean_content, max_words=40)
             
             # Detect used links
             found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', clean_content)

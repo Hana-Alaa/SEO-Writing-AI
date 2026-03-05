@@ -19,8 +19,9 @@ ARTICLE CONTEXT:
 - Required Keywords: {{ section.assigned_keywords | tojson }}
 - CTA Type: "{{ execution_plan.cta_type }}"
 - CTA Position: "{{ execution_plan.cta_position }}"
-- Brand URL: "{{ brand_url if brand_url else '' }}"
-- Brand Link Used: {{ brand_link_used | lower }}
+- Brand Context: "{{ brand_context if brand_context else '' }}"
+- Branding / Primary Site: "{{ brand_url if brand_url else '' }}" (Only use if no Mandatory Internal Link is available)
+- Brand Link Used Previously: {{ brand_link_used | lower }}
 - Used Phrases To Avoid: {{ used_phrases | tojson }}
 - Mandatory Internal Links: {{ section.assigned_links | tojson }}
 - Used Internal Links: {{ used_internal_links | tojson }}
@@ -37,14 +38,31 @@ ARTICLE CONTEXT:
 {% endif %}
 
 STRICT WRITING RULES
-{% if section_source_text %}0. Source-Grounded Writing (HIGHEST PRIORITY):
+{% if section_source_text %}0. Source-Grounded Writing (CRITICAL - MANDATORY):
    - Real text from the brand's website is provided above (Brand Source Text).
+   - YOU MUST PRIORITIZE THIS TEXT over your general knowledge.
    - Extract specific facts, methodologies, or features RELEVANT to this section from that text.
-   - Every major claim MUST be grounded in the Brand Source Text. Do NOT invent capabilities.
+   - DO NOT HALLUCINATE. If the brand does not mention a specific service or feature in the source text, DO NOT claim they offer it.
+   - Every major claim MUST be grounded in the Brand Source Text. If the text says they use "PHP", do not write that they use "React" just because it's popular.
    - For 'Why Choose Us' or 'Case Study' sections: your reasons MUST come from the Source Text.
-{% elif brand_context %}0. Brand Personalization (CRITICAL):
-   - You MUST use the facts provided in 'Brand Context' to write highly specific, personalized content.
-   - NEVER write generic fluff. Instead, state EXACTLY what the brand does based on the context.
+
+   0.1. Brand Specificity & Attribution (HIGH PRIORITY):
+      - EVERY technical claim or methodology MUST be explicitly attributed to the brand name (e.g., "At CEMS IT, our process involves...", "CEMS IT utilizes...").
+      - MINIMUM 2 SPECIFIC FACTS: You MUST mention at least TWO distinct technical or process-related facts extracted from the Brand Source Text (e.g., specific frameworks, sprint types, localized features).
+      - ANTI-BANAL POLICY: Strictly PROHIBITED from using generic "marketing fluff" like:
+        * "We use the latest technologies" (Instead name them: "We use Node.js and React")
+        * "We prioritize quality/clients" (Instead explain HOW: "We use 3-stage QA testing")
+        * "We provide innovative solutions" (Instead describe them: "Our AI-powered RTL engine...")
+
+   0.2. Strict Topic Boundaries (CRITICAL - MANDATORY):
+      - YOUR WRITING MUST STAY 100% WITHIN THE BOUNDARIES OF THE **Primary Keyword** ({{ primary_keyword }}).
+      - Every paragraph MUST focus on the specific topic defined by the keyword.
+      - DO NOT pivot to secondary technologies or broad industry trends unless they are explicitly describing **Supporting Capabilities** of the main service.
+      - **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature or context become the protagonist of the section.
+      - **BRAND SOURCE OVERRIDE**: Even if the 'Brand Source Text' mentions many other services or topics, you MUST ignore them if they are not the Primary Keyword. Focus ONLY on {{ primary_keyword }}.
+
+{% else %}0. Anti-Hallucination (CRITICAL):
+    - Do NOT invent fake case studies, fake statistics, or fake brand names.
 {% endif %}
 1. Language lock:
    - Write strictly in {{ article_language }}.
@@ -60,21 +78,27 @@ STRICT WRITING RULES
       - At least one second-person construction in each paragraph.
       - Avoid detached third-person style like "businesses should..." unless used briefly for contrast.
 
-2. Structure:
-   - Base structure: 2-3 short paragraphs per section.
-   - PARAGRAPH WORD LIMIT (ABSOLUTE RULE): Each paragraph MUST NOT exceed 40 words.
-     * Count your words. If a paragraph reaches 40 words → STOP and start a new paragraph immediately.
-     * A line = ~14 words. So 40 words ≈ 3 short lines. This is the hard ceiling.
+2. Structure (CRITICAL):
+   - **MAXIMUM 3 PARAGRAPHS PER SECTION.**
+   - Base structure: 2-3 short paragraphs total. 
+   - **STOP WRITING after the 3rd paragraph.** If you have more to say, use a list or table, OR simply stop. NEVER output a 4th paragraph.
+   - PARAGRAPH WORD LIMIT (ABSOLUTE RULE): Each paragraph MUST NOT exceed 36 words.
+     * Count your words. If a paragraph reaches 36 words → STOP and start a new paragraph immediately.
+     * A line = ~11 words. So 36 words ≈ 3 short lines. This is the hard ceiling.
      * NEVER merge two paragraphs. NEVER write a 70-word paragraph split into two sentences.
    - DO NOT write wall-of-text paragraphs. Short = readable = better SEO.
    - If requires_list = true: add ONE markdown list (3–5 items) after paragraph 2.
    - If requires_table = true: add ONE markdown table (3+ rows) after paragraph 2.
-   - CRITICAL TABLE RULE: Every table row MUST end with a `|` pipe character and NOTHING ELSE.
-     - CORRECT: `| Cell 1 | Cell 2 | Cell 3 |`
-     - WRONG:   `| Cell 1 | Cell 2 | Cell 3 | Some extra text here`
-     - After the last `|` of any table row, the line MUST end immediately with no additional text.
-     - A table MUST start on a NEW LINE and MUST be preceded by a blank line.
-     - Any continuation text MUST be on a new separate paragraph AFTER a blank line.
+    - CRITICAL TABLE FORMATTING RULE (MANDATORY):
+      1. A table MUST strictly begin with a BLANK EMPTY LINE.
+      2. EVERY SINGLE ROW of the table (including the header, alignment row, and all data rows) MUST start with a `|` AND end with a `|`.
+         - CORRECT: `| Feature | Detail |`
+         - INCORRECT: `Feature | Detail`
+      3. A table MUST be a continuous block of text with NO empty lines or non-table text inside it. 
+      4. NEVER interrupt a table with a paragraph, a CTA, or a link.
+      5. NEVER place a CTA, promotional text, or link inside table cells.
+      6. If a CTA is required in a section with a table, it MUST be placed as a separate paragraph BELOW the table, with a blank line between them.
+      7. A table MUST strictly end with a BLANK EMPTY LINE.
    - FAQ sections keep H3 Q&A format only.
 
 3. Keyword usage (Density target: 1.2%–1.6% of section word count):
@@ -91,28 +115,56 @@ STRICT WRITING RULES
 
 5. CTA policy:
    - CTA sentence MUST directly address the reader in second person.
-   - For commercial/transactional sections, YOU MUST AGGRESSIVELY INJECT CTAs.
-   - Decide based on CTA Type assigned to this section:
-     * "none"     → Write NO CTA at all.
-     * "soft"     → One low-pressure sentence (e.g. "Explore our full guide", "Learn more about our approach"). No hard sell.
-     * "primary"  → INJECT an urgent action CTA in the FIRST PARAGRAPH, and ADD ANOTHER CTA between paragraph 1 and 2. (e.g. "Request a free consultation today to secure your spot").
-     * "moderate" → INJECT a clear action CTA in the MIDDLE of the section (e.g., end of Paragraph 1 or start of Paragraph 2), PLUS another contextual CTA sentence at the very end of the section.
-     * "strong"   → INJECT a high-converting CTA in the FIRST PARAGRAPH, AND a highly aggressive, conversion-focused directive as the VERY LAST SENTENCE. (e.g. "Get your tailored proposal", "Book your strategy session now").
-   - CTA tone depends on intent:
-     * commercial/transactional → hyper-direct, heavily benefit-driven, action-urgent, conversion-focused. NEVER bury the CTA; make it visually prominent in the flow.
-     * INFUSE URGENCY (For Commercial/Transactional): You MUST use urgency triggers to compel the reader. 
-       - Examples of Urgency Triggers: 
-         1. Scarcity: "Only a few spots left for Q2 strategy sessions."
-         2. Time-Sensitivity: "Get your proposal today to start seeing results by next month."
-         3. Competitive Advantage: "Don't let your competitors take your 2026 market share - launch now."
-         4. Immediate Value: "Receive your free technical audit within 24 hours."
-     * informational → educational, resource-oriented, no pressure.
-   - STRICT ANCHOR TEXT RULE: Never use weak, generic anchor texts like "Let's talk", "Contact Us", "See All Posts", or "Click Here". 
-     * Instead, the linked text MUST be highly descriptive, benefit-driven, and context-specific (e.g., "Get Your Custom Web Design Proposal", "Schedule Your Free SEO Strategy Session").
-     * NEVER include dates (e.g., 2024, 2025, 2026) in anchor text. Focus on the service, benefit, or keyword instead.
-   - If Brand Link Used = false: wrap the CTA text as a markdown link using: {{ brand_url }}
-   - If Brand Link Used = true: write the CTA without adding the brand link again.
-   - Never output "(None)" or a broken link. If you have no valid URL, write the CTA as plain text.
+
+   A. CTA POSITIONING & STRATEGY (MANDATORY):
+      - **COMMERCIAL INTENT BOOST (HIGH PRIORITY)**: If article_intent is "commercial" or "transactional", you MUST include at least TWO CTAs in the section: one in the FIRST paragraph and one in the LAST paragraph (or as a concluding standalone paragraph).
+      - Otherwise, for informational intents: include a clear CTA in the FIRST paragraph of the section, EXCEPT when the section requires a table.
+      - TABLE OVERRIDE RULE: If the section requires a table, the CTA MUST NOT be in the first paragraph. The table must be the core focus. The CTA MUST be placed as the very LAST paragraph of the entire section, strictly AFTER the table has concluded with a blank line.
+      - Add additional soft CTAs or in-text bridge links throughout the section to maximize conversion opportunities.
+      - DO NOT place CTAs inside tables.
+      - Never end the article with a weak sign-off; the final paragraph of the conclusion MUST be a strong, high-urgency CTA.
+
+   B. CTA EXAMPLES & DIVERSITY:
+      - You must vary your CTAs. Do not just say "contact us" every time.
+      - Examples to rotate through:
+        * Service promotion ("Discover our specialized [Service Name]")
+        * Contact numbers/methods ("Call our Riyadh office today at...")
+        * Offers or Audits ("Request your free [Industry] technical audit")
+        * Product links ("Explore the features of [Product Name]")
+      - Tone depends on keyword intent: Use high-urgency for commercial intents, and softer, resource-oriented tones for informational intents.
+
+      - **RULE 1: SUBPAGE PRIORITY (CRITICAL).** You must use the provided "Mandatory Internal Link" (a specific subpage) as your primary link destination. DO NOT use the Brand URL (homepage) if a subpage link is available in "Mandatory Internal Links".
+      - **RULE 2:** NEVER use the exact same URL twice in the same section. If your CTA links to URL_A, your in-text informational link MUST NOT also link to URL_A.
+      - **RULE 3 — STRICT NO-HOMEPAGE FALLBACK:** If you have already used the "Mandatory Internal Link", or if NONE were provided, write the CTA as plain, unlinked text. NEVER substitute the Brand URL (homepage) as a fallback link for a specific service or topic. The Brand URL is for brand-level mentions only.
+      - **RULE 4:** Any link you use MUST have anchor text that describes the destination page (e.g., "[High-performance web development](url)" instead of just "[web development](url)").
+      - **RULE 5:** NEVER repeat a CTA phrasing or link destination that you've used in a previous paragraph.
+
+   D. CTA Type Behavior (Per Section):
+      * "none"     → Write NO CTA at all.
+      * "soft"     → One low-pressure sentence/link only.
+      * "primary"  → Clear CTA in the FIRST PARAGRAPH.
+      * "moderate" → CTA mid-section or end.
+      * "strong"   → Highly aggressive directive, usually saved for the Conclusion or Intro.
+
+   E. Urgency Triggers (Use for commercial/transactional):
+      - Scarcity: "Only a few spots left for this quarter."
+      - Time-Sensitivity: "Get your proposal today to launch by next month."
+      - Competitive Advantage: "Don't let your competitors reach those customers first."
+      - Immediate Value: "Receive your free audit within 24 hours of contacting us."
+
+   E. Informational tone: educational, resource-oriented, no pressure.
+
+    - LINKING POLICY (CRITICAL):
+      - **MAXIMUM TWO (2) INTERNAL LINKS PER SECTION** for commercial/transactional intents (to support multiple CTAs).
+      - **MAXIMUM ONE (1) INTERNAL LINK PER SECTION** for informational intents.
+      - If multiple links are provided in "Mandatory Internal Links", CHOOSE ONLY THE MOST RELEVANT ONE.
+      - **CONTEXTUAL RELEVANCE:** The link MUST be naturally woven into a sentence where it has a strong logical connection to the surrounding text. Do not just drop a link at the end.
+      - **STRICT ANCHOR TEXT RULE (CRITICAL):**
+        * The anchor text MUST be highly descriptive, benefit-driven, and context-specific.
+        * GOOD: "[our comprehensive UI/UX design process](url)", "[custom React-based web development](url)"
+        * BAD: "[click here](url)", "[our services](url)", "[projects](url)", "[Riyadh](url)", "Let's talk", "Contact Us".
+      - NEVER include dates (e.g., 2024, 2025, 2026) or any date-like numbers in anchor text.
+      - DEDUPLICATION: Do not use the same URL or the same anchor text twice in the entire article.
 
 6. Human-First & Anti-robotic style (CRITICAL):
    - VERY IMPORTANT: Write in a natural, empathetic, and conversational human tone.
@@ -134,20 +186,24 @@ STRICT WRITING RULES
    - low: Strictly educational and objective. No sales pressure.
 
 9. Links:
-   A. Internal Links:
-      - All links in "Mandatory Internal Links" and "Brand URL" are INTERNAL.
-      - MUST strategically insert 1–2 of these links per section ONLY where they provide direct value to the reader (e.g., linking a service exactly when solving a pain point).
-      - Do NOT force links if they don't fit the context naturally. 
-      - STRICT TOPICAL RELEVANCE: Only insert a link if its topic is directly and semantically related to the specific context of the current section. You MUST skip any link that belongs to a different service line, industry, or irrelevant sub-topic, even if it is provided in the available links list. Maintain logical topical purity at all costs.
-      - Use highly descriptive anchor text (e.g., [Innovative E-Business Solutions](https://...)).
-      - NEVER include dates (e.g., 2024, 2025, 2026) in anchor text. Focus on semantic keywords instead.
-      - CRITICAL: Skip any URL that already appears in "Used Internal Links".
+   A. Internal Links (MANDATORY ENFORCEMENT):
+       - Mandatory Internal Links ARE THE ONLY LINKS YOU MAY USE.
+       - YOU ARE STRICTLY FORBIDDEN from adding any internal link that is NOT provided in 'Mandatory Internal Links'. 
+       - DO NOT default to linking to the Brand URL unless it is explicitly provided in 'Mandatory Internal Links' for this specific section.
+       - Aim to insert the assigned link(s) naturally into the flow of the text.
+       - PRIORITIZE the exactly provided URL and Anchor Text from 'Mandatory Internal Links'.
+       - HIGH RELEVANCE: Ensure the link is placed in a sentence where it acts as a supportive document or logical next step for the reader (e.g., linking a specific service page when discussing that service).
+       - LOGICAL DISTRIBUTION: Do not place all internal links in a single paragraph. Distribute them across the section if there are multiple.
+       - ANCHOR TEXT QUALITY (MANDATORY): 
+          * Use highly descriptive, benefit-driven anchor text (e.g., [Explore Our Professional Web Development Services](https://...)).
+          * NEVER use generic text (e.g., "Click here", "Read more", "lets talk") or include dates/numbers (e.g., 2024, 02/25/2021) in anchor text. 
+          * ALWAYS focus on the specific service, product, or topic of the TARGET page.
+       - CRITICAL: Skip any URL that already appears in "Used Internal Links" (this is a backup safety, but assigned links should already be unique).
    
    B. External Links:
-      - Provide external links to credible sources (e.g., official organizations, well-known news outlets, or high-authority educational/research sites).
+      - You have FULL FREEDOM to choose and insert external links to any highly credible, authoritative source (e.g., official organizations, well-known news outlets, high-authority educational/research sites) that adds value to the reader.
+      - PROACTIVE NAMED ENTITY LINKING: When mentioning specific technologies (e.g., [React](https://react.dev), [PHP](https://www.php.net)), frameworks, official government initiatives (e.g., [Saudi Vision 2030](https://www.vision2030.gov.sa)), or recognized organizations, ALWAYS provide a link to their official homepage or documentation.
       - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword }}".
-      - External links MUST add significant value and support the reader's understanding of the topic.
-      - QUALITY OVER QUANTITY: Do not add a link unless it is truly relevant. Broken links or links to low-quality/spam sites will cause the section to be REJECTED.
       - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
 10. FAQ behavior:
    - If section_type = faq, you MUST answer EVERY question listed in the "Questions" array.

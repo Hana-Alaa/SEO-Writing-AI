@@ -237,6 +237,33 @@
             font-weight: 500;
         }
 
+        /* Call to Action Buttons */
+        .cta-container {
+            text-align: center;
+            margin: 3rem 0;
+            width: 100%;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: #ffffff !important;
+            font-size: 1.25rem;
+            font-weight: 600;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none !important;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .cta-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.35);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             article {

@@ -180,19 +180,19 @@ class ImageGenerator:
     """
 
     STYLE_PREFIXES = {
-        "Featured": "High-quality photorealistic featured image, professional lighting, ultra realistic, highly detailed, NO TEXT, NO GIBBERISH LETTERS,",
-        "Infographic": "Clean infographic style illustration, flat design, clear visual hierarchy, professional vector graphics, ONLY valid English text if any, NO GIBBERISH,",
-        "Illustration": "Minimalist conceptual illustration, modern style, soft transitions, professional digital art, NO TEXT, NO TYPOGRAPHY,",
-        "Mockup": "Professional minimalist product mockup, clean desk setting, premium presentation, high quality 3D render, NO TEXT, NO GIBBERISH,"
+        "Featured": "Premium hero header, award-winning cinematic studio lighting, UNCLUTTERED, ultra-realistic 8k texture, sophisticated MINIMALIST modern composition, professional advertising photography, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, ABSOLUTELY NO TEXT OR LETTERS,",
+        "Infographic": "Exclusive custom-designed 3D isometric process flow, UNCLUTTERED, high-end corporate visualization, clean structural elegance, soft ambient occlusion shadows, VERY WIDE SAFE MARGINS, KEEP CONTENT CENTERED AND AWAY FROM EDGES, ENGLISH TEXT ONLY, STRICTLY NO ARABIC TEXT, MINIMALIST TEXT ONLY, PERFECTLY SPELLED TEXT, NO GIBBERISH,",
+        "Illustration": "Bespoke digital art, UNCLUTTERED, minimalist editorial style, soft color transitions, premium conceptual depth, professional stroke-work, high-end finish, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, ABSOLUTELY NO TEXT OR LETTERS,",
+        "Mockup": "Ultra-premium 3D product render, UNCLUTTERED, elegant minimalist environment, soft blurred background, realistic materials (glass/metal/matte), high-end presentation, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, ABSOLUTELY NO TEXT OR LETTERS,"
     }
 
-    def __init__(self, ai_client, save_dir: str = "output/images", logo_path: str = None):
+    def __init__(self, ai_client, save_dir: str = "output/images", image_frame_path: str = None):
         self.save_dir = save_dir
         self.ai_client = ai_client
-        self.logo_path = logo_path
+        self.image_frame_path = image_frame_path
         os.makedirs(self.save_dir, exist_ok=True)
 
-    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None, logo_path: str = None, brand_visual_style: str = "") -> List[Dict[str, Any]]:
+    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None, image_frame_path: str = None, brand_visual_style: str = "") -> List[Dict[str, Any]]:
         """
         Generates actual images using Stability.ai for a list of prompts in parallel.
         """
@@ -207,11 +207,13 @@ class ImageGenerator:
             async with sem:
                 return await task
 
+        target_frame = image_frame_path or self.image_frame_path
+
         tasks = [
             self._process_single_image(
                 item=item,
                 primary_keyword=primary_keyword,
-                logo_path=logo_path or self.logo_path,
+                image_frame_path=target_frame,
                 brand_visual_style=brand_visual_style
             )
             for item in image_prompts
@@ -255,7 +257,7 @@ class ImageGenerator:
         
     #     return None
 
-    async def _process_single_image(self, item, primary_keyword=None, logo_path=None, reference_path=None, brand_visual_style=""):
+    async def _process_single_image(self, item, primary_keyword=None, image_frame_path=None, brand_visual_style=""):
         """Internal worker to process a single image generation task."""
         prompt = item.get("prompt", "").strip()
         section_id = item.get("section_id", "").strip()
@@ -269,12 +271,13 @@ class ImageGenerator:
         final_prompt = f"{style_prefix} {prompt}.{style_hint}"
         seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 4294967295
 
-        local_path = await self._call_openrouter(final_prompt, section_id, image_type, seed, reference_path)
+        local_path = await self._call_openrouter(final_prompt, section_id, image_type, seed)
         if not local_path:
             return None 
 
-        apply_logo = image_type in {"Featured", "Mockup"}
-        processed_path = await asyncio.to_thread(self._process_image_versions, local_path, logo_path, apply_logo)
+        # Apply brand frame to ALL image types for consistent exclusivity
+        apply_brand = True 
+        processed_path = await asyncio.to_thread(self._process_image_versions, local_path, image_frame_path, apply_brand)
 
         return {
             "section_id": section_id,
@@ -352,32 +355,253 @@ class ImageGenerator:
         # except Exception as e:
         #     logger.error(f"Processing image {filepath} failed: {e}")
 
-    def _process_image_versions(self, filepath: str, logo_path: str = None, apply_logo: bool = True) -> str:
-        logger.info(f"[_process_image_versions] Processing: {filepath} | Logo Path: {logo_path} | Apply Logo: {apply_logo}")
+    def _process_image_versions(self, filepath: str, image_frame_path: str = None, apply_brand: bool = True) -> str:
+        logger.info(f"[_process_image_versions] Processing: {filepath} | Frame: {image_frame_path}")
         
         with Image.open(filepath) as img:
-            img = img.convert("RGBA").resize((1200, 675), Image.Resampling.LANCZOS)
+            img = img.convert("RGBA")
 
-            abs_logo_path = os.path.abspath(logo_path) if logo_path else None
-            logo_exists = os.path.exists(abs_logo_path) if abs_logo_path else False
+            # Apply Brand Frame
+            if apply_brand and image_frame_path and os.path.exists(image_frame_path):
+                logger.info(f"[_process_image_versions] Applying branded frame overlay")
+                img = self._composite_with_template(img, image_frame_path)
             
-            logger.info(f"[_process_image_versions] Absolute Logo Path: {abs_logo_path} | Exists: {logo_exists}")
-
-            if apply_logo and logo_exists:
-                logger.info(f"[_process_image_versions] EXECUTING LOGO OVERLAY NOW")
-                img = self._add_logo(img, abs_logo_path)
+            # Simple resize if no branding applied or no frame provided
+            elif not (apply_brand and image_frame_path):
+                img = img.resize((1200, 675), Image.Resampling.LANCZOS)
+                logger.info(f"[_process_image_versions] Applying simple logo overlay")
+                # Pre-resize for standard logo flow
+                img = img.resize((1200, 675), Image.Resampling.LANCZOS)
+                img = self._add_logo(img, logo_path)
+            
+            # No branding, just standard resize
             else:
-                logger.warning(f"[_process_image_versions] Logo Skipped. apply_logo={apply_logo}, logo_exists={logo_exists}")
+                img = img.resize((1200, 675), Image.Resampling.LANCZOS)
 
             webp_path = os.path.splitext(filepath)[0] + ".webp"
-            img.convert("RGB").save(webp_path, format="WEBP", quality=95, method=6, optimize=True)
+            img.convert("RGB").save(webp_path, format="WEBP", quality=92, method=6, optimize=True)
 
         if os.path.exists(filepath) and filepath != webp_path:
             os.remove(filepath)
 
         return webp_path
+
+    def _composite_with_template(self, base_image: Image.Image, template_path: str) -> Image.Image:
+        """
+        Composites an AI generated image into a branded template.
+        Priority:
+        1. Transparency (Alpha Channel) Detection
+        2. White-space Bounding Box Detection
+        3. Split-Frame fallback
+        """
+        try:
+            with Image.open(template_path) as template:
+                template = template.convert("RGBA")
+                tw, th = template.size
+                
+                # Check for transparency (Alpha < 255)
+                # This is the most accurate way for .png templates
+                mask_bbox = template.getbbox() # This gets the non-zero alpha area, but we want the ZERO alpha area
+                
+                # We need to find the "hole" (transparent area)
+                # Let's scan for a transparent bounding box
+                pixels = list(template.getdata())
+                hole_bbox = [tw, th, 0, 0]
+                has_transparency = False
+                
+                for i, p in enumerate(pixels):
+                    if p[3] < 10: # Very transparent
+                        x, y = i % tw, i // tw
+                        hole_bbox[0] = min(hole_bbox[0], x)
+                        hole_bbox[1] = min(hole_bbox[1], y)
+                        hole_bbox[2] = max(hole_bbox[2], x)
+                        hole_bbox[3] = max(hole_bbox[3], y)
+                        has_transparency = True
+                
+                # Fallback check for "white box" areas in non-transparent templates
+                white_box = None
+                if not has_transparency:
+                    # Scan for a large white/near-white block (e.g., for JPG templates)
+                    for i, p in enumerate(pixels):
+                        if p[0] > 245 and p[1] > 245 and p[2] > 245: # Near white
+                            x, y = i % tw, i // tw
+                            if white_box is None:
+                                white_box = [x, y, x, y]
+                            else:
+                                white_box[0] = min(white_box[0], x)
+                                white_box[1] = min(white_box[1], y)
+                                white_box[2] = max(white_box[2], x)
+                                white_box[3] = max(white_box[3], y)
+
+                if has_transparency or white_box:
+                    logger.info(f"Applying Smart Fit composition. Transparency: {has_transparency}, WhiteBox: {bool(white_box)}")
+                    tx1, ty1, tx2, ty2 = hole_bbox if has_transparency else white_box
+                    box_w, box_h = tx2 - tx1 + 1, ty2 - ty1 + 1
+                    
+                    # 1. Prepare AI image foreground (FIT / CONTAIN)
+                    base_w, base_h = base_image.size
+                    aspect = base_w / base_h
+                    box_aspect = box_w / box_h
+
+                    if aspect > box_aspect: # Image is wider than hole
+                        fit_w = box_w
+                        fit_h = int(box_w / aspect)
+                    else: # Image is taller than hole
+                        fit_h = box_h
+                        fit_w = int(box_h * aspect)
+
+                    foreground = base_image.resize((fit_w, fit_h), Image.Resampling.LANCZOS)
+                    
+                    # 2. Prepare AI image background (FILL + BLUR)
+                    # We reuse the FILL logic but blur it to handle aspect mismatches elegantly
+                    if aspect > box_aspect:
+                        fill_h = box_h
+                        fill_w = int(box_h * aspect)
+                    else:
+                        fill_w = box_w
+                        fill_h = int(box_w / aspect)
+                    
+                    background = base_image.resize((fill_w, fill_h), Image.Resampling.LANCZOS)
+                    left = (fill_w - box_w) // 2
+                    top = (fill_h - box_h) // 2
+                    background = background.crop((left, top, left + box_w, top + box_h))
+                    
+                    from PIL import ImageFilter, ImageEnhance
+                    background = background.filter(ImageFilter.GaussianBlur(radius=20))
+                    # Darken background slightly to emphasize foreground
+                    background = ImageEnhance.Brightness(background).enhance(0.85)
+
+                    # 3. Layering
+                    content_block = Image.new("RGBA", (box_w, box_h), (255, 255, 255, 255))
+                    content_block.paste(background, (0, 0))
+                    
+                    # Center the foreground on the blurred background
+                    offset_x = (box_w - fit_w) // 2
+                    offset_y = (box_h - fit_h) // 2
+                    content_block.paste(foreground, (offset_x, offset_y), mask=foreground if foreground.mode == 'RGBA' else None)
+
+                    # Final composite
+                    result = Image.new("RGBA", (tw, th), (255, 255, 255, 255))
+                    result.paste(content_block, (tx1, ty1))
+                    result.alpha_composite(template)
+                    return result
+
+                # Final Fallback: Split-Frame logic (unchanged essentially but ensures safe framing)
+                logger.info("Using split-frame fallback")
+                split_y = int(th * 0.78)
+                frame_region = template.crop((0, split_y, tw, th))
+                box_w, box_h = tw, split_y
+                
+                # Apply same Smart Fit logic for split frame if needed, but usually templates match
+                base_w, base_h = base_image.size
+                resized_base = base_image.resize((tw, int(tw / (base_w/base_h))), Image.Resampling.LANCZOS)
+                
+                result = Image.new("RGBA", (tw, th))
+                result.paste(resized_base, (0, 0))
+                result.paste(frame_region, (0, split_y))
+                return result
+
+        except Exception as e:
+            logger.error(f"Template composition failed: {e}")
+            return base_image
+
+    def _find_white_rectangle(self, img: Image.Image) -> Optional[tuple]:
+        """
+        Sophisticated detection of the central white rectangle.
+        Finds a contiguous white area starting from the center.
+        """
+        try:
+            w, h = img.size
+            cx, cy = w // 2, h // 2
+            
+            # 1. Verification: Is the center actually white?
+            gray = img.convert("L")
+            if gray.getpixel((cx, cy)) < 240:
+                # If center isn't white, try searching a bit around it
+                found = False
+                for dx in range(-50, 51, 10):
+                    for dy in range(-50, 51, 10):
+                        if gray.getpixel((cx+dx, cy+dy)) >= 240:
+                            cx, cy = cx+dx, cy+dy
+                            found = True
+                            break
+                    if found: break
+                if not found: return None
+
+            # 2. Expand from center to find boundaries
+            # Expand Left
+            left = cx
+            while left > 0 and gray.getpixel((left-1, cy)) >= 240:
+                left -= 1
+            # Expand Right
+            right = cx
+            while right < w-1 and gray.getpixel((right+1, cy)) >= 240:
+                right += 1
+            # Expand Top
+            top = cy
+            while top > 0 and gray.getpixel((cx, top-1)) >= 240:
+                top -= 1
+            # Expand Bottom
+            bottom = cy
+            while bottom < h-1 and gray.getpixel((cx, bottom+1)) >= 240:
+                bottom += 1
+
+            # 3. Validation: Minimum size
+            if (right - left) < w * 0.2 or (bottom - top) < h * 0.2:
+                return None
+
+            return (left, top, right, bottom)
+        except Exception as e:
+            logger.error(f"Hole detection failed: {e}")
+            return None
+
+    def _detect_logo_position_from_template(self, template_path: str) -> Optional[Dict[str, Any]]:
+        """
+        Analyzes the template to find where a logo might be placed.
+        Checks bottom corners for non-background content.
+        """
+        try:
+            with Image.open(template_path) as img:
+                img = img.convert("RGBA")
+                w, h = img.size
+                gray = img.convert("L")
+                
+                # Search regions: Bottom Left and Bottom Right
+                regions = {
+                    "bottom_right": (int(w*0.7), int(h*0.7), w-20, h-20),
+                    "bottom_left": (20, int(h*0.7), int(w*0.3), h-20)
+                }
+                
+                best_region = None
+                max_density = 0
+                
+                for name, (x1, y1, x2, y2) in regions.items():
+                    content_pixels = 0
+                    total_pixels = (x2-x1) * (y2-y1)
+                    
+                    # Sample density
+                    for y in range(y1, y2, 5):
+                        for x in range(x1, x2, 5):
+                            p = img.getpixel((x, y))
+                            # If not white and not transparent
+                            if p[0] < 240 and p[3] > 50:
+                                content_pixels += 1
+                    
+                    density = content_pixels / (total_pixels / 25) # adj for sampling
+                    if density > 0.1 and density > max_density:
+                        max_density = density
+                        best_region = name
+                
+                if best_region:
+                    logger.info(f"Detected logo region: {best_region} (density: {max_density:.2f})")
+                    return {"region": best_region}
+                
+            return None
+        except Exception as e:
+            logger.error(f"Logo detection failed: {e}")
+            return None
     
-    def _add_logo(self, base_image: Image.Image, logo_path: str) -> Image.Image:
+    def _add_logo(self, base_image: Image.Image, logo_path: str, position_hint: Dict = None) -> Image.Image:
         """Overlays a logo professionally on the base image."""
         try:
             with Image.open(logo_path) as logo:
@@ -393,14 +617,32 @@ class ImageGenerator:
                 logo = logo.resize((new_logo_w, new_logo_h), Image.Resampling.LANCZOS)
                 
                 # Dynamic Padding (Margin) based on image size
-                margin_x = int(base_w * 0.04) # 4% margin from right
-                margin_y = int(base_h * 0.04) # 4% margin from bottom
+                margin_x = int(base_w * 0.04) 
+                margin_y = int(base_h * 0.04)
                 
-                # Positioning: Bottom Right
-                position = (base_w - new_logo_w - margin_x, base_h - new_logo_h - margin_y)
+                # Position logic based on hint or default
+                region = position_hint.get("region", "bottom_right") if position_hint else "bottom_right"
                 
-                # Create a transparent layer for composition
+                if region == "bottom_left":
+                    position = (margin_x, base_h - new_logo_h - margin_y)
+                else: # bottom_right
+                    position = (base_w - new_logo_w - margin_x, base_h - new_logo_h - margin_y)
+                
+                # Create a rounded white background for the logo to make it "pop"
+                padding = 10
+                bg_rect = [
+                    position[0] - padding, 
+                    position[1] - padding, 
+                    position[0] + new_logo_w + padding, 
+                    position[1] + new_logo_h + padding
+                ]
+                
                 overlay = Image.new("RGBA", base_image.size, (0, 0, 0, 0))
+                from PIL import ImageDraw
+                draw = ImageDraw.Draw(overlay)
+                draw.rounded_rectangle(bg_rect, radius=8, fill=(255, 255, 255, 255))
+                
+                # Paste logo on top of the white background
                 overlay.paste(logo, position, mask=logo)
                 
                 # Alpha composite merges them perfectly

@@ -12,6 +12,7 @@ import re
 import json
 import asyncio
 from pathlib import Path
+from urllib.parse import urlparse
 from langdetect import detect  
 from jinja2 import Template, StrictUndefined
 from typing import Dict, Any, List, Optional, Callable, ClassVar
@@ -153,8 +154,6 @@ class AsyncWorkflowController:
         state["max_external_links"] = 3
 
         steps = [
-            # ("analysis", self._step_0_analysis, 0),
-            # ("web_research", self._step_web_research, 1),  
             # ("semantic_layer", self._step_semantic_layer, 1),
             ("analysis_init", self._step_0_init, 0),
             ("brand_discovery", self._step_0_brand_discovery, 1),
@@ -166,11 +165,11 @@ class AsyncWorkflowController:
             ("outline_generation", self._step_1_outline, 1),
 
             ("content_writing", self._step_2_write_sections, 1),
-            # ("image_prompting", self._step_4_generate_image_prompts, 0),
-            # ("image_generation", self._step_4_5_download_images, 2),
+            ("image_prompting", self._step_4_generate_image_prompts, 0),
+            ("image_generation", self._step_4_5_download_images, 2),
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
-            # ("image_inserter", self._step_6_image_inserter, 0),
+            ("image_inserter", self._step_6_image_inserter, 0),
             ("meta_schema", self._step_7_meta_schema, 0),
             # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
@@ -220,6 +219,8 @@ class AsyncWorkflowController:
         state["primary_keyword"] = primary_keyword
         state["raw_title"] = raw_title
         state["keywords"] = keywords
+        state["image_frame_path"] = input_data.get("image_frame_path") or input_data.get("image_template_path")
+        state["brand_visual_style"] = input_data.get("brand_visual_style", "")
 
         # keep input_data in sync for downstream steps
         state.setdefault("input_data", {})
@@ -273,16 +274,54 @@ class AsyncWorkflowController:
             headers = {"User-Agent": "Mozilla/5.0 (SEO-Engine-Bot)"}
 
             def fetch_text(url: str) -> str:
-                """Fetch a URL and return clean text from important tags."""
+                """
+                Fetch a URL and return clean, structured body text.
+                Groups paragraphs under their heading context to give the AI
+                meaningful, specific content rather than navigation/UI noise.
+                """
                 try:
                     r = requests.get(url, timeout=10, headers=headers)
                     if r.status_code != 200:
                         return ""
                     s = BeautifulSoup(r.text, "html.parser")
-                    for tag in s(["nav", "footer", "script", "style", "header"]):
+
+                    # Strip ALL noise tags aggressively
+                    for tag in s(["nav", "footer", "script", "style", "header",
+                                   "aside", "form", "button", "iframe", "svg",
+                                   "noscript", "meta", "link"]):
                         tag.decompose()
-                    parts = s.find_all(["h1", "h2", "h3", "p", "li"])
-                    return " ".join(p.get_text(strip=True) for p in parts if len(p.get_text(strip=True)) > 10)
+
+                    # Find the main content area if available
+                    main = s.find("main") or s.find(id="main") or s.find(class_="content") or s
+
+                    # Build structured text: "Heading\nParagraph\nParagraph\n..."
+                    blocks = []
+                    current_heading = ""
+                    current_paras = []
+
+                    for tag in main.find_all(["h1", "h2", "h3", "p", "li"]):
+                        text = tag.get_text(separator=" ", strip=True)
+                        # Skip very short items (buttons, labels, menu items)
+                        if len(text) < 40:
+                            continue
+
+                        if tag.name in ("h1", "h2", "h3"):
+                            # Save previous group
+                            if current_paras:
+                                group = (f"## {current_heading}\n" if current_heading else "") + "\n".join(current_paras)
+                                blocks.append(group[:800])  # cap each group
+                            current_heading = text
+                            current_paras = []
+                        else:
+                            current_paras.append(text)
+
+                    # Save the last group
+                    if current_paras:
+                        group = (f"## {current_heading}\n" if current_heading else "") + "\n".join(current_paras)
+                        blocks.append(group[:800])
+
+                    return "\n\n".join(blocks)[:3000]
+
                 except Exception as ex:
                     logger.warning(f"Failed to fetch {url}: {ex}")
                     return ""
@@ -304,27 +343,80 @@ class AsyncWorkflowController:
 
             homepage_soup = BeautifulSoup(homepage_html.text, "html.parser")
             discovered_links = {}  # canon_url -> (anchor_text, score)
+            
+            # Helper to clean anchor text
+            def clean_anchor(text: str) -> str:
+                import re
+                # Strip date patterns like 12/23/2021, 2022, 02/25/2021
+                text = re.sub(r'\b\d{2}/\d{2}/\d{4}\b', '', text).strip()
+                text = re.sub(r'\b(19|20)\d{2}\b', '', text).strip()
+                # Collapse extra spaces
+                text = re.sub(r'\s+', ' ', text).strip()
+                return text
+            
+            GENERIC_ANCHORS = {"click here", "read more", "learn more", "lets talk", 
+                               "let's talk", "contact us", "see all", "اقرأ أكثر", "انقر هنا"}
 
-            for a in homepage_soup.find_all("a", href=True):
-                href = a["href"]
-                anchor = a.get_text(strip=True)
-                full_url = urljoin(brand_url, href)
+            # Helper to process a soup for links
+            def extract_links(soup, base_url):
+                for a in soup.find_all("a", href=True):
+                    href = a["href"]
+                    anchor_raw = a.get_text(strip=True)
+                    anchor = clean_anchor(anchor_raw)
+                    full_url = urljoin(base_url, href)
 
-                if self._domain(full_url) != domain:
-                    continue
-                canon = self._canon_url(full_url)
-                if canon == self._canon_url(brand_url):
-                    continue  # skip homepage itself
-                if not anchor or len(anchor) < 3 or len(anchor) > 80:
-                    continue
+                    if self._domain(full_url) != domain:
+                        continue
+                    canon = self._canon_url(full_url)
+                    if canon == self._canon_url(brand_url):
+                        continue
+                    if not anchor or len(anchor) < 3 or len(anchor) > 80:
+                        continue
+                    # Skip if anchor is generic after cleaning
+                    if anchor.lower() in GENERIC_ANCHORS:
+                        continue
 
-                score = relevance_score(canon, anchor)
-                if canon not in discovered_links or score > discovered_links[canon][1]:
-                    discovered_links[canon] = (anchor, score)
+                    score = relevance_score(canon, anchor)
+                    if canon not in discovered_links or score > discovered_links[canon][1]:
+                        discovered_links[canon] = (anchor, score)
 
-            # --- Step 2: Sort by relevance, pick top 5 subpages ---
+            extract_links(homepage_soup, brand_url)
+
+            # --- Anchor Deduplication & Service Boosting ---
+            filtered_links = {}
+            for canon, (anchor, score) in discovered_links.items():
+                # Boost score for services/products
+                if any(k in canon.lower() for k in ["service", "product", "solution", "خدمات", "منتجات", "برامج"]):
+                    score += 5
+                
+                # Deduplicate by anchor text: keep highest score for a given anchor
+                if anchor not in filtered_links or score > filtered_links[anchor][1]:
+                    filtered_links[anchor] = (canon, score)
+            
+            # Re-map discovered_links to the deduplicated set
+            discovered_links = {canon: (anchor, score) for anchor, (canon, score) in filtered_links.items()}
+
+            # DEEP DISCOVERY: Identify "Hub" pages (Services, Solutions) and crawl them too
+            hub_keywords = ["service", "solution", "product", "offer", "خدمات", "حلول"]
+            hub_links = []
+            for canon, (anchor, score) in discovered_links.items():
+                if any(k in canon.lower() or k in anchor.lower() for k in hub_keywords):
+                    if score >= 1: # Must be somewhat relevant
+                        hub_links.append(canon)
+            
+            # Limit to top 2 hubs to avoid massive crawl
+            for hub_url in hub_links[:2]:
+                try:
+                    logger.info(f"Deep crawling hub page: {hub_url}")
+                    hub_html = requests.get(hub_url, timeout=10, headers=headers)
+                    if hub_html.status_code == 200:
+                        extract_links(BeautifulSoup(hub_html.text, "html.parser"), hub_url)
+                except Exception as e:
+                    logger.warning(f"Failed deep crawl for {hub_url}: {e}")
+
+            # --- Step 2: Sort by relevance, pick top 10 subpages ---
             sorted_links = sorted(discovered_links.items(), key=lambda x: x[1][1], reverse=True)
-            top_links = sorted_links[:5]
+            top_links = sorted_links[:10]
 
             logger.info(f"Top relevant brand pages: {[l[0] for l in top_links]}")
 
@@ -332,31 +424,36 @@ class AsyncWorkflowController:
             if "internal_resources" not in state:
                 state["internal_resources"] = []
 
+            junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
+            def is_junk(url_str):
+                path = urlparse(url_str).path.lower().rstrip('/')
+                last_segment = path.split('/')[-1]
+                return last_segment in junk_slugs
+
             input_urls = state.get("input_data", {}).get("urls", [])
             seen_canons = set()
             for u in input_urls:
                 link = u.get("link", "")
-                if link:
+                if link and not is_junk(link):
                     seen_canons.add(self._canon_url(link))
                     state["internal_resources"].append({"link": link, "text": u.get("text") or "Internal Resource"})
 
             added_count = 0
             for canon, (anchor, score) in sorted_links:
-                # MANDATORY RELEVANCE THRESHOLD:
-                # If the page doesn't have at least some relevance to the primary keyword, exclude it.
-                # This prevents old/unrelated blog posts (like video production from 2022) 
-                # from being suggested in a Web Design Riyadh article.
-                if score < 2:
+                # Filter by relevance AND junk slugs
+                if score < 3: # Increased from 1 or 2 to ensure high-value pages
+                    continue
+                if is_junk(canon):
                     continue
 
                 if canon not in seen_canons:
                     state["internal_resources"].append({"link": canon, "text": anchor})
                     seen_canons.add(canon)
                     added_count += 1
-                if added_count >= 10:
+                if added_count >= 10: # Reduced from 20 to keep selection very tight
                     break
 
-            logger.info(f"Discovered {added_count} new internal resources from brand_url.")
+            logger.info(f"Discovered {added_count} brand resources.")
 
             # --- Step 4: Fetch and index the content of the top relevant subpages ---
             brand_pages_index = {}  # url -> raw text
@@ -364,12 +461,12 @@ class AsyncWorkflowController:
             # Always include homepage
             homepage_text_raw = fetch_text(brand_url)
             if homepage_text_raw:
-                brand_pages_index[brand_url] = homepage_text_raw[:2000]
+                brand_pages_index[brand_url] = homepage_text_raw[:2500] # Increased limit
 
             for canon, (anchor, score) in top_links:
                 page_text = fetch_text(canon)
                 if page_text:
-                    brand_pages_index[canon] = page_text[:2000]
+                    brand_pages_index[canon] = page_text[:2500] # Increased limit
                     logger.info(f"Indexed brand page: {canon} (score={score}, ~{len(page_text)} chars)")
 
             state["brand_pages_index"] = brand_pages_index
@@ -717,8 +814,28 @@ Output the JSON array now:"""
         urls_norm = []
         
         # We use state["internal_resources"] which was populated in brand_discovery
+        # Junk link filter (avoid Contact, Login, etc.)
+        junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
+        
+        def is_junk(url):
+            path = urlparse(url).path.lower().rstrip('/')
+            last_segment = path.split('/')[-1]
+            return last_segment in junk_slugs
+
         internal_resources = state.get("internal_resources", [])
-        for res in internal_resources:
+        
+        # Filter internal_resources based on junk slugs
+        filtered_internal_resources = [
+            r for r in internal_resources 
+            if not is_junk(r.get('link', ''))
+        ]
+
+        # Deduplicate based on 'link' and update the list
+        deduplicated_internal_resources = list({r["link"]: r for r in filtered_internal_resources if r.get("link")}.values())
+        
+        logger.info(f"Discovered {len(deduplicated_internal_resources)} high-relevance internal resources (after junk filtering and deduplication).")
+
+        for res in deduplicated_internal_resources:
             urls_norm.append({"text": res.get("text", "Internal Resource"), "link": res.get("link")})
 
         for u in urls_norm:
@@ -897,16 +1014,8 @@ Output the JSON array now:"""
             brand_url=urls_norm[0].get("link", "") if urls_norm else ""
         )
 
-        state["allowed_external_domains"] = {
-            "sama.gov.sa", "cst.gov.sa", "ndmo.gov.sa",
-            "developers.google.com", "web.dev", "schema.org", "w3.org", "statista.com"
-        }
-
-        outline = DataInjector.distribute_urls_to_outline(outline, urls_norm, strategy="conservative")
-
         state["link_strategy"] = {
             "internal_topics": urls_norm,
-            "authority_topics": [{"link": f"https://{d}", "type": "authority"} for d in state["allowed_external_domains"]],
             "affiliate_policy": {"max_per_section": 3, "placement": "distributed", "tone": "neutral"}
         }
                 
@@ -919,6 +1028,26 @@ Output the JSON array now:"""
                  # Robust safety fallback
                  sec["assigned_keywords"] = keywords[:3] if keywords else [primary_keyword]
         
+        # --- Article-Level Link Deduplication ---
+        # Ensure no URL is assigned to more than one section in the entire article
+        all_assigned_urls = set()
+        
+        for section in outline:
+            assigned = section.get("assigned_links", [])
+            valid_assigned = []
+            for link in assigned:
+                url = link.get("url") if isinstance(link, dict) else link
+                if not url: continue
+                
+                norm = self._normalize_url_for_dedup(url)
+                if norm not in all_assigned_urls:
+                    all_assigned_urls.add(norm)
+                    valid_assigned.append(link)
+                else:
+                    logger.warning(f"Removing duplicate link assignment in outline: {url}")
+            
+            section["assigned_links"] = valid_assigned
+
         state["outline"] = outline
         present_types = {sec.get("section_type") for sec in outline}
 
@@ -1316,7 +1445,7 @@ Output the JSON array now:"""
         images = await self.image_client.generate_images(
             prompts,
             primary_keyword=primary_keyword,
-            logo_path=logo_path,
+            image_frame_path=state.get("image_frame_path"),
             brand_visual_style=brand_visual_style
         )
 
@@ -1365,8 +1494,20 @@ Output the JSON array now:"""
         
         # Final pass redundancy pruning on the whole assembled markdown
         if "final_markdown" in assembled:
-            assembled["final_markdown"] = self._prune_redundant_intros(assembled["final_markdown"])
-            
+            md = assembled["final_markdown"]
+            md = self._prune_redundant_intros(md)
+            brand_url = state.get("brand_url", "")
+            brand_domain = self._domain(brand_url) if brand_url else ""
+            md = self._deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
+
+            # Inject commercial CTAs for brand_commercial articles
+            content_type = state.get("content_type", "informational")
+            article_language = state.get("article_language", "en")
+            if content_type == "brand_commercial":
+                md = self._inject_commercial_ctas(md, article_language)
+
+            assembled["final_markdown"] = md
+
         state["final_output"] = assembled
         return state
 
@@ -1378,6 +1519,10 @@ Output the JSON array now:"""
             return state
 
         new_md = await self.image_inserter.insert(final_md, images)
+        # Run a second dedup pass after image insertion to catch any links added by images
+        brand_url = state.get("brand_url", "")
+        brand_domain = self._domain(brand_url) if brand_url else ""
+        new_md = self._deduplicate_links_in_markdown(new_md, brand_domain=brand_domain, max_internal=6)
         state["final_output"]["final_markdown"] = new_md
         return state
 
@@ -1961,6 +2106,143 @@ Output the JSON array now:"""
         
         return intersection / union
 
+    def _inject_commercial_ctas(self, markdown: str, article_language: str) -> str:
+        """
+        Post-processing CTA injector for brand_commercial articles.
+        Scans the assembled markdown and deterministically injects rotating
+        CTA phrases at strategic positions:
+          - After first paragraph of each H2 body (except skip sections)
+          - After any table within a section
+          - Before the first FAQ/conclusion-type section
+        CTAs rotate through a bank to avoid repetition.
+        Total CTAs capped at MAX_CTAS.
+        """
+        import re
+
+        # ---- CTA Bank (rotating, no links) ----
+        CTA_BANK = {
+            "ar": [
+                "تواصل مع فريقنا اليوم وابدأ مشروعك في أقرب وقت.",
+                "احصل على استشارة مجانية من خبرائنا المتخصصين — بدون أي التزام.",
+                "لا تدع منافسيك يسبقونك — ابدأ مشروعك الرقمي الآن.",
+                "اكتشف كيف يمكننا تحويل رؤيتك إلى نتائج رقمية حقيقية.",
+                "خبراؤنا جاهزون للإجابة على كل تساؤلاتك — تواصل معنا الآن.",
+                "خطوتك الأولى نحو النجاح تبدأ بمحادثة واحدة — دعنا نبدأ.",
+            ],
+            "en": [
+                "Contact our team today and get your project moving within days.",
+                "Get a free consultation with our specialists — zero commitment required.",
+                "Don't let your competitors launch first — start your digital project now.",
+                "See how our team can turn your vision into measurable digital results.",
+                "Our experts are standing by — reach out and get direct answers today.",
+                "Your path to digital success starts with one conversation — let's begin.",
+            ],
+        }
+
+        MAX_CTAS = 6
+        cta_idx = [0]
+        ctas_injected = [0]
+
+        lang = "ar" if article_language and "ar" in article_language.lower() else "en"
+        ctas = CTA_BANK.get(lang, CTA_BANK["en"])
+
+        def next_cta() -> str:
+            if ctas_injected[0] >= MAX_CTAS:
+                return ""
+            cta = ctas[cta_idx[0] % len(ctas)]
+            cta_idx[0] += 1
+            ctas_injected[0] += 1
+            return f"\n\n**{cta}**\n"
+
+        # Keywords that identify FAQ / skip sections
+        SKIP_KEYWORDS = [
+            "faq", "أسئلة", "frequently asked", "questions", "خاتمة",
+            "conclusion", "في ختام", "summary", "في النهاية",
+        ]
+        INTRO_KEYWORDS = ["introduction", "مقدمة", "overview", "نظرة عامة"]
+
+        def is_skip(heading: str) -> bool:
+            h = heading.lower()
+            return any(kw in h for kw in SKIP_KEYWORDS)
+
+        def is_intro(heading: str) -> bool:
+            h = heading.lower()
+            return any(kw in h for kw in INTRO_KEYWORDS)
+
+        def is_conclusion(heading: str) -> bool:
+            h = heading.lower()
+            return any(kw in h for kw in ["conclusion", "خاتمة", "في ختام", "ready to", "start your"])
+
+        # ---- Split markdown into (heading, body) pairs ----
+        parts = re.split(r'(^## .+$)', markdown, flags=re.MULTILINE)
+
+        # parts[0] = content before first H2 (H1 title, etc.)
+        # parts[1::2] = H2 headings
+        # parts[2::2] = section bodies
+
+        if len(parts) < 3:
+            return markdown  # No H2 sections found
+
+        pre_content = parts[0]
+        headings = parts[1::2]
+        bodies = parts[2::2]
+
+        result_parts = [pre_content]
+
+        # Peek ahead helper
+        def next_heading_is_skip(i):
+            if i + 1 < len(headings):
+                return is_skip(headings[i + 1])
+            return False
+
+        for i, (heading, body) in enumerate(zip(headings, bodies)):
+            skip = is_skip(heading)
+            intro = is_intro(heading)
+            concl = is_conclusion(heading)
+
+            if skip or intro or concl:
+                # Inject pre-FAQ CTA before FAQ section
+                if skip and ctas_injected[0] < MAX_CTAS:
+                    # Add to end of previous section (already appended), add before this heading
+                    cta = next_cta()
+                    if cta and result_parts:
+                        result_parts[-1] = result_parts[-1].rstrip() + cta
+                result_parts.append(heading)
+                result_parts.append(body)
+                continue
+
+            new_body = body
+
+            # 1. Inject CTA after first real paragraph in this section
+            paragraphs = re.split(r'\n{2,}', new_body.strip())
+            if paragraphs:
+                first_para = paragraphs[0]
+                rest = paragraphs[1:]
+                cta = next_cta()
+                if cta:
+                    new_body = first_para + cta + "\n\n" + "\n\n".join(rest) if rest else first_para + cta
+
+            # 2. Inject CTA after any markdown table in this section
+            table_pattern = re.compile(
+                r'(\|[^\n]+\|\n(?:\|[-|: ]+\|\n)(?:\|[^\n]+\|\n)*)',
+                re.MULTILINE
+            )
+            def inject_after_table(m):
+                cta = next_cta()
+                return m.group(0) + (cta if cta else "")
+            new_body = table_pattern.sub(inject_after_table, new_body)
+
+            # 3. If next section is FAQ or skip, inject a strong CTA at end of this section
+            if next_heading_is_skip(i):
+                cta = next_cta()
+                if cta:
+                    new_body = new_body.rstrip() + cta
+
+            result_parts.append(heading)
+            result_parts.append(new_body)
+
+        return "\n".join(result_parts)
+
     def _prune_redundant_intros(self, text: str) -> str:
         """
         Removes repetitive 'Vision 2030' or 'Digital Transformation' style filler intros
@@ -2127,25 +2409,50 @@ Output the JSON array now:"""
         return True, None
 
     def _assemble_final_output(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        import re
         input_data = state.get("input_data", {})
         final_out = state.get("final_output", {})
         seo_meta = state.get("seo_meta", {})
         images = state.get("images", [])
         seo_report = state.get("seo_report", {})
-        # state["performance"] = self.ai_client.observer.summarize_model_calls()
         performance = self.ai_client.observer.summarize_model_calls()
+        content_type = state.get("content_type", "informational")
 
+        raw_title = input_data.get("title", "Untitled")
+        meta_title = seo_meta.get("meta_title", "")
+
+        # For commercial articles, inject brand name into title & meta_title
+        if content_type == "brand_commercial":
+            brand_url = state.get("brand_url", "")
+            if brand_url:
+                # Extract a clean brand name from the domain
+                domain = self._domain(brand_url)  # e.g., "cems-it.com"
+                brand_name = domain.split(".")[0]  # e.g., "cems-it"
+                brand_name = brand_name.replace("-", " ").replace("_", " ").title()  # e.g., "Cems It"
+
+                # Append to article title if not already included
+                if brand_name.lower() not in raw_title.lower():
+                    raw_title = f"{raw_title} | {brand_name}"
+
+                # Append to meta_title if not already included (meta titles are character-limited)
+                if meta_title and brand_name.lower() not in meta_title.lower():
+                    # Keep meta_title under 60 chars
+                    candidate = f"{meta_title} | {brand_name}"
+                    if len(candidate) <= 65:
+                        meta_title = candidate
+                    # If too long, just use the original meta_title unchanged
 
         return {
-            "title": input_data.get("title", "Untitled"),
+            "title": raw_title,
             "slug": state.get("slug", "unknown"),
             "primary_keyword": state.get("primary_keyword", ""),
             "final_markdown": final_out.get("final_markdown", ""),
             "article_language": state.get("article_language", "en"),
 
             # SEO
-            "meta_title": seo_meta.get("meta_title", ""),
+            "meta_title": meta_title,
             "meta_description": seo_meta.get("meta_description", ""),
+            "meta_keywords": seo_meta.get("meta_keywords", ""),
             "article_schema": seo_meta.get("article_schema", {}),
             "faq_schema": seo_meta.get("faq_schema", {}),
 
@@ -2161,6 +2468,7 @@ Output the JSON array now:"""
             # Debug / Storage
             "output_dir": state.get("output_dir", ""),
         }
+
 
     _MANDATORY_ROLES: ClassVar[set] = {"introduction", "conclusion"}
     _EDITORIAL_ROLES: ClassVar[set] = {"pros", "cons", "who_for", "who_avoid"}
@@ -2238,15 +2546,49 @@ Output the JSON array now:"""
         h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
 
         if content_type == "brand_commercial":
+            TARGET_COMMERCIAL_RATIO = 0.70
+            # Protected section types that should NOT be converted to commercial
+            PROTECTED_TYPES = {"faq", "conclusion", "introduction"}
+
             commercial_sections = [
                 s for s in h2_sections
                 if s.get("section_intent") in ["Commercial", "Transactional"]
             ]
-
             ratio = len(commercial_sections) / max(len(h2_sections), 1)
 
-            if ratio < 0.6:
-                errors.append(f"Commercial intent distribution too weak ({ratio:.0%}). Brand articles require at least 60% commercial/transactional H2 sections.")
+            if ratio < TARGET_COMMERCIAL_RATIO:
+                # Actively fix: convert eligible informational sections to Commercial
+                needed = round(TARGET_COMMERCIAL_RATIO * len(h2_sections)) - len(commercial_sections)
+                converted = 0
+                for s in h2_sections:
+                    if converted >= needed:
+                        break
+                    s_type = (s.get("section_type") or "").lower()
+                    s_intent = s.get("section_intent", "")
+                    if s_type in PROTECTED_TYPES:
+                        continue
+                    if s_intent not in ["Commercial", "Transactional"]:
+                        # Convert to Commercial
+                        s["section_intent"] = "Commercial"
+                        s["sales_intensity"] = s.get("sales_intensity", "medium")
+                        if s.get("cta_type") in [None, "none", ""]:
+                            s["cta_type"] = "moderate"
+                            s["cta_position"] = "last_sentence"
+                        converted += 1
+
+                # Recalculate after correction
+                commercial_now = [
+                    s for s in h2_sections
+                    if s.get("section_intent") in ["Commercial", "Transactional"]
+                ]
+                new_ratio = len(commercial_now) / max(len(h2_sections), 1)
+                logger.info(f"[intent_distribution] Corrected commercial ratio: {ratio:.0%} → {new_ratio:.0%} (converted {converted} sections)")
+
+                if new_ratio < 0.60:
+                    errors.append(
+                        f"Commercial intent distribution still too weak ({new_ratio:.0%}) after correction. "
+                        f"Brand articles require at least 70% commercial/transactional H2 sections."
+                    )
 
         if intent.lower() == "informational":
             for s in outline:
@@ -2781,6 +3123,128 @@ Output the JSON array now:"""
 
         cleaned = re.sub(pattern, repl, content)
         return cleaned
+    def _normalize_url_for_dedup(self, url: str) -> str:
+        """Normalize URL for deduplication by removing trailing slashes, fragments, and queries."""
+        import urllib.parse
+        if not url:
+            return ""
+        
+        try:
+            url = url.strip()
+            parsed = urllib.parse.urlparse(url)
+            # Remove www., force lowercase for netloc
+            netloc = parsed.netloc.lower()
+            if netloc.startswith("www."):
+                netloc = netloc[4:]
+            
+            path = parsed.path
+            # Remove trailing slash from path unless it's just "/"
+            if len(path) > 1 and path.endswith("/"):
+                path = path[:-1]
+                
+            # Ignore schema, query, and fragment for deduplication purposes
+            normalized = f"{netloc}{path}"
+            return normalized
+        except Exception:
+            return url.strip().lower()
+
+    def _deduplicate_links_in_markdown(self, markdown_text: str, brand_domain: str = "", max_internal: int = 6) -> str:
+        """
+        Final safety gate for link quality:
+        1. Deduplicates by URL (same URL -> keep first only).
+        2. Deduplicates by anchor text (same anchor -> second occurrence becomes plain text).
+        3. Strips dates and numbers from AI-generated anchor text.
+        4. Removes generic/useless anchors.
+        5. Enforces a hard cap of max_internal internal links.
+        """
+        import re
+        if not markdown_text:
+            return markdown_text
+
+        # Patterns for bad anchor content
+        date_pattern = re.compile(r'\b\d{1,2}/\d{1,2}/\d{2,4}\b|\b(19|20)\d{2}\b')
+        # Anchors that are ONLY numbers/dates after cleaning
+        numeric_only = re.compile(r'^[\d\s/.,:-]+$')
+        generic_anchors = {"click here", "read more", "learn more", "lets talk",
+                           "let's talk", "contact us", "see all", "here",
+                           "this page", "this article", "اقرأ أكثر", "انقر هنا",
+                           "websites", "مواقع", "projects", "portfolio"}
+
+        def clean_anchor_text(text: str) -> str:
+            cleaned = date_pattern.sub('', text).strip()
+            cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+            return cleaned
+
+        link_pattern = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+        seen_urls = set()
+        seen_anchors = set()
+        internal_count = 0
+        
+        # We'll track links per H2 section to enforce the "max 1 per section" rule
+        links_in_current_h2 = 0
+
+        def is_internal(url):
+            return brand_domain and brand_domain.lower() in url.lower()
+
+        def is_seo_valuable(url):
+            # Same filter as discovery
+            junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
+            path = urlparse(url).path.lower().rstrip('/')
+            last_segment = path.split('/')[-1]
+            return last_segment not in junk_slugs
+
+        def replace_func(match):
+            nonlocal internal_count, links_in_current_h2
+            anchor_raw = match.group(1)
+            url = match.group(2).strip()
+
+            anchor = anchor_raw.strip()
+            if not anchor:
+                return ""
+
+            # 1. Global Physical Duplicate Check with language normalization
+            core_url = self._normalize_url_for_dedup(url)
+            if core_url in seen_urls:
+                return anchor
+
+            # 2. Section Limit Check: Max 1 internal link per H2 block
+            if is_internal(url):
+                if links_in_current_h2 >= 1:
+                    return anchor # Show as text if section already has a link
+            
+            # 3. SEO Value Check
+            if is_internal(url) and not is_seo_valuable(url):
+                return anchor
+
+            # 4. Global Cap Check
+            if is_internal(url) and internal_count >= max_internal:
+                return anchor
+
+            # 5. Anchor Uniqueness Check
+            anchor_key = anchor.lower().strip()
+            if anchor_key in seen_anchors:
+                return anchor
+            
+            # Success: Mark as seen and increment counters
+            seen_urls.add(core_url)
+            seen_anchors.add(anchor_key)
+            if is_internal(url):
+                internal_count += 1
+                links_in_current_h2 += 1
+            
+            return f"[{anchor_raw}]({url})"
+
+        # To enforce "per section", we split by H2 and process each chunk separately
+        parts = re.split(r'(^##\s+.*)', markdown_text, flags=re.MULTILINE)
+        processed_parts = []
+        for part in parts:
+            if part.startswith('##'):
+                links_in_current_h2 = 0 # Reset counter for the new H2 block
+                processed_parts.append(part)
+            else:
+                processed_parts.append(link_pattern.sub(replace_func, part))
+
+        return "".join(processed_parts)
 
     # async def _step_4_validate_sections(self, state):
     #     input_data = state.get("input_data", {})

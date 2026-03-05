@@ -90,7 +90,10 @@ async def main():
             ],
             "area": "Riyadh",
             # Source assets for the test
-            "logo_path": "output/images/logo.png"
+            "logo_path": "output/images/logo.png",
+            "image_ref_path": "output/images/reference.webp",
+            "image_frame_path": "output/images/reference.png"
+
         }
     }       
             # "logo_reference_path": "output/images/reference.webp"

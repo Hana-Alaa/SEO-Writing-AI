@@ -7,10 +7,15 @@ Context:
 - Intent: "{{ intent }}"
 - Content Type: "{{ content_type }}"
 - Area: "{{ area }}"
+Topic Protagonist Rule (HIGHEST PRIORITY):
+- The **Primary Keyword** must be the absolute protagonist of at least 80% of the sections. 
+- **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature, technology, or niche sub-topic become the main subject of an H2. They can only be mentioned as supporting tools or context that enhances the main service.
+- If the AI suggests topics that deviate from the core intent of the Primary Keyword, YOU MUST REJECT THOSE SUGGESTIONS.
 - SEO Intelligence: {{ seo_intelligence | tojson }}
 - Content Strategy: {{ content_strategy | tojson }}
 {% if brand_context %}- Brand Context: "{{ brand_context }}"{% endif %}
-- Mandatory Section Types: {{ mandatory_section_types }}
+- Internal Links (Available to Assign): {{ urls | tojson }}
+- Mandatory Section Types (YOU MUST INCLUDE THESE): {{ mandatory_section_types | tojson }}
 - Current Year: {{ current_year }}
 
 Role:
@@ -67,74 +72,87 @@ Hard Rules:
    - AVOID typical AI heading patterns like "Navigating the complexities of...".
    - In remaining sections use semantic variations naturally in the heading text.
 
-8. CTA Policy (distribute across article based on intent):
+9. CTA Policy (distribute across article based on intent):
    For brand_commercial:
+      - ALWAYS REMEMBER: The goal is to SELL. Every section is an opportunity to convert the reader.
+      - Default Placement: For almost all commercial sections, use `cta_position = "first_paragraph"`.
       - section_type = introduction: cta_type = "primary", cta_position = "first_paragraph".
-        CTA must be a direct call (e.g. "request a consultation", "start your project") + brand URL.
-      - section_type = proof or benefits: cta_type = "moderate", cta_position = "last_sentence".
-      - section_type = process: cta_type = "moderate", cta_position = "last_sentence".
-      - section_type = why_choose_us: cta_type = "primary", cta_position = "middle".
-      - section_type = case_study: cta_type = "moderate", cta_position = "last_sentence".
-      - section_type = conclusion: cta_type = "strong", cta_position = "last_sentence".
-        CTA must be high-urgency: "Start today", "Contact us now", direct link.
-      - section_type = faq or market_reality: cta_type = "none".
-      - All other sections MUST HAVE at LEAST cta_type = "moderate" to aggressively drive sales.
+      - section_type = core or benefits: cta_type = "primary", cta_position = "first_paragraph".
+      - section_type = proof: cta_type = "moderate", cta_position = "first_paragraph".
+      - section_type = process: cta_type = "moderate", cta_position = "first_paragraph".
+      - section_type = why_choose_us: cta_type = "primary", cta_position = "first_paragraph".
+      - section_type = case_study: cta_type = "moderate", cta_position = "first_paragraph".
+      - section_type = conclusion: cta_type = "strong", cta_position = "last_sentence". (This is the ONLY exception that must be at the end).
+      - section_type = faq: cta_type = "none".
+      - The section IMMEDIATELY BEFORE the FAQ section: cta_type = "strong", cta_position = "first_paragraph".
+      - All other sections: cta_type = "moderate" minimum.
+      - CRITICAL — CTA VARIATION: Each section's CTA MUST use DIFFERENT phrasing and a DIFFERENT thematic focus.
+        Rotate through: Service Promotion, Contact Numbers/Methods, Special Offers/Audits, Product Links.
+        NEVER repeat the same CTA sentence or focus twice in the article.
    For informational:
-      - informational: NO CTAs in body. Only soft resource links allowed.
+      - NO CTAs in body. Only soft resource links allowed.
       - section_type = introduction: cta_type = "soft", cta_position = "last_sentence".
         Soft CTA = "Learn more", "Explore the full guide", or resource link. No hard sell.
       - section_type = conclusion: cta_type = "soft", cta_position = "last_sentence".
       - All other sections: cta_type = "none".
 
-9. Sales Intensity (Distribute across sections):
+10. Sales Intensity (Distribute across sections):
    - high: strong persuasive tone, clear value proposition (e.g., Intro, Proof, Conclusion).
    - medium: balanced education and selling (e.g., Technical Systems).
    - low: purely educational, no selling (e.g., FAQ, Market Reality).
 
-10. Rich-format requirement:
+11. Rich-format requirement:
    - At least ONE non-FAQ section must have requires_table = true.
    - At least TWO non-FAQ sections must have requires_list = true.
    - Exactly ONE table (comparison or process) in a core section.
    - At least TWO bulleted/numbered lists.
 
-11. Conclusion enforcement (CRITICAL):
+12. Conclusion enforcement (CRITICAL):
     - The VERY LAST section of the outline MUST have `section_type: "conclusion"`.
     - Do NOT name it "core" or anything else. It must be explicitly tagged as "conclusion".
     - It must have `cta_type: "strong"` and `cta_position: "last_sentence"`.
 
-12. Table placement:
+13. Table placement:
    - Prefer table in "Proof Layer" or "Implementation Process" only.
 
-13. Mandatory section types enforcement:
+14. Mandatory section types enforcement:
    - You MUST include every section_type listed in Mandatory Section Types exactly as-is.
    - Do not rename, paraphrase, or merge them.
-   13b. Superlative Justification (Proof Layer):
+   14b. Superlative Justification (Proof Layer):
       - If Article Title uses "Top", "Best", "Leading", or "#1", the "Proof Layer" section MUST include a `content_goal` to justify this claim.
       - Justification must focus on: Years of experience, Number of successful projects, Unique proprietary methodology, or measurable ROI results.
-   13c. Mandatory Section Separation:
+   14c. Mandatory Section Separation:
       - "Why Choose Us" (why_choose_us) and "Proof" (proof) are separate entities.
       - why_choose_us focuses on the USER'S benefits and unique value proposition.
       - proof focuses on OBJECTIVE evidence (metrics, history, data).
       - NEVER merge these into a single section.
-   13d. Case Study / Portfolio:
-      - If "case_study" is dynamically required, find the most relevant URL in the "Internal Links" list (Project, Portfolio, or Success Story) and dedicate this section to it.
+   14d. Case Study / Portfolio:
+      - If "case_study" is dynamically required or requested, you MUST find the most relevant URL in the "Internal Links" list (Project, Portfolio, or Success Story) and dedicate this section to it.
+      - You MUST incorporate real facts from the 'Brand Context' (if provided) to ground the case study in reality. Do not invent fake metrics.
       - Make the heading sound natural (e.g., "See How We Helped [Client/Industry]").
-   13e. Why Choose Us:
+   14e. Why Choose Us:
       - Ensure the heading text for the 'why_choose_us' section uses a strong converting phrase like "Why Choose [Brand Name] for [Keyword]" or similar.
+   14f. Intent Ratio Enforcement (CRITICAL):
+      - If Content Type is "brand_commercial", the article MUST maintain an approximate 70% Commercial / 30% Informational split across its H2 sections.
+      - At least 70% of the H2 sections must have `section_intent`: "Commercial" and `sales_intensity`: "high" or "medium".
+      - Only reserve "Informational" intent for introductory concepts, definitions, or the FAQ.
 
-14. Hierarchical Depth (Featured Snippets):
+15. Hierarchical Depth (Featured Snippets):
    - At least 2 non-FAQ H2 sections MUST have 1-2 internal H3 subheadings.
    - Use H3 to break down: "Comparison of services", "Technical components", "Step-by-step processes", or "Specific customer categories".
    - H3 headings must directly support the parent H2 and follow it immediately in the JSON list.
    - This prevents flat content and maximizes Featured Snippet potential.
 
-15. Strategic Linking (Internal):
-   - You are provided with a list of "Internal Links" (URLs) which include high-quality "Discovered Resources" (blogs, service pages) from the brand's own site.
-   - Use the provided "text" label for each link as its natural anchor text (e.g., if text is "E-Business Solutions", the article should link that specific phrase).
-   - Strategically assign these links to the most relevant H2/H3 sections by adding them to the `assigned_links` array in the JSON.
-   - Do not dump all links in one section; distribute them naturally to provide depth and helpfulness.
+16. Strategic Linking (Internal):
+   - You are provided with a list of "Internal Links" (URLs).
+   - LINK QUOTA (STRICT): Assign between 3 and 6 total internal links for the entire article.
+   - **MAXIMUM ONE (1) INTERNAL LINK PER SECTION.**
+   - **STRICT UNIQUENESS: Every URL assigned MUST be unique across the ENTIRE article. NO URL can appear in more than one section.**
+   - ANCHOR DIVERSITY: Each assigned link MUST have a unique and highly descriptive anchor text (`text` field) that identifies the target page's content (e.g., "[custom React development solutions](url)").
+   - PRIORITIZATION: Prioritize linking to Service or Product pages. Avoid generic "About" or "Contact" pages.
+   - DISTRIBUTION: Distribute these links across different sections by adding them to the `assigned_links` array as objects: `{"url": "...", "text": "..."}`.
 
-16. Reader Addressing:
+17. Reader Addressing:
    - content_goal and content_angle must be reader-directed (second-person oriented), not generic third-person.
 
 

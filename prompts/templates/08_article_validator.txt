@@ -59,6 +59,11 @@ Validation Checklist:
    - No references to images, schema, meta, SEO prompts inside content. [CRITICAL]
    - No duplicated content or filler text. [WARNING]
 
+61. **Topic Integrity (CRITICAL)**
+    - The article MUST focus strictly on the **Primary Keyword** ({{ primary_keyword }}).
+    - If the article drifts into unrelated or secondary topics (supporting technologies, unrelated services, or broad industry fluff) for more than 10% of the content, it is a CRITICAL violation.
+    - The Primary Keyword must be the absolute "subject" of the expertise shown.
+
 9. **Content Angle & Tone (STRICT)**
    - Primary Angle: "{{ content_strategy.primary_angle if content_strategy else 'N/A' }}"
    - Strategic Positioning: "{{ content_strategy.strategic_positioning if content_strategy else 'N/A' }}"

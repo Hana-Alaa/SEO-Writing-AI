@@ -311,6 +311,7 @@ def _wrap_tables(html: str) -> str:
     )
 
 
+
 def render_html_page(final_result: dict):
     output_dir = final_result["output_dir"]
     os.makedirs(output_dir, exist_ok=True)

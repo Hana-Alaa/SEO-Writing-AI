@@ -28,7 +28,9 @@ Title rules:
 - Must match article language
 - If area is provided, include it naturally
 - For commercial intent,prefer adding numbers or years (e.g., "2026") when relevant (Commercial keywords).
-- No clickbait, no keyword stuffing
+- No clickbait, no keyword stuffing.
+- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.
+- Focus 100% on the **Primary keyword** service.
 - No markdown
 - No extra text
 

@@ -14,22 +14,28 @@ You must generate a list of **7 high-quality image prompts** that will be used t
 
 Rules:
 1. **Quantity**: You MUST generate exactly **7 image prompts**. If there are fewer than 7 sections, assign multiple images to the most important sections (Introduction, Core services).
-2. **Exclusivity - NO STOCK IMAGES**: Do NOT use generic stock photos. Every prompt must focus on:
-   - Custom Designs (Minimalist, modern, branded)
-   - Product/Service Mockups
-   - Real-world "Action" Screenshots (Simulated)
-   - Professional Infographics (Process flows, data)
-3. **Relevance**: Each image must correspond to a specific section of the outline.
-4. **Variety**: Use different styles (e.g., "Photorealistic office setting", "Minimalist vector illustration", "Data visualization chart", "Infographic style").
-5. **Alt Text**: ALT text must include the primary keyword explicitly.
-6. **Featured Image**: One image must be a Featured Image for the article intro.
-7. **Ordering**: The first image MUST correspond to the Introduction section.
-8. image_type must strictly be one of:
-   - Featured
-   - Infographic
-   - Illustration
-   - Mockup
-
+2. **Exclusivity (STRICT - NO STOCK IMAGES)**: 
+   - Prohibited: Generic "smiling people in office", "shaking hands", "random code on screen", "generic laptop on desk".
+   - Required: Custom-designed, premium visuals. Describe specific, brand-relevant scenarios.
+   - Style: "Exclusive Branded Aesthetic" - focus on modern architecture, clean tech-surfaces, isometric 3D abstractions, and professional MENA-region/Riyadh localized contexts.
+3. **Brand Grounding**: Each prompt MUST incorporate elements from the Brand Source Text or its specific services (e.g., "A modern Figma UI prototype for a Riyadh-based e-commerce project", "An isometric 3D visualization of a React + PHP backend architecture").
+4. **Relevance**: Each image must correspond directly to the technical or business value of the section it is assigned to.
+5. **Variety**: Rotate through: 
+   - Hero/Featured (Cinematic, grand scale)
+   - Process Infographic (Technical, structured)
+   - Abstract Illustration (Minimalist, conceptual)
+   - High-End Mockup (Real-world application)
+6. **Alt Text**: ALT text must be descriptive and include the primary keyword naturally.
+7. **Image Types**: Use strictly: Featured, Infographic, Illustration, Mockup.
+8. **Prompt Engineering for Clean Visuals (CRITICAL)**: 
+   - Image generators produce "messy" or garbled results when given overly complex or crowded prompts. 
+   - KEEP IT CLEAN: Focus on a single, clear, high-quality subject. Use words like "minimalist," "clean composition," "uncluttered," and "professional."
+   - **FRAMING SAFETY (CRITICAL)**: Describe subjects as being "centered with wide margins" or "surrounded by significant negative space". This ensures that no part of the subject is cut off when fitted into different templates.
+   - DO NOT ask for collages, crowded scenes, or multiple overlapping elements.
+9. **Language & Text Restriction (ABSOLUTE RULE)**: 
+   - Generative AI produces "gibberish" when trying to write Arabic or complex text.
+   - For 'Featured', 'Illustration', and 'Mockup' types: NEVER request text in the prompt. Expressly describe visual elements only.
+   - For 'Infographic' types (if text is necessary): ALL text MUST be in English ONLY. Keep text requests extremely short (1-2 words). Do NOT ask for paragraphs or sentences. Absolutely NO ARABIC text.
 
 Output Format:
 Return strictly a JSON array of objects. No markdown.

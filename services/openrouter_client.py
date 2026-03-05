@@ -56,7 +56,7 @@ class OpenRouterClient(BaseAIClient):
             logger.error(f"Failed to load prompt from {path}: {e}")
             return ""
 
-    async def send(self, prompt: str, step: str = "default") -> str:
+    async def send(self, prompt: str, step: str = "default", max_tokens: Optional[int] = None) -> str:
         system_prompt = self.load_prompt("prompts/system_persona.txt")
 
         messages = [
@@ -69,6 +69,10 @@ class OpenRouterClient(BaseAIClient):
             "messages": messages,
             "temperature": 0.7
         }
+        
+        if max_tokens:
+            payload["max_tokens"] = max_tokens
+        # Removed hardcoded max_tokens for specific steps to avoid truncation
 
         start_time = time.time()
 
