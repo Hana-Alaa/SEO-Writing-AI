@@ -1,0 +1,27 @@
+Brand Commercial Specific Rules:
+1. Intent Distribution (MANDATORY):
+   - Ratio: 70% Commercial/Transactional sections, 30% Informational.
+   - Must include: "Why Choose Us" (Uniqueness), "Proof/Trust", and "Implementation/Process".
+   - Focus: Converting segments (e.g., service for startups, service for high-growth firms).
+
+2. CTA Policy:
+   - ALWAYS REMEMBER: The goal is to SELL. Every section is an opportunity to convert the reader.
+   - Default Placement: For almost all commercial sections, use `cta_position = "first_paragraph"`.
+   - section_type = introduction: cta_type = "primary", cta_position = "first_paragraph".
+   - section_type = core or benefits: cta_type = "primary", cta_position = "first_paragraph".
+   - section_type = proof: cta_type = "moderate", cta_position = "first_paragraph".
+   - section_type = process: cta_type = "moderate", cta_position = "first_paragraph".
+   - section_type = why_choose_us: cta_type = "primary", cta_position = "first_paragraph".
+   - section_type = case_study: cta_type = "moderate", cta_position = "first_paragraph".
+   - section_type = conclusion: cta_type = "strong", cta_position = "last_sentence". (This is the ONLY exception that must be at the end).
+   - section_type = faq: cta_type = "none".
+   - The section IMMEDIATELY BEFORE the FAQ section: cta_type = "strong", cta_position = "first_paragraph".
+   - All other sections: cta_type = "moderate" minimum.
+   - CRITICAL — CTA VARIATION: Each section's CTA MUST use DIFFERENT phrasing and a DIFFERENT thematic focus.
+     Rotate through: Service Promotion, Contact Numbers/Methods, Special Offers/Audits, Product Links.
+     NEVER repeat the same CTA sentence or focus twice in the article.
+
+3. Intent Ratio Enforcement (CRITICAL):
+   - The article MUST maintain an approximate 70% Commercial / 30% Informational split across its H2 sections.
+   - At least 70% of the H2 sections must have `section_intent`: "Commercial" and `sales_intensity`: "high" or "medium".
+   - Only reserve "Informational" intent for introductory concepts, definitions, or the FAQ.

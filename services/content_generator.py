@@ -40,8 +40,11 @@ def _enforce_paragraph_word_limit(content: str, max_words: int = 40) -> str:
             result_lines.append(line)
             continue
         
-        # Track tables — rows start with '|' (or are the alignment row '|-')
-        if stripped.startswith("|") or (stripped.startswith("-") and "|" in stripped):
+        # Track tables — rows usually have pipes or alignment markers
+        # Robust check: starts with | OR has at least 2 pipes OR is a separator row
+        is_table_row = stripped.startswith("|") or stripped.count("|") >= 2 or (stripped.startswith("-") and "|" in stripped)
+        
+        if is_table_row:
             in_table = True
             result_lines.append(line)
             continue
@@ -98,10 +101,20 @@ def _enforce_paragraph_word_limit(content: str, max_words: int = 40) -> str:
 
 
 class OutlineGenerator:
-    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/01_outline_generator.txt"):
+    def __init__(self, ai_client: Any):
         self.ai_client = ai_client
-        with open(template_path, "r", encoding="utf-8") as f:
-            self.template = Template(f.read(), undefined=StrictUndefined)
+        from pathlib import Path
+        
+        base_outline = Path("prompts/templates/01_outline_generator_base.txt").read_text(encoding="utf-8")
+        commercial_outline = Path("prompts/templates/01_outline_generator_brand_commercial.txt").read_text(encoding="utf-8")
+        informational_outline = Path("prompts/templates/01_outline_generator_informational.txt").read_text(encoding="utf-8")
+        comparison_outline = Path("prompts/templates/01_outline_generator_comparison.txt").read_text(encoding="utf-8")
+        
+        self.templates = {
+            "brand_commercial": Template(base_outline + "\n\n" + commercial_outline, undefined=StrictUndefined),
+            "informational": Template(base_outline + "\n\n" + informational_outline, undefined=StrictUndefined),
+            "comparison": Template(base_outline + "\n\n" + comparison_outline, undefined=StrictUndefined),
+        }
 
     def _normalize_section(self, section: Dict[str, Any], idx: int, content_type: str, content_strategy: Dict[str, Any], area: Optional[str]):
 
@@ -175,7 +188,13 @@ class OutlineGenerator:
         ) -> Dict[str, Any]:
 
         current_year = str(datetime.now().year)
-        prompt = self.template.render(
+
+        template = self.templates.get(
+            content_type,
+            self.templates["informational"]
+        )
+
+        prompt = template.render(
             title=title,
             keywords=keywords,
             urls=urls,
@@ -197,14 +216,17 @@ class OutlineGenerator:
         logger.info("\n=============================================================\n")
 
         # response = await self.ai_client.send(prompt)
-        response = await self.ai_client.send(prompt, step="outline")
+        res = await self.ai_client.send(prompt, step="outline")
+        response = res["content"]
+        metadata = res["metadata"]
 
         if not response:
             logger.error("Outline AI returned empty response")
             # return []
             return {
                 "outline": [],
-                "keyword_expansion": {}
+                "keyword_expansion": {},
+                "metadata": metadata
             }
 
 
@@ -253,14 +275,25 @@ class OutlineGenerator:
 
         return {
             "outline": outline,
-            "keyword_expansion": keyword_expansion
+            "keyword_expansion": keyword_expansion,
+            "metadata": metadata
         }
 
 class SectionWriter:
-    def __init__(self, ai_client: Any, template_path: str = "prompts/templates/02_section_writer.txt"):
+    def __init__(self, ai_client: Any):
         self.ai_client = ai_client
-        with open(template_path, "r", encoding="utf-8") as f:
-            self.template = Template(f.read(), undefined=StrictUndefined)
+        from pathlib import Path
+        
+        base_writer = Path("prompts/templates/02_section_writer_base.txt").read_text(encoding="utf-8")
+        commercial_writer = Path("prompts/templates/02_section_writer_brand_commercial.txt").read_text(encoding="utf-8")
+        informational_writer = Path("prompts/templates/02_section_writer_informational.txt").read_text(encoding="utf-8")
+        comparison_writer = Path("prompts/templates/02_section_writer_comparison.txt").read_text(encoding="utf-8")
+        
+        self.templates = {
+            "brand_commercial": Template(base_writer + "\n\n" + commercial_writer, undefined=StrictUndefined),
+            "informational": Template(base_writer + "\n\n" + informational_writer, undefined=StrictUndefined),
+            "comparison": Template(base_writer + "\n\n" + comparison_writer, undefined=StrictUndefined),
+        }
 
     async def write(
         self,
@@ -283,7 +316,9 @@ class SectionWriter:
         section_index: int = 0,
         total_sections: int = 1,
         brand_context: str = "",
-        section_source_text: str = ""
+        section_source_text: str = "",
+        external_sources: List[Dict[str, str]] = None,
+        workflow_logger: Optional[Any] = None
     ) -> Dict[str, Any]:
 
         brand_url = brand_url if brand_url not in ["None", ""] else None
@@ -346,17 +381,22 @@ class SectionWriter:
 
         current_year = str(datetime.now().year)
 
-        prompt = self.template.render(
+        template = self.templates.get(
+            content_type,
+            self.templates["informational"]
+        )
+
+        prompt = template.render(
             title=title,
             global_keywords=global_keywords,
             supporting_keywords=supporting_keywords,
             primary_keyword=primary_keyword,
             article_language=article_language,
             article_intent=article_intent,
+            content_type=content_type,
             section=safe_section,
             seo_intelligence=safe_seo,
             link_strategy=link_strategy,
-            content_type=content_type,
             brand_url=brand_url,
             brand_link_used=brand_link_used,
             brand_link_allowed=brand_link_allowed,
@@ -370,6 +410,7 @@ class SectionWriter:
             total_sections=total_sections,
             brand_context=brand_context,
             section_source_text=section_source_text,
+            external_sources=external_sources or [],
             is_first_section=(section_index == 0),
             is_last_section=(section_index == total_sections - 1)
         )
@@ -381,21 +422,45 @@ class SectionWriter:
         print(f"\n=== Generating Section: {safe_section['heading_text']} ===")
 
         try:
-            content = await self.ai_client.send(prompt, step="section")
-            if not content:
-                logger.warning(f"AI returned empty content for section {section.get('section_id')}")
-                return {"content": "", "used_links": [], "brand_link_used": False}
-            
-            clean_content = content.strip().removeprefix("```").removesuffix("```").strip()
-            clean_content = _enforce_paragraph_word_limit(clean_content, max_words=40)
-            
-            # Detect used links
-            found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', clean_content)
-            
+            res = await self.ai_client.send(prompt, step=f"section_{section_index+1}")
+            response_content = res["content"]
+            metadata = res["metadata"]
+
+            if workflow_logger:
+                workflow_logger.log_ai_call(
+                    step_name=f"section_{section_index+1}_{section.get('heading_text', 'No Heading')}",
+                    prompt=prompt,
+                    response=response_content,
+                    tokens=metadata,
+                    duration=metadata.get("duration", 0)
+                )
+
+            heading_text = safe_section['heading_text'] # Define heading_text for error logging
+
+            if not response_content:
+                logger.error(f"SectionWriter returned empty response for: {heading_text}")
+                return {
+                    "content": "",
+                    "used_links": [],
+                    "brand_link_used": False,
+                    "metadata": metadata
+                }
+
+            data = recover_json(response_content)
+            if not data:
+                # Fallback to pure string if JSON recovery fails
+                return {
+                    "content": response_content,
+                    "used_links": [],
+                    "brand_link_used": False,
+                    "metadata": metadata
+                }
+
             return {
-                "content": clean_content,
-                "used_links": found_links,
-                "brand_link_used": any(brand_url in l for l in found_links) if brand_url else False
+                "content": data.get("content", ""),
+                "used_links": data.get("used_links", []),
+                "brand_link_used": data.get("brand_link_used", False),
+                "metadata": metadata
             }
         except Exception as e:
             logger.error(f"Error writing section {section.get('section_id', 'unknown')}: {e}")
@@ -448,7 +513,12 @@ class Assembler:
             # Remove extra leading spaces after cleanup
             content = content.strip()
 
-            final_parts.append(f"{'#' * level_num} {heading}")
+            # Skip adding the heading if it's the exact word 'Introduction' (or common translations)
+            # Because we want the intro text to flow seamlessly after the Title (H1).
+            skip_heading = heading.strip().lower() in ["introduction", "مقدمة", "مقدمه"]
+            
+            if not skip_heading:
+                final_parts.append(f"{'#' * level_num} {heading}")
 
             if sec.get("section_id"):
                 final_parts.append(f"<!-- section_id: {sec['section_id']} -->")

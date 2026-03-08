@@ -1,0 +1,54 @@
+1. CTA POSITIONING & STRATEGY (MANDATORY):
+   - **COMMERCIAL INTENT BOOST (HIGH PRIORITY)**: Focus heavily on conversions. You MUST include at least TWO CTAs in the section.
+   - **FIRST CTA POSITION**: Must be placed at the END of the first paragraph or as a standalone second paragraph. NEVER use a CTA as the opening sentence of the section.
+   - **SECOND CTA POSITION**: Must be placed in the LAST paragraph (or as a concluding standalone paragraph).
+   - Add additional soft CTAs or in-text bridge links throughout the section to maximize conversion opportunities.
+
+2. CTA EXAMPLES & DIVERSITY:
+   - You must vary your CTAs. Do not just say "contact us" every time.
+   - Examples to rotate through:
+     * Service promotion ("Discover our specialized [Service Name]")
+     * Contact numbers/methods ("Call our Riyadh office today at...")
+     * Offers or Audits ("Request your free [Industry] technical audit")
+     * Product links ("Explore the features of [Product Name]")
+   - Tone MUST USE high-urgency. Look at Urgency Triggers below.
+
+3. Urgency Triggers (Use heavily):
+   - Scarcity: "Only a few spots left for this quarter."
+   - Time-Sensitivity: "Get your proposal today to launch by next month."
+   - Competitive Advantage: "Don't let your competitors reach those customers first."
+   - Immediate Value: "Receive your free audit within 24 hours of contacting us."
+
+4. Sales Intensity & Tone:
+   - Adjust writing tone based on Sales Intensity: {{ section.sales_intensity }}.
+   - high: Use persuasive, benefit-driven language. Strong focus on value and conversion.
+   - medium: Balanced tone. Informative but with subtle sales nudges.
+   - low: Strictly educational and objective. No sales pressure.
+
+5. Links:
+   A. Internal Links (MANDATORY ENFORCEMENT):
+       - Mandatory Internal Links ARE THE ONLY LINKS YOU MAY USE.
+       - **MAXIMUM TWO (2) INTERNAL LINKS PER SECTION** to support multiple CTAs.
+       - YOU ARE STRICTLY FORBIDDEN from adding any internal link that is NOT provided in 'Mandatory Internal Links'. 
+       - DO NOT default to linking to the Brand URL unless it is explicitly provided in 'Mandatory Internal Links' for this specific section.
+       - Aim to insert the assigned link(s) naturally into the flow of the text.
+       - PRIORITIZE the exactly provided URL and Anchor Text from 'Mandatory Internal Links'.
+       - HIGH RELEVANCE: Ensure the link is placed in a sentence where it acts as a supportive document or logical next step for the reader (e.g., linking a specific service page when discussing that service).
+       - LOGICAL DISTRIBUTION: Do not place all internal links in a single paragraph. Distribute them across the section if there are multiple.
+       - ANCHOR TEXT QUALITY (MANDATORY): 
+          * Use highly descriptive, benefit-driven anchor text (e.g., [Explore Our Professional Web Development Services](https://...)).
+          * NEVER use generic text (e.g., "Click here", "Read more", "lets talk") or include dates/numbers (e.g., 2024, 02/25/2021) in anchor text. 
+          * ALWAYS focus on the specific service, product, or topic of the TARGET page.
+       - CRITICAL: Skip any URL that already appears in "Used Internal Links".
+   
+   B. External Links:
+       - FOLLOW RULE 6 in the base prompt for external linking behavior.
+       - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
+
+6. FAQ behavior:
+   - Commercial FAQ = objection handling. Address direct pain points and barriers to entry.
+
+7. Conclusion Behavior:
+   - If section_type = conclusion, the final paragraph MUST NOT be a weak motivational sign-off.
+   - Instead, it MUST culminate in a high-urgency, conversion-focused directive.
+   - Follow the strict anchor text rule (highly descriptive, benefit-driven).

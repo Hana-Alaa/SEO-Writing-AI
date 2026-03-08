@@ -1,0 +1,30 @@
+1. CTA POSITIONING & STRATEGY (MANDATORY):
+   - Include a clear CTA within the FIRST paragraph, but **NEVER as the very first sentence**. The first sentence MUST be purely educational context.
+   - Do NOT use high urgency or high-pressure tactics. Be educational and helpful.
+   - Informational tone: educational, resource-oriented, no pressure.
+   - Examples of softer CTAs: "Learn more", "Explore the full guide", or resource link. No hard sell.
+
+2. Sales Intensity & Tone:
+   - Tone should be universally educational and objective, focused purely on topical authority and user value.
+   - Use a voice that builds credibility and trust, rather than a focus on conversions.
+
+3. Links:
+   A. Internal Links (MANDATORY ENFORCEMENT):
+       - Mandatory Internal Links ARE THE ONLY LINKS YOU MAY USE.
+       - **MAXIMUM ONE (1) INTERNAL LINK PER SECTION**. You are informing, not aggressively selling.
+       - YOU ARE STRICTLY FORBIDDEN from adding any internal link that is NOT provided in 'Mandatory Internal Links'. 
+       - DO NOT default to linking to the Brand URL unless it is explicitly provided in 'Mandatory Internal Links' for this specific section.
+       - Aim to insert the assigned link(s) naturally into the flow of the text.
+       - PRIORITIZE the exactly provided URL and Anchor Text from 'Mandatory Internal Links'.
+       - HIGH RELEVANCE: Ensure the link is placed in a sentence where it acts as a supportive document or logical next step for the reader (e.g., linking a specific service page when discussing that service).
+       - ANCHOR TEXT QUALITY (MANDATORY): 
+          * Use highly descriptive, context-specific anchor text (e.g., [Learn about UI/UX design components](https://...)).
+          * NEVER use generic text (e.g., "Click here", "Read more", "lets talk") or include dates/numbers (e.g., 2024, 02/25/2021) in anchor text. 
+       - CRITICAL: Skip any URL that already appears in "Used Internal Links".
+   
+   B. External Links:
+       - FOLLOW RULE 6 in the base prompt for external linking behavior.
+       - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
+
+4. FAQ behavior:
+   - Informational FAQ = educational clarity, no selling. Strictly educational tone.

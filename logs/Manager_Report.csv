@@ -1,0 +1,31 @@
+﻿Step Name,Total Step Duration (sec),Prompt Name,Model Name,Response Time (sec),Tokens Used,Prompt Snippet
+analysis_init,0.395,-,-,-,-,"System Initialization: Loading configs, preparing workspace structure."
+brand_discovery,33.351,brand_discovery,google/gemini-3-flash-preview,3.646,2115,"You are a Brand Intelligence Analyst.
+Below is real text scraped from multiple pages of a company's website...
+Write a detailed 4-6 sentence factual summary..."
+↳ brand_discovery (Call 2),-,brand_discovery,google/gemini-3-flash-preview,1.481,518,"You are a Brand Intelligence Analyst.
+Below is real text scraped from multiple pages of a company's website...
+Write a detailed 4-6 sentence factual summary..."
+web_research,54.75,web_research,openai/o4-mini:online,54.748,21872,Use web search to analyze the primary keyword and competitors...
+serp_analysis,5.391,serp_analysis,google/gemini-3-flash-preview,5.39,1890,"Analyze SERP data and extract LSI keywords, PAA, and related searches..."
+outline_generation,16.31,OutlineGenerator,google/gemini-3-flash-preview,16.304,8688," Context: - Feedback: ""None"" - Article Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Primary Keyword: ""Web Design Agency"" - Core Keywords: [""Web Design Agency"", ""Web D..."
+content_writing,91.565,SectionWriter,google/gemini-3-flash-preview,2.961,5584," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 2),-,SectionWriter,google/gemini-3-flash-preview,2.346,4011," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 3),-,SectionWriter,google/gemini-3-flash-preview,3.625,5829," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 4),-,SectionWriter,google/gemini-3-flash-preview,3.918,4306," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 5),-,SectionWriter,google/gemini-3-flash-preview,3.013,6008," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 6),-,SectionWriter,google/gemini-3-flash-preview,2.844,6104," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 7),-,SectionWriter,google/gemini-3-flash-preview,2.884,4661," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 8),-,SectionWriter,google/gemini-3-flash-preview,3.426,6274," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 9),-,SectionWriter,google/gemini-3-flash-preview,4.45,4942," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 10),-,SectionWriter,google/gemini-3-flash-preview,3.513,6632," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 11),-,SectionWriter,google/gemini-3-flash-preview,4.359,6877," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 12),-,SectionWriter,google/gemini-3-flash-preview,5.051,7264," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 13),-,SectionWriter,google/gemini-3-flash-preview,4.926,5811," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+↳ content_writing (Call 14),-,SectionWriter,google/gemini-3-flash-preview,3.07,7147," You are an Elite SEO section writer. Write ONLY the current section body in markdown.  ARTICLE CONTEXT: - Title: ""Top-Rated Web Design Agency in Riyadh: Custom Solutions for 2026"" - Intent: ""comme..."
+image_prompting,9.72,image_prompting,google/gemini-3-flash-preview,9.719,12300,No explicit prompt text logged for this step.
+image_generation,66.298,-,-,-,-,API Call: Downloading images generated from the prior step prompts (Timing represents download/rendering latency).
+assembly,0.003,-,-,-,-,Code logic: Retrieves all written text and compiles the full Markdown document without pinging the AI.
+image_inserter,0.0,-,-,-,-,Code logic: Injects image tags into the final document.
+meta_schema,6.679,MetaSchemaGenerator,google/gemini-3-flash-preview,6.677,4533," You are an SEO Metadata and Structured Data Generator.  You are working ONLY on a fully assembled, finalized article. You MUST NOT modify, rewrite, reorder, or comment on the article content.  INP..."
+render_html,0.083,-,-,-,-,Code logic: Converts the markdown to final HTML format.

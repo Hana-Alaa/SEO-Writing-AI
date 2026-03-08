@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Writing AI - Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --surface-color: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --gradient-start: #4facfe;
+            --gradient-end: #00f2fe;
+            --error-color: #ef4444;
+            --success-color: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(to bottom, rgba(99, 102, 241, 0.1), transparent);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 0 2rem;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input {
+            width: auto;
+            accent-color: var(--accent-color);
+        }
+
+        button.submit-btn {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button.submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        button.submit-btn:active {
+            transform: translateY(0);
+        }
+
+        button.submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #result-container {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0px;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        pre#markdown-output {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #f1f5f9;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        #html-output {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: 'Consolas', monospace;
+            font-size: 0.875rem;
+            color: #6366f1;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .url-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            align-items: end;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .remove-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .add-btn {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-color);
+            border: 1px dashed var(--accent-color);
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .add-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-info {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        #view-btn {
+            display: none;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>SEO Writing AI</h1>
+        <p>Premium Autonomous Content Generation System</p>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <form id="generate-form">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="title">Article Title *</label>
+                        <input type="text" id="title" required
+                            placeholder="e.g. Best Web Development Frameworks In 2026">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="keywords">Target Keywords (comma separated) *</label>
+                        <input type="text" id="keywords" required
+                            placeholder="e.g. web development, react vs angular, frontend frameworks">
+                        <small style="color: var(--text-secondary); font-size: 0.75rem;">First keyword will be treated
+                            as the Primary Keyword.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="language">Language</label>
+                        <select id="language">
+                            <option value="">Not Selected (System Default)</option>
+                            <option value="ar">Arabic (ar)</option>
+                            <option value="en">English (en)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="area">Target Area (Local SEO)</label>
+                        <input type="text" id="area" placeholder="e.g. Riyadh, Saudi Arabia">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Target URLs (First URL is treated as the Brand Homepage)</label>
+                        <div id="url-container">
+                            <div class="url-item">
+                                <div class="form-group">
+                                    <label>URL</label>
+                                    <input type="text" class="url-input" placeholder="https://example.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Anchor Text (Optional)</label>
+                                    <input type="text" class="anchor-input" placeholder="Example Site">
+                                </div>
+                                <button type="button" class="remove-btn" onclick="removeUrl(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-btn" onclick="addUrlField()">+ Add Another Link</button>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="brand_visual_style">Brand Visual Style (Image Generation)</label>
+                        <textarea id="brand_visual_style"
+                            placeholder="e.g. Modern, minimalist, corporate blue tones..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Brand Logo (Optional)</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="logo_image" accept="image/*" onchange="updateFileInfo(this)">
+                            <div class="file-info">Click to upload or drag logo</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reference Image / Frame (Optional)</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="reference_image" accept="image/*" onchange="updateFileInfo(this)">
+                            <div class="file-info">Click to upload or drag image</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group full-width">
+                        <input type="checkbox" id="meta_keywords" checked>
+                        <label for="meta_keywords">Generate Meta Keywords</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span>Generate Article</span>
+                    <div class="loader" id="loader"></div>
+                </button>
+            </form>
+        </div>
+
+        <div class="card" id="result-container">
+            <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                <div id="status-container" style="flex: 1;"></div>
+                <a id="view-btn" target="_blank">View Live Page ↗</a>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('markdown-tab')">Markdown</button>
+                <button class="tab" onclick="switchTab('html-tab')">HTML</button>
+            </div>
+
+            <div id="markdown-tab" class="tab-content active">
+                <pre id="markdown-output"></pre>
+            </div>
+
+            <div id="html-tab" class="tab-content">
+                <pre id="html-output"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addUrlField() {
+            const container = document.getElementById('url-container');
+            const item = document.createElement('div');
+            item.className = 'url-item';
+            item.innerHTML = `
+                <div class="form-group">
+                    <label>URL</label>
+                    <input type="text" class="url-input" placeholder="https://example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Anchor Text (Optional)</label>
+                    <input type="text" class="anchor-input" placeholder="Example Site">
+                </div>
+                <button type="button" class="remove-btn" onclick="removeUrl(this)">✕</button>
+            `;
+            container.appendChild(item);
+        }
+
+        function removeUrl(btn) {
+            const items = document.querySelectorAll('.url-item');
+            if (items.length > 1) {
+                btn.closest('.url-item').remove();
+            } else {
+                alert("At least one URL (Brand Homepage) is required.");
+            }
+        }
+
+        function updateFileInfo(input) {
+            const info = input.nextElementSibling;
+            if (input.files && input.files[0]) {
+                info.textContent = `Selected: ${input.files[0].name}`;
+                info.style.color = 'var(--success-color)';
+            } else {
+                info.textContent = 'Click to upload or drag image';
+                info.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        document.getElementById('generate-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loader = document.getElementById('loader');
+            const btnText = submitBtn.querySelector('span');
+            const resultContainer = document.getElementById('result-container');
+            const viewBtn = document.getElementById('view-btn');
+
+            // UI Loading state
+            btnText.textContent = 'Generating... (Takes 2-5 min)';
+            loader.style.display = 'block';
+            submitBtn.disabled = true;
+            resultContainer.style.display = 'none';
+            viewBtn.style.display = 'none';
+
+            // Gather Dynamic URLs
+            const urlInputs = document.querySelectorAll('.url-input');
+            const anchorInputs = document.querySelectorAll('.anchor-input');
+            const urls = [];
+            urlInputs.forEach((input, index) => {
+                if (input.value.trim()) {
+                    urls.push({
+                        link: input.value.trim(),
+                        text: anchorInputs[index].value.trim() || ""
+                    });
+                }
+            });
+
+            const keywordsInput = document.getElementById('keywords').value;
+            const keywords = keywordsInput.split(',').map(k => k.trim()).filter(k => k);
+
+            const payload = new FormData();
+            payload.append('title', document.getElementById('title').value);
+            payload.append('keywords', JSON.stringify(keywords));
+
+            const lang = document.getElementById('language').value;
+            if (lang) payload.append('article_language', lang);
+
+            const area = document.getElementById('area').value;
+            if (area) payload.append('area', area);
+
+            // First URL is used internally as Brand URL
+            payload.append('urls', JSON.stringify(urls));
+            payload.append('include_meta_keywords', document.getElementById('meta_keywords').checked);
+
+            const logoImage = document.getElementById('logo_image').files[0];
+            if (logoImage) payload.append('logo_image', logoImage);
+
+            const referenceImage = document.getElementById('reference_image').files[0];
+            if (referenceImage) payload.append('reference_image', referenceImage);
+
+            try {
+                const response = await fetch('http://localhost:8000/generate', {
+                    method: 'POST',
+                    body: payload
+                });
+
+                const data = await response.json();
+
+                resultContainer.style.display = 'block';
+                if (data.status === 'success') {
+                    document.getElementById('status-container').innerHTML =
+                        `<div class="status-badge status-success">Success: Saved to ${data.slug}</div>`;
+
+                    // Show View Button
+                    const htmlUrl = `http://localhost:8000/output/${data.slug}/page.html`;
+                    viewBtn.href = htmlUrl;
+                    viewBtn.style.display = 'inline-block';
+                } else {
+                    document.getElementById('status-container').innerHTML =
+                        `<div class="status-badge status-error">Error: ${data.message}</div>`;
+                }
+
+                document.getElementById('markdown-output').textContent = data.markdown_content || 'No markdown generated.';
+                document.getElementById('html-output').textContent = data.html_content || 'No HTML generated.';
+
+            } catch (error) {
+                alert('An error occurred during generation: ' + error.message);
+            } finally {
+                resetBtn();
+            }
+
+            function resetBtn() {
+                btnText.textContent = 'Generate Article';
+                loader.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

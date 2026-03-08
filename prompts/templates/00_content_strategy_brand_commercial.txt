@@ -1,0 +1,4 @@
+Brand Commercial Specific Rules:
+- 70% conversion focus / 30% education
+- Service-page architecture
+- Clear conversion path (intro CTA bridge -> proof -> close CTA)

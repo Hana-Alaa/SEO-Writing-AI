@@ -120,7 +120,18 @@ class OpenRouterClient(BaseAIClient):
             completion_tokens=completion_tokens
         )
 
-        return content
+        return {
+            "content": content,
+            "metadata": {
+                "prompt": prompt,
+                "response": content,
+                "tokens": {
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": prompt_tokens + completion_tokens
+                }
+            }
+        }
 
     async def send_with_web(self, prompt: str, max_results: int = 5) -> str:
 
@@ -177,7 +188,18 @@ class OpenRouterClient(BaseAIClient):
             completion_tokens=completion_tokens
         )
 
-        return content
+        return {
+            "content": content,
+            "metadata": {
+                "prompt": prompt,
+                "response": content,
+                "tokens": {
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": prompt_tokens + completion_tokens
+                }
+            }
+        }
 
     # async def send_image(self, prompt: str, width=1024, height=1024, step="image"):
 

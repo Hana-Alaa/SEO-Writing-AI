@@ -24,6 +24,5 @@ class MetaSchemaGenerator:
         logger.info(prompt)
         logger.info("\n=============================================================\n")
 
-        return await self.ai_client.send(prompt, step="meta_schema")
-
-    
+        res = await self.ai_client.send(prompt, step="meta_schema")
+        return res["content"]

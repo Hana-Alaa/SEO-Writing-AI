@@ -1,0 +1,12 @@
+Informational Specific Rules:
+1. Intent Distribution (MANDATORY):
+   - Ratio: 100% Educational/Informational.
+   - NO CTAs allowed in body sections.
+   - Focus: Topical authority and user value.
+
+2. CTA Policy:
+   - NO CTAs in body. Only soft resource links allowed.
+   - section_type = introduction: cta_type = "soft", cta_position = "last_sentence".
+     Soft CTA = "Learn more", "Explore the full guide", or resource link. No hard sell.
+   - section_type = conclusion: cta_type = "soft", cta_position = "last_sentence".
+   - All other sections: cta_type = "none".

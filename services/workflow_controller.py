@@ -37,6 +37,7 @@ from utils.observability import ObservabilityTracker
 from utils.seo_utils import enforce_meta_lengths
 from utils.html_renderer import render_html_page
 from urllib.parse import urlparse
+from utils.workflow_logger import WorkflowLogger
 BASE_DIR = Path(__file__).resolve().parents[1] 
 
 # Configure logging
@@ -57,7 +58,14 @@ class AsyncExecutor:
         attempt = 0
         while attempt <= retries:
             logger.info(f"--- Starting Step: {step_name} (Attempt {attempt + 1}/{retries + 1}) ---")
-            start_time = time.time()
+            
+            # Use WorkflowLogger if available in state
+            workflow_logger = state.get("workflow_logger")
+            start_time = 0
+            if workflow_logger:
+                start_time = workflow_logger.start_step(step_name)
+            else:
+                start_time = time.time()
             
             try:
                 # Execute the async coordination step
@@ -67,6 +75,18 @@ class AsyncExecutor:
                     new_state = state
                 
                 duration = time.time() - start_time
+                
+                if workflow_logger:
+                    # Collect token info if available in new_state (requires AI clients to report tokens)
+                    tokens = new_state.get("last_step_tokens")
+                    workflow_logger.end_step(
+                        step_name=step_name,
+                        start_time=start_time,
+                        prompt=new_state.get("last_step_prompt"),
+                        response=new_state.get("last_step_response"),
+                        tokens=tokens
+                    )
+                
                 if self.observer:
                     self.observer.log_workflow_step(step_name, duration)
                 logger.info(f"--- Finished Step: {step_name} (Duration: {duration:.2f}s) ---")
@@ -108,8 +128,16 @@ class AsyncWorkflowController:
         with open("prompts/templates/00_intent_classifier.txt", "r", encoding="utf-8") as f:
             self.intent_template = Template(f.read(), undefined=StrictUndefined)
         
-        with open("prompts/templates/00_content_strategy.txt", "r", encoding="utf-8") as f:
-            self.content_strategy = Template(f.read(), undefined=StrictUndefined)
+        base_strategy = Path("prompts/templates/00_content_strategy_base.txt").read_text(encoding="utf-8")
+        commercial_strategy = Path("prompts/templates/00_content_strategy_brand_commercial.txt").read_text(encoding="utf-8")
+        informational_strategy = Path("prompts/templates/00_content_strategy_informational.txt").read_text(encoding="utf-8")
+        comparison_strategy = Path("prompts/templates/00_content_strategy_comparison.txt").read_text(encoding="utf-8")
+        
+        self.content_strategy_templates = {
+            "brand_commercial": Template(base_strategy + "\n\n" + commercial_strategy, undefined=StrictUndefined),
+            "informational": Template(base_strategy + "\n\n" + informational_strategy, undefined=StrictUndefined),
+            "comparison": Template(base_strategy + "\n\n" + comparison_strategy, undefined=StrictUndefined),
+        }
 
         # Content generation services
         self.title_generator = TitleGenerator(self.ai_client)
@@ -165,11 +193,11 @@ class AsyncWorkflowController:
             ("outline_generation", self._step_1_outline, 1),
 
             ("content_writing", self._step_2_write_sections, 1),
-            ("image_prompting", self._step_4_generate_image_prompts, 0),
-            ("image_generation", self._step_4_5_download_images, 2),
+            # ("image_prompting", self._step_4_generate_image_prompts, 0),
+            # ("image_generation", self._step_4_5_download_images, 2),
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
-            ("image_inserter", self._step_6_image_inserter, 0),
+            # ("image_inserter", self._step_6_image_inserter, 0),
             ("meta_schema", self._step_7_meta_schema, 0),
             # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
@@ -183,18 +211,29 @@ class AsyncWorkflowController:
                 logger.error(f"Workflow stopped at critical step: {name}")
                 break
 
+        # Final Export
+        if state.get("workflow_logger"):
+            state["workflow_logger"].export_csv()
+
         return self._assemble_final_output(state)
 
     # ---------------- COORDINATION STEPS (ASYNC) ----------------
-    async def _detect_intent_ai(self, raw_title: str, primary_keyword: str) -> str:
+    async def _detect_intent_ai(self, raw_title: str, primary_keyword: str, state: Dict[str, Any] = None) -> str:
 
         prompt = self.intent_template.render(
             raw_title=raw_title,
             primary_keyword=primary_keyword
         )
 
-        response = await self.ai_client.send(prompt, step="intent")
-        return response.strip()
+        res = await self.ai_client.send(prompt, step="intent")
+        content = res["content"]
+        # Store metadata in state if provided
+        if state is not None:
+            state["last_step_prompt"] = res["metadata"]["prompt"]
+            state["last_step_response"] = res["metadata"]["response"]
+            state["last_step_tokens"] = res["metadata"]["tokens"]
+            
+        return content.strip()
 
     async def _step_0_init(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Setup unique directories and sluggification."""
@@ -219,9 +258,13 @@ class AsyncWorkflowController:
         state["primary_keyword"] = primary_keyword
         state["raw_title"] = raw_title
         state["keywords"] = keywords
+        
+        # New: Derive brand_url from the FIRST URL provided in the UI list
+        urls = state.get("input_data", {}).get("urls", [])
+        state["brand_url"] = urls[0].get("link") if urls else None
+        
         state["image_frame_path"] = input_data.get("image_frame_path") or input_data.get("image_template_path")
-        state["brand_visual_style"] = input_data.get("brand_visual_style", "")
-
+        state["brand_visual_style"] = "" # Removed from UI, setting to empty
         # keep input_data in sync for downstream steps
         state.setdefault("input_data", {})
         state["input_data"]["article_language"] = article_language
@@ -236,8 +279,25 @@ class AsyncWorkflowController:
         
         output_dir = os.path.join(self.work_dir, slug)
         os.makedirs(output_dir, exist_ok=True)
+        
+        # Initialize WorkflowLogger
+        state["workflow_logger"] = WorkflowLogger(output_dir)
+        state["workflow_logger"].log_event("Initialization", {
+            "title": raw_title,
+            "language": article_language,
+            "primary_keyword": primary_keyword,
+            "output_dir": output_dir
+        })
+        
         state["output_dir"] = output_dir
         state["used_phrases"] = []
+        
+        # Initialize external link controls
+        state["max_external_links"] = 6
+        state["blocked_external_domains"] = set()
+        state["allowed_external_domains"] = set()
+        state["used_external_links"] = []
+        state["used_all_urls"] = set()
 
         return state
 
@@ -480,29 +540,49 @@ class AsyncWorkflowController:
             if combined_text:
                 context_prompt = f"""You are a Brand Intelligence Analyst.
 
-Below is real text scraped from multiple pages of a company's website.
-The article we are writing is about: "{primary_keyword}"
+        Below is real text scraped from multiple pages of a company's website.
+        The article we are writing is about: "{primary_keyword}"
 
-Website Content:
-\"\"\"
-{combined_text}
-\"\"\"
+        Website Content:
+        \"\"\"
+        {combined_text}
+        \"\"\"
 
-Your task:
-1. Read through all pages and find information directly related to: "{primary_keyword}"
-2. Write a detailed 4-6 sentence factual summary of:
-   - Exactly how this company delivers this service (their process/methodology)
-   - What specific technologies, tools, or frameworks they use
-   - What makes their approach different or specific (NOT generic marketing)
-   - Who their target clients are
-3. Only use information found in the text above. Do NOT invent or assume anything.
-4. If you cannot find enough specific info, clearly state what you DID find.
+        Your task:
+        1. Read through all pages and find information directly related to: "{primary_keyword}"
+        2. Write a detailed 4-6 sentence factual summary of:
+        - Exactly how this company delivers this service (their process/methodology)
+        - What specific technologies, tools, or frameworks they use
+        - What makes their approach different or specific (NOT generic marketing)
+        - Who their target clients are
+        3. Only use information found in the text above. Do NOT invent or assume anything.
+        4. If you cannot find enough specific info, clearly state what you DID find.
 
-Write the summary now:"""
+        Write the summary now:"""
 
-                brand_context = await self.ai_client.send(context_prompt, step="brand_discovery")
-                if brand_context and len(brand_context) > 20:
-                    state["brand_context"] = brand_context.strip()
+                res = await self.ai_client.send(context_prompt, step="brand_discovery")
+                brand_content = res["content"]
+                metadata = res["metadata"]
+                
+                if state.get("workflow_logger"):
+                    state["workflow_logger"].log_ai_call(
+                        step_name="brand_discovery",
+                        prompt=context_prompt,
+                        response=brand_content,
+                        tokens=metadata,
+                        duration=metadata.get("duration", 0)
+                    )
+                
+                state["last_step_prompt"] = metadata["prompt"]
+                state["last_step_response"] = metadata["response"]
+                state["last_step_tokens"] = metadata["tokens"]
+                
+                brand_data = recover_json(brand_content)
+                if brand_data and isinstance(brand_data, dict) and brand_data.get("summary"):
+                    state["brand_context"] = brand_data["summary"].strip()
+                    logger.info(f"Brand Context extracted successfully from JSON:\n{state['brand_context']}")
+                elif brand_content and len(brand_content) > 20:
+                    state["brand_context"] = brand_content.strip()
                     logger.info(f"Brand Context extracted successfully:\n{state['brand_context']}")
                 else:
                     state["brand_context"] = ""
@@ -513,17 +593,33 @@ Write the summary now:"""
             area = state.get("area")
             if area:
                 neighborhood_prompt = f"""You are a Local SEO expert.
-Your task: List the top 8-10 most well-known neighborhoods, districts, or business zones in "{area}" that are most relevant to the service: "{primary_keyword}".
+        Your task: List the top 8-10 most well-known neighborhoods, districts, or business zones in "{area}" that are most relevant to the service: "{primary_keyword}".
 
-Rules:
-- Output ONLY a valid JSON array of strings. No explanations, no markdown, just the array.
-- Use the local language (Arabic if the city is Arab, etc.)
-- Focus on areas where businesses would search for this service.
-- Example output: ["العليا", "النخيل", "الملقا", "الروضة", "الزهراء", "الملز"]
+        Rules:
+        - Output ONLY a valid JSON array of strings. No explanations, no markdown, just the array.
+        - Use the local language (Arabic if the city is Arab, etc.)
+        - Focus on areas where businesses would search for this service.
+        - Example output: ["العليا", "النخيل", "الملقا", "الروضة", "الزهراء", "الملز"]
 
-Output the JSON array now:"""
+        Output the JSON array now:"""
                 try:
-                    neighborhoods_raw = await self.ai_client.send(neighborhood_prompt, step="local_seo")
+                    neighborhoods_res = await self.ai_client.send(neighborhood_prompt, step="local_seo")
+                    neighborhoods_raw = neighborhoods_res["content"]
+                    metadata = neighborhoods_res["metadata"]
+                    
+                    if state.get("workflow_logger"):
+                        state["workflow_logger"].log_ai_call(
+                            step_name="local_neighborhoods",
+                            prompt=neighborhood_prompt,
+                            response=neighborhoods_raw,
+                            tokens=metadata,
+                            duration=metadata.get("duration", 0)
+                        )
+                        
+                    state["last_step_prompt"] = metadata["prompt"]
+                    state["last_step_response"] = metadata["response"]
+                    state["last_step_tokens"] = metadata["tokens"]
+
                     # Parse the JSON array from AI response
                     import re as _re
                     match = _re.search(r'\[.*?\]', neighborhoods_raw, _re.DOTALL)
@@ -561,10 +657,26 @@ Output the JSON array now:"""
             primary_keyword=search_query
         )
 
-        raw = await self.ai_client.send_with_web(
+        res = await self.ai_client.send_with_web(
             prompt=research_prompt,
             max_results=3
         )
+        raw = res["content"]
+        metadata = res["metadata"]
+        
+        if state.get("workflow_logger"):
+            state["workflow_logger"].log_ai_call(
+                step_name="web_research",
+                prompt=research_prompt,
+                response=raw,
+                tokens=metadata,
+                duration=metadata.get("duration", 0)
+            )
+            
+        state["last_step_prompt"] = metadata["prompt"]
+        state["last_step_response"] = metadata["response"]
+        state["last_step_tokens"] = metadata["tokens"]
+
         logger.info(f"RAW SERP RESPONSE:\n{raw}")
 
         clean_raw = raw.strip()
@@ -586,89 +698,6 @@ Output the JSON array now:"""
 
         logger.info(f"SERP stored successfully: {len(serp_data.get('top_results', []))} results")
 
-        return state
-
-    async def _step_0_intent_title(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        raw_title = state.get("raw_title") or state.get("input_data", {}).get("title", "Untitled Article")
-        primary_keyword = state.get("primary_keyword") or (state.get("keywords", [raw_title])[0] if state.get("keywords") else raw_title)
-        article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "en")
-
-        serp_data = state.get("serp_data", {})
-        area = state.get("area")
-
-        top_titles = [
-            r.get("title", "")
-            for r in serp_data.get("top_results", [])
-            if isinstance(r, dict)
-        ][:5]
-
-        cta_styles = [
-            r.get("cta_style", "")
-            for r in serp_data.get("top_results", [])
-            if isinstance(r, dict)
-        ]
-
-        title_data = await self.title_generator.generate(
-            raw_title=raw_title,
-            primary_keyword=primary_keyword,
-            article_language=article_language,
-            serp_titles=top_titles,
-            serp_cta_styles=cta_styles,
-            area=area
-        )
-
-        intent_raw = title_data.get("intent", "Informational")
-        optimized_title = title_data.get("optimized_title", raw_title)
-
-        serp_confirmed = (
-            state.get("seo_intelligence", {})
-                .get("strategic_analysis", {})
-                .get("intent_analysis", {})
-                .get("confirmed_intent")
-        )
-        confidence = (
-            state.get("seo_intelligence", {})
-                .get("strategic_analysis", {})
-                .get("intent_analysis", {})
-                .get("intent_confidence_score", 0)
-        )
-
-        if confidence > 0.6 and serp_confirmed:
-            intent_raw = serp_confirmed
-
-        intent_normalized = intent_raw.strip().lower()
-        state["intent"] = intent_normalized
-
-        if any(x in intent_normalized for x in ["commercial", "transactional"]):
-            state["content_type"] = "brand_commercial"
-        elif any(x in intent_normalized for x in ["comparison", "comparative"]):
-            state["content_type"] = "comparison"
-        else:
-            state["content_type"] = "informational"
-
-        state["input_data"]["title"] = optimized_title
-        return state
-
-    async def _step_0_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyzes the reference image if provided to determine the brand's visual style."""
-        input_data = state.get("input_data", {})
-        ref_path = input_data.get("logo_reference_path")
-        logo_path = input_data.get("logo_path")
-        # ref_path = state.get("input_data", {}).get("logo_reference_path")
-
-        state["brand_visual_style"] = ""
-
-        if ref_path and isinstance(ref_path, str) and os.path.exists(ref_path):
-            logger.info(f"Analyzing brand style from reference: {ref_path}")
-            try:
-                style_desc = await self.ai_client.describe_image_style(ref_path)
-                state["brand_visual_style"] = style_desc
-            except Exception as e:
-                logger.error(f"Failed to analyze reference image: {e}")
-                state["brand_visual_style"] = "Professional, modern corporate identity, clean lighting"
-        else:
-            logger.info("No reference image provided. Using generic professional visual style.")
-            
         return state
 
     async def _step_0_serp_analysis(self, state):
@@ -704,10 +733,23 @@ Output the JSON array now:"""
         )
 
 
-        raw = await self.ai_client.send(
+        res = await self.ai_client.send(
             analysis_prompt,
             step="serp_analysis"
         )
+        raw = res["content"]
+        metadata = res["metadata"]
+        
+        if state.get("workflow_logger"):
+            state["workflow_logger"].log_ai_call(
+                step_name="serp_analysis",
+                prompt=analysis_prompt,
+                response=raw,
+                tokens=metadata,
+                duration=metadata.get("duration", 0)
+            )
+            
+        state["last_step_tokens"] = metadata["tokens"]
 
         serp_insights = recover_json(raw) or {}
         serp_insights["semantic_assets"] = {
@@ -743,6 +785,103 @@ Output the JSON array now:"""
         }
         return state
 
+    async def _step_0_intent_title(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Classify user intent and refine the title via AI."""
+        raw_title = state.get("raw_title") or "Untitled"
+        primary_keyword = state.get("primary_keyword") or raw_title
+        article_language = state.get("article_language") or "en"
+        area = state.get("area")
+        serp_data = state.get("serp_data", {})
+
+        top_titles = [
+            r.get("title", "")
+            for r in serp_data.get("top_results", [])
+            if isinstance(r, dict)
+        ][:5]
+
+        cta_styles = [
+            r.get("cta_style", "")
+            for r in serp_data.get("top_results", [])
+            if isinstance(r, dict)
+        ]
+
+        res = await self.title_generator.generate(
+            raw_title=raw_title,
+            primary_keyword=primary_keyword,
+            article_language=article_language,
+            serp_titles=top_titles,
+            serp_cta_styles=cta_styles,
+            area=area
+        )
+        
+        if state.get("workflow_logger"):
+            state["workflow_logger"].log_ai_call(
+                step_name="intent_title",
+                prompt=res.get("prompt"),
+                response=res,  # Log the whole dict as JSON
+                tokens=res.get("metadata", {}),
+                duration=res.get("metadata", {}).get("duration", 0)
+            )
+
+        intent_raw = res.get("intent", "Informational")
+        optimized_title = res.get("optimized_title", raw_title)
+
+        # Logic for local SEO intent refinement
+        serp_confirmed = (
+            state.get("seo_intelligence", {})
+                .get("strategic_analysis", {})
+                .get("intent_analysis", {})
+                .get("confirmed_intent")
+        )
+        confidence = (
+            state.get("seo_intelligence", {})
+                .get("strategic_analysis", {})
+                .get("intent_analysis", {})
+                .get("intent_confidence_score", 0)
+        )
+
+        if confidence > 0.6 and serp_confirmed:
+            intent_raw = serp_confirmed
+
+        intent_normalized = intent_raw.strip().lower()
+        state["intent"] = intent_normalized
+
+        if any(x in intent_normalized for x in ["commercial", "transactional"]):
+            state["content_type"] = "brand_commercial"
+        elif any(x in intent_normalized for x in ["comparison", "comparative"]):
+            state["content_type"] = "comparison"
+        else:
+            state["content_type"] = "informational"
+
+        state["input_data"]["title"] = optimized_title
+        
+        # Finally, perform the classifier step for logging
+        await self._detect_intent_ai(raw_title, primary_keyword, state=state)
+        
+        return state
+
+    async def _step_0_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyzes the reference image if provided to determine the brand's visual style."""
+        input_data = state.get("input_data", {})
+        ref_path = input_data.get("logo_reference_path")
+        logo_path = input_data.get("logo_path")
+        # ref_path = state.get("input_data", {}).get("logo_reference_path")
+
+        state["brand_visual_style"] = ""
+
+        if ref_path and isinstance(ref_path, str) and os.path.exists(ref_path):
+            logger.info(f"Analyzing brand style from reference: {ref_path}")
+            try:
+                style_desc = await self.ai_client.describe_image_style(ref_path)
+                state["brand_visual_style"] = style_desc
+            except Exception as e:
+                logger.error(f"Failed to analyze reference image: {e}")
+                state["brand_visual_style"] = "Professional, modern corporate identity, clean lighting"
+        else:
+            logger.info("No reference image provided. Using generic professional visual style.")
+            
+        return state
+
     async def _step_0_content_strategy(self, state: Dict[str, Any]) -> Dict[str, Any]:
         primary_keyword = state.get("primary_keyword")
         intent = state.get("intent")
@@ -766,7 +905,12 @@ Output the JSON array now:"""
                 "keywords": list(dict.fromkeys(fallback_keywords))
             }]
 
-        prompt = self.content_strategy.render(
+        template = self.content_strategy_templates.get(
+            content_type,
+            self.content_strategy_templates["informational"]
+        )
+
+        prompt = template.render(
             primary_keyword=primary_keyword,
             intent=intent,
             serp_intent_analysis=json.dumps(intent_layer),
@@ -779,7 +923,28 @@ Output the JSON array now:"""
 
         final_data = None
         for attempt in range(3):
-            raw = await self.ai_client.send(prompt, step="content_strategy")
+            res = await self.ai_client.send(prompt, step="content_strategy")
+            raw = res["content"]
+            metadata = res["metadata"]
+
+            if state.get("workflow_logger"):
+                state["workflow_logger"].log_ai_call(
+                    step_name="content_strategy",
+                    prompt=metadata.get("prompt"),
+                    response=raw,
+                    tokens=metadata.get("tokens"),
+                    duration=metadata.get("duration", 0)
+                )
+
+            state["last_step_prompt"] = metadata["prompt"]
+            state["last_step_response"] = metadata["response"]
+            state["last_step_tokens"] = metadata["tokens"]
+
+            if not raw:
+                logger.error("Content Strategy AI returned empty response")
+                state["content_strategy"] = {}
+                return state
+            
             json_text = self._extract_first_json_object(raw)
             parsed = recover_json(json_text)
 
@@ -894,6 +1059,12 @@ Output the JSON array now:"""
                 feedback=feedback,
                 mandatory_section_types = list(mandatory)
             )
+            
+            # Store metadata for WorkflowLogger
+            if "metadata" in outline_data:
+                state["last_step_prompt"] = outline_data["metadata"]["prompt"]
+                state["last_step_response"] = outline_data["metadata"]["response"]
+                state["last_step_tokens"] = outline_data["metadata"]["tokens"]
 
             if not outline_data or not outline_data.get("outline"):
                 if attempt < 2:
@@ -1222,6 +1393,24 @@ Output the JSON array now:"""
                 section_source_text = best_text[:2500]
                 logger.info(f"Section '{section_heading}' -> using brand page: {best_url} (score={best_score})")
 
+        # --- Extract curated external sources from SERP ---
+        external_sources = []
+        serp_results = state.get("serp_data", {}).get("top_results", [])
+        blocked_domains = state.get("blocked_external_domains", set())
+        brand_domain = self._domain(state.get("brand_url", ""))
+        
+        for r in serp_results:
+            url = r.get("url")
+            if not url: continue
+            dom = self._domain(url)
+            if dom == brand_domain or dom in blocked_domains:
+                continue
+            external_sources.append({"url": url, "text": r.get("title", "External Resource")})
+            if len(external_sources) >= 8: # Cap to 8 sources
+                break
+        
+        logger.info(f"Extracted {len(external_sources)} external sources for section '{section.get('heading_text')}'")
+
         # Try 1
 
         res_data = await self.section_writer.write(
@@ -1232,23 +1421,32 @@ Output the JSON array now:"""
             seo_intelligence=seo_intelligence,
             content_type=content_type,
             link_strategy=link_strategy,
-            brand_link_used=brand_link_used,
-            brand_link_allowed=can_use_brand_link,
+            brand_url=brand_url,
+            brand_link_used=state.get("brand_link_used", False),
+            brand_link_allowed=execution_plan.get("brand_link_allowed", False),
             allow_external_links=True,
             execution_plan=execution_plan,
-            area=state.get("area"),
+            area=state.get("area", ""),
             used_phrases=used_phrases,
             used_internal_links=state.get("used_internal_links", []),
-            used_external_links=state.get("used_external_links", []), 
+            used_external_links=state.get("used_external_links", []),
             section_index=section_index,
             total_sections=total_sections,
-            brand_url=state.get("brand_url"),
             brand_context=brand_context,
-            section_source_text=section_source_text
+            section_source_text=section_source_text,
+            external_sources=external_sources,
+            workflow_logger=state.get("workflow_logger")
         )
+        
         content = res_data.get("content", "")
         used_links = res_data.get("used_links", [])
         brand_link_used_in_sec = res_data.get("brand_link_used", False)
+        
+        # Store metadata for WorkflowLogger
+        if "metadata" in res_data:
+            state["last_step_prompt"] = res_data["metadata"]["prompt"]
+            state["last_step_response"] = res_data["metadata"]["response"]
+            state["last_step_tokens"] = res_data["metadata"]["tokens"]
 
         # Semantic Overlap Rejection
         if content and getattr(self, "semantic_model", None) and state.get("used_claims"):
@@ -1277,7 +1475,8 @@ Output the JSON array now:"""
                     used_internal_links=state.get("used_internal_links", []),
                     used_external_links=state.get("used_external_links", []), 
                     section_index=section_index,
-                    total_sections=total_sections
+                    total_sections=total_sections,
+                    external_sources=external_sources
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1320,7 +1519,8 @@ Output the JSON array now:"""
                     used_internal_links=state.get("used_internal_links", []),
                     used_external_links=state.get("used_external_links", []),
                     section_index=section_index,
-                    total_sections=total_sections
+                    total_sections=total_sections,
+                    external_sources=external_sources
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1349,7 +1549,8 @@ Output the JSON array now:"""
                     used_internal_links=state.get("used_internal_links", []),
                     used_external_links=state.get("used_external_links", []), 
                     section_index=section_index,
-                    total_sections=total_sections
+                    total_sections=total_sections,
+                    external_sources=external_sources
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1367,13 +1568,19 @@ Output the JSON array now:"""
             if getattr(self, "semantic_model", None):
                 state["used_claims"].extend(substantial_sentences)
 
-            # sanitize links first
             content = self._sanitize_section_links(
                 content=content,
                 state=state,
                 brand_url=brand_url or "",
-                max_external=1
+                max_external=2 # Increased to allow 3-4 across article
             )
+
+            logger.info(f"Section '{section.get('heading_text')}' finalized. Current external links in state: {len(state.get('used_external_links', []))}")
+            if state.get("workflow_logger"):
+                state["workflow_logger"].log_event(f"Section Finalized: {section.get('heading_text')}", {
+                    "external_links_count": len(state.get("used_external_links", [])),
+                    "internal_links_count": len(state.get("used_internal_links", []))
+                })
 
             # classify links after sanitize
             found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
@@ -1590,7 +1797,7 @@ Output the JSON array now:"""
         final_md = self.sanitize_links(
             final_md,
             max_external=3,
-            max_brand=1,
+            max_brand=6,
             brand_url=state.get("brand_url"),
             internal_url_set=state.get("internal_url_set", set()),
             blocked_domains=state.get("blocked_external_domains", set()),
@@ -1748,8 +1955,8 @@ Output the JSON array now:"""
         if not text:
             return text
 
-        # 1) Protect table blocks first (2+ pipe lines)
-        table_pattern = re.compile(r'((?:^\s*\|.*\|\s*$\n?){2,})', re.MULTILINE)
+        # 1) Protect table blocks first (lines with 2+ pipes or starting with |)
+        table_pattern = re.compile(r'((?:^\s*\|?.*\|.*\|?.*$\n?){2,})', re.MULTILINE)
         table_blocks = []
 
         def _stash_table(m):
@@ -2214,17 +2421,22 @@ Output the JSON array now:"""
             new_body = body
 
             # 1. Inject CTA after first real paragraph in this section
+            # AVOID injecting if the section starts with a table or list
             paragraphs = re.split(r'\n{2,}', new_body.strip())
             if paragraphs:
                 first_para = paragraphs[0]
-                rest = paragraphs[1:]
-                cta = next_cta()
-                if cta:
-                    new_body = first_para + cta + "\n\n" + "\n\n".join(rest) if rest else first_para + cta
+                is_table_or_list = first_para.strip().startswith("|") or first_para.strip().count("|") >= 2 or first_para.strip().startswith("-") or first_para.strip().startswith("*")
+                
+                if not is_table_or_list:
+                    rest = paragraphs[1:]
+                    cta = next_cta()
+                    if cta:
+                        new_body = first_para + cta + "\n\n" + "\n\n".join(rest) if rest else first_para + cta
 
             # 2. Inject CTA after any markdown table in this section
+            # More robust table pattern: matches blocks where multiple lines have pipes
             table_pattern = re.compile(
-                r'(\|[^\n]+\|\n(?:\|[-|: ]+\|\n)(?:\|[^\n]+\|\n)*)',
+                r'((?:^\s*\|?.*\|.*\|?.*$\n?){2,})',
                 re.MULTILINE
             )
             def inject_after_table(m):
@@ -3077,7 +3289,7 @@ Output the JSON array now:"""
 
         used_external_count = len(state.get("used_external_links", []))
         if max_external is None:
-            max_external = state.get("max_external_links", 3)
+            max_external = state.get("max_external_links", 6)
 
         pattern = r'\[([^\]]+)\]\(([^)]+)\)'
 
@@ -3123,6 +3335,7 @@ Output the JSON array now:"""
 
         cleaned = re.sub(pattern, repl, content)
         return cleaned
+    
     def _normalize_url_for_dedup(self, url: str) -> str:
         """Normalize URL for deduplication by removing trailing slashes, fragments, and queries."""
         import urllib.parse
@@ -3207,9 +3420,9 @@ Output the JSON array now:"""
             if core_url in seen_urls:
                 return anchor
 
-            # 2. Section Limit Check: Max 1 internal link per H2 block
+            # 2. Section Limit Check: Max 2 internal links per H2 block
             if is_internal(url):
-                if links_in_current_h2 >= 1:
+                if links_in_current_h2 >= 2:
                     return anchor # Show as text if section already has a link
             
             # 3. SEO Value Check

@@ -38,4 +38,5 @@ class ArticleValidator:
         logger.info(prompt)
         logger.info("\n=============================================================\n")
         
-        return await self.ai_client.send(prompt, step="article_validation")
+        res = await self.ai_client.send(prompt, step="article_validation")
+        return res["content"]

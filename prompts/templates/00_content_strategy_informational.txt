@@ -1,0 +1,4 @@
+Informational Specific Rules:
+- 100% educational tone
+- No direct selling
+- Internal-link bridge toward service pages

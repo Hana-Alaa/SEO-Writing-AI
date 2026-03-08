@@ -42,7 +42,8 @@ class TitleGenerator:
         logger.info(prompt)
         logger.info("\n======================================\n")
 
-        raw_response = await self.ai_client.send(prompt, step="title")
+        res = await self.ai_client.send(prompt, step="title")
+        raw_response = res["content"]
         data = recover_json(raw_response) or {}
         
         title = data.get("optimized_title", processed_raw_title)
@@ -54,5 +55,7 @@ class TitleGenerator:
 
         return {
             "optimized_title": title.strip(),
-            "intent": intent.strip()
+            "intent": intent.strip(),
+            "metadata": res["metadata"],
+            "prompt": prompt
         }
