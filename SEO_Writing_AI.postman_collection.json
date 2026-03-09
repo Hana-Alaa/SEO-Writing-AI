@@ -1,0 +1,124 @@
+{
+    "info": {
+        "_postman_id": "seo-writing-ai-v1",
+        "name": "SEO Writing AI API",
+        "description": "Professional API collection for the autonomous SEO content generation pipeline. Use this to integrate the SEO writer with other platforms or for developer testing.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "System",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:8000/health",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8000",
+                            "path": [
+                                "health"
+                            ]
+                        },
+                        "description": "Verifies that the API server is up and running."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Article Generation",
+            "item": [
+                {
+                    "name": "Generate Article",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "title",
+                                    "value": "Best Web Design Agency in Riyadh 2024",
+                                    "description": "The main topic or H1 of the article",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "keywords",
+                                    "value": "[\"web design\", \"SEO services\", \"Riyadh\"]",
+                                    "description": "JSON array of keywords. First keyword is the primary target.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "article_language",
+                                    "value": "ar",
+                                    "description": "Language code (ar or en). Auto-detected if empty.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "area",
+                                    "value": "Riyadh",
+                                    "description": "Target geographic location for local SEO",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "urls",
+                                    "value": "[]",
+                                    "description": "JSON array of internal links: [{\"url\": \"...\", \"text\": \"...\"}]",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "include_meta_keywords",
+                                    "value": "true",
+                                    "description": "Generate SEO meta tags",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "logo_image",
+                                    "description": "PNG/JPG logo for branding",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "reference_image",
+                                    "description": "PNG frame template for image branding",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "http://localhost:8000/generate",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8000",
+                            "path": [
+                                "generate"
+                            ]
+                        },
+                        "description": "Triggers the full SEO generation workflow including research, writing, and image creation.\n\n**Response Highlights:**\n- `metadata`: Contains structured SEO data (meta_title, meta_description, keywords, article_schema, faq_schema).\n- `images`: A list of objects containing absolute `url`, `alt_text`, and `image_type`.\n- `html_content`: The full rendered article page.\n- `markdown_content`: The raw article text."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000"
+        }
+    ]
+}

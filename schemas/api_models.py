@@ -15,6 +15,20 @@ class ArticleRequest(BaseModel):
     brand_visual_style: Optional[str] = Field(None, description="Description of the brand's visual style")
     image_frame_path: Optional[str] = Field(None, description="Path to a visual frame/template for images")
 
+class ArticleMetadata(BaseModel):
+    title: str
+    meta_title: str
+    meta_description: str
+    meta_keywords: str
+    article_schema: Dict[str, Any] = Field(default_factory=dict)
+    faq_schema: Dict[str, Any] = Field(default_factory=dict)
+
+class ArticleImage(BaseModel):
+    url: str
+    alt_text: str
+    image_type: str
+    section_id: Optional[str] = None
+
 class ArticleResponse(BaseModel):
     status: str
     message: str
@@ -22,3 +36,5 @@ class ArticleResponse(BaseModel):
     output_dir: Optional[str] = None
     html_content: Optional[str] = None
     markdown_content: Optional[str] = None
+    metadata: Optional[ArticleMetadata] = None
+    images: Optional[List[ArticleImage]] = None

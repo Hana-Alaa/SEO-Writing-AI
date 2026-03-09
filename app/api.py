@@ -1,13 +1,13 @@
 import os
 import json
 import logging
-from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import shutil
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
-from schemas.api_models import ArticleResponse
+from schemas.api_models import ArticleResponse, ArticleMetadata, ArticleImage
 from services.workflow_controller import AsyncWorkflowController
 
 # Ensure required directories exist
@@ -51,6 +51,7 @@ async def health_check():
 
 @app.post("/generate", response_model=ArticleResponse)
 async def generate_article(
+    request: Request,
     title: str = Form(...),
     keywords: str = Form(...),
     article_language: str = Form(None),
@@ -154,7 +155,40 @@ async def generate_article(
                     
         # Fallback to memory if file read failed or was empty
         if not markdown_content:
-            markdown_content = final_state.get("final_output", {}).get("final_markdown", "")
+            markdown_content = final_state.get("final_markdown", "")
+
+        # --- SEO Metadata ---
+        meta_dict = ArticleMetadata(
+            title=final_state.get("title", ""),
+            meta_title=final_state.get("meta_title", ""),
+            meta_description=final_state.get("meta_description", ""),
+            meta_keywords=final_state.get("meta_keywords", ""),
+            article_schema=final_state.get("article_schema", {}),
+            faq_schema=final_state.get("faq_schema", {})
+        )
+
+        # --- Image URLs ---
+        base_url = str(request.base_url)
+        # Ensure base_url doesn't end with a slash for clean joins later
+        if base_url.endswith("/"):
+            base_url = base_url[:-1]
+
+        image_list = []
+        for img in final_state.get("images", []):
+            rel_path = img.get("local_path", "")
+            # Convert internal path to URL
+            # e.g. "output/slug/images/img.webp" -> "http://.../output/slug/images/img.webp"
+            if rel_path.startswith(os.getcwd()):
+                rel_path = os.path.relpath(rel_path, os.getcwd())
+            
+            image_url = f"{base_url}/{rel_path.replace(os.sep, '/')}"
+            
+            image_list.append(ArticleImage(
+                url=image_url,
+                alt_text=img.get("alt_text", ""),
+                image_type=img.get("image_type", "Standard"),
+                section_id=img.get("section_id")
+            ))
 
         return ArticleResponse(
             status="success",
@@ -162,7 +196,9 @@ async def generate_article(
             slug=slug,
             output_dir=output_dir,
             html_content=html_content,
-            markdown_content=markdown_content
+            markdown_content=markdown_content,
+            metadata=meta_dict,
+            images=image_list
         )
         
     except Exception as e:
