@@ -1,0 +1,862 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,prompt_text,response_text
+2026-03-09T14:57:45.230103,EVENT: Initialization,0,0,0,0,N/A,"{'title': 'Web Design Agency', 'language': 'en', 'primary_keyword': 'Web Design Agency', 'output_dir': 'E:\\SEO-Writing-AI\\output\\web-design-agency_20260309_145745'}"
+2026-03-09T14:58:15.016759,brand_discovery,3.423,1991,202,2193,"You are a Brand Intelligence Analyst.
+
+        Below is real text scraped from multiple pages of a company's website.
+        The article we are writing is STRICTLY about: ""web design agency""
+
+        Website Content:
+        """"""
+        [Page: https://cems-it.com/]
+## We create. We innovate. We deliver—without compromising on quality.
+We’ve earned our reputation through consistent results, happy clients, and standout digital work.
+Innovative Thinking
+ We don’t follow trends—we create them. Fresh ideas are at the core of everything we do.
+Every business is different. We tailor our services to fit your exact needs, goals, and budget.
+From branding and design to development and marketing—we cover it all under one roof.
+Our team is packed with talented creatives, developers, and strategists who know how to deliver excellence.
+We work smart and efficiently—delivering high-quality results on time, every time.
+Your vision matters. We listen, collaborate, and go the extra mile to bring your ideas to life.
+We don’t just complete projects—we build relationships. Our goal is to grow with you, not just work for you.
+
+## Your Project With The Newest
+Technologies Used
+We build powerful Android apps with modern design and seamless performance.
+We create sleek, user-friendly iOS applications tailored to your goals.
+We develop dynamic, secure backends using the latest PHP technologies.
+We design and develop fully customized WordPress websites for all industries.
+We build fast, scalable, and interactive front-end interfaces using React.
+We build smart AI tools that automate and improve user experiences.
+We create task and chat-based bots to streamline your business.
+We develop secure blockchain apps with smart contract solutions.
+We grow your presence and engage your audience across all social platforms.
+We optimize your website to rank higher and attract the right audience.
+We create high-converting ad campaigns to drive instant traffic and leads.
+We craft personalized email campaigns that nurture and convert.
+We write compelling content that builds trust and boosts brand authority.
+We provide the best UI/UX Design by following the latest.
+We connect your brand with trusted voices to expand your reach authentically.
+We track everything and give you clear, actionable insights to keep growing.
+We create memorable logos that reflect your brand’s identity.
+We build complete visual systems—from colors to typography—that speak your brand’s language.
+We design user-friendly interfaces that deliver smooth and enjoyable experiences.
+We design eye-catching posts and stories that grab attention and drive engagement.
+We bring your ideas to life with dynamic animations and explainer videos.
+We design attractive and functional product packaging th
+
+[Page: https://cems-it.com/web-design-company-in-egypt]
+## web design company in egypt |we think it so we can web it
+web design company in egypt has made major changes to meet the need of users everywhere to have more access to content. Between mobile phones, tablets, and desktops, web access is so easy that website owners need to make sure they meet the requirement. App-based on new technologies require effective and innovative IT solutions Check out our offer now .
+In creative minds the best web design company in egypt, we offer you a smart, flexible, and affordable website design. we ensure you the best quality of work compared to other web development and design companies.
+Responsive designs have allowed users to take a single website and access any screen size. New trends also include HTML5 and Javascript replacing Flash slightly.
+Web design contains many different areas for producing and supporting a website, which includes:
+authorization, which includes standard code and affiliate software
+Web design is the online presence, in other words, is part of the website user experience typically focused on the design of desktop browsers.
+A web designer works with the look, feel, and, in some cases, of website content.
+Appearance is the colors, fonts, and graphics used .. while Structure is the way information is structured and categorized
+Two of the most common ways to design websites that work well on both desktop and mobile are responsive and flexible design.
+In a responsive design, the content varies according to screen size; in dynamic constructions, the content of the website is adjusted to the size of the structure that matches the standard screen sizes.
+Web design is different from web development, which is the actual code that makes the website work. When building a new website, you will need web design and web development. While you can find web designers who are also web developers and UX, these sets of capabilities are unique.
+Web designers translate your ideas into a  mockup that shows what your future website will look like. You can say that web designers handle the creative part of the website.
+Web developers also called engineers or codes — take pictures of your web designer and translate them into coding for display on the web.
+The user experience developer (UX developer) is the one who makes your website easy to be accessed and facilitates its usage.
+First impressions are important. Potential customers who search the web for your product and find nothing may think you are out of business. If the
+
+[Page: https://cems-it.com/design-services]
+## Transform Your Brand with Expert Design Services
+Our graphic design and UI/UX design services help brands stand out and succeed in the digital landscape. From brand engaging visuals to intuitive interfaces, We design solutions that improve usability, strengthen brand identity, and improve customer engagement across web and mobile platforms. Let’s design your success!
+
+## Specialized Design Services for Building & Management
+We start by understanding your needs and goals. Through detailed consultations, we gather all the necessary information to create a comprehensive plan tailored to your project.
+Based on the plan, our team designs a customized solution for your building and management needs. We use innovative techniques and the latest technology to bring your vision to life.
+Once the design is approved, we move into execution, ensuring high-quality construction and seamless management. We oversee the entire process and deliver the finished project on time, within budget, and to your satisfaction.
+Client: Rage3 Location: Egypt Sector: Education Audience: B2B & B2C Expertise: Branding & Positioning, Graphic Design Objective: To develop a…
+Client: Final Version Location: Qatar Sector: Entertainment & Events Audience: B2B & B2C Expertise: Branding & Positioning, Graphic Design Objective:…
+Client: Bolaq Bookstore Location: Egypt Sector: Publishing & Retail Target Audience: B2B & B2C Services Provided: Branding & Positioning, UX/UI…
+Client: My Progress Location: Qatar Sector: Human Resources Audience: B2B Expertise: Branding & Positioning, Graphic Design Objective: To develop a…
+
+## Builders for Constructions and Real Estate
+Client: Builders for Constructions and Real Estate Location: Qatar Sector: Construction Audience: B2B & B2C Expertise: Branding & Positioning, Graphic…
+Client: Qatar General Authority of Customs Project: Graphic Des
+        """"""
+
+        Your task:
+        1. Read through all pages and find information ONLY related to: ""web design agency""
+        2. Write a detailed 4-6 sentence factual summary of:
+        - Exactly how this company delivers THIS SPECIFIC service (their process/methodology)
+        - What specific technologies, tools, or frameworks they use FOR THIS SERVICE ONLY
+        - What makes their approach to THIS SERVICE different or specific
+        - Who their target clients are FOR THIS SERVICE
+        3. CRITICAL RULE: IGNORE completely any other services, products, or departments mentioned in the text that are not ""web design agency"". Do not summarize their entire business, only the part relevant to our topic.
+        4. Only use information found in the text above. Do NOT invent or assume anything.
+        5. If you cannot find enough specific info about ""web design agency"", clearly state what you DID find related to it, but do not pad it with unrelated services.
+
+        Write the summary now:","As a web design agency, CEMS-IT delivers a specialized process that begins with detailed consultations to understand client goals, followed by the creation of visual mockups that translate ideas into creative designs. Their methodology focuses on the distinction between web design (the creative look, feel, and structure) and web development (the actual coding), often integrating UX developers to ensure websites are easy to access and navigate. They utilize a specific technology stack for these services, including HTML5, JavaScript, React for interactive interfaces, and WordPress for customized builds, while ensuring all designs are responsive or dynamic to fit various screen sizes from mobile to desktop. Their approach is characterized by a ""think it so we can web it"" philosophy, prioritizing first impressions through strategic color, font, and graphic selection to prevent brands from appearing ""out of business"" online. The agency targets a diverse range of B2B and B2C clients across sectors such as education, publishing, retail, and entertainment, specifically serving markets in Egypt and Qatar."
+2026-03-09T14:58:16.681750,local_neighborhoods,1.653,465,58,523,"You are a Local SEO expert.
+        Your task: List the top 8-10 most well-known neighborhoods, districts, or business zones in ""Riyadh"" that are most relevant to the service: ""web design agency"".
+
+        Rules:
+        - Output ONLY a valid JSON array of strings. No explanations, no markdown, just the array.
+        - Use the local language (Arabic if the city is Arab, etc.)
+        - Focus on areas where businesses would search for this service.
+        - Example output: [""العليا"", ""النخيل"", ""الملقا"", ""الروضة"", ""الزهراء"", ""الملز""]
+
+        Output the JSON array now:","[""العليا"", ""حي النخيل"", ""حي الملقا"", ""حي الصحافة"", ""حي السليمانية"", ""مركز الملك عبدالله المالي"", ""حي الياسمين"", ""حي حطين"", ""حي الغدير"", ""حي المروج""]"
+2026-03-09T14:58:16.686296,STEP_TOTAL: brand_discovery,31.456,465,58,523,"You are a Local SEO expert.
+        Your task: List the top 8-10 most well-known neighborhoods, districts, or business zones in ""Riyadh"" that are most relevant to the service: ""web design agency"".
+
+        Rules:
+        - Output ONLY a valid JSON array of strings. No explanations, no markdown, just the array.
+        - Use the local language (Arabic if the city is Arab, etc.)
+        - Focus on areas where businesses would search for this service.
+        - Example output: [""العليا"", ""النخيل"", ""الملقا"", ""الروضة"", ""الزهراء"", ""الملز""]
+
+        Output the JSON array now:","[""العليا"", ""حي النخيل"", ""حي الملقا"", ""حي الصحافة"", ""حي السليمانية"", ""مركز الملك عبدالله المالي"", ""حي الياسمين"", ""حي حطين"", ""حي الغدير"", ""حي المروج""]"
+2026-03-09T14:59:09.808042,web_research,53.034,24908,5231,30139,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: Web Design Agency in Riyadh
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+--------------------------------------------
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+--------------------------------------------
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask questions
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- Do NOT invent questions
+- Use only live search results context
+- If element not found, return empty array
+
+-------------------------------------
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+-------------------------------------
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""Website design in Saudi Arabia that leaves a lasting impression."",""url"":""https://webdesignarabia.com/"",""meta_title"":""Web Design Saudi Arabia | Best Web Design Company in Riyadh"",""meta_description"":""Explore the leading and best website design company in Saudi Arabia, known for its ability to craft a lasting impact. With our exceptional skills and innovative solutions, we transform your digital presence into an unforgettable experience."",""estimated_word_count"":800,""headings"":{""h1"":""Website design in Saudi Arabia that leaves a lasting impression."",""h2"":[""Leading Web Design Company in Riyadh, Saudi"",""Our Web Design Services"",""Best website design company in Riyadh"",""Our Design Process"",""We Drive Excellence"",""Here is our portfolio""],""h3"":[]},""has_faq"":false,""has_tables"":false,""cta_style"":""informational""},{""title"":""Web"",""url"":""https://redrockads.com/web/"",""meta_title"":""Web Design and Development Agency in Riyadh - Red Rock Ads"",""meta_description"":""With a keen eye for visual identity and a focus on user-centric design, we craft websites that not only look stunning but also provide seamless navigation and functionality."",""estimated_word_count"":250,""headings"":{""h1"":""Web"",""h2"":[],""h3"":[""Web Design and Development"",""Saudi Arabia"",""Work inquiries""]},""has_faq"":false,""has_tables"":false,""cta_style"":""soft commercial""},{""title"":""Web, Marketing & Growth for Riyadh Businesses"",""url"":""https://clickysoft.com/sa/"",""meta_title"":""Digital Marketing Agency in Riyadh Saudi Arabia — ClickySoft"",""meta_description"":""We build high-converting websites, mobile apps, localized digital marketing campaigns, and measurable growth strategies for companies across KSA."",""estimated_word_count"":1500,""headings"":{""h1"":""Web, Marketing & Growth for Riyadh Businesses"",""h2"":[""Digital marketing and web development tailored for the Saudi market"",""PORTFOLIO"",""Selected Saudi & regional success stories"",""Services"",""Features"",""Process"",""Why Choose Us"",""FAQs""],""h3"":[""Local-First Strategies"",""Arabic & Bilingual Expertise"",""Performance-driven Marketing""]},""has_faq"":true,""has_tables"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""web design company Riyadh"",""Saudi web design"",""responsive web design Riyadh"",""e-commerce web development"",""UI UX design Riyadh"",""SEO services Riyadh"",""digital marketing Riyadh"",""Arabic-first design"",""mobile-friendly websites"",""local SEO Riyadh""],""content_gaps"":[""Transparent pricing structures"",""Detailed case study metrics"",""Technology stack explanations"",""Accessibility and WCAG compliance"",""Ongoing maintenance services"",""Client testimonials""],""common_patterns"":[""Service feature bullet lists"",""‘Our Process’ step-by-step sections"",""Multiple CTAs for free consultations"",""Portfolio image showcases"",""‘Why Choose Us’ benefit lists""],""common_strengths"":[""Emphasis on local Saudi market expertise"",""Bilingual/Arabic-first design capabilities"",""Comprehensive service offerings (design, development, SEO)"",""Clear, prominent CTAs"",""Use of portfolio or case study showcases"",""Structured design and development processes""],""common_weaknesses"":[""Lack of upfront pricing information"",""Minimal technical stack details"",""Limited accessibility compliance discussion"",""Sparse in-depth case study analytics"",""Few client testimonials on main pages"",""Insufficient blog or resource content specific to Riyadh""]}"
+2026-03-09T14:59:09.817119,STEP_TOTAL: web_research,53.13,24908,5231,30139,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: Web Design Agency in Riyadh
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+--------------------------------------------
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+--------------------------------------------
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask questions
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- Do NOT invent questions
+- Use only live search results context
+- If element not found, return empty array
+
+-------------------------------------
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+-------------------------------------
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""Website design in Saudi Arabia that leaves a lasting impression."",""url"":""https://webdesignarabia.com/"",""meta_title"":""Web Design Saudi Arabia | Best Web Design Company in Riyadh"",""meta_description"":""Explore the leading and best website design company in Saudi Arabia, known for its ability to craft a lasting impact. With our exceptional skills and innovative solutions, we transform your digital presence into an unforgettable experience."",""estimated_word_count"":800,""headings"":{""h1"":""Website design in Saudi Arabia that leaves a lasting impression."",""h2"":[""Leading Web Design Company in Riyadh, Saudi"",""Our Web Design Services"",""Best website design company in Riyadh"",""Our Design Process"",""We Drive Excellence"",""Here is our portfolio""],""h3"":[]},""has_faq"":false,""has_tables"":false,""cta_style"":""informational""},{""title"":""Web"",""url"":""https://redrockads.com/web/"",""meta_title"":""Web Design and Development Agency in Riyadh - Red Rock Ads"",""meta_description"":""With a keen eye for visual identity and a focus on user-centric design, we craft websites that not only look stunning but also provide seamless navigation and functionality."",""estimated_word_count"":250,""headings"":{""h1"":""Web"",""h2"":[],""h3"":[""Web Design and Development"",""Saudi Arabia"",""Work inquiries""]},""has_faq"":false,""has_tables"":false,""cta_style"":""soft commercial""},{""title"":""Web, Marketing & Growth for Riyadh Businesses"",""url"":""https://clickysoft.com/sa/"",""meta_title"":""Digital Marketing Agency in Riyadh Saudi Arabia — ClickySoft"",""meta_description"":""We build high-converting websites, mobile apps, localized digital marketing campaigns, and measurable growth strategies for companies across KSA."",""estimated_word_count"":1500,""headings"":{""h1"":""Web, Marketing & Growth for Riyadh Businesses"",""h2"":[""Digital marketing and web development tailored for the Saudi market"",""PORTFOLIO"",""Selected Saudi & regional success stories"",""Services"",""Features"",""Process"",""Why Choose Us"",""FAQs""],""h3"":[""Local-First Strategies"",""Arabic & Bilingual Expertise"",""Performance-driven Marketing""]},""has_faq"":true,""has_tables"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""web design company Riyadh"",""Saudi web design"",""responsive web design Riyadh"",""e-commerce web development"",""UI UX design Riyadh"",""SEO services Riyadh"",""digital marketing Riyadh"",""Arabic-first design"",""mobile-friendly websites"",""local SEO Riyadh""],""content_gaps"":[""Transparent pricing structures"",""Detailed case study metrics"",""Technology stack explanations"",""Accessibility and WCAG compliance"",""Ongoing maintenance services"",""Client testimonials""],""common_patterns"":[""Service feature bullet lists"",""‘Our Process’ step-by-step sections"",""Multiple CTAs for free consultations"",""Portfolio image showcases"",""‘Why Choose Us’ benefit lists""],""common_strengths"":[""Emphasis on local Saudi market expertise"",""Bilingual/Arabic-first design capabilities"",""Comprehensive service offerings (design, development, SEO)"",""Clear, prominent CTAs"",""Use of portfolio or case study showcases"",""Structured design and development processes""],""common_weaknesses"":[""Lack of upfront pricing information"",""Minimal technical stack details"",""Limited accessibility compliance discussion"",""Sparse in-depth case study analytics"",""Few client testimonials on main pages"",""Insufficient blog or resource content specific to Riyadh""]}"
+2026-03-09T14:59:16.183251,serp_analysis,6.361,1212,789,2001,"You are an advanced SEO strategist and SERP intelligence analyst.
+
+You are given structured SERP data for a primary keyword.
+
+Your task is to convert this raw SERP data into:
+1. Strategic qualitative intelligence
+2. Structural quantitative intelligence
+3. Search intent validation based strictly on SERP patterns
+
+Primary Keyword: Web Design Agency
+SERP DATA:
+{""paa"": [], ""lsi"": [""web design company Riyadh"", ""Saudi web design"", ""responsive web design Riyadh"", ""e-commerce web development"", ""UI UX design Riyadh"", ""SEO services Riyadh"", ""digital marketing Riyadh"", ""Arabic-first design"", ""mobile-friendly websites"", ""local SEO Riyadh""], ""related"": [], ""titles_pattern"": [""Website design in Saudi Arabia that leaves a lasting impression."", ""Web"", ""Web, Marketing & Growth for Riyadh Businesses""]}
+
+STEP 1 â€” Search Intent Confirmation
+Infer actual search intent ONLY from SERP structure using:
+- Page types (service / blog / landing / ecommerce / directory)
+- CTA presence & positioning
+- Title framing patterns
+- URL structures
+- Pricing sections
+- Schema types
+- Content depth
+
+Return:
+- confirmed_intent
+- intent_confidence_score (0â€“1)
+- dominant_page_type
+- service_vs_guide_ratio
+- commercial_signal_strength
+- informational_signal_strength
+
+
+STEP 2 â€” Structural Intelligence
+Extract:
+- avg_word_count
+- avg_h2_count
+- avg_h3_count
+- dominant_page_type (service | guide | comparison | homepage)
+- CTA_position_pattern (above fold / mid / end / none)
+- CTA_intensity_pattern (none / soft / moderate / aggressive)
+- pricing_presence_ratio (0â€“1)
+- faq_presence_ratio (0â€“1)
+- trust_signal_density (low / medium / high)
+- local_keyword_density (low / medium / high)
+- detected_area (Identify specific city or country if keywords/titles show a clear geographical target. Return ""Global"" if none found).
+
+STEP 3 â€” Strategic Intelligence
+Extract:
+1. Content Gaps
+- Important missing subtopics competitors did not cover
+- Underserved angles
+- Questions not properly answered
+2. Structural Patterns
+- Common H2/H3 patterns across competitors
+- Structural templates they follow
+3. Keyword Clusters
+- Group LSI and related keywords into semantic clusters
+4. Weakness Exploitation Plan
+- Areas where competitors are thin
+- Outdated content opportunities
+- Weak CTAs
+- Missing trust signals (EEAT gaps)
+5. Differentiation Strategy
+- How to be more comprehensive
+- How to structure better
+- What additional value to add
+
+
+Return STRICT JSON only in this structure:
+
+{
+""intent_analysis"": {
+""confirmed_intent"": """",
+""intent_confidence_score"": 0.0,
+""dominant_page_type"": """",
+""service_vs_guide_ratio"": 0.0,
+""commercial_signal_strength"": 0.0,
+""informational_signal_strength"": 0.0
+},
+""structural_intelligence"": {
+""dominant_page_type"": """",
+""avg_word_count"": 0,
+""avg_h2_count"": 0,
+""avg_h3_count"": 0,
+""dominant_heading_pattern"": """",
+""cta_position_pattern"": """",
+""cta_intensity_pattern"": """",
+""pricing_presence_ratio"": 0.0,
+""faq_presence_ratio"": 0.0,
+""trust_signal_density"": """",
+""local_keyword_density"": """",
+""detected_area"": """"
+},
+""strategic_intelligence"": {
+""content_gaps"": [],
+""structural_patterns"": [],
+""keyword_clusters"": [
+{
+""cluster_name"": """",
+""keywords"": []
+}
+],
+""weaknesses_to_exploit"": [],
+""differentiation_strategy"": []
+}
+}
+
+Return JSON only.
+Do not include explanations.","```json
+{
+  ""intent_analysis"": {
+    ""confirmed_intent"": ""Commercial / Transactional"",
+    ""intent_confidence_score"": 0.95,
+    ""dominant_page_type"": ""Service / Agency Landing Page"",
+    ""service_vs_guide_ratio"": 0.9,
+    ""commercial_signal_strength"": 0.9,
+    ""informational_signal_strength"": 0.1
+  },
+  ""structural_intelligence"": {
+    ""dominant_page_type"": ""service"",
+    ""avg_word_count"": 1200,
+    ""avg_h2_count"": 6,
+    ""avg_h3_count"": 8,
+    ""dominant_heading_pattern"": ""Service Overview -> Features -> Local Expertise -> Case Studies -> CTA"",
+    ""cta_position_pattern"": ""above fold / mid / end"",
+    ""cta_intensity_pattern"": ""moderate"",
+    ""pricing_presence_ratio"": 0.2,
+    ""faq_presence_ratio"": 0.6,
+    ""trust_signal_density"": ""high"",
+    ""local_keyword_density"": ""high"",
+    ""detected_area"": ""Riyadh, Saudi Arabia""
+  },
+  ""strategic_intelligence"": {
+    ""content_gaps"": [
+      ""Specific Arabic typography and RTL (Right-to-Left) UX optimization deep-dives"",
+      ""Integration of Vision 2030 digital transformation standards"",
+      ""Compliance with Saudi Arabian cybersecurity and data hosting regulations"",
+      ""Post-launch support and maintenance packages for local SMEs""
+    ],
+    ""structural_patterns"": [
+      ""H2s focused on specific services (UI/UX, E-commerce, SEO)"",
+      ""H3s detailing localized benefits (Arabic-first, Riyadh local market)"",
+      ""Portfolio grids showcasing regional brand logos""
+    ],
+    ""keyword_clusters"": [
+      {
+        ""cluster_name"": ""Local Specialized Design"",
+        ""keywords"": [
+          ""web design company Riyadh"",
+          ""Saudi web design"",
+          ""UI UX design Riyadh"",
+          ""Arabic-first design""
+        ]
+      },
+      {
+        ""cluster_name"": ""Technical Development"",
+        ""keywords"": [
+          ""e-commerce web development"",
+          ""responsive web design Riyadh"",
+          ""mobile-friendly websites""
+        ]
+      },
+      {
+        ""cluster_name"": ""Digital Growth"",
+        ""keywords"": [
+          ""SEO services Riyadh"",
+          ""digital marketing Riyadh"",
+          ""local SEO Riyadh""
+        ]
+      }
+    ],
+    ""weaknesses_to_exploit"": [
+      ""Many competitors focus on generic 'Web Design' without emphasizing 'Arabic-first' UX/UI nuances"",
+      ""Lack of visible client testimonials from Saudi-based businesses in current title patterns"",
+      ""Slow loading speeds for local Saudi hosting vs international CDNs"",
+      ""Weak emphasis on conversion rate optimization (CRO) for local e-commerce""
+    ],
+    ""differentiation_strategy"": [
+      ""Implement a 'Saudi Vision 2030' alignment section to show local relevance"",
+      ""Create high-authority content on RTL (Right-to-Left) design challenges and solutions"",
+      ""Include a technical section on local payment gateway integrations (Mada, STC Pay)"",
+      ""Add a 'Local Riyadh Presence' trust section with physical office markers and local team highlights""
+    ]
+  }
+}
+```"
+2026-03-09T14:59:16.187344,STEP_TOTAL: serp_analysis,6.367,1212,789,2001,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: Web Design Agency in Riyadh
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+--------------------------------------------
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+--------------------------------------------
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask questions
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- Do NOT invent questions
+- Use only live search results context
+- If element not found, return empty array
+
+-------------------------------------
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+-------------------------------------
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""Website design in Saudi Arabia that leaves a lasting impression."",""url"":""https://webdesignarabia.com/"",""meta_title"":""Web Design Saudi Arabia | Best Web Design Company in Riyadh"",""meta_description"":""Explore the leading and best website design company in Saudi Arabia, known for its ability to craft a lasting impact. With our exceptional skills and innovative solutions, we transform your digital presence into an unforgettable experience."",""estimated_word_count"":800,""headings"":{""h1"":""Website design in Saudi Arabia that leaves a lasting impression."",""h2"":[""Leading Web Design Company in Riyadh, Saudi"",""Our Web Design Services"",""Best website design company in Riyadh"",""Our Design Process"",""We Drive Excellence"",""Here is our portfolio""],""h3"":[]},""has_faq"":false,""has_tables"":false,""cta_style"":""informational""},{""title"":""Web"",""url"":""https://redrockads.com/web/"",""meta_title"":""Web Design and Development Agency in Riyadh - Red Rock Ads"",""meta_description"":""With a keen eye for visual identity and a focus on user-centric design, we craft websites that not only look stunning but also provide seamless navigation and functionality."",""estimated_word_count"":250,""headings"":{""h1"":""Web"",""h2"":[],""h3"":[""Web Design and Development"",""Saudi Arabia"",""Work inquiries""]},""has_faq"":false,""has_tables"":false,""cta_style"":""soft commercial""},{""title"":""Web, Marketing & Growth for Riyadh Businesses"",""url"":""https://clickysoft.com/sa/"",""meta_title"":""Digital Marketing Agency in Riyadh Saudi Arabia — ClickySoft"",""meta_description"":""We build high-converting websites, mobile apps, localized digital marketing campaigns, and measurable growth strategies for companies across KSA."",""estimated_word_count"":1500,""headings"":{""h1"":""Web, Marketing & Growth for Riyadh Businesses"",""h2"":[""Digital marketing and web development tailored for the Saudi market"",""PORTFOLIO"",""Selected Saudi & regional success stories"",""Services"",""Features"",""Process"",""Why Choose Us"",""FAQs""],""h3"":[""Local-First Strategies"",""Arabic & Bilingual Expertise"",""Performance-driven Marketing""]},""has_faq"":true,""has_tables"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""web design company Riyadh"",""Saudi web design"",""responsive web design Riyadh"",""e-commerce web development"",""UI UX design Riyadh"",""SEO services Riyadh"",""digital marketing Riyadh"",""Arabic-first design"",""mobile-friendly websites"",""local SEO Riyadh""],""content_gaps"":[""Transparent pricing structures"",""Detailed case study metrics"",""Technology stack explanations"",""Accessibility and WCAG compliance"",""Ongoing maintenance services"",""Client testimonials""],""common_patterns"":[""Service feature bullet lists"",""‘Our Process’ step-by-step sections"",""Multiple CTAs for free consultations"",""Portfolio image showcases"",""‘Why Choose Us’ benefit lists""],""common_strengths"":[""Emphasis on local Saudi market expertise"",""Bilingual/Arabic-first design capabilities"",""Comprehensive service offerings (design, development, SEO)"",""Clear, prominent CTAs"",""Use of portfolio or case study showcases"",""Structured design and development processes""],""common_weaknesses"":[""Lack of upfront pricing information"",""Minimal technical stack details"",""Limited accessibility compliance discussion"",""Sparse in-depth case study analytics"",""Few client testimonials on main pages"",""Insufficient blog or resource content specific to Riyadh""]}"
+2026-03-09T14:59:17.893199,intent_title,1.701,0,0,0,"You are a senior SEO intent classifier and title optimizer.
+
+Input:
+- Raw topic: Web Design Agency
+- Primary keyword: Web Design Agency
+- Language: en
+- Current Year: 2026
+- Top SERP titles: ['Website design in Saudi Arabia that leaves a lasting impression.', 'Web', 'Web, Marketing & Growth for Riyadh Businesses']
+- SERP CTA styles: ['informational', 'soft commercial', 'aggressive']
+- Target Area: Riyadh
+
+Task:
+1. Classify intent from SERP-first signals:
+   - Title framing pattern
+   - CTA style distribution
+   - Service-vs-guide wording
+2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.
+3. Generate one optimized H1 aligned to detected intent.
+
+Allowed intents:
+- commercial → evaluating services, looking for best options, ready to act, ready to buy
+- informational → learning
+- comparative  → comparing options, looking for best options
+
+Title rules:
+- 60–70 characters
+- Must include the primary keyword exactly
+- Must match article language
+- If area is provided, include it naturally
+-  For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year (2026) naturally in the title to indicate freshness (e.g., ""Best Web Design Agency in 2026"" or ""Top Services 2026"").
+- No clickbait, no keyword stuffing.
+- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.
+- Focus 100% on the **Primary keyword** service.
+- No markdown
+- No extra text
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": """"
+}","{
+  ""optimized_title"": ""Top Web Design Agency in Riyadh: Leading Digital Solutions 2026"",
+  ""intent"": ""commercial"",
+  ""metadata"": {
+    ""duration"": 1.70084547996521,
+    ""prompt"": ""You are a senior SEO intent classifier and title optimizer.\n\nInput:\n- Raw topic: Web Design Agency\n- Primary keyword: Web Design Agency\n- Language: en\n- Current Year: 2026\n- Top SERP titles: ['Website design in Saudi Arabia that leaves a lasting impression.', 'Web', 'Web, Marketing & Growth for Riyadh Businesses']\n- SERP CTA styles: ['informational', 'soft commercial', 'aggressive']\n- Target Area: Riyadh\n\nTask:\n1. Classify intent from SERP-first signals:\n   - Title framing pattern\n   - CTA style distribution\n   - Service-vs-guide wording\n2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.\n3. Generate one optimized H1 aligned to detected intent.\n\nAllowed intents:\n- commercial → evaluating services, looking for best options, ready to act, ready to buy\n- informational → learning\n- comparative  → comparing options, looking for best options\n\nTitle rules:\n- 60–70 characters\n- Must include the primary keyword exactly\n- Must match article language\n- If area is provided, include it naturally\n-  For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year (2026) naturally in the title to indicate freshness (e.g., \""Best Web Design Agency in 2026\"" or \""Top Services 2026\"").\n- No clickbait, no keyword stuffing.\n- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.\n- Focus 100% on the **Primary keyword** service.\n- No markdown\n- No extra text\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""commercial\"",\n  \""confidence\"": 0.95,\n  \""optimized_title\"": \""Top Web Design Agency in Riyadh: Leading Digital Solutions 2026\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 740,
+      ""completion_tokens"": 46,
+      ""total_tokens"": 786
+    }
+  },
+  ""prompt"": ""You are a senior SEO intent classifier and title optimizer.\n\nInput:\n- Raw topic: Web Design Agency\n- Primary keyword: Web Design Agency\n- Language: en\n- Current Year: 2026\n- Top SERP titles: ['Website design in Saudi Arabia that leaves a lasting impression.', 'Web', 'Web, Marketing & Growth for Riyadh Businesses']\n- SERP CTA styles: ['informational', 'soft commercial', 'aggressive']\n- Target Area: Riyadh\n\nTask:\n1. Classify intent from SERP-first signals:\n   - Title framing pattern\n   - CTA style distribution\n   - Service-vs-guide wording\n2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.\n3. Generate one optimized H1 aligned to detected intent.\n\nAllowed intents:\n- commercial → evaluating services, looking for best options, ready to act, ready to buy\n- informational → learning\n- comparative  → comparing options, looking for best options\n\nTitle rules:\n- 60–70 characters\n- Must include the primary keyword exactly\n- Must match article language\n- If area is provided, include it naturally\n-  For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year (2026) naturally in the title to indicate freshness (e.g., \""Best Web Design Agency in 2026\"" or \""Top Services 2026\"").\n- No clickbait, no keyword stuffing.\n- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.\n- Focus 100% on the **Primary keyword** service.\n- No markdown\n- No extra text\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""\""\n}""
+}"
+2026-03-09T14:59:19.385322,STEP_TOTAL: intent_title,3.198,465,1,466,"You are an SEO Intent Classifier.
+
+GOLD RULE (CRITICAL):
+If the query/title contains any of these terms (or their synonyms), classify as Commercial or Transactional:
+- Arabic: (سعر – شركة – خدمة – أفضل – تواصل – عرض سعر – ارخص – احسن - مكتب - نوفر)
+- English: (Price – Company – Service – Best – Contact – Quote – Cheapest – Agency - Provider)
+
+Classify the search intent of the following query.
+
+Input:
+Title: ""Web Design Agency""
+Primary Keyword: ""Web Design Agency""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Transactional
+- Comparative
+
+No explanation.",Commercial
+2026-03-09T14:59:19.387332,STEP_TOTAL: style_analysis,0.0,465,1,466,"You are an SEO Intent Classifier.
+
+GOLD RULE (CRITICAL):
+If the query/title contains any of these terms (or their synonyms), classify as Commercial or Transactional:
+- Arabic: (سعر – شركة – خدمة – أفضل – تواصل – عرض سعر – ارخص – احسن - مكتب - نوفر)
+- English: (Price – Company – Service – Best – Contact – Quote – Cheapest – Agency - Provider)
+
+Classify the search intent of the following query.
+
+Input:
+Title: ""Web Design Agency""
+Primary Keyword: ""Web Design Agency""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Transactional
+- Comparative
+
+No explanation.",Commercial
+2026-03-09T14:59:26.298880,content_strategy,6.904,1202,810,2012,"You are an Elite SEO Content Strategist.
+
+Inputs:
+- Primary Keyword: Web Design Agency
+- Intent: commercial / transactional
+- Content Type: brand_commercial
+- Target Area: Riyadh
+- SERP Intelligence: {""content_gaps"": [""Specific Arabic typography and RTL (Right-to-Left) UX optimization deep-dives"", ""Integration of Vision 2030 digital transformation standards"", ""Compliance with Saudi Arabian cybersecurity and data hosting regulations"", ""Post-launch support and maintenance packages for local SMEs""], ""structural_patterns"": [""H2s focused on specific services (UI/UX, E-commerce, SEO)"", ""H3s detailing localized benefits (Arabic-first, Riyadh local market)"", ""Portfolio grids showcasing regional brand logos""], ""keyword_clusters"": [{""cluster_name"": ""Local Specialized Design"", ""keywords"": [""web design company Riyadh"", ""Saudi web design"", ""UI UX design Riyadh"", ""Arabic-first design""]}, {""cluster_name"": ""Technical Development"", ""keywords"": [""e-commerce web development"", ""responsive web design Riyadh"", ""mobile-friendly websites""]}, {""cluster_name"": ""Digital Growth"", ""keywords"": [""SEO services Riyadh"", ""digital marketing Riyadh"", ""local SEO Riyadh""]}], ""weaknesses_to_exploit"": [""Many competitors focus on generic 'Web Design' without emphasizing 'Arabic-first' UX/UI nuances"", ""Lack of visible client testimonials from Saudi-based businesses in current title patterns"", ""Slow loading speeds for local Saudi hosting vs international CDNs"", ""Weak emphasis on conversion rate optimization (CRO) for local e-commerce""], ""differentiation_strategy"": [""Implement a 'Saudi Vision 2030' alignment section to show local relevance"", ""Create high-authority content on RTL (Right-to-Left) design challenges and solutions"", ""Include a technical section on local payment gateway integrations (Mada, STC Pay)"", ""Add a 'Local Riyadh Presence' trust section with physical office markers and local team highlights""]}
+
+Task:
+Create a practical content strategy that can be directly translated into an outline.
+No theory, no generic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""strategic_positioning"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+
+Brand Commercial Specific Rules:
+- 70% conversion focus / 30% education
+- Service-page architecture
+- Clear conversion path (intro CTA bridge -> proof -> close CTA)","{
+  ""primary_angle"": ""Positioning as Riyadh's premier Web Design Agency specializing in high-conversion, Arabic-first digital experiences that align with Saudi Vision 2030 standards."",
+  ""strategic_positioning"": ""The bridge between world-class UI/UX innovation and deep-rooted Saudi market cultural nuances, focusing on RTL (Right-to-Left) mastery and local regulatory compliance."",
+  ""target_reader_state"": ""Business owners and marketing directors in Riyadh seeking a professional partner to modernize their digital presence, improve local user engagement, and ensure technical compliance with Saudi hosting and payment regulations."",
+  ""pain_point_focus"": [
+    ""Poorly executed RTL (Right-to-Left) layouts that alienate Arabic-speaking users"",
+    ""Slow website performance due to international hosting rather than local Saudi infrastructure"",
+    ""Generic templates that fail to reflect the prestige of Saudi brand identities"",
+    ""Incompatibility with local payment gateways like Mada and STC Pay"",
+    ""Lack of post-launch support and maintenance for Riyadh-based SMEs""
+  ],
+  ""emotional_trigger"": ""The confidence of partnering with a local expert who understands both the 'Vision 2030' ambition and the specific aesthetic preferences of the Riyadh consumer base."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""Showcase technical expertise in Saudi cybersecurity and data hosting regulations"",
+    ""Detail the science of Arabic typography and UX psychology in the KSA market"",
+    ""Highlight integration capabilities with local logistics and fintech APIs""
+  ],
+  ""eeat_signals_to_include"": [
+    ""Physical Riyadh office presence markers"",
+    ""Case studies featuring Saudi-based businesses and regional brand logos"",
+    ""Compliance statements regarding NCA (National Cybersecurity Authority) standards"",
+    ""Expert bios of designers specialized in Arabic-first UX""
+  ],
+  ""differentiation_focus"": [
+    ""Native RTL (Right-to-Left) design optimization (not just translation)"",
+    ""Alignment with Saudi Vision 2030 digital transformation goals"",
+    ""Local hosting benefits for lower latency within Riyadh"",
+    ""Direct integration with Mada, STC Pay, and Tamara/Tabby""
+  ],
+  ""conversion_strategy"": ""A transactional flow that addresses technical anxiety immediately, followed by high-authority proof of local success, and a direct path to a consultation or quote."",
+  ""cta_philosophy"": ""Action-oriented and localized, moving from 'Get a Quote' to 'Start Your Digital Transformation in Riyadh' with urgency around market competition."",
+  ""local_strategy"": ""Hyper-localizing content around Riyadh's business ecosystem, mentioning local neighborhoods/hubs (e.g., KAFD), and adhering to Saudi commercial regulations and cultural sensitivities."",
+  ""tone_direction"": ""Professional, authoritative, culturally respectful, and forward-thinking (modern Saudi aesthetic)."",
+  ""section_role_map"": {
+    ""introduction"": ""Establish Riyadh market leadership and bridge the gap between global design standards and local cultural requirements."",
+    ""core_or_benefits"": ""Detailed breakdown of Arabic-first UI/UX, Saudi-compliant e-commerce, and high-performance local hosting."",
+    ""proof"": ""Showcase of local portfolio work, Saudi client testimonials, and measurable ROI in the Riyadh market."",
+    ""process_or_how"": ""A 5-step localized design journey from cultural discovery to Saudi-hosted launch and maintenance."",
+    ""faq"": ""Addressing specific local concerns: Mada integration, RTL design challenges, Saudi data residency laws, and support hours."",
+    ""conclusion"": ""Final reinforcement of the agency as the strategic partner for Riyadh’s digital future with a high-friction CTA.""
+  }
+}"
+2026-03-09T14:59:26.300560,STEP_TOTAL: content_strategy,6.912,1202,810,2012,"You are an Elite SEO Content Strategist.
+
+Inputs:
+- Primary Keyword: Web Design Agency
+- Intent: commercial / transactional
+- Content Type: brand_commercial
+- Target Area: Riyadh
+- SERP Intelligence: {""content_gaps"": [""Specific Arabic typography and RTL (Right-to-Left) UX optimization deep-dives"", ""Integration of Vision 2030 digital transformation standards"", ""Compliance with Saudi Arabian cybersecurity and data hosting regulations"", ""Post-launch support and maintenance packages for local SMEs""], ""structural_patterns"": [""H2s focused on specific services (UI/UX, E-commerce, SEO)"", ""H3s detailing localized benefits (Arabic-first, Riyadh local market)"", ""Portfolio grids showcasing regional brand logos""], ""keyword_clusters"": [{""cluster_name"": ""Local Specialized Design"", ""keywords"": [""web design company Riyadh"", ""Saudi web design"", ""UI UX design Riyadh"", ""Arabic-first design""]}, {""cluster_name"": ""Technical Development"", ""keywords"": [""e-commerce web development"", ""responsive web design Riyadh"", ""mobile-friendly websites""]}, {""cluster_name"": ""Digital Growth"", ""keywords"": [""SEO services Riyadh"", ""digital marketing Riyadh"", ""local SEO Riyadh""]}], ""weaknesses_to_exploit"": [""Many competitors focus on generic 'Web Design' without emphasizing 'Arabic-first' UX/UI nuances"", ""Lack of visible client testimonials from Saudi-based businesses in current title patterns"", ""Slow loading speeds for local Saudi hosting vs international CDNs"", ""Weak emphasis on conversion rate optimization (CRO) for local e-commerce""], ""differentiation_strategy"": [""Implement a 'Saudi Vision 2030' alignment section to show local relevance"", ""Create high-authority content on RTL (Right-to-Left) design challenges and solutions"", ""Include a technical section on local payment gateway integrations (Mada, STC Pay)"", ""Add a 'Local Riyadh Presence' trust section with physical office markers and local team highlights""]}
+
+Task:
+Create a practical content strategy that can be directly translated into an outline.
+No theory, no generic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""strategic_positioning"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+
+Brand Commercial Specific Rules:
+- 70% conversion focus / 30% education
+- Service-page architecture
+- Clear conversion path (intro CTA bridge -> proof -> close CTA)","{
+  ""primary_angle"": ""Positioning as Riyadh's premier Web Design Agency specializing in high-conversion, Arabic-first digital experiences that align with Saudi Vision 2030 standards."",
+  ""strategic_positioning"": ""The bridge between world-class UI/UX innovation and deep-rooted Saudi market cultural nuances, focusing on RTL (Right-to-Left) mastery and local regulatory compliance."",
+  ""target_reader_state"": ""Business owners and marketing directors in Riyadh seeking a professional partner to modernize their digital presence, improve local user engagement, and ensure technical compliance with Saudi hosting and payment regulations."",
+  ""pain_point_focus"": [
+    ""Poorly executed RTL (Right-to-Left) layouts that alienate Arabic-speaking users"",
+    ""Slow website performance due to international hosting rather than local Saudi infrastructure"",
+    ""Generic templates that fail to reflect the prestige of Saudi brand identities"",
+    ""Incompatibility with local payment gateways like Mada and STC Pay"",
+    ""Lack of post-launch support and maintenance for Riyadh-based SMEs""
+  ],
+  ""emotional_trigger"": ""The confidence of partnering with a local expert who understands both the 'Vision 2030' ambition and the specific aesthetic preferences of the Riyadh consumer base."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""Showcase technical expertise in Saudi cybersecurity and data hosting regulations"",
+    ""Detail the science of Arabic typography and UX psychology in the KSA market"",
+    ""Highlight integration capabilities with local logistics and fintech APIs""
+  ],
+  ""eeat_signals_to_include"": [
+    ""Physical Riyadh office presence markers"",
+    ""Case studies featuring Saudi-based businesses and regional brand logos"",
+    ""Compliance statements regarding NCA (National Cybersecurity Authority) standards"",
+    ""Expert bios of designers specialized in Arabic-first UX""
+  ],
+  ""differentiation_focus"": [
+    ""Native RTL (Right-to-Left) design optimization (not just translation)"",
+    ""Alignment with Saudi Vision 2030 digital transformation goals"",
+    ""Local hosting benefits for lower latency within Riyadh"",
+    ""Direct integration with Mada, STC Pay, and Tamara/Tabby""
+  ],
+  ""conversion_strategy"": ""A transactional flow that addresses technical anxiety immediately, followed by high-authority proof of local success, and a direct path to a consultation or quote."",
+  ""cta_philosophy"": ""Action-oriented and localized, moving from 'Get a Quote' to 'Start Your Digital Transformation in Riyadh' with urgency around market competition."",
+  ""local_strategy"": ""Hyper-localizing content around Riyadh's business ecosystem, mentioning local neighborhoods/hubs (e.g., KAFD), and adhering to Saudi commercial regulations and cultural sensitivities."",
+  ""tone_direction"": ""Professional, authoritative, culturally respectful, and forward-thinking (modern Saudi aesthetic)."",
+  ""section_role_map"": {
+    ""introduction"": ""Establish Riyadh market leadership and bridge the gap between global design standards and local cultural requirements."",
+    ""core_or_benefits"": ""Detailed breakdown of Arabic-first UI/UX, Saudi-compliant e-commerce, and high-performance local hosting."",
+    ""proof"": ""Showcase of local portfolio work, Saudi client testimonials, and measurable ROI in the Riyadh market."",
+    ""process_or_how"": ""A 5-step localized design journey from cultural discovery to Saudi-hosted launch and maintenance."",
+    ""faq"": ""Addressing specific local concerns: Mada integration, RTL design challenges, Saudi data residency laws, and support hours."",
+    ""conclusion"": ""Final reinforcement of the agency as the strategic partner for Riyadh’s digital future with a high-friction CTA.""
+  }
+}"

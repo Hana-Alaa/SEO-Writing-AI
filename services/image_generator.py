@@ -194,10 +194,10 @@ class ImageGenerator:
     """
 
     STYLE_PREFIXES = {
-        "Featured": "Premium hero header, award-winning cinematic studio lighting, UNCLUTTERED, ultra-realistic 8k texture, sophisticated MINIMALIST modern composition, professional advertising photography, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, STRICTLY NO TEXT, NO ARABIC LETTERS, NO GIBBERISH,",
-        "Infographic": "Exclusive custom-designed 3D isometric process flow, UNCLUTTERED, high-end corporate visualization, clean structural elegance, soft ambient occlusion shadows, VERY WIDE SAFE MARGINS, KEEP CONTENT CENTERED AND AWAY FROM EDGES, STRICTLY NO ARABIC TEXT, MINIMALIST PERFECT ENGLISH TEXT ONLY, PERFECT SPELLING,",
-        "Illustration": "Bespoke digital art, UNCLUTTERED, minimalist editorial style, soft color transitions, premium conceptual depth, professional stroke-work, high-end finish, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, STRICTLY NO TEXT, NO ARABIC LETTERS, NO GIBBERISH,",
-        "Mockup": "Ultra-premium 3D product render, UNCLUTTERED, elegant minimalist environment, soft blurred background, realistic materials (glass/metal/matte), high-end presentation, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, STRICTLY NO TEXT, NO ARABIC LETTERS, NO GIBBERISH,"
+        "Featured": "Premium hero header, award-winning cinematic studio lighting, UNCLUTTERED, ultra-realistic 8k texture, sophisticated MINIMALIST modern composition, professional advertising photography, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, NO TEXT BY DEFAULT, if text is necessary use high-end professional Arabic or English typography, STRICTLY NO GIBBERISH, NO DISCONNECTED LETTERS, NO NONSENSICAL CHARACTERS, perfectly legible,",
+        "Infographic": "Exclusive custom-designed 3D isometric process flow, UNCLUTTERED, high-end corporate visualization, clean structural elegance, soft ambient occlusion shadows, VERY WIDE SAFE MARGINS, KEEP CONTENT CENTERED AND AWAY FROM EDGES, modern clean minimalistic Arabic or English typography, PERFECT SPELLING, NO GIBBERISH, NO NONSENSICAL CHARACTERS, perfectly aligned legible text,",
+        "Illustration": "Bespoke digital art, UNCLUTTERED, minimalist editorial style, soft color transitions, premium conceptual depth, professional stroke-work, high-end finish, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, NO TEXT BY DEFAULT, if text is necessary use artistic Arabic calligraphy, STRICTLY NO GIBBERISH, NO DISCONNECTED LETTERS, NO NONSENSICAL CHARACTERS, perfectly legible,",
+        "Mockup": "Ultra-premium 3D product render, UNCLUTTERED, elegant minimalist environment, soft blurred background, realistic materials (glass/metal/matte), high-end presentation, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, NO TEXT BY DEFAULT, if text is necessary use professional typography, STRICTLY NO GIBBERISH, NO DISCONNECTED LETTERS, NO NONSENSICAL CHARACTERS, perfectly legible,"
     }
 
     def __init__(self, ai_client, save_dir: str = "output/images", image_frame_path: str = None):
@@ -484,34 +484,39 @@ class ImageGenerator:
                                 white_box[3] = max(white_box[3], y)
 
                 if has_transparency or white_box:
-                    logger.info(f"Applying Smart Fit composition. Transparency: {has_transparency}, WhiteBox: {bool(white_box)}")
                     tx1, ty1, tx2, ty2 = hole_bbox if has_transparency else white_box
                     box_w, box_h = tx2 - tx1 + 1, ty2 - ty1 + 1
+                    box_aspect = box_w / box_h
                     
-                    # 1. Prepare AI image foreground (FIT / CONTAIN)
                     base_w, base_h = base_image.size
-                    aspect = base_w / base_h
+                    img_aspect = base_w / base_h
+                    
+                    # Always use "Blurred Wings" (Smart Fit) as requested by the user. 
+                    # This provides a consistent safety margin for logos and frames,
+                    # ensuring they never obscure important image content.
+                    
+                    logger.info("Using Smart Fit (Blurred Wings) for all images to protect content margins.")
+                    # 1. Prepare AI image foreground (FIT / CONTAIN)
                     # Apply a 5% safety margin to ensure content isn't touched by frame edges
                     safe_box_w = int(box_w * 0.95)
                     safe_box_h = int(box_h * 0.95)
                     
-                    if aspect > box_aspect: # Image is wider than hole
+                    if img_aspect > box_aspect: # Image is wider than hole
                         fit_w = safe_box_w
-                        fit_h = int(safe_box_w / aspect)
+                        fit_h = int(safe_box_w / img_aspect)
                     else: # Image is taller than hole
                         fit_h = safe_box_h
-                        fit_w = int(safe_box_h * aspect)
+                        fit_w = int(safe_box_h * img_aspect)
 
                     foreground = base_image.resize((fit_w, fit_h), Image.Resampling.LANCZOS)
                     
                     # 2. Prepare AI image background (FILL + BLUR)
-                    # We reuse the FILL logic but blur it to handle aspect mismatches elegantly
-                    if aspect > box_aspect:
+                    if img_aspect > box_aspect:
                         fill_h = box_h
-                        fill_w = int(box_h * aspect)
+                        fill_w = int(box_h * img_aspect)
                     else:
                         fill_w = box_w
-                        fill_h = int(box_w / aspect)
+                        fill_h = int(box_w / img_aspect)
                     
                     background = base_image.resize((fill_w, fill_h), Image.Resampling.LANCZOS)
                     left = (fill_w - box_w) // 2
@@ -519,43 +524,99 @@ class ImageGenerator:
                     background = background.crop((left, top, left + box_w, top + box_h))
                     
                     from PIL import ImageFilter, ImageEnhance
-                    background = background.filter(ImageFilter.GaussianBlur(radius=20))
-                    # Darken background slightly to emphasize foreground
-                    background = ImageEnhance.Brightness(background).enhance(0.85)
+                    background = background.filter(ImageFilter.GaussianBlur(radius=25))
+                    background = ImageEnhance.Brightness(background).enhance(0.8)
 
                     # 3. Layering
-                    content_block = Image.new("RGBA", (box_w, box_h), (255, 255, 255, 255))
+                    content_block = Image.new("RGBA", (box_w, box_h), (0, 0, 0, 0))
                     content_block.paste(background, (0, 0))
                     
-                    # Center the foreground on the blurred background
                     offset_x = (box_w - fit_w) // 2
                     offset_y = (box_h - fit_h) // 2
                     content_block.paste(foreground, (offset_x, offset_y), mask=foreground if foreground.mode == 'RGBA' else None)
 
                     # Final composite
-                    result = Image.new("RGBA", (tw, th), (255, 255, 255, 255))
+                    result = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
                     result.paste(content_block, (tx1, ty1))
-                    result.alpha_composite(template)
+                    result = Image.alpha_composite(result, template)
                     return result
 
-                # Final Fallback: Split-Frame logic (unchanged essentially but ensures safe framing)
+                # Final Fallback: Split-Frame logic
                 logger.info("Using split-frame fallback")
                 split_y = int(th * 0.78)
                 frame_region = template.crop((0, split_y, tw, th))
-                box_w, box_h = tw, split_y
                 
-                # Apply same Smart Fit logic for split frame if needed, but usually templates match
                 base_w, base_h = base_image.size
-                resized_base = base_image.resize((tw, int(tw / (base_w/base_h))), Image.Resampling.LANCZOS)
+                # Fill the top portion (tw, split_y)
+                target_aspect = tw / split_y
+                if (base_w / base_h) > target_aspect:
+                    fill_h = split_y
+                    fill_w = int(split_y * (base_w/base_h))
+                else:
+                    fill_w = tw
+                    fill_h = int(tw / (base_w/base_h))
+                    
+                resized_base = base_image.resize((fill_w, fill_h), Image.Resampling.LANCZOS)
+                left = (fill_w - tw) // 2
+                top = (fill_h - split_y) // 2
+                resized_base = resized_base.crop((left, top, left + tw, top + split_y))
                 
                 result = Image.new("RGBA", (tw, th))
                 result.paste(resized_base, (0, 0))
-                result.paste(frame_region, (0, split_y))
+                result.paste(frame_region, (0, split_y), mask=frame_region)
                 return result
 
         except Exception as e:
             logger.error(f"Template composition failed: {e}")
             return base_image
+
+    def _is_edge_busy(self, img: Image.Image, img_aspect: float, box_aspect: float) -> bool:
+        """
+        Detects if the edges of the image (the areas that would be cropped) are 'busy'
+        (high visual complexity/entropy).
+        """
+        try:
+            w, h = img.size
+            # We care about the horizontal edges if img is wider than box, 
+            # and vertical edges if img is taller than box.
+            
+            # Simple heuristic: check the entropy of the 10% outer margins
+            edge_margin = 0.12 # 12% margin
+            
+            if img_aspect > box_aspect:
+                # Wide image: check left and right strips
+                margin_px = int(w * edge_margin)
+                left_strip = img.crop((0, 0, margin_px, h)).convert("L")
+                right_strip = img.crop((w - margin_px, 0, w, h)).convert("L")
+                strips = [left_strip, right_strip]
+            else:
+                # Tall image: check top and bottom strips
+                margin_px = int(h * edge_margin)
+                top_strip = img.crop((0, 0, w, margin_px)).convert("L")
+                bottom_strip = img.crop((0, h - margin_px, w, h)).convert("L")
+                strips = [top_strip, bottom_strip]
+
+            import numpy as np
+            def get_entropy(pil_img):
+                # Calculate histogram entropy
+                hist = pil_img.histogram()
+                hist_dist = np.array(hist) / sum(hist)
+                # Remove 0s to avoid log2 error
+                hist_dist = hist_dist[hist_dist > 0]
+                return -np.sum(hist_dist * np.log2(hist_dist))
+
+            entropies = [get_entropy(s) for s in strips]
+            avg_entropy = sum(entropies) / len(entropies)
+            
+            logger.debug(f"Edge Complexity Check: Avg Entropy = {avg_entropy:.2f}")
+            
+            # Threshold: ~4.5-5.0 is usually where details/text start to appear.
+            # Flat backgrounds/skies are usually < 3.5.
+            return avg_entropy > 4.8
+            
+        except Exception as e:
+            logger.warning(f"Edge detection failed: {e}. Defaulting to safe mode (Smart Fit).")
+            return True # Fallback to safe mode if check fails
 
     def _find_white_rectangle(self, img: Image.Image) -> Optional[tuple]:
         """

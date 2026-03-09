@@ -14,15 +14,14 @@ class ImageInserter:
         new_lines = []
         h1_done = False
 
-        # Prepend featured image if it exists
-        if featured:
-            new_lines.append(f'![{featured["alt_text"]}]({featured["local_path"]})')
-            new_lines.append("") # Spacer
-
         for line in lines:
             new_lines.append(line)
-            if line.startswith("# "):
+            if not h1_done and line.startswith("# "):
                 h1_done = True
+                if featured:
+                    new_lines.append("") # Spacer
+                    new_lines.append(f'![{featured["alt_text"]}]({featured["local_path"]})')
+                    new_lines.append("") # Spacer
 
         final_markdown = "\n".join(new_lines)
 

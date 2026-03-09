@@ -525,9 +525,11 @@ class Assembler:
                     logger.info(f"[Assembler] Removing duplicate heading from content: '{first_line}'")
                     content = "\n".join(content_lines[1:]).strip()
 
-            # Skip adding the heading if it's the exact word 'Introduction' (or common translations)
-            # Because we want the intro text to flow seamlessly after the Title (H1).
-            skip_heading = heading.strip().lower() in ["introduction", "مقدمة", "مقدمه"]
+            # Skip adding the heading for the VERY FIRST section unconditionally.
+            # This ensures we don't have H1 and H2 stacked at the start.
+            # Also skip if it's explicitly named 'Introduction'.
+            is_first_sec = (sections.index(sec) == 0)
+            skip_heading = is_first_sec or heading.strip().lower() in ["introduction", "مقدمة", "مقدمه"]
             
             if not skip_heading:
                 final_parts.append(f"{'#' * level_num} {heading}")
