@@ -1,0 +1,156 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 2.79 seconds
+  -- Tokens Used: 2,168
+--------------------------------------------------
+Step: LOCAL_NEIGHBORHOODS
+  -- Duration: 2.40 seconds
+  -- Tokens Used: 525
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 33.36 seconds
+  -- Tokens Used: 525
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 69.51 seconds
+  -- Tokens Used: 27,898
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 69.51 seconds
+  -- Tokens Used: 27,898
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 6.57 seconds
+  -- Tokens Used: 2,021
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 6.57 seconds
+  -- Tokens Used: 2,021
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.49 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.58 seconds
+  -- Tokens Used: 466
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 466
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 6.80 seconds
+  -- Tokens Used: 2,047
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 6.80 seconds
+  -- Tokens Used: 2,047
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 59.84 seconds
+  -- Tokens Used: 9,334
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 3.08 seconds
+  -- Tokens Used: 4,987
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_THE RISK OF GENERIC TEMPLATES IN THE COMPETITIVE RIYADH MARKET
+  -- Duration: 4.48 seconds
+  -- Tokens Used: 5,516
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: THE RISK OF GENERIC TEMPLATES IN THE COMPETITIVE RIYADH MARKET
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_OUR TECHNICAL FRAMEWORK: PERFORMANCE-FIRST ENGINEERING FOR KSA
+  -- Duration: 4.44 seconds
+  -- Tokens Used: 6,023
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: OUR TECHNICAL FRAMEWORK: PERFORMANCE-FIRST ENGINEERING FOR KSA
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_BILINGUAL-FIRST UI/UX PHILOSOPHY
+  -- Duration: 3.56 seconds
+  -- Tokens Used: 5,877
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: BILINGUAL-FIRST UI/UX PHILOSOPHY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_EVIDENCE OF EXCELLENCE: WHY WE ARE THE TOP AGENCY IN RIYADH
+  -- Duration: 3.83 seconds
+  -- Tokens Used: 6,307
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: EVIDENCE OF EXCELLENCE: WHY WE ARE THE TOP AGENCY IN RIYADH
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_CASE STUDY: SCALING LOCAL RIYADH VENTURES DIGITALLY
+  -- Duration: 3.06 seconds
+  -- Tokens Used: 6,465
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: CASE STUDY: SCALING LOCAL RIYADH VENTURES DIGITALLY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_FROM CONSULTATION TO LAUNCH: OUR RIYADH DESIGN PROCESS
+  -- Duration: 4.19 seconds
+  -- Tokens Used: 6,672
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: FROM CONSULTATION TO LAUNCH: OUR RIYADH DESIGN PROCESS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_POST-LAUNCH PERFORMANCE & MAINTENANCE
+  -- Duration: 2.92 seconds
+  -- Tokens Used: 6,896
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: POST-LAUNCH PERFORMANCE & MAINTENANCE
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_FREQUENTLY ASKED QUESTIONS ABOUT WEB DESIGN IN RIYADH
+  -- Duration: 5.53 seconds
+  -- Tokens Used: 7,355
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: FREQUENTLY ASKED QUESTIONS ABOUT WEB DESIGN IN RIYADH
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_10_SECURE YOUR DIGITAL FUTURE IN THE KINGDOM WITH CEMS IT
+  -- Duration: 3.01 seconds
+  -- Tokens Used: 7,569
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: SECURE YOUR DIGITAL FUTURE IN THE KINGDOM WITH CEMS IT
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 73.47 seconds
+  -- Tokens Used: 7,569
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 7,569
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 5.22 seconds
+  -- Tokens Used: 7,569
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.06 seconds
+  -- Tokens Used: 7,569
+--------------------------------------------------
