@@ -19,7 +19,8 @@ OPENROUTER = {
     "models": {
         "writing": "google/gemini-3-flash-preview",
         "research": "openai/o4-mini:online",
-        "image": "black-forest-labs/flux.2-pro" 
+        # "image": "black-forest-labs/flux.2-pro" 
+        "image": "google/gemini-3-pro-image-preview"
 
     }
 }

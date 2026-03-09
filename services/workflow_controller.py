@@ -193,11 +193,11 @@ class AsyncWorkflowController:
             ("outline_generation", self._step_1_outline, 1),
 
             ("content_writing", self._step_2_write_sections, 1),
-            # ("image_prompting", self._step_4_generate_image_prompts, 0),
-            # ("image_generation", self._step_4_5_download_images, 2),
+            ("image_prompting", self._step_4_generate_image_prompts, 0),
+            ("image_generation", self._step_4_5_download_images, 2),
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
-            # ("image_inserter", self._step_6_image_inserter, 0),
+            ("image_inserter", self._step_6_image_inserter, 0),
             ("meta_schema", self._step_7_meta_schema, 0),
             # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
@@ -264,6 +264,7 @@ class AsyncWorkflowController:
         state["brand_url"] = urls[0].get("link") if urls else None
         
         state["image_frame_path"] = input_data.get("image_frame_path") or input_data.get("image_template_path")
+        state["logo_image_path"] = input_data.get("logo_image_path")
         state["brand_visual_style"] = "" # Removed from UI, setting to empty
         # keep input_data in sync for downstream steps
         state.setdefault("input_data", {})
@@ -1635,6 +1636,9 @@ class AsyncWorkflowController:
         primary_keyword = state.get("primary_keyword")
         brand_visual_style = state.get("brand_visual_style", "")
 
+        # Zero out previous step tokens to prevent token leakage in metrics log
+        state["last_step_tokens"] = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+
         image_prompts = await self.image_prompt_planner.generate(
             title=title,
             primary_keyword=primary_keyword,
@@ -1660,17 +1664,29 @@ class AsyncWorkflowController:
         primary_keyword = state.get("primary_keyword")
         logo_path = state.get("input_data", {}).get("logo_path")
         brand_visual_style = state.get("brand_visual_style", "")
+        
+        # Zero out previous step tokens
+        state["last_step_tokens"] = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+
+        # Set image directory to project specific output directory
+        output_dir = state.get("output_dir", self.work_dir)
+        images_dir = os.path.join(output_dir, "images")
+        os.makedirs(images_dir, exist_ok=True)
+        self.image_client.save_dir = images_dir
 
         images = await self.image_client.generate_images(
             prompts,
             primary_keyword=primary_keyword,
-            image_frame_path=state.get("image_frame_path"),
-            brand_visual_style=brand_visual_style
+            image_frame_path=state.get("input_data", {}).get("image_frame_path"),
+            logo_path=state.get("input_data", {}).get("logo_image_path"),
+            brand_visual_style=brand_visual_style,
+            workflow_logger=state.get("workflow_logger")
         )
 
         for img in images:
             if "local_path" in img:
-                img["local_path"] = f"../images/{os.path.basename(img['local_path'])}"
+                # Store paths strictly relative to the project output dir
+                img["local_path"] = f"images/{os.path.basename(img['local_path'])}"
 
         state["images"] = images
         return state

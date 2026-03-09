@@ -123,8 +123,9 @@ class WorkflowLogger:
                 dict_writer.writerows(self.metrics)
             logger.info(f"Exported metrics to: {filepath}")
             
-            # Auto-generate text summary too
+            # Auto-generate summaries
             self.export_text_summary()
+            self.export_manager_summary()
             
         except Exception as e:
             logger.error(f"Failed to export CSV: {e}")
@@ -167,3 +168,125 @@ class WorkflowLogger:
             logger.info(f"Exported metrics summary text to: {filepath}")
         except Exception as e:
             logger.error(f"Failed to export text summary: {e}")
+
+    def export_manager_summary(self, filename: str = "manager_report.txt"):
+        """
+        Generates a simplified, executive-level report grouped by phases.
+        Hides technical internal events and uses friendly terminology.
+        """
+        if not self.metrics: return
+        
+        # Step -> (Phase, Friendly Name)
+        STEP_MAP = {
+            "analysis_init": ("Phase 1: Project Setup", "Project Initialization"),
+            "brand_discovery": ("Phase 1: Project Setup", "Brand Intelligence Gathering"),
+            "local_neighborhoods": ("Phase 1: Project Setup", "Regional Market Research"),
+            "web_research": ("Phase 2: Market Analysis", "Live Web & Competitor Search"),
+            "serp_analysis": ("Phase 2: Market Analysis", "Google Search Intent Analysis"),
+            "intent_title": ("Phase 3: Strategy & Design", "User Intent Calibration"),
+            "style_analysis": ("Phase 3: Strategy & Design", "Persona & Tone Design"),
+            "content_strategy": ("Phase 3: Strategy & Design", "SEO Strategic Roadmap"),
+            "outline_generation": ("Phase 3: Strategy & Design", "Article Structure Design"),
+            "content_writing": ("Phase 4: Content Production", "Main Article Generation"),
+            "image_prompting": ("Phase 5: Visuals & Finalization", "Creative Concept Planning"),
+            "image_generation": ("Phase 5: Visuals & Finalization", "AI Visual Creation (7 Images)"),
+            "assembly": ("Phase 5: Visuals & Finalization", "Technical Content Assembly"),
+            "image_inserter": ("Phase 5: Visuals & Finalization", "Image & Visual Integration"),
+            "meta_schema": ("Phase 5: Visuals & Finalization", "SEO Metadata & Schema Markup"),
+            "render_html": ("Phase 5: Visuals & Finalization", "Final Web Page Generation")
+        }
+
+        # Handle dynamics like SECTION_...
+        def get_friendly_info(raw_name):
+            is_total = raw_name.startswith("STEP_TOTAL: ")
+            clean_name = raw_name.replace("STEP_TOTAL: ", "").strip()
+            
+            # Prioritize individual production steps for detail, or totals for research
+            if clean_name in STEP_MAP:
+                # For high-level phases like Research/Strategy, use the total if available
+                # But if it's content_writing or image_generation, we want the individual "fizz"
+                if clean_name in ["content_writing", "image_generation", "image_prompting"]:
+                    return None # Skip the generic total, we'll see the individual sections/images
+                if is_total:
+                    return STEP_MAP[clean_name]
+                return None
+                
+            if raw_name.startswith("SECTION_"): 
+                return ("Phase 4: Content Production", f"Writing: {raw_name.replace('SECTION_', '').replace('_', ' ').title()}")
+            if raw_name.startswith("IMAGE_"): 
+                # Keep individual image logs as they show the 7 images requirement
+                step_parts = raw_name.replace('IMAGE_', '').split('_')
+                img_type = step_parts[0].title()
+                img_loc = step_parts[-1] if len(step_parts) > 1 else "Gen"
+                return ("Phase 5: Visuals & Finalization", f"Creating Image: {img_type} ({img_loc})")
+            
+            return None
+
+        phases = {}
+        total_time = 0
+        total_units = 0
+
+        for m in self.metrics:
+            info = get_friendly_info(m["step_name"])
+            if not info: continue 
+            
+            phase_name, friendly_name = info
+            if phase_name not in phases: 
+                phases[phase_name] = {"steps": [], "time": 0, "units": 0}
+            
+            dur = float(m["duration_sec"])
+            # Fallback for tokens if 0 (e.g. if the image model didn't report them but we know it's AI)
+            units_val = int(m["total_tokens"])
+            if units_val > 0:
+                units_display = f"{units_val:,}"
+            elif "Image" in friendly_name:
+                units_display = "AI Generated"
+            else:
+                units_display = "Local Process"
+            
+            phases[phase_name]["steps"].append({
+                "name": friendly_name,
+                "time": f"{dur:.1f}s" if dur >= 1 else "< 1s",
+                "units": units_display
+            })
+            phases[phase_name]["time"] += dur
+            phases[phase_name]["units"] += units_val
+            
+            total_time += dur
+            total_units += units_val
+
+        filepath = os.path.join(self.output_dir, filename)
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write("╔" + "═"*58 + "╗\n")
+                f.write("║" + " EXECUTIVE ARTICLE GENERATION REPORT ".center(58) + "║\n")
+                f.write("╚" + "═"*58 + "╝\n\n")
+                
+                f.write(f"● OVERALL EXECUTION TIME: {total_time/60:.1f} minutes\n")
+                f.write(f"● TOTAL AI PROCESSING UNITS: {total_units:,}\n")
+                f.write(f"● PROJECT STATUS: COMPLETED SUCCESSFULLY\n")
+                f.write(f"● GENERATION DATE: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
+                
+                f.write("PHASE BREAKDOWN\n")
+                f.write("=" * 60 + "\n\n")
+                
+                for phase, data in phases.items():
+                    f.write(f"▶ {phase}\n")
+                    f.write("  " + "─"*56 + "\n")
+                    for s in data["steps"]:
+                        f.write(f"  • {s['name']:<38} | {s['time']:>8} | AI: {s['units']}\n")
+                    
+                    # Phase Total
+                    phase_time = f"{data['time']/60:.1f}m" if data['time'] > 60 else f"{data['time']:.1f}s"
+                    f.write("  " + "─"*56 + "\n")
+                    f.write(f"  SUB-TOTAL {phase.split(':')[-1].upper():<28} | {phase_time:>8} | AI: {data['units']:,}\n\n")
+                
+                f.write("=" * 60 + "\n")
+                f.write("Note: 'AI Processing Units' represent the computational effort \n")
+                f.write("expended by the AI models. 'Local Process' indicates \n")
+                f.write("technical assembly tasks performed without external AI costs.\n")
+                f.write("'AI Generated' indicates high-compute visual creation steps.\n")
+
+            logger.info(f"Exported Manager Report to: {filepath}")
+        except Exception as e:
+            logger.error(f"Failed to export manager report: {e}")

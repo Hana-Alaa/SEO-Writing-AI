@@ -21,7 +21,7 @@ Rules:
 3. **Brand Grounding**: Each prompt MUST incorporate elements from the Brand Source Text or its specific services (e.g., "A modern Figma UI prototype for a Riyadh-based e-commerce project", "An isometric 3D visualization of a React + PHP backend architecture").
 4. **Relevance**: Each image must correspond directly to the technical or business value of the section it is assigned to.
 5. **Variety**: Rotate through: 
-   - Hero/Featured (Cinematic, grand scale)
+   - Hero/Featured (High-impact, expressive, artistically cinematic, grand scale)
    - Process Infographic (Technical, structured)
    - Abstract Illustration (Minimalist, conceptual)
    - High-End Mockup (Real-world application)
@@ -32,10 +32,12 @@ Rules:
    - KEEP IT CLEAN: Focus on a single, clear, high-quality subject. Use words like "minimalist," "clean composition," "uncluttered," and "professional."
    - **FRAMING SAFETY (CRITICAL)**: Describe subjects as being "centered with wide margins" or "surrounded by significant negative space". This ensures that no part of the subject is cut off when fitted into different templates.
    - DO NOT ask for collages, crowded scenes, or multiple overlapping elements.
-9. **Language & Text Restriction (ABSOLUTE RULE)**: 
-   - Generative AI produces "gibberish" when trying to write Arabic or complex text.
-   - For 'Featured', 'Illustration', and 'Mockup' types: NEVER request text in the prompt. Expressly describe visual elements only.
-   - For 'Infographic' types (if text is necessary): ALL text MUST be in English ONLY. Keep text requests extremely short (1-2 words). Do NOT ask for paragraphs or sentences. Absolutely NO ARABIC text.
+9. **Language & Text Restriction (ABSOLUTE RULE - NO ARABIC TEXT)**: 
+   - Image Generators currently CANNOT render Arabic text correctly and will produce ugly, distorted gibberish.
+   - You MUST PROHIBIT all text in your prompts by default.
+   - For 'Featured', 'Illustration', and 'Mockup' types: NEVER request text. Expressly describe visual elements only.
+   - For 'Infographic' types: IF text is absolutely necessary, it MUST be 1-2 words of PERFECT ENGLISH ONLY.
+   - NEVER, UNDER ANY CIRCUMSTANCES, ask the AI to generate Arabic words or Arabic UI elements.
 
 Output Format:
 Return strictly a JSON array of objects. No markdown.

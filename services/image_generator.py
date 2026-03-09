@@ -106,7 +106,11 @@ class ImagePromptPlanner:
             brand_visual_style=brand_visual_style
         )
 
-        raw_response = await self.ai_client.send(prompt_text, step="image") or "[]"
+        response_data = await self.ai_client.send(prompt_text, step="image")
+        raw_response = response_data.get("content", "[]") if isinstance(response_data, dict) else str(response_data or "[]")
+        
+        # DEBUG: Print exact raw response
+        logger.debug(f"RAW IMAGE PLANNER RESPONSE:\n{raw_response}\n{'='*40}")
 
         try:
             image_prompts = recover_json(raw_response)
@@ -135,13 +139,14 @@ class ImagePromptPlanner:
             # Limit to 7 images total
             image_prompts = ([featured] + others)[:7]
 
-            # Validate section_ids
-            outline_ids = {s.get("section_id") for s in outline}
+            # Validate section_ids and fix hallucinatory IDs
+            outline_ids_list = [s.get("section_id") for s in outline] if outline else ["sec_01"]
+            outline_ids_set = set(outline_ids_list)
 
             for p in image_prompts:
-                if p.get("section_id") not in outline_ids:
-                    logger.error(f"Invalid section_id: {p.get('section_id')}")
-                    return []
+                if p.get("section_id") not in outline_ids_set:
+                    logger.warning(f"Invalid section_id '{p.get('section_id')}' found in plan. Mapping to fallback.")
+                    p["section_id"] = outline_ids_list[0]
 
             # Remove duplicates safely
             # unique = {}
@@ -165,6 +170,15 @@ class ImagePromptPlanner:
             final_list[0]["section_id"] = intro_id
             final_list[0]["image_type"] = "Featured"
 
+            # PAD TO EXACTLY 7 IMAGES
+            if final_list and len(final_list) < 7:
+                original_len = len(final_list)
+                for i in range(7 - original_len):
+                    src_prompt = final_list[i % original_len].copy()
+                    # Do not duplicate Featured 
+                    src_prompt["image_type"] = "Illustration" if src_prompt["image_type"] == "Featured" else src_prompt["image_type"]
+                    final_list.append(src_prompt)
+                    
             logger.info(f"FINAL IMAGE PROMPTS COUNT: {len(final_list)}")
 
             return final_list
@@ -180,10 +194,10 @@ class ImageGenerator:
     """
 
     STYLE_PREFIXES = {
-        "Featured": "Premium hero header, award-winning cinematic studio lighting, UNCLUTTERED, ultra-realistic 8k texture, sophisticated MINIMALIST modern composition, professional advertising photography, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, ABSOLUTELY NO TEXT OR LETTERS,",
-        "Infographic": "Exclusive custom-designed 3D isometric process flow, UNCLUTTERED, high-end corporate visualization, clean structural elegance, soft ambient occlusion shadows, VERY WIDE SAFE MARGINS, KEEP CONTENT CENTERED AND AWAY FROM EDGES, ENGLISH TEXT ONLY, STRICTLY NO ARABIC TEXT, MINIMALIST TEXT ONLY, PERFECTLY SPELLED TEXT, NO GIBBERISH,",
-        "Illustration": "Bespoke digital art, UNCLUTTERED, minimalist editorial style, soft color transitions, premium conceptual depth, professional stroke-work, high-end finish, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, ABSOLUTELY NO TEXT OR LETTERS,",
-        "Mockup": "Ultra-premium 3D product render, UNCLUTTERED, elegant minimalist environment, soft blurred background, realistic materials (glass/metal/matte), high-end presentation, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, ABSOLUTELY NO TEXT OR LETTERS,"
+        "Featured": "Premium hero header, award-winning cinematic studio lighting, UNCLUTTERED, ultra-realistic 8k texture, sophisticated MINIMALIST modern composition, professional advertising photography, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, STRICTLY NO TEXT, NO ARABIC LETTERS, NO GIBBERISH,",
+        "Infographic": "Exclusive custom-designed 3D isometric process flow, UNCLUTTERED, high-end corporate visualization, clean structural elegance, soft ambient occlusion shadows, VERY WIDE SAFE MARGINS, KEEP CONTENT CENTERED AND AWAY FROM EDGES, STRICTLY NO ARABIC TEXT, MINIMALIST PERFECT ENGLISH TEXT ONLY, PERFECT SPELLING,",
+        "Illustration": "Bespoke digital art, UNCLUTTERED, minimalist editorial style, soft color transitions, premium conceptual depth, professional stroke-work, high-end finish, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, STRICTLY NO TEXT, NO ARABIC LETTERS, NO GIBBERISH,",
+        "Mockup": "Ultra-premium 3D product render, UNCLUTTERED, elegant minimalist environment, soft blurred background, realistic materials (glass/metal/matte), high-end presentation, VERY WIDE SAFE MARGINS, KEEP SUBJECTS CENTERED AND AWAY FROM EDGES, STRICTLY NO TEXT, NO ARABIC LETTERS, NO GIBBERISH,"
     }
 
     def __init__(self, ai_client, save_dir: str = "output/images", image_frame_path: str = None):
@@ -192,12 +206,14 @@ class ImageGenerator:
         self.image_frame_path = image_frame_path
         os.makedirs(self.save_dir, exist_ok=True)
 
-    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None, image_frame_path: str = None, brand_visual_style: str = "") -> List[Dict[str, Any]]:
+    async def generate_images(self, image_prompts: List[Dict[str, str]], primary_keyword: str = None, image_frame_path: str = None, logo_path: str = None, brand_visual_style: str = "", workflow_logger: Any = None) -> List[Dict[str, Any]]:
         """
         Generates actual images using Stability.ai for a list of prompts in parallel.
         """
+        logger.info(f"[generate_images] Received {len(image_prompts)} image prompts to process.")
+        
         if len(image_prompts) < 1:
-            logger.warning("No image prompts provided.")
+            logger.warning("[generate_images] No image prompts provided. Returning empty list.")
             return []
         
         # Run all generation tasks in parallel
@@ -214,13 +230,17 @@ class ImageGenerator:
                 item=item,
                 primary_keyword=primary_keyword,
                 image_frame_path=target_frame,
-                brand_visual_style=brand_visual_style
+                logo_path=logo_path,
+                brand_visual_style=brand_visual_style,
+                workflow_logger=workflow_logger
             )
             for item in image_prompts
         ]
 
         results = await asyncio.gather(*(limited_task(t) for t in tasks))
-        return [r for r in results if r]
+        final_results = [r for r in results if r]
+        logger.info(f"[generate_images] Finished processing. Returning {len(final_results)} successful images.")
+        return final_results
 
     # async def _process_single_image(self, item: Dict[str, str], primary_keyword: str = None, logo_path: str = None) -> Optional[Dict[str, Any]]:
     #     """Internal worker to process a single image generation task."""
@@ -257,27 +277,46 @@ class ImageGenerator:
         
     #     return None
 
-    async def _process_single_image(self, item, primary_keyword=None, image_frame_path=None, brand_visual_style=""):
+    async def _process_single_image(self, item, primary_keyword=None, image_frame_path=None, logo_path=None, brand_visual_style="", workflow_logger: Any = None):
         """Internal worker to process a single image generation task."""
         prompt = item.get("prompt", "").strip()
         section_id = item.get("section_id", "").strip()
         image_type = item.get("image_type", "Illustration")
 
         if not prompt or not section_id:
+            logger.error(f"[_process_single_image] Skipped generation for {section_id} due to missing prompt or section_id.")
             return None
 
         style_prefix = self.STYLE_PREFIXES.get(image_type, self.STYLE_PREFIXES["Illustration"])
         style_hint = f" Brand style cues: {brand_visual_style}." if brand_visual_style else ""
         final_prompt = f"{style_prefix} {prompt}.{style_hint}"
-        seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 4294967295
+        # Use modulo 2147483647 (max signed INT32) to avoid 400 errors from Google/OpenRouter
+        seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 2147483647
 
+        logger.info(f"[_process_single_image] Calling OpenRouter for {section_id} with prompt: {final_prompt[:50]}...")
+        
+        start_time = workflow_logger.start_step(f"IMAGE_{image_type.upper()}_{section_id}") if workflow_logger else None
+        
         local_path = await self._call_openrouter(final_prompt, section_id, image_type, seed)
+        
+        if workflow_logger and start_time:
+            workflow_logger.end_step(
+                step_name=f"IMAGE_{image_type.upper()}_{section_id}",
+                start_time=start_time,
+                prompt=final_prompt,
+                response={"local_path": local_path},
+                tokens={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            )
+
         if not local_path:
+            logger.error(f"[_process_single_image] OpenRouter failed to return a valid local_path for {section_id}.")
             return None 
+
+        logger.info(f"[_process_single_image] Successfully downloaded image for {section_id} to {local_path}.")
 
         # Apply brand frame to ALL image types for consistent exclusivity
         apply_brand = True 
-        processed_path = await asyncio.to_thread(self._process_image_versions, local_path, image_frame_path, apply_brand)
+        processed_path = await asyncio.to_thread(self._process_image_versions, local_path, image_frame_path, logo_path, apply_brand)
 
         return {
             "section_id": section_id,
@@ -355,27 +394,38 @@ class ImageGenerator:
         # except Exception as e:
         #     logger.error(f"Processing image {filepath} failed: {e}")
 
-    def _process_image_versions(self, filepath: str, image_frame_path: str = None, apply_brand: bool = True) -> str:
+    def _process_image_versions(self, filepath: str, image_frame_path: str = None, logo_path: str = None, apply_brand: bool = True) -> str:
         logger.info(f"[_process_image_versions] Processing: {filepath} | Frame: {image_frame_path}")
         
         with Image.open(filepath) as img:
             img = img.convert("RGBA")
 
             # Apply Brand Frame
-            if apply_brand and image_frame_path and os.path.exists(image_frame_path):
-                logger.info(f"[_process_image_versions] Applying branded frame overlay")
-                img = self._composite_with_template(img, image_frame_path)
+            frame_exists = image_frame_path and os.path.exists(image_frame_path)
+            logo_exists = logo_path and os.path.exists(logo_path)
             
-            # Simple resize if no branding applied or no frame provided
-            elif not (apply_brand and image_frame_path):
-                img = img.resize((1200, 675), Image.Resampling.LANCZOS)
-                logger.info(f"[_process_image_versions] Applying simple logo overlay")
-                # Pre-resize for standard logo flow
+            logger.info(f"[_process_image_versions] Frame path exists: {frame_exists} ({image_frame_path})")
+            logger.info(f"[_process_image_versions] Logo path exists: {logo_exists} ({logo_path})")
+
+            if apply_brand and frame_exists:
+                logger.info(f"[_process_image_versions] Applying branded frame overlay")
+                try:
+                    img = self._composite_with_template(img, image_frame_path)
+                except Exception as e:
+                    logger.error(f"[_process_image_versions] Frame composition failed: {e}. Falling back to resize/logo.")
+                    img = img.resize((1200, 675), Image.Resampling.LANCZOS)
+                    if logo_exists:
+                        img = self._add_logo(img, logo_path)
+            
+            # Simple resize if no frame provided or branding disabled
+            elif logo_exists:
+                logger.info(f"[_process_image_versions] No frame found. Applying simple logo overlay.")
                 img = img.resize((1200, 675), Image.Resampling.LANCZOS)
                 img = self._add_logo(img, logo_path)
             
             # No branding, just standard resize
             else:
+                logger.info(f"[_process_image_versions] No frame or logo found. Standard resize only.")
                 img = img.resize((1200, 675), Image.Resampling.LANCZOS)
 
             webp_path = os.path.splitext(filepath)[0] + ".webp"
@@ -410,7 +460,7 @@ class ImageGenerator:
                 has_transparency = False
                 
                 for i, p in enumerate(pixels):
-                    if p[3] < 10: # Very transparent
+                    if p[3] < 128: # More lenient: detect semi-transparent areas too
                         x, y = i % tw, i // tw
                         hole_bbox[0] = min(hole_bbox[0], x)
                         hole_bbox[1] = min(hole_bbox[1], y)
@@ -423,7 +473,7 @@ class ImageGenerator:
                 if not has_transparency:
                     # Scan for a large white/near-white block (e.g., for JPG templates)
                     for i, p in enumerate(pixels):
-                        if p[0] > 245 and p[1] > 245 and p[2] > 245: # Near white
+                        if p[0] > 240 and p[1] > 240 and p[2] > 240: # More lenient white detection
                             x, y = i % tw, i // tw
                             if white_box is None:
                                 white_box = [x, y, x, y]
@@ -441,14 +491,16 @@ class ImageGenerator:
                     # 1. Prepare AI image foreground (FIT / CONTAIN)
                     base_w, base_h = base_image.size
                     aspect = base_w / base_h
-                    box_aspect = box_w / box_h
-
+                    # Apply a 5% safety margin to ensure content isn't touched by frame edges
+                    safe_box_w = int(box_w * 0.95)
+                    safe_box_h = int(box_h * 0.95)
+                    
                     if aspect > box_aspect: # Image is wider than hole
-                        fit_w = box_w
-                        fit_h = int(box_w / aspect)
+                        fit_w = safe_box_w
+                        fit_h = int(safe_box_w / aspect)
                     else: # Image is taller than hole
-                        fit_h = box_h
-                        fit_w = int(box_h * aspect)
+                        fit_h = safe_box_h
+                        fit_w = int(safe_box_h * aspect)
 
                     foreground = base_image.resize((fit_w, fit_h), Image.Resampling.LANCZOS)
                     

@@ -203,13 +203,14 @@ STRICT WRITING RULES
        - CRITICAL: Skip any URL that already appears in "Used Internal Links" (this is a backup safety, but assigned links should already be unique).
    
    B. External Links:
-{% if is_first_section %}      - THIS IS THE FIRST SECTION (INTRODUCTION). YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
-{% else %}{% if external_sources %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section. Do NOT skip this.
-      - Select this link ONLY from the "Reliable External Sources" list provided in the context below. Do not make up your own external links.
-      - Ensure the link explicitly provides data, research, or official standards that back up a claim.
+{% if is_first_section %}      - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
+{% else %}{% if used_external_links|length < 2 %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
+      - The link must add value and support reader understanding (e.g., statistics, official definitions).
+      - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword }}".
+      - DO NOT repeat any of the links already used in previous sections: {{ used_external_links | tojson }}
       - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
-{% else %}      - No "Reliable External Sources" were provided for this section. Do not add any external links.
-{% endif %}{% endif %}      - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword }}".
+{% else %}      - We have already reached the maximum limit of external links for this article. DO NOT add any more external links in this section.
+{% endif %}{% endif %}
 10. FAQ behavior:
    - If section_type = faq, you MUST answer EVERY question listed in the "Questions" array.
    - Use an H3 heading for each question, followed by a concise, unique, and helpful answer. Exactly 4-6 questions MUST be present.

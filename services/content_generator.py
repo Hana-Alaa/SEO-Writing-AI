@@ -499,7 +499,7 @@ class Assembler:
 
             level_num = max(2, min(level_num, 6))  
 
-            # 2) Robust Mechanical Cleanup (Regex Based)
+            # Robust Mechanical Cleanup (Regex Based)
             cleanup_patterns = [
                 r"\bIn this section,?\s*",
                 r"\bIn this section we will\s*",
@@ -510,8 +510,20 @@ class Assembler:
             for pattern in cleanup_patterns:
                 content = re.sub(pattern, "", content, flags=re.IGNORECASE)
 
-            # Remove extra leading spaces after cleanup
+            # 3) Heading De-duplication (CRITICAL)
+            # If the content starts with the same heading (e.g. "## FAQ"), remove that line.
             content = content.strip()
+            content_lines = content.split("\n")
+            if content_lines:
+                first_line = content_lines[0].strip()
+                # Remove markdown hashes and common prefix/suffixes for comparison
+                clean_first_line = re.sub(r"^#+\s*", "", first_line).strip().lower()
+                clean_heading = heading.lower()
+                
+                # Exact match or starts-with match (allowing for minor AI variations)
+                if clean_first_line == clean_heading or clean_first_line.startswith(clean_heading):
+                    logger.info(f"[Assembler] Removing duplicate heading from content: '{first_line}'")
+                    content = "\n".join(content_lines[1:]).strip()
 
             # Skip adding the heading if it's the exact word 'Introduction' (or common translations)
             # Because we want the intro text to flow seamlessly after the Title (H1).

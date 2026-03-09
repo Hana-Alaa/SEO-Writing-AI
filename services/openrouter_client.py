@@ -256,12 +256,10 @@ class OpenRouterClient(BaseAIClient):
             "messages": [
                 {
                     "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt}
-                    ]
+                    "content": prompt
                 }
             ],
-            "modalities": ["image"]
+            "modalities": ["image", "text"]
         }
         
         if seed is not None:
@@ -270,11 +268,14 @@ class OpenRouterClient(BaseAIClient):
         if reference_path and os.path.exists(reference_path):
             with open(reference_path, "rb") as f:
                 base64_image = base64.b64encode(f.read()).decode("utf-8")
-                # Add image reference to messages if supported by model (OpenRouter standard for some models)
-                payload["messages"][0]["content"].append({
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/png;base64,{base64_image}"}
-                })
+                # Format as a list of content blocks for multimodal input
+                payload["messages"][0]["content"] = [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{base64_image}"}
+                    }
+                ]
 
         data = await self._post_with_retry(
             self.base_url_chat,

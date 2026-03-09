@@ -1,0 +1,196 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 3.05 seconds
+  -- Tokens Used: 2,159
+--------------------------------------------------
+Step: LOCAL_NEIGHBORHOODS
+  -- Duration: 1.51 seconds
+  -- Tokens Used: 524
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 32.37 seconds
+  -- Tokens Used: 524
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 75.96 seconds
+  -- Tokens Used: 31,916
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 76.07 seconds
+  -- Tokens Used: 31,916
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 6.15 seconds
+  -- Tokens Used: 1,976
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 6.16 seconds
+  -- Tokens Used: 1,976
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.86 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.33 seconds
+  -- Tokens Used: 466
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 466
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 6.18 seconds
+  -- Tokens Used: 1,968
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 6.18 seconds
+  -- Tokens Used: 1,968
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 58.61 seconds
+  -- Tokens Used: 9,486
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 2.68 seconds
+  -- Tokens Used: 4,910
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_THE HIGH STAKES OF DIGITAL PRESENCE IN THE RIYADH MARKET
+  -- Duration: 3.52 seconds
+  -- Tokens Used: 5,514
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: THE HIGH STAKES OF DIGITAL PRESENCE IN THE RIYADH MARKET
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_WHY CHOOSE CEMS IT FOR YOUR WEB DESIGN IN RIYADH
+  -- Duration: 3.56 seconds
+  -- Tokens Used: 5,843
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: WHY CHOOSE CEMS IT FOR YOUR WEB DESIGN IN RIYADH
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_ARABIC-FIRST CULTURAL UX/UI DESIGN
+  -- Duration: 2.93 seconds
+  -- Tokens Used: 5,960
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ARABIC-FIRST CULTURAL UX/UI DESIGN
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_PROVEN ROI: JUSTIFYING OUR STATUS AS A LEADING AGENCY
+  -- Duration: 3.07 seconds
+  -- Tokens Used: 6,196
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: PROVEN ROI: JUSTIFYING OUR STATUS AS A LEADING AGENCY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_SUCCESS SPOTLIGHT: HOW WE REVOLUTIONIZED DIGITAL PLATFORMS
+  -- Duration: 2.93 seconds
+  -- Tokens Used: 6,064
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: SUCCESS SPOTLIGHT: HOW WE REVOLUTIONIZED DIGITAL PLATFORMS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_OUR STRATEGIC 4-STEP WEB DESIGN PROCESS
+  -- Duration: 3.29 seconds
+  -- Tokens Used: 6,474
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: OUR STRATEGIC 4-STEP WEB DESIGN PROCESS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_DISCOVERY AND RESPONSIVE PROTOTYPING
+  -- Duration: 2.36 seconds
+  -- Tokens Used: 6,694
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: DISCOVERY AND RESPONSIVE PROTOTYPING
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_COMMON QUESTIONS ABOUT PROFESSIONAL WEB DESIGN IN RIYADH
+  -- Duration: 3.45 seconds
+  -- Tokens Used: 6,940
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: COMMON QUESTIONS ABOUT PROFESSIONAL WEB DESIGN IN RIYADH
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_10_READY TO LEAD THE RIYADH DIGITAL LANDSCAPE?
+  -- Duration: 3.36 seconds
+  -- Tokens Used: 7,220
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: READY TO LEAD THE RIYADH DIGITAL LANDSCAPE?
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 69.53 seconds
+  -- Tokens Used: 7,220
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 8.17 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_FEATURED_SEC_01
+  -- Duration: 17.36 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_02
+  -- Duration: 18.71 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_INFOGRAPHIC_SEC_03
+  -- Duration: 17.69 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_MOCKUP_SEC_03_SUB1
+  -- Duration: 17.97 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_05
+  -- Duration: 19.05 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_INFOGRAPHIC_SEC_06
+  -- Duration: 20.96 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_01
+  -- Duration: 17.65 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 72.44 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.06 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.07 seconds
+  -- Tokens Used: 0
+--------------------------------------------------

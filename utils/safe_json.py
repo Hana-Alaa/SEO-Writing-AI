@@ -20,26 +20,34 @@ def recover_json(text: str) -> Optional[Any]:
     except Exception:
         pass
 
-    # Strip markdown fences
-    cleaned = (
-        text.replace("```json", "")
-            .replace("```", "")
-            .strip()
-    )
+    # Extract markdown block specifically
+    md_match = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL | re.IGNORECASE)
+    if md_match:
+        try:
+            return json.loads(md_match.group(1))
+        except Exception as e:
+            logger.debug(f"Failed to parse markdown JSON: {e}")
 
-    try:
-        return json.loads(cleaned)
-    except Exception:
-        pass
+    # Fallback: Find the first and last brackets/braces to ignore conversational text
+    first_bracket = text.find('[')
+    last_bracket = text.rfind(']')
+    
+    first_brace = text.find('{')
+    last_brace = text.rfind('}')
+    
+    # Try array if it starts first
+    if first_bracket != -1 and (first_brace == -1 or first_bracket < first_brace) and last_bracket != -1:
+        try:
+            return json.loads(text[first_bracket:last_bracket+1])
+        except Exception:
+            pass
+            
+    # Try object if it starts first
+    if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket) and last_brace != -1:
+        try:
+            return json.loads(text[first_brace:last_brace+1])
+        except Exception:
+            pass
 
-    # Regex extraction (last resort)
-    match = JSON_BLOCK_RE.search(text)
-    if match:
-        candidate = match.group(1) or match.group(2)
-        if candidate:
-            try:
-                return json.loads(candidate.strip())
-            except Exception as e:
-                logger.debug(f"Regex JSON recovery failed: {e}")
-
+    logger.debug("Regex JSON recovery and outermost bracket extraction failed.")
     return None

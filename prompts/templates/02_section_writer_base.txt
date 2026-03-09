@@ -127,13 +127,13 @@ STRICT WRITING RULES
    - **RULE 4:** Any link you use MUST have anchor text that describes the destination page (e.g., "[High-performance web development](url)" instead of just "[web development](url)").
    - **RULE 5:** NEVER repeat a CTA phrasing or link destination that you've used in a previous paragraph.
    - **RULE 6 — EXTERNAL LINKS (CRITICAL):**
-{% if is_first_section %}      - THIS IS THE FIRST SECTION (INTRODUCTION). YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE. The first link a reader encounters MUST be an internal link to keep them on our site.
-{% else %}{% if external_sources %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section. Do NOT skip this.
-      - Select this link ONLY from the "Reliable External Sources" list provided in the context below. Do not make up your own external links.
-      - Ensure the link explicitly provides data, research, or official standards that back up a claim in your paragraph.
-      - Use natural anchor text like "[75% of users prefer...](url)" or "[According to official reports...](url)".
-{% else %}      - No "Reliable External Sources" were provided for this section. Do not add any external links.
-{% endif %}{% endif %}      - NEVER link to competitors who offer the same services or target the same primary keyword.
+{% if is_first_section %}      - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
+{% else %}{% if used_external_links|length < 2 %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
+      - The link must add value and support reader understanding (e.g., statistics, official definitions).
+      - NEVER link to competitors who offer the same services or target the same primary keyword.
+      - DO NOT repeat any of the links already used in previous sections: {{ used_external_links | tojson }}
+{% else %}      - We have already reached the maximum limit of external links for this article. DO NOT add any more external links in this section.
+{% endif %}{% endif %}
     - **RULE 7 — DATA & STATISTICS (NEW):**
       - Actively look for percentages, growth metrics, or industry benchmarks in the "Reliable External Sources" or "Brand Source Text".
       - Use these to back up your claims (e.g., "Industry data shows a 40% increase in..." or "Our internal metrics indicate a 99.9% uptime...").
