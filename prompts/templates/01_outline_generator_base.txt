@@ -10,6 +10,7 @@ Context:
 Topic Protagonist Rule (HIGHEST PRIORITY):
 - The **Primary Keyword** must be the absolute protagonist of at least 80% of the sections. 
 - **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature, technology, or niche sub-topic become the main subject of an H2. They can only be mentioned as supporting tools or context that enhances the main service.
+- **NO SERVICE HALLUCINATION/BLENDING**: The Brand Context may list multiple services. You MUST ONLY create headings for the service that matches the Primary Keyword. Ignore all other services.
 - If the AI suggests topics that deviate from the core intent of the Primary Keyword, YOU MUST REJECT THOSE SUGGESTIONS.
 - SEO Intelligence: {{ seo_intelligence | tojson }}
 - Content Strategy: {{ content_strategy | tojson }}

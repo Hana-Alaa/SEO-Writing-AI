@@ -600,8 +600,12 @@
                     viewBtn.href = htmlUrl;
                     viewBtn.style.display = 'inline-block';
                 } else {
+                    let errorMsg = data.detail && data.detail.message ? data.detail.message : (data.message || 'Unknown error');
+                    let traceback = data.detail && data.detail.traceback ? data.detail.traceback : '';
+
                     document.getElementById('status-container').innerHTML =
-                        `<div class="status-badge status-error">Error: ${data.message}</div>`;
+                        `<div class="status-badge status-error">Error: ${errorMsg}</div>
+                         ${traceback ? `<details style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);"><summary>View Traceback</summary><pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; overflow-x: auto;">${traceback}</pre></details>` : ''}`;
                 }
 
                 document.getElementById('markdown-output').textContent = data.markdown_content || 'No markdown generated.';

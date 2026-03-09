@@ -80,7 +80,7 @@ class AsyncExecutor:
                     # Collect token info if available in new_state (requires AI clients to report tokens)
                     tokens = new_state.get("last_step_tokens")
                     workflow_logger.end_step(
-                        step_name=step_name,
+                        step_name=f"STEP_TOTAL: {step_name}",
                         start_time=start_time,
                         prompt=new_state.get("last_step_prompt"),
                         response=new_state.get("last_step_response"),
@@ -369,7 +369,7 @@ class AsyncWorkflowController:
                             # Save previous group
                             if current_paras:
                                 group = (f"## {current_heading}\n" if current_heading else "") + "\n".join(current_paras)
-                                blocks.append(group[:800])  # cap each group
+                                blocks.append(group)  # no longer capping each group to 800 chars
                             current_heading = text
                             current_paras = []
                         else:
@@ -378,9 +378,10 @@ class AsyncWorkflowController:
                     # Save the last group
                     if current_paras:
                         group = (f"## {current_heading}\n" if current_heading else "") + "\n".join(current_paras)
-                        blocks.append(group[:800])
+                        blocks.append(group)
 
-                    return "\n\n".join(blocks)[:3000]
+                    # Return up to 6000 characters to provide sufficient context but avoid massive token usage
+                    return "\n\n".join(blocks)[:6000]
 
                 except Exception as ex:
                     logger.warning(f"Failed to fetch {url}: {ex}")
@@ -389,8 +390,17 @@ class AsyncWorkflowController:
             def relevance_score(url: str, anchor: str) -> int:
                 """Score a URL by how relevant it appears to the primary keyword."""
                 text = (url + " " + anchor).lower()
-                score = sum(1 for t in kw_tokens if t in text)
-                for boost_word in ["service", "solution", "about", "work", "portfolio", "project", "offer", "product"]:
+                score = 0
+                
+                # Massive boost for exact primary keyword match
+                if primary_keyword.lower() in text:
+                    score += 20
+                
+                # Heavy boost for individual token matches
+                score += sum(3 for t in kw_tokens if t in text and len(t) > 2)
+                
+                # Minor boost for general structure pages
+                for boost_word in ["about", "work", "portfolio", "project", "offer"]:
                     if boost_word in text:
                         score += 1
                 return score
@@ -445,9 +455,10 @@ class AsyncWorkflowController:
             # --- Anchor Deduplication & Service Boosting ---
             filtered_links = {}
             for canon, (anchor, score) in discovered_links.items():
-                # Boost score for services/products
-                if any(k in canon.lower() for k in ["service", "product", "solution", "خدمات", "منتجات", "برامج"]):
-                    score += 5
+                # Boost score for services/products ONLY IF it's already relevant to the topic
+                if score > 0:
+                    if any(k in canon.lower() for k in ["service", "product", "solution", "خدمات", "منتجات", "برامج"]):
+                        score += 2
                 
                 # Deduplicate by anchor text: keep highest score for a given anchor
                 if anchor not in filtered_links or score > filtered_links[anchor][1]:
@@ -461,7 +472,7 @@ class AsyncWorkflowController:
             hub_links = []
             for canon, (anchor, score) in discovered_links.items():
                 if any(k in canon.lower() or k in anchor.lower() for k in hub_keywords):
-                    if score >= 1: # Must be somewhat relevant
+                    if score >= 0: # Crawl hubs even if they lack the exact keyword, to find subpages
                         hub_links.append(canon)
             
             # Limit to top 2 hubs to avoid massive crawl
@@ -541,7 +552,7 @@ class AsyncWorkflowController:
                 context_prompt = f"""You are a Brand Intelligence Analyst.
 
         Below is real text scraped from multiple pages of a company's website.
-        The article we are writing is about: "{primary_keyword}"
+        The article we are writing is STRICTLY about: "{primary_keyword}"
 
         Website Content:
         \"\"\"
@@ -549,14 +560,15 @@ class AsyncWorkflowController:
         \"\"\"
 
         Your task:
-        1. Read through all pages and find information directly related to: "{primary_keyword}"
+        1. Read through all pages and find information ONLY related to: "{primary_keyword}"
         2. Write a detailed 4-6 sentence factual summary of:
-        - Exactly how this company delivers this service (their process/methodology)
-        - What specific technologies, tools, or frameworks they use
-        - What makes their approach different or specific (NOT generic marketing)
-        - Who their target clients are
-        3. Only use information found in the text above. Do NOT invent or assume anything.
-        4. If you cannot find enough specific info, clearly state what you DID find.
+        - Exactly how this company delivers THIS SPECIFIC service (their process/methodology)
+        - What specific technologies, tools, or frameworks they use FOR THIS SERVICE ONLY
+        - What makes their approach to THIS SERVICE different or specific
+        - Who their target clients are FOR THIS SERVICE
+        3. CRITICAL RULE: IGNORE completely any other services, products, or departments mentioned in the text that are not "{primary_keyword}". Do not summarize their entire business, only the part relevant to our topic.
+        4. Only use information found in the text above. Do NOT invent or assume anything.
+        5. If you cannot find enough specific info about "{primary_keyword}", clearly state what you DID find related to it, but do not pad it with unrelated services.
 
         Write the summary now:"""
 
@@ -569,7 +581,7 @@ class AsyncWorkflowController:
                         step_name="brand_discovery",
                         prompt=context_prompt,
                         response=brand_content,
-                        tokens=metadata,
+                        tokens=metadata.get("tokens", {}),
                         duration=metadata.get("duration", 0)
                     )
                 
@@ -612,7 +624,7 @@ class AsyncWorkflowController:
                             step_name="local_neighborhoods",
                             prompt=neighborhood_prompt,
                             response=neighborhoods_raw,
-                            tokens=metadata,
+                            tokens=metadata.get("tokens", {}),
                             duration=metadata.get("duration", 0)
                         )
                         
@@ -669,13 +681,13 @@ class AsyncWorkflowController:
                 step_name="web_research",
                 prompt=research_prompt,
                 response=raw,
-                tokens=metadata,
+                tokens=metadata.get("tokens", {}),
                 duration=metadata.get("duration", 0)
             )
             
         state["last_step_prompt"] = metadata["prompt"]
         state["last_step_response"] = metadata["response"]
-        state["last_step_tokens"] = metadata["tokens"]
+        state["last_step_tokens"] = metadata.get("tokens", {})
 
         logger.info(f"RAW SERP RESPONSE:\n{raw}")
 
@@ -745,11 +757,11 @@ class AsyncWorkflowController:
                 step_name="serp_analysis",
                 prompt=analysis_prompt,
                 response=raw,
-                tokens=metadata,
+                tokens=metadata.get("tokens", {}),
                 duration=metadata.get("duration", 0)
             )
             
-        state["last_step_tokens"] = metadata["tokens"]
+        state["last_step_tokens"] = metadata.get("tokens", {})
 
         serp_insights = recover_json(raw) or {}
         serp_insights["semantic_assets"] = {
@@ -1941,10 +1953,17 @@ class AsyncWorkflowController:
         except Exception as e:
             logger.error(f"Failed to render HTML page: {e}")
 
-        # if html_content:
-        #     html_content = html_content.replace('<table>', '<div class="table-wrapper">\n<table>')
-        #     html_content = html_content.replace('</table>', '</table>\n</div>')
-            
+        # Save Markdown to output directory
+        final_markdown = final_output.get("final_markdown")
+        if output_dir and final_markdown:
+            md_path = os.path.join(output_dir, "article_final.md")
+            try:
+                with open(md_path, "w", encoding="utf-8") as f:
+                    f.write(final_markdown)
+                logger.info(f"Markdown saved to: {md_path}")
+            except Exception as e:
+                logger.error(f"Failed to save Markdown file: {e}")
+
         return state
     
     # ---------------- UTILITIES ----------------
@@ -3274,10 +3293,8 @@ class AsyncWorkflowController:
         if brand_url in {"None", "", None}:
             brand_url = ""
 
-        # Initialize global link tracking if not exists
         if "used_all_urls" not in state:
             state["used_all_urls"] = set()
-            # Mark URLs already used in previous sections
             for u in state.get("used_internal_links", []):
                 state["used_all_urls"].add(self._canon_url(u))
             for u in state.get("used_external_links", []):
@@ -3285,16 +3302,19 @@ class AsyncWorkflowController:
 
         internal_set = state.get("internal_url_set", set()) or set()
         blocked_domains = state.get("blocked_external_domains", set()) or set()
-        allowed_domains = state.get("allowed_external_domains", set()) or set()
 
-        used_external_count = len(state.get("used_external_links", []))
+        # Track external links specifically for this section to avoid cramming too many at once
+        section_external_count = 0 
+        
+        # Max global external limits
+        global_used_external_count = len(state.get("used_external_links", []))
         if max_external is None:
             max_external = state.get("max_external_links", 6)
 
         pattern = r'\[([^\]]+)\]\(([^)]+)\)'
 
         def repl(m):
-            nonlocal used_external_count
+            nonlocal section_external_count, global_used_external_count
             text, raw_url = m.group(1), m.group(2).strip()
 
             if raw_url.lower() in {"none", "null", ""}:
@@ -3321,16 +3341,16 @@ class AsyncWorkflowController:
                 if dom in blocked_domains:
                     return text
                     
-                # If there are specific allowed domains, and it's not one of them, but it's a known safe domain, let it pass
-                safe_fallback_domains = {"statista.com", "mckinsey.com", "wikipedia.org", "en.wikipedia.org", "ar.wikipedia.org"}
-                if allowed_domains and dom not in allowed_domains and dom not in safe_fallback_domains:
+                # Limit external links per section to 2 max, and global to max_external
+                if section_external_count >= 2:
                     return text
-                    
-                if used_external_count >= max_external:
+                
+                if global_used_external_count >= max_external:
                     return text
                 
                 state["used_all_urls"].add(cu)
-                used_external_count += 1
+                section_external_count += 1
+                global_used_external_count += 1
                 return f"[{text}]({raw_url})"
 
         cleaned = re.sub(pattern, repl, content)

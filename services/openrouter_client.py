@@ -123,6 +123,7 @@ class OpenRouterClient(BaseAIClient):
         return {
             "content": content,
             "metadata": {
+                "duration": end_time - start_time,
                 "prompt": prompt,
                 "response": content,
                 "tokens": {
@@ -191,6 +192,7 @@ class OpenRouterClient(BaseAIClient):
         return {
             "content": content,
             "metadata": {
+                "duration": end_time - start_time,
                 "prompt": prompt,
                 "response": content,
                 "tokens": {

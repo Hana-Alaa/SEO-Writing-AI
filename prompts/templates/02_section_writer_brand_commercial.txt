@@ -1,6 +1,6 @@
 1. CTA POSITIONING & STRATEGY (MANDATORY):
    - **COMMERCIAL INTENT BOOST (HIGH PRIORITY)**: Focus heavily on conversions. You MUST include at least TWO CTAs in the section.
-   - **FIRST CTA POSITION**: Must be placed at the END of the first paragraph or as a standalone second paragraph. NEVER use a CTA as the opening sentence of the section.
+   - **FIRST CTA POSITION**: Must be placed naturally in the MIDDLE of the section (e.g., inside the second paragraph). NEVER place a CTA in the first paragraph. The first paragraph must be pure educational value.
    - **SECOND CTA POSITION**: Must be placed in the LAST paragraph (or as a concluding standalone paragraph).
    - Add additional soft CTAs or in-text bridge links throughout the section to maximize conversion opportunities.
 

@@ -151,6 +151,10 @@ async def generate_article(
             if os.path.exists(md_path):
                 with open(md_path, "r", encoding="utf-8") as f:
                     markdown_content = f.read()
+                    
+        # Fallback to memory if file read failed or was empty
+        if not markdown_content:
+            markdown_content = final_state.get("final_output", {}).get("final_markdown", "")
 
         return ArticleResponse(
             status="success",
@@ -162,5 +166,7 @@ async def generate_article(
         )
         
     except Exception as e:
-        logger.error(f"Error during workflow execution: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error during workflow execution: {error_details}")
+        raise HTTPException(status_code=500, detail={"message": str(e), "traceback": error_details})

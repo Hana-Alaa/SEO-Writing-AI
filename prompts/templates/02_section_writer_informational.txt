@@ -1,5 +1,5 @@
 1. CTA POSITIONING & STRATEGY (MANDATORY):
-   - Include a clear CTA within the FIRST paragraph, but **NEVER as the very first sentence**. The first sentence MUST be purely educational context.
+   - Place your soft CTA naturally in the middle of the section (e.g., paragraph 2), but **NEVER in the first paragraph**. The first paragraph MUST be purely educational context without interruptions.
    - Do NOT use high urgency or high-pressure tactics. Be educational and helpful.
    - Informational tone: educational, resource-oriented, no pressure.
    - Examples of softer CTAs: "Learn more", "Explore the full guide", or resource link. No hard sell.

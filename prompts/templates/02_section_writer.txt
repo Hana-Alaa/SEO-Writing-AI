@@ -25,6 +25,7 @@ ARTICLE CONTEXT:
 - Used Phrases To Avoid: {{ used_phrases | tojson }}
 - Mandatory Internal Links: {{ section.assigned_links | tojson }}
 - Used Internal Links: {{ used_internal_links | tojson }}
+- Reliable External Sources: {{ external_sources | tojson }}
 - Used External Links: {{ used_external_links | tojson }}
 - Requires Table: {{ section.requires_table }}
 - Table Type: "{{ section.table_type | default('none') }}"
@@ -117,9 +118,10 @@ STRICT WRITING RULES
    - CTA sentence MUST directly address the reader in second person.
 
    A. CTA POSITIONING & STRATEGY (MANDATORY):
-      - **COMMERCIAL INTENT BOOST (HIGH PRIORITY)**: If article_intent is "commercial" or "transactional", you MUST include at least TWO CTAs in the section: one in the FIRST paragraph and one in the LAST paragraph (or as a concluding standalone paragraph).
-      - Otherwise, for informational intents: include a clear CTA in the FIRST paragraph of the section, EXCEPT when the section requires a table.
-      - TABLE OVERRIDE RULE: If the section requires a table, the CTA MUST NOT be in the first paragraph. The table must be the core focus. The CTA MUST be placed as the very LAST paragraph of the entire section, strictly AFTER the table has concluded with a blank line.
+      - **COMMERCIAL INTENT BOOST (HIGH PRIORITY)**: If article_intent is "commercial" or "transactional", you MUST include at least TWO CTAs in the section. Place the first CTA naturally in the middle of the section (e.g. paragraph 2), and the second in the last paragraph.
+      - **NATURAL PLACEMENT (CRITICAL):** Do NOT force the CTA into the very first paragraph unless absolutely necessary. The best place for a CTA is **naturally integrated into the middle of the section**.
+      - Let the reader understand the value first, then offer the CTA as a logical next step.
+      - TABLE OVERRIDE RULE: If the section requires a table, the CTA MUST be placed as the very LAST paragraph of the entire section, strictly AFTER the table has concluded with a blank line.
       - Add additional soft CTAs or in-text bridge links throughout the section to maximize conversion opportunities.
       - DO NOT place CTAs inside tables.
       - Never end the article with a weak sign-off; the final paragraph of the conclusion MUST be a strong, high-urgency CTA.
@@ -142,7 +144,7 @@ STRICT WRITING RULES
    D. CTA Type Behavior (Per Section):
       * "none"     → Write NO CTA at all.
       * "soft"     → One low-pressure sentence/link only.
-      * "primary"  → Clear CTA in the FIRST PARAGRAPH.
+      * "primary"  → Clear CTA naturally integrated in the text.
       * "moderate" → CTA mid-section or end.
       * "strong"   → Highly aggressive directive, usually saved for the Conclusion or Intro.
 
@@ -201,10 +203,13 @@ STRICT WRITING RULES
        - CRITICAL: Skip any URL that already appears in "Used Internal Links" (this is a backup safety, but assigned links should already be unique).
    
    B. External Links:
-      - You have FULL FREEDOM to choose and insert external links to any highly credible, authoritative source (e.g., official organizations, well-known news outlets, high-authority educational/research sites) that adds value to the reader.
-      - PROACTIVE NAMED ENTITY LINKING: When mentioning specific technologies (e.g., [React](https://react.dev), [PHP](https://www.php.net)), frameworks, official government initiatives (e.g., [Saudi Vision 2030](https://www.vision2030.gov.sa)), or recognized organizations, ALWAYS provide a link to their official homepage or documentation.
-      - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword }}".
+{% if is_first_section %}      - THIS IS THE FIRST SECTION (INTRODUCTION). YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
+{% else %}{% if external_sources %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section. Do NOT skip this.
+      - Select this link ONLY from the "Reliable External Sources" list provided in the context below. Do not make up your own external links.
+      - Ensure the link explicitly provides data, research, or official standards that back up a claim.
       - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
+{% else %}      - No "Reliable External Sources" were provided for this section. Do not add any external links.
+{% endif %}{% endif %}      - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword }}".
 10. FAQ behavior:
    - If section_type = faq, you MUST answer EVERY question listed in the "Questions" array.
    - Use an H3 heading for each question, followed by a concise, unique, and helpful answer. Exactly 4-6 questions MUST be present.

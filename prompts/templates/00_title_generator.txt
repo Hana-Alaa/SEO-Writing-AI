@@ -6,7 +6,7 @@ Rules:
 - Must include the primary keyword exactly as provided.
 - Match the detected article language.
 - If intent is Commercial, make it persuasive/sales-oriented.
-- Prefer adding a relevant year (e.g., {{ current_year }}) when appropriate.
+- **YEAR INCLUSION (MANDATORY)**: You MUST include the current year ({{ current_year }}) naturally in the title.
 - No quotes.
 - No markdown.
 - No extra text.

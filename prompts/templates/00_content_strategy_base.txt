@@ -14,6 +14,8 @@ No theory, no generic frameworks, no outline generation.
 Rules:
 - Stay strictly on primary keyword topic.
 - **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a "full-service agency" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
 - Use SERP evidence only
 - If area exists:
   - Include local differentiation (market behavior, trust factors, payment/regulatory context)

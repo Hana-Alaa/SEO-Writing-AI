@@ -122,6 +122,10 @@ class WorkflowLogger:
                 dict_writer.writeheader()
                 dict_writer.writerows(self.metrics)
             logger.info(f"Exported metrics to: {filepath}")
+            
+            # Auto-generate text summary too
+            self.export_text_summary()
+            
         except Exception as e:
             logger.error(f"Failed to export CSV: {e}")
 
@@ -137,3 +141,29 @@ class WorkflowLogger:
             "prompt_text": "N/A",
             "response_text": str(data)
         })
+
+    def export_text_summary(self, filename: str = "metrics_summary.txt"):
+        """Generates a clean, readable text summary of step times and AI tokens."""
+        if not self.metrics:
+            return
+
+        filepath = os.path.join(self.output_dir, filename)
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write("===================================================\n")
+                f.write("        AI Workflow Execution Metrics Summary      \n")
+                f.write("===================================================\n\n")
+
+                for metric in self.metrics:
+                    step = metric.get("step_name", "Unknown")
+                    duration = float(metric.get("duration_sec", 0))
+                    tokens = int(metric.get("total_tokens", 0))
+
+                    f.write(f"Step: {step.upper()}\n")
+                    f.write(f"  -- Duration: {duration:.2f} seconds\n")
+                    f.write(f"  -- Tokens Used: {tokens:,}\n")
+                    f.write("-" * 50 + "\n")
+
+            logger.info(f"Exported metrics summary text to: {filepath}")
+        except Exception as e:
+            logger.error(f"Failed to export text summary: {e}")

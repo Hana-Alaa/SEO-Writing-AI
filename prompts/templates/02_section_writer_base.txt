@@ -25,10 +25,8 @@ ARTICLE CONTEXT:
 - Used Phrases To Avoid: {{ used_phrases | tojson }}
 - Mandatory Internal Links: {{ section.assigned_links | tojson }}
 - Used Internal Links: {{ used_internal_links | tojson }}
+- Reliable External Sources: {{ external_sources | tojson }}
 - Used External Links: {{ used_external_links | tojson }}
-- Reliable External Sources:
-{% for src in external_sources %}  * {{ src.text }}: {{ src.url }}
-{% endfor %}
 - Requires Table: {{ section.requires_table }}
 - Table Type: "{{ section.table_type | default('none') }}"
 - Requires List: {{ section.requires_list | default(false) }}
@@ -62,6 +60,7 @@ STRICT WRITING RULES
       - Every paragraph MUST focus on the specific topic defined by the keyword.
       - DO NOT pivot to secondary technologies or broad industry trends unless they are explicitly describing **Supporting Capabilities** of the main service.
       - **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature or context become the protagonist of the section.
+      - **NO SERVICE BLENDING**: If the Brand Source Text lists multiple services (e.g., SEO, Marketing, Hosting), but the primary keyword is "Web Design", YOU MUST COMPLETELY IGNORE the other services. Do NOT list the company as a "full-service provider" of those other things. ONLY write about the primary keyword.
       - **BRAND SOURCE OVERRIDE**: Even if the 'Brand Source Text' mentions many other services or topics, you MUST ignore them if they are not the Primary Keyword. Focus ONLY on {{ primary_keyword }}.
 
 {% else %}0. Anti-Hallucination (CRITICAL):
@@ -118,8 +117,9 @@ STRICT WRITING RULES
 
 5. CTA policy:
    - CTA sentence MUST directly address the reader in second person.
-   - **DO NOT START THE SECTION WITH A CTA.** The very first sentence of the section MUST ALWAYS be informational content. The CTA can be placed at the end of the first paragraph, or as a standalone second paragraph.
-   - TABLE OVERRIDE RULE: If the section requires a table, the CTA MUST NOT be in the first paragraph. The table must be the core focus. The CTA MUST be placed as the very LAST paragraph of the entire section, strictly AFTER the table has concluded with a blank line.
+   - **NATURAL PLACEMENT (CRITICAL):** Do NOT force the CTA into the very first paragraph unless absolutely necessary. The best place for a CTA is **naturally integrated into the middle of the section** (e.g., in the second paragraph) after you have already provided some educational context.
+   - Let the reader understand the value first, then offer the CTA as a logical next step.
+   - TABLE OVERRIDE RULE: If the section requires a table, the CTA MUST be placed as the very LAST paragraph of the entire section, strictly AFTER the table has concluded with a blank line.
    - DO NOT place CTAs inside tables.
    - **RULE 1: SUBPAGE PRIORITY (CRITICAL).** You must use the provided "Mandatory Internal Link" (a specific subpage) as your primary link destination. DO NOT use the Brand URL (homepage) if a subpage link is available in "Mandatory Internal Links".
    - **RULE 2:** NEVER use the exact same URL twice in the same section. If your CTA links to URL_A, your in-text informational link MUST NOT also link to URL_A.
@@ -128,10 +128,12 @@ STRICT WRITING RULES
    - **RULE 5:** NEVER repeat a CTA phrasing or link destination that you've used in a previous paragraph.
    - **RULE 6 — EXTERNAL LINKS (CRITICAL):**
 {% if is_first_section %}      - THIS IS THE FIRST SECTION (INTRODUCTION). YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE. The first link a reader encounters MUST be an internal link to keep them on our site.
-{% else %}      - Aim for 3-4 external links across the article, prioritizing sections where citing a statistic or a technical fact increases credibility.
-      - Select links from the "Reliable External Sources" list provided below that explicitly provide data, research, or official standards.
+{% else %}{% if external_sources %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section. Do NOT skip this.
+      - Select this link ONLY from the "Reliable External Sources" list provided in the context below. Do not make up your own external links.
+      - Ensure the link explicitly provides data, research, or official standards that back up a claim in your paragraph.
       - Use natural anchor text like "[75% of users prefer...](url)" or "[According to official reports...](url)".
-{% endif %}      - NEVER link to competitors who offer the same services or target the same primary keyword.
+{% else %}      - No "Reliable External Sources" were provided for this section. Do not add any external links.
+{% endif %}{% endif %}      - NEVER link to competitors who offer the same services or target the same primary keyword.
     - **RULE 7 — DATA & STATISTICS (NEW):**
       - Actively look for percentages, growth metrics, or industry benchmarks in the "Reliable External Sources" or "Brand Source Text".
       - Use these to back up your claims (e.g., "Industry data shows a 40% increase in..." or "Our internal metrics indicate a 99.9% uptime...").

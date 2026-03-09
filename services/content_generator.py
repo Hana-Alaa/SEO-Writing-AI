@@ -431,7 +431,7 @@ class SectionWriter:
                     step_name=f"section_{section_index+1}_{section.get('heading_text', 'No Heading')}",
                     prompt=prompt,
                     response=response_content,
-                    tokens=metadata,
+                    tokens=metadata.get("tokens", {}),
                     duration=metadata.get("duration", 0)
                 )
 
