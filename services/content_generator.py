@@ -184,7 +184,8 @@ class OutlineGenerator:
             area: Optional[str],
             area_neighborhoods: Optional[List[str]] = None,
             feedback: Optional[str] = None,
-            mandatory_section_types: Optional[List[str]] = None
+            mandatory_section_types: Optional[List[str]] = None,
+            prohibited_competitors: Optional[List[str]] = None
         ) -> Dict[str, Any]:
 
         current_year = str(datetime.now().year)
@@ -207,8 +208,9 @@ class OutlineGenerator:
             area=area,
             area_neighborhoods=area_neighborhoods or [],
             feedback=feedback,
-            mandatory_section_types = mandatory_section_types or [],
-            current_year=current_year
+            mandatory_section_types=mandatory_section_types or [],
+            current_year=current_year,
+            prohibited_competitors=prohibited_competitors or []
         )
 
         logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
@@ -310,6 +312,7 @@ class SectionWriter:
         allow_external_links: bool,
         execution_plan: Dict[str, Any],
         area: str,
+        brand_name: str = "",
         used_phrases: List[str] = None,
         used_internal_links: List[str] = None,
         used_external_links: List[str] = None,
@@ -318,7 +321,8 @@ class SectionWriter:
         brand_context: str = "",
         section_source_text: str = "",
         external_sources: List[Dict[str, str]] = None,
-        workflow_logger: Optional[Any] = None
+        workflow_logger: Optional[Any] = None,
+        prohibited_competitors: List[str] = None
     ) -> Dict[str, Any]:
 
         brand_url = brand_url if brand_url not in ["None", ""] else None
@@ -406,13 +410,16 @@ class SectionWriter:
             used_phrases=used_phrases or [],
             used_internal_links=used_internal_links or [],
             used_external_links=used_external_links or [], 
+            brand_name=brand_name,
             section_index=section_index,
             total_sections=total_sections,
             brand_context=brand_context,
             section_source_text=section_source_text,
             external_sources=external_sources or [],
             is_first_section=(section_index == 0),
-            is_last_section=(section_index == total_sections - 1)
+            is_last_section=(section_index == total_sections - 1),
+            prohibited_competitors=prohibited_competitors or [],
+            current_year=current_year
         )
 
         logger.info("\n================ FINAL PROMPT (SectionWriter) ================\n")

@@ -1,0 +1,216 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 8.56 seconds
+  -- Tokens Used: 3,341
+--------------------------------------------------
+Step: LOCAL_NEIGHBORHOODS
+  -- Duration: 1.77 seconds
+  -- Tokens Used: 518
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 23.30 seconds
+  -- Tokens Used: 518
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 67.08 seconds
+  -- Tokens Used: 31,068
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 68.17 seconds
+  -- Tokens Used: 22,773
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 135.26 seconds
+  -- Tokens Used: 22,773
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 6.44 seconds
+  -- Tokens Used: 3,337
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 6.44 seconds
+  -- Tokens Used: 3,337
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.77 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.80 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 8.12 seconds
+  -- Tokens Used: 2,818
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 12.01 seconds
+  -- Tokens Used: 2,861
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 20.64 seconds
+  -- Tokens Used: 2,861
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 21.66 seconds
+  -- Tokens Used: 30,041
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.68 seconds
+  -- Tokens Used: 6,797
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.05 seconds
+  -- Tokens Used: 6,808
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_واقع حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 5.88 seconds
+  -- Tokens Used: 10,798
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: واقع حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا تختار منصة تيك إيفنت لحجز تذاكر المباريات؟
+  -- Duration: 5.03 seconds
+  -- Tokens Used: 15,230
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار منصة تيك إيفنت لحجز تذاكر المباريات؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_المنظومة التقنية: كيف نضمن لك حجزاً آمناً وسريعاً؟
+  -- Duration: 7.25 seconds
+  -- Tokens Used: 19,049
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: المنظومة التقنية: كيف نضمن لك حجزاً آمناً وسريعاً؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_دليل الثقة: لماذا نعتبر الأفضل في سوق التذاكر؟
+  -- Duration: 4.17 seconds
+  -- Tokens Used: 22,923
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: دليل الثقة: لماذا نعتبر الأفضل في سوق التذاكر؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_خطوات حجز تذكرتك عبر تيك إيفنت في دقائق
+  -- Duration: 4.47 seconds
+  -- Tokens Used: 27,435
+--------------------------------------------------
+Step: SECTION_6_خطوات حجز تذكرتك عبر تيك إيفنت في دقائق
+  -- Duration: 5.50 seconds
+  -- Tokens Used: 27,449
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات حجز تذكرتك عبر تيك إيفنت في دقائق
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_الأسئلة الشائعة حول حجز تذاكر المباريات
+  -- Duration: 5.75 seconds
+  -- Tokens Used: 31,890
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول حجز تذاكر المباريات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_لا تدع الحماس يفوتك: احجز مقعدك للموسم القادم الآن
+  -- Duration: 6.00 seconds
+  -- Tokens Used: 37,695
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لا تدع الحماس يفوتك: احجز مقعدك للموسم القادم الآن
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.21 seconds
+  -- Tokens Used: 40,624
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.94 seconds
+  -- Tokens Used: 40,625
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 82.96 seconds
+  -- Tokens Used: 40,624
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 11.95 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_MASTERFRAME_MASTER_FRAME
+  -- Duration: 13.44 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 13.71 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_MOCKUP_SEC_PROOF
+  -- Duration: 14.16 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_MARKET
+  -- Duration: 19.05 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_TECH
+  -- Duration: 22.73 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_FEATURED_SEC_INTRO
+  -- Duration: 23.98 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_INTRO
+  -- Duration: 24.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_INFOGRAPHIC_SEC_WHY_CHOOSE
+  -- Duration: 25.18 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_INFOGRAPHIC_SEC_PROCESS
+  -- Duration: 25.73 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 26.48 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 6.36 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.30 seconds
+  -- Tokens Used: 0
+--------------------------------------------------

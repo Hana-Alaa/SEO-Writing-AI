@@ -24,7 +24,7 @@ class SectionValidator:
 
         response = await self.ai_client.send(prompt, step="section_validation")
 
-        data = recover_json(response)
+        data = recover_json(response["content"]) if isinstance(response, dict) else recover_json(str(response))
 
         if not data or "status" not in data:
             raise ContentGeneratorError("Invalid section validation response.")

@@ -19,6 +19,15 @@ class WorkflowLogger:
         self.log_file = os.path.join(self.output_dir, "workflow.log")
         self.csv_file = os.path.join(self.output_dir, "metrics.csv")
         
+        # OpenRouter pricing per 1k tokens (simplified)
+        self.PRICING_MAP = {
+            "google/gemini-3-flash-preview": {"prompt": 0.0001, "completion": 0.0003},
+            "openai/o4-mini:online": {"prompt": 0.00015, "completion": 0.0006},
+            "black-forest-labs/flux.2-pro": {"image": 0.02},
+            "google/gemini-3.1-flash-image-preview": {"image": 0.005},
+            "google/gemini-2.0-flash-001": {"prompt": 0.0001, "completion": 0.0003}
+        }
+        
     def start_step(self, step_name: str) -> float:
         """Returns the start time of a step."""
         logger.info(f"Starting workflow step: {step_name}")
@@ -29,7 +38,8 @@ class WorkflowLogger:
                  start_time: float, 
                  prompt: Optional[str] = None, 
                  response: Optional[Any] = None,
-                 tokens: Optional[Dict[str, int]] = None):
+                 tokens: Optional[Dict[str, int]] = None,
+                 model: str = "unknown"):
         """Records metrics for a completed step."""
         duration = time.time() - start_time
         
@@ -48,6 +58,9 @@ class WorkflowLogger:
             "prompt_tokens": tokens.get("prompt_tokens", 0) if tokens else 0,
             "completion_tokens": tokens.get("completion_tokens", 0) if tokens else 0,
             "total_tokens": tokens.get("total_tokens", 0) if tokens else 0,
+            "model": model,
+            "estimated_cost": self._calculate_cost(model, tokens),
+            "is_google": "google" in model.lower(),
             "prompt_text": prompt or "N/A",
             "response_text": resp_str or "N/A"
         }
@@ -57,7 +70,8 @@ class WorkflowLogger:
         self._log_to_file(step_name, prompt, resp_str, duration)
         logger.info(f"Finished step: {step_name} in {duration:.2f}s")
 
-    def log_ai_call(self, step_name: str, prompt: str, response: Any, tokens: Dict[str, int], duration: float):
+    def log_ai_call(self, step_name: str, prompt: str, response: Any, tokens: Dict[str, int], duration: float, model: str = "unknown"):
+        """Logs an AI call immediately, useful for nested or parallel steps."""
         """Logs an AI call immediately, useful for nested or parallel steps."""
         resp_str = ""
         if isinstance(response, (dict, list)):
@@ -72,6 +86,9 @@ class WorkflowLogger:
             "prompt_tokens": tokens.get("prompt_tokens", 0),
             "completion_tokens": tokens.get("completion_tokens", 0),
             "total_tokens": tokens.get("total_tokens", 0),
+            "model": model,
+            "estimated_cost": self._calculate_cost(model, tokens),
+            "is_google": "google" in model.lower(),
             "prompt_text": prompt,
             "response_text": resp_str
         }
@@ -115,7 +132,11 @@ class WorkflowLogger:
             logger.warning("No metrics to export.")
             return
 
-        keys = self.metrics[0].keys()
+        # Collect all unique keys from all logic
+        all_keys = set()
+        for m in self.metrics:
+            all_keys.update(m.keys())
+        keys = sorted(list(all_keys))
         try:
             with open(filepath, 'w', newline='', encoding='utf-8-sig') as f:
                 dict_writer = csv.DictWriter(f, fieldnames=keys)
@@ -126,6 +147,7 @@ class WorkflowLogger:
             # Auto-generate summaries
             self.export_text_summary()
             self.export_manager_summary()
+            self.export_consumption_reports()
             
         except Exception as e:
             logger.error(f"Failed to export CSV: {e}")
@@ -139,6 +161,9 @@ class WorkflowLogger:
             "prompt_tokens": 0,
             "completion_tokens": 0,
             "total_tokens": 0,
+            "model": "N/A",
+            "estimated_cost": 0.0,
+            "is_google": False,
             "prompt_text": "N/A",
             "response_text": str(data)
         })
@@ -376,3 +401,80 @@ class WorkflowLogger:
             logger.info(f"Exported Manager Report to: {filepath}")
         except Exception as e:
             logger.error(f"Failed to export manager report: {e}")
+
+    def _calculate_cost(self, model: str, tokens: Optional[Dict[str, int]]) -> float:
+        """Calculates estimated cost for a step."""
+        if not tokens or model == "unknown":
+            return 0.0
+        
+        rates = self.PRICING_MAP.get(model, {"prompt": 0, "completion": 0})
+        
+        # Handle Image Costs
+        if "image" in model.lower() or "flux" in model.lower():
+            return rates.get("image", 0.0)
+
+        p_tokens = tokens.get("prompt_tokens", 0)
+        c_tokens = tokens.get("completion_tokens", 0)
+        
+        cost = (p_tokens / 1000) * rates.get("prompt", 0) + (c_tokens / 1000) * rates.get("completion", 0)
+        return round(cost, 6)
+
+    def export_consumption_reports(self):
+        """Generates consumption reports in both MD and TXT formats."""
+        if not self.metrics: return
+        
+        total_cost = sum(m.get("estimated_cost", 0) for m in self.metrics)
+        total_tokens = sum(m.get("total_tokens", 0) for m in self.metrics)
+        google_cost = sum(m.get("estimated_cost", 0) for m in self.metrics if m.get("is_google"))
+        other_cost = total_cost - google_cost
+
+        # Generate Markdown Version
+        md_content = [
+            "# API Consumption & Cost Report",
+            f"\n**Total Estimated Cost:** ${total_cost:.4f}",
+            f"\n**Total Tokens:** {total_tokens:,}",
+            "\n## Cost Breakdown by Provider",
+            f"- **Google (Gemini):** ${google_cost:.4f}",
+            f"- **Others:** ${other_cost:.4f}",
+            "\n## Detailed Step Usage",
+            "| Step | Model | Tokens | Duration | Cost |",
+            "| :--- | :--- | :--- | :--- | :--- |"
+        ]
+
+        for m in self.metrics:
+            step_name = m.get('step_name', 'Unknown')
+            model = m.get('model', 'N/A')
+            total_tokens_val = m.get('total_tokens', 0)
+            duration_sec = m.get('duration_sec', 0)
+            est_cost = m.get('estimated_cost', 0.0)
+            md_content.append(f"| {step_name} | {model} | {total_tokens_val:,} | {duration_sec}s | ${est_cost:.6f} |")
+
+        md_path = os.path.join(self.output_dir, "consumption_report.md")
+        with open(md_path, 'w', encoding='utf-8') as f:
+            f.write("\n".join(md_content))
+
+        # Generate TXT Version
+        txt_content = [
+            "==================================================",
+            "        API CONSUMPTION & COST REPORT             ",
+            "==================================================",
+            f"\nTotal Estimated Cost: ${total_cost:.4f}",
+            f"Total Tokens: {total_tokens:,}",
+            f"\nGoogle (Gemini) Cost: ${google_cost:.4f}",
+            f"Other Costs: ${other_cost:.4f}",
+            "\n--------------------------------------------------",
+            f"{'Step':<25} | {'Model':<25} | {'Cost':<10}",
+            "--------------------------------------------------"
+        ]
+
+        for m in self.metrics:
+            step_name = str(m.get('step_name', 'Unknown'))[:24]
+            model = str(m.get('model', 'N/A'))[:24]
+            est_cost = m.get('estimated_cost', 0.0)
+            txt_content.append(f"{step_name:<25} | {model:<25} | ${est_cost:.6f}")
+
+        txt_path = os.path.join(self.output_dir, "consumption_report.txt")
+        with open(txt_path, 'w', encoding='utf-8') as f:
+            f.write("\n".join(txt_content))
+
+        logger.info(f"Exported consumption reports to {md_path} and {txt_path}")

@@ -19,6 +19,8 @@ Rules:
 - Use SERP evidence only
 - If area exists:
   - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic "market standards" or "alternative methods".
+- PROHIBITED NAMES: {{ prohibited_competitors | join(', ') }}
 
 OUTPUT FORMAT:
 You MUST return the output EXACTLY as a valid JSON object. 

@@ -1,0 +1,192 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 7.06 seconds
+  -- Tokens Used: 3,301
+--------------------------------------------------
+Step: LOCAL_NEIGHBORHOODS
+  -- Duration: 1.83 seconds
+  -- Tokens Used: 519
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 23.26 seconds
+  -- Tokens Used: 519
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 47.94 seconds
+  -- Tokens Used: 23,663
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 47.95 seconds
+  -- Tokens Used: 23,663
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 6.70 seconds
+  -- Tokens Used: 3,781
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 6.70 seconds
+  -- Tokens Used: 3,781
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.67 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.12 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 8.77 seconds
+  -- Tokens Used: 3,292
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 8.77 seconds
+  -- Tokens Used: 3,292
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 23.22 seconds
+  -- Tokens Used: 34,056
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.85 seconds
+  -- Tokens Used: 7,155
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.59 seconds
+  -- Tokens Used: 7,125
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_واقع سوق حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 4.95 seconds
+  -- Tokens Used: 11,247
+--------------------------------------------------
+Step: SECTION_2_واقع سوق حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 6.94 seconds
+  -- Tokens Used: 11,359
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: واقع سوق حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا تفشل الطرق التقليدية في حجز تذاكر المباريات الكبرى؟
+  -- Duration: 4.61 seconds
+  -- Tokens Used: 18,438
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تفشل الطرق التقليدية في حجز تذاكر المباريات الكبرى؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_منظومة تيك إيفنت: كيف نعيد تعريف تجربة شراء تذاكر كرة القدم؟
+  -- Duration: 4.88 seconds
+  -- Tokens Used: 22,971
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: منظومة تيك إيفنت: كيف نعيد تعريف تجربة شراء تذاكر كرة القدم؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_نظام تيك تقسيط: شاهد نجومك المفضلين وادفع لاحقاً
+  -- Duration: 4.66 seconds
+  -- Tokens Used: 27,318
+--------------------------------------------------
+Step: SECTION_5_نظام تيك تقسيط: شاهد نجومك المفضلين وادفع لاحقاً
+  -- Duration: 4.21 seconds
+  -- Tokens Used: 27,338
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: نظام تيك تقسيط: شاهد نجومك المفضلين وادفع لاحقاً
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_لماذا نعتبر الأفضل في حجز تذاكر المباريات؟ أرقام وضمانات
+  -- Duration: 6.95 seconds
+  -- Tokens Used: 31,853
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا نعتبر الأفضل في حجز تذاكر المباريات؟ أرقام وضمانات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_لماذا تختار تيك إيفنت لحجز تذاكر المباريات في 2026؟
+  -- Duration: 3.95 seconds
+  -- Tokens Used: 36,916
+--------------------------------------------------
+Step: SECTION_7_لماذا تختار تيك إيفنت لحجز تذاكر المباريات في 2026؟
+  -- Duration: 4.63 seconds
+  -- Tokens Used: 36,962
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار تيك إيفنت لحجز تذاكر المباريات في 2026؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_خطوات حجز تذاكر المباريات عبر المنصة: من الشاشة إلى المدرج
+  -- Duration: 4.94 seconds
+  -- Tokens Used: 41,124
+--------------------------------------------------
+Step: SECTION_8_خطوات حجز تذاكر المباريات عبر المنصة: من الشاشة إلى المدرج
+  -- Duration: 5.35 seconds
+  -- Tokens Used: 41,075
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات حجز تذاكر المباريات عبر المنصة: من الشاشة إلى المدرج
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_دليل المشجع الدولي: كيف تحجز تذكرتك لزيارة الملاعب السعودية؟
+  -- Duration: 4.90 seconds
+  -- Tokens Used: 44,680
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: دليل المشجع الدولي: كيف تحجز تذكرتك لزيارة الملاعب السعودية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_10_الأسئلة الشائعة حول حجز تذاكر المباريات عبر تيك إيفنت
+  -- Duration: 9.01 seconds
+  -- Tokens Used: 48,892
+--------------------------------------------------
+Step: SECTION_10_الأسئلة الشائعة حول حجز تذاكر المباريات عبر تيك إيفنت
+  -- Duration: 6.47 seconds
+  -- Tokens Used: 48,834
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول حجز تذاكر المباريات عبر تيك إيفنت
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_11_الخلاصة: اجعل مدرجك المفضل حقيقة مع تيك إيفنت
+  -- Duration: 6.03 seconds
+  -- Tokens Used: 54,516
+--------------------------------------------------
+Step: SECTION_11_الخلاصة: اجعل مدرجك المفضل حقيقة مع تيك إيفنت
+  -- Duration: 6.03 seconds
+  -- Tokens Used: 54,527
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الخلاصة: اجعل مدرجك المفضل حقيقة مع تيك إيفنت
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 6.39 seconds
+  -- Tokens Used: 57,906
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.79 seconds
+  -- Tokens Used: 57,879
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 143.13 seconds
+  -- Tokens Used: 57,906
+--------------------------------------------------

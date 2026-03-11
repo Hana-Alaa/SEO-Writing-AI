@@ -23,7 +23,6 @@ OPENROUTER = {
         # "image": "google/gemini-3-pro-image-preview"
         # "image": "google/gemini-2.5-flash-image-preview"
         "image": "google/gemini-3.1-flash-image-preview"
-
     }
 }
 

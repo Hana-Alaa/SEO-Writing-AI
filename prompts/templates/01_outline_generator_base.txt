@@ -16,8 +16,14 @@ Topic Protagonist Rule (HIGHEST PRIORITY):
 - Content Strategy: {{ content_strategy | tojson }}
 {% if brand_context %}- Brand Context: "{{ brand_context }}"{% endif %}
 - Internal Links (Available to Assign): {{ urls | tojson }}
-- Mandatory Section Types (YOU MUST INCLUDE THESE): {{ mandatory_section_types | tojson }}
 - Current Year: {{ current_year }}
+- Prohibited Competitors (NEVER MENTION THESE): {{ prohibited_competitors | tojson }}
+{% if prohibited_competitors %}
+PROHIBITED BRANDS (CRITICAL CONSTRAINT):
+- You MUST NOT mention, reference, or compare to any of the following competitor brands: {{ prohibited_competitors | join(', ') }}.
+- Do not create any sections that would require mentioning these competitors.
+- Focus exclusively on the Protagonist Brand ({{ brand_context if brand_context else 'The Company' }}).
+{% endif %}
 
 Role:
 You are an SEO Content Architect.

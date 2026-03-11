@@ -4,6 +4,14 @@ Write ONLY the current section body in markdown.
 ARTICLE CONTEXT:
 - Title: "{{ title }}"
 - Intent: "{{ article_intent }}"
+- Current Year: {{ current_year }}
+- Prohibited Competitors (NEVER MENTION THESE): {{ prohibited_competitors | tojson }}
+{% if prohibited_competitors %}
+PROHIBITED BRANDS (CRITICAL CONSTRAINT):
+- You MUST NOT mention, reference, or compare to any of the following competitor brands: {{ prohibited_competitors | join(', ') }}.
+- Focus exclusively on our brand and its unique advantages.
+- If you need to mention "competitors" generally, do so without naming any specific brand.
+{% endif %}
 - Content Type: "{{ content_type }}"
 - Primary Keyword: "{{ primary_keyword }}"
 - Language: "{{ article_language }}"
@@ -20,6 +28,7 @@ ARTICLE CONTEXT:
 - CTA Type: "{{ execution_plan.cta_type }}"
 - CTA Position: "{{ execution_plan.cta_position }}"
 - Brand Context: "{{ brand_context if brand_context else '' }}"
+- Brand Name: "{{ brand_name }}"
 - Branding / Primary Site: "{{ brand_url if brand_url else '' }}" (PRIMARY BRAND IDENTITY - MANDATORY for Introduction)
 - Brand Link Used Previously: {{ brand_link_used | lower }}
 - Used Phrases To Avoid: {{ used_phrases | tojson }}
@@ -132,7 +141,8 @@ STRICT WRITING RULES
    - STRUCTURAL RULE: Links MUST NOT be placed in tables. If a table exists, the link goes in the paragraph below it.
    - UNIQUENESS: Do NOT use the same URL or the same phrasing twice in the section.
    - INTERNAL LINKS: Use only URLs from "Mandatory Internal Links". In Introduction, use the Brand URL.
-   - **HOMEPAGE INJECTION (CRITICAL):** If this is the "Introduction" section, you MUST integrate the Brand Homepage URL natively into the text of the first or second paragraph. Do not leave the introduction without the primary brand link.
+    - **HOMEPAGE INJECTION (CRITICAL):** If this is the "Introduction" section, you MUST integrate the Brand Homepage URL ({{ brand_url }}) natively into a CTA sentence within the VERY FIRST paragraph. Do not leave the opening paragraph without the primary brand link.
+    - **BRAND NAME IN CTA (MANDATORY for First 2 Sections):** If this is one of the first two sections (section_index < 2), you MUST explicitly mention the brand name "{{ brand_name }}" within your bolded CTA sentence.
 
 6. External Links (MANDATORY ENFORCEMENT):
 {% if is_first_section %}   - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.

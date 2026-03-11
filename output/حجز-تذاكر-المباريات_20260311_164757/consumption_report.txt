@@ -1,0 +1,66 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0149
+Total Tokens: 455,145
+
+Google (Gemini) Cost: $0.0088
+Other Costs: $0.0061
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+brand_discovery           | unknown                   | $0.000000
+local_neighborhoods       | unknown                   | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+STEP_TOTAL: web_research  | openai/o4-mini:online     | $0.006099
+serp_analysis             | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | google/gemini-3-flash-pr  | $0.000489
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | google/gemini-3-flash-pr  | $0.000048
+STEP_TOTAL: style_analys  | google/gemini-3-flash-pr  | $0.000048
+content_strategy          | unknown                   | $0.000000
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | google/gemini-3-flash-pr  | $0.000475
+STEP_TOTAL: outline_gene  | google/gemini-3-flash-pr  | $0.003603
+section_1_Introduction    | unknown                   | $0.000000
+section_1_Introduction    | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_2_واقع حجز تذاكر  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_3_لماذا تختار من  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_4_المنظومة التقن  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_5_دليل الثقة: لم  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_6_خطوات حجز تذكر  | unknown                   | $0.000000
+section_6_خطوات حجز تذكر  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_7_الأسئلة الشائع  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_8_لا تدع الحماس   | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_1_Introduction    | unknown                   | $0.000000
+section_1_Introduction    | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+STEP_TOTAL: content_writ  | google/gemini-3-flash-pr  | $0.004112
+STEP_TOTAL: image_prompt  | google/gemini-3-flash-pr  | $0.000000
+IMAGE_MASTERFRAME_master  | unknown                   | $0.000000
+STEP_TOTAL: master_frame  | google/gemini-3-flash-pr  | $0.000000
+IMAGE_MOCKUP_sec_proof    | unknown                   | $0.000000
+IMAGE_ILLUSTRATION_sec_m  | unknown                   | $0.000000
+IMAGE_ILLUSTRATION_sec_t  | unknown                   | $0.000000
+IMAGE_FEATURED_sec_intro  | unknown                   | $0.000000
+IMAGE_ILLUSTRATION_sec_i  | unknown                   | $0.000000
+IMAGE_INFOGRAPHIC_sec_wh  | unknown                   | $0.000000
+IMAGE_INFOGRAPHIC_sec_pr  | unknown                   | $0.000000
+STEP_TOTAL: image_genera  | google/gemini-3-flash-pr  | $0.000000
+STEP_TOTAL: assembly      | google/gemini-3-flash-pr  | $0.000000
+STEP_TOTAL: image_insert  | google/gemini-3-flash-pr  | $0.000000
+STEP_TOTAL: meta_schema   | google/gemini-3-flash-pr  | $0.000000
+STEP_TOTAL: render_html   | google/gemini-3-flash-pr  | $0.000000

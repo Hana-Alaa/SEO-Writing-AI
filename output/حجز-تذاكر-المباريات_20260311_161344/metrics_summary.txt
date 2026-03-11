@@ -1,0 +1,28 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 7.30 seconds
+  -- Tokens Used: 3,317
+--------------------------------------------------
+Step: LOCAL_NEIGHBORHOODS
+  -- Duration: 1.79 seconds
+  -- Tokens Used: 522
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 24.15 seconds
+  -- Tokens Used: 522
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 54.33 seconds
+  -- Tokens Used: 25,377
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 66.16 seconds
+  -- Tokens Used: 35,596
+--------------------------------------------------

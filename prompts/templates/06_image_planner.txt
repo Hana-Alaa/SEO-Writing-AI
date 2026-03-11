@@ -31,13 +31,18 @@ Rules:
    - Image generators produce "messy" or garbled results when given overly complex or crowded prompts. 
    - KEEP IT CLEAN: Focus on a single, clear, high-quality subject. Use words like "minimalist," "clean composition," "uncluttered," and "professional."
    - **FRAMING SAFETY (CRITICAL)**: Describe subjects as being "centered with wide margins" or "surrounded by significant negative space". This ensures that no part of the subject is cut off when fitted into different templates.
+   - **HIGH-CLARITY & SHARP FOCUS**: Use keywords like "ray tracing", "8k resolution", "sharp focus", "professional studio lighting".
    - DO NOT ask for collages, crowded scenes, or multiple overlapping elements.
-9. **Language & Text Restriction (ABSOLUTE RULE - NO ARABIC TEXT)**: 
-   - Image Generators currently CANNOT render Arabic text correctly and will produce ugly, distorted gibberish.
-   - You MUST PROHIBIT all text in your prompts by default.
-   - For 'Featured', 'Illustration', and 'Mockup' types: NEVER request text. Expressly describe visual elements only.
-   - For 'Infographic' types: IF text is absolutely necessary, it MUST be 1-2 words of PERFECT ENGLISH ONLY.
-   - NEVER, UNDER ANY CIRCUMSTANCES, ask the AI to generate Arabic words or Arabic UI elements.
+9. **Language & Text Strategy (Arabic Allowed but Use with Caution)**: 
+   - You MAY include Arabic text in image prompts if it significantly enhances the context (e.g., brand name, key headline, or localized signs).
+   - **QUALITY WARNING**: Be aware that many AI image models still struggle with complex Arabic script and may produce garbled or reversed letters. 
+   - **STRICT GUIDELINES FOR TEXT**:
+     - Keep Arabic text extremely short (1-3 words max).
+     - Request "Simple, bold, modern Arabic typography" or "Clean Kufic calligraphy" for better results.
+     - Expressly forbid "complex calligraphy" or "long sentences" as they are most likely to fail.
+     - If the text looks distorted in previous attempts or the context is abstract, fallback to visual metaphors without text.
+   - **NO GARBLED TEXT**: Always include "no garbled or distorted text" in the negative prompt portion of your instructions.
+10. **Aesthetic Consistency**: All images must follow an 'Executive Modern' style - use premium materials (brushed metal, frosted glass, smooth concrete) and soft, professional color palettes derived from the brand style.
 
 Output Format:
 Return strictly a JSON array of objects. No markdown.

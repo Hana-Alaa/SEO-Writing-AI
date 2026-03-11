@@ -5,7 +5,7 @@ import base64
 import logging
 import asyncio
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from config.ai_config import OPENROUTER
 from services.ai_client_base import BaseAIClient
 from utils.observability import ObservabilityTracker
@@ -126,6 +126,7 @@ class OpenRouterClient(BaseAIClient):
             "content": content,
             "metadata": {
                 "duration": end_time - start_time,
+                "model": self.model_writing,
                 "prompt": prompt,
                 "response": content,
                 "tokens": {
@@ -195,6 +196,7 @@ class OpenRouterClient(BaseAIClient):
             "content": content,
             "metadata": {
                 "duration": end_time - start_time,
+                "model": self.model_research,
                 "prompt": prompt,
                 "response": content,
                 "tokens": {
@@ -284,42 +286,61 @@ class OpenRouterClient(BaseAIClient):
             payload
         )
 
-        if not data or "choices" not in data:
-            logger.error("Invalid image response")
+        if not data:
+            logger.error("Empty response from image API")
+            return None
+            
+        # Standard OpenAI/Image API format fallback
+        if "data" in data and isinstance(data["data"], list) and len(data["data"]) > 0:
+            image_url = data["data"][0].get("url") or data["data"][0].get("b64_json")
+            if image_url:
+                logger.info(f"Image found via standard format: {image_url[:50]}...")
+                return await self._process_image_url(image_url, save_dir)
+
+        if "choices" not in data:
+            logger.error(f"Invalid image response: {data}")
             return None
 
         message = data["choices"][0]["message"]
 
         if "images" not in message or not message["images"]:
-            logger.error("No images in response")
+            logger.error(f"No images in response. Raw message content: {message}")
+            logger.debug(f"Full response data: {data}")
             return None
 
         image_url = message["images"][0]["image_url"]["url"]
+        return await self._process_image_url(image_url, save_dir)
 
-        # data:image/png;base64,xxxxxx
-        if "," in image_url:
-            header, encoded = image_url.split(",", 1)
-            image_bytes = base64.b64decode(encoded)
-        else:
-            # Handle potential direct URL if OpenRouter returns one
-            async with httpx.AsyncClient() as client:
-                r = await client.get(image_url)
-                r.raise_for_status()
-                image_bytes = r.content
+    async def _process_image_url(self, image_url: str, save_dir: str = None) -> Optional[str]:
+        """Downloads/decodes image and saves to save_dir."""
+        try:
+            # data:image/png;base64,xxxxxx
+            if image_url.startswith("data:"):
+                header, encoded = image_url.split(",", 1)
+                image_bytes = base64.b64decode(encoded)
+            else:
+                # Handle potential direct URL if OpenRouter returns one
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    r = await client.get(image_url)
+                    r.raise_for_status()
+                    image_bytes = r.content
 
-        # Use provided save_dir or fall back to default
-        target_dir = save_dir or "output/images"
-        os.makedirs(target_dir, exist_ok=True)
-        filename = os.path.join(target_dir, f"{int(time.time()*1000)}.png")
+            # Use provided save_dir or fall back to default
+            target_dir = save_dir or "output/images"
+            os.makedirs(target_dir, exist_ok=True)
+            filename = os.path.join(target_dir, f"{int(time.time()*1000)}.png")
 
-        with open(filename, "wb") as f:
-            f.write(image_bytes)
+            with open(filename, "wb") as f:
+                f.write(image_bytes)
 
-        logger.info(f"Image saved to: {filename}")
-        return filename
+            logger.info(f"Image saved to: {filename}")
+            return filename
+        except Exception as e:
+            logger.error(f"Failed to process image URL: {e}")
+            return None
 
-    async def describe_image_style(self, image_path: str) -> str:
-        """Analyzes a reference image to describe its visual style using a vision model."""
+    async def describe_image_style(self, image_path: str) -> Dict[str, Any]:
+        """Analyzes a reference image and returns a dict with 'content' (description) and 'metadata'."""
         if not os.path.exists(image_path):
             logger.error(f"Reference image not found: {image_path}")
             return ""
@@ -345,7 +366,14 @@ class OpenRouterClient(BaseAIClient):
             if data and "choices" in data:
                 description = data["choices"][0]["message"]["content"].strip()
                 logger.info(f"Vision Style Analysis: {description}")
-                return description
+                return {
+                    "content": description,
+                    "metadata": {
+                        "model": "google/gemini-2.0-flash-001",
+                        "duration": time.time() - start_time,
+                        "tokens": data.get("usage", {})
+                    }
+                }
         except Exception as e:
             logger.error(f"Vision analysis failed: {e}")
         

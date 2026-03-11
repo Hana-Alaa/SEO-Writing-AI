@@ -350,7 +350,9 @@ def render_html_page(final_result: dict):
     page_title = final_result.get("meta_title") or final_result.get("title", "Untitled")
     has_arabic = bool(re.search(r'[\u0600-\u06FF]', page_title))
     direction = "rtl" if has_arabic else "ltr"
-    copyright_text = "© 2026 جميع الحقوق محفوظة" if direction == "rtl" else "© 2026 All Rights Reserved"
+    from datetime import datetime
+    current_year = str(datetime.now().year)
+    copyright_text = f"© {current_year} جميع الحقوق محفوظة" if direction == "rtl" else f"© {current_year} All Rights Reserved"
 
     try:
         html = template.render(
