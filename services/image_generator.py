@@ -217,7 +217,7 @@ class ImageGenerator:
             return []
         
         # Run all generation tasks in parallel
-        sem = asyncio.Semaphore(2)
+        sem = asyncio.Semaphore(7) # Support all standard article images in parallel
 
         async def limited_task(task):
             async with sem:
@@ -714,9 +714,57 @@ class ImageGenerator:
             logger.error(f"Logo detection failed: {e}")
             return None
     
+    def create_branded_template(self, base_frame_path: str, logo_path: str, output_path: str) -> Optional[str]:
+        """
+        Converts an AI-generated background into a functional branded template.
+        1. Loads the background.
+        2. Adds a central 'smart placeholder' (white rectangle with soft border).
+        3. Overlays the logo in a corner.
+        4. Saves as PNG.
+        """
+        try:
+            from PIL import ImageDraw, ImageFilter
+            
+            with Image.open(base_frame_path) as base:
+                base = base.convert("RGBA")
+                w, h = base.size
+                
+                # 1. Create the central placeholder "hole" with an inner shadow effect
+                pw = int(w * 0.85)  # Slightly larger content area
+                ph = int(h * 0.85)
+                px1 = (w - pw) // 2
+                py1 = (h - ph) // 2
+                px2 = px1 + pw
+                py2 = py1 + ph
+                
+                # Draw the main white rectangle
+                draw = ImageDraw.Draw(base)
+                draw.rectangle([px1, py1, px2, py2], fill=(255, 255, 255, 255))
+                
+                # Add a subtle "Inner Shadow" to make it look like a real frame cutout
+                shadow_size = 15
+                for i in range(shadow_size):
+                    alpha = int(120 * (1 - i/shadow_size))
+                    # Top shadow
+                    draw.line([px1, py1+i, px2, py1+i], fill=(0, 0, 0, alpha))
+                    # Left shadow
+                    draw.line([px1+i, py1, px1+i, py2], fill=(0, 0, 0, alpha))
+
+                # 2. Add the Logo using the refined method
+                base = self._add_logo(base, logo_path)
+                
+                # 3. Save the resulting template
+                base.save(output_path, "PNG")
+                return output_path
+                
+        except Exception as e:
+            logger.error(f"Failed to create branded template: {e}")
+            return None
+
     def _add_logo(self, base_image: Image.Image, logo_path: str, position_hint: Dict = None) -> Image.Image:
         """Overlays a logo professionally on the base image."""
         try:
+            from PIL import ImageDraw
             with Image.open(logo_path) as logo:
                 logo = logo.convert("RGBA")
                 
@@ -741,24 +789,30 @@ class ImageGenerator:
                 else: # bottom_right
                     position = (base_w - new_logo_w - margin_x, base_h - new_logo_h - margin_y)
                 
-                # Create a rounded white background for the logo to make it "pop"
-                padding = 10
+                # Create a "Glassmorphism" background for the logo
+                padding_x = 25
+                padding_y = 15
                 bg_rect = [
-                    position[0] - padding, 
-                    position[1] - padding, 
-                    position[0] + new_logo_w + padding, 
-                    position[1] + new_logo_h + padding
+                    position[0] - padding_x, 
+                    position[1] - padding_y, 
+                    position[0] + new_logo_w + padding_x, 
+                    position[1] + new_logo_h + padding_y
                 ]
                 
                 overlay = Image.new("RGBA", base_image.size, (0, 0, 0, 0))
-                from PIL import ImageDraw
                 draw = ImageDraw.Draw(overlay)
-                draw.rounded_rectangle(bg_rect, radius=8, fill=(255, 255, 255, 255))
                 
-                # Paste logo on top of the white background
+                # 1. Semi-transparent blurred backdrop (Glass effect)
+                # White with 180 alpha
+                draw.rounded_rectangle(bg_rect, radius=12, fill=(255, 255, 255, 180))
+                
+                # 2. Add a very subtle thin border (1px)
+                draw.rounded_rectangle(bg_rect, radius=12, outline=(255, 255, 255, 220), width=1)
+                
+                # Paste logo on top
                 overlay.paste(logo, position, mask=logo)
                 
-                # Alpha composite merges them perfectly
+                # Final Alpha composite
                 return Image.alpha_composite(base_image, overlay)
                 
         except Exception as e:

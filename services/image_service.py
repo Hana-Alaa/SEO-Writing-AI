@@ -63,41 +63,45 @@ class StabilityImageService:
         return prompts
 
 
-    def download_and_process_images(self, image_prompts: List[Dict]) -> List[Dict]:
+    async def download_and_process_images(self, image_prompts: List[Dict]) -> List[Dict]:
         """
-        Calls Stability.ai for each prompt, saves, and resizes the images.
+        Calls Stability.ai for each prompt in parallel, saves, and resizes the images.
         """
-        results = []
-        
-        for item in image_prompts:
-            section_id = item.get("section_id")
-            image_type = item.get("image_type", "Illustration")
-            base_prompt = item.get("prompt")
-            alt_text = item.get("alt_text")
-            
-            # 1. Apply Style Prefix
-            style_prefix = self.STYLE_PREFIXES.get(image_type, self.STYLE_PREFIXES["Illustration"])
-            final_prompt = f"{style_prefix} {base_prompt}"
-            
-            # 2. Generate Deterministic Seed
-            seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 4294967295 # max seed for stability
-            
-            # 3. Call Stability API
-            local_path = self._generate_stability_image(final_prompt, seed, section_id)
-            
-            if local_path:
-                # 4. Resize to 1200x630
-                self._resize_image(local_path)
+        import asyncio
+        sem = asyncio.Semaphore(7)
+
+        async def _process_item(item):
+            async with sem:
+                section_id = item.get("section_id")
+                image_type = item.get("image_type", "Illustration")
+                base_prompt = item.get("prompt")
+                alt_text = item.get("alt_text")
                 
-            results.append({
-                "section_id": section_id,
-                "image_type": image_type,
-                "alt_text": alt_text,
-                "local_path": local_path,
-                "url": local_path # Using local path as URL per requirements
-            })
-            
-        return results
+                # 1. Apply Style Prefix
+                style_prefix = self.STYLE_PREFIXES.get(image_type, self.STYLE_PREFIXES["Illustration"])
+                final_prompt = f"{style_prefix} {base_prompt}"
+                
+                # 2. Generate Deterministic Seed
+                seed = int(hashlib.md5(section_id.encode()).hexdigest(), 16) % 4294967295 # max seed for stability
+                
+                # 3. Call Stability API
+                local_path = await asyncio.to_thread(self._generate_stability_image, final_prompt, seed, section_id)
+                
+                if local_path:
+                    # 4. Resize to 1200x630
+                    await asyncio.to_thread(self._resize_image, local_path)
+                    
+                return {
+                    "section_id": section_id,
+                    "image_type": image_type,
+                    "alt_text": alt_text,
+                    "local_path": local_path,
+                    "url": local_path # Using local path as URL per requirements
+                }
+
+        tasks = [_process_item(item) for item in image_prompts]
+        results = await asyncio.gather(*tasks)
+        return list(results)
 
     def _generate_stability_image(self, prompt: str, seed: int, section_id: str) -> str:
         """Helper to call Stability.ai and save the image."""

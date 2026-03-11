@@ -1,0 +1,188 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: LOCAL_NEIGHBORHOODS
+  -- Duration: 1.67 seconds
+  -- Tokens Used: 528
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 17.44 seconds
+  -- Tokens Used: 528
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 67.80 seconds
+  -- Tokens Used: 35,613
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 67.89 seconds
+  -- Tokens Used: 35,613
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 9.20 seconds
+  -- Tokens Used: 2,443
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 9.55 seconds
+  -- Tokens Used: 2,443
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.59 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.00 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 8.08 seconds
+  -- Tokens Used: 3,069
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 8.08 seconds
+  -- Tokens Used: 3,069
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 57.55 seconds
+  -- Tokens Used: 28,277
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 3.49 seconds
+  -- Tokens Used: 7,033
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_واقع سوق حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 4.54 seconds
+  -- Tokens Used: 10,201
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: واقع سوق حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا تختار تيك إيفنت لـ حجز تذاكر المباريات؟
+  -- Duration: 4.81 seconds
+  -- Tokens Used: 16,017
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار تيك إيفنت لـ حجز تذاكر المباريات؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_آلية العمل التقنية لضمان تذكرتك الموثوقة
+  -- Duration: 4.26 seconds
+  -- Tokens Used: 20,668
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: آلية العمل التقنية لضمان تذكرتك الموثوقة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_خطوات الحجز عبر تطبيق الجوال
+  -- Duration: 3.93 seconds
+  -- Tokens Used: 25,253
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات الحجز عبر تطبيق الجوال
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_أدلة الموثوقية وأسعار فئات التذاكر لعام 2026
+  -- Duration: 6.76 seconds
+  -- Tokens Used: 29,044
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أدلة الموثوقية وأسعار فئات التذاكر لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_تجارب ناجحة: كيف أعدنا تعريف تجربة المشجع؟
+  -- Duration: 3.47 seconds
+  -- Tokens Used: 33,617
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: تجارب ناجحة: كيف أعدنا تعريف تجربة المشجع؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_أسئلة شائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 5.41 seconds
+  -- Tokens Used: 37,078
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_الخلاصة: ابدأ رحلتك إلى المدرجات الآن
+  -- Duration: 4.24 seconds
+  -- Tokens Used: 44,095
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الخلاصة: ابدأ رحلتك إلى المدرجات الآن
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 3.91 seconds
+  -- Tokens Used: 48,896
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 93.23 seconds
+  -- Tokens Used: 48,896
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 11.32 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_02
+  -- Duration: 14.55 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_INFOGRAPHIC_SEC_04
+  -- Duration: 14.81 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_FEATURED_SEC_01
+  -- Duration: 14.87 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_04_H3_1
+  -- Duration: 15.69 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_INFOGRAPHIC_SEC_05
+  -- Duration: 16.47 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_ILLUSTRATION_SEC_01
+  -- Duration: 18.53 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: IMAGE_MOCKUP_SEC_03
+  -- Duration: 20.57 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 20.88 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------

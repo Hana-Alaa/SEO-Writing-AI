@@ -1,0 +1,149 @@
+================================================================================
+    TRI-COMPETITOR COMPARISON (2026): CUSTOM SEO ENGINE vs. SEOWRITING vs. KOALA
+================================================================================
+
+1. PRICING & SUBSCRIPTION DETAILS (OFFICIAL 2026 SITES)
+--------------------------------------------------------------------------------
+SEOWRITING.AI TIERED PLANS (Monthly Billing):
+- STARTER ($19/mo): Up to 50 Articles/Credits. Includes AI Editor, Bulk Gen, WP.
+- PROFESSIONAL ($79/mo): Up to 250 Articles. Adds Ext/Int Linking, 5 Brand Voices.
+- PLUS 1 ($159/mo): Up to 500 Articles. Adds 10 Brand Voices.
+- PLUS 2 ($307/mo): Up to 1000 Articles. Adds 25 Brand Voices.
+* Note: Significant savings (25%) on annual plans ($14/$59/$119/$230).
+
+KOALAWRITER (Monthly Billing):
+- ESSENTIALS ($9/mo): 15k words, 250 Chat msgs. Includes Amazon, Bulk, WP.
+- PROFESSIONAL ($49/mo): 100k words, 1k Chat msgs. Adds Auto Int Linking, 
+  Deep Research, KoalaLinks, KoalaMagnets, Premium Image styles.
+- BOOST ($99/mo): 250k words, 2.5k Chat msgs. 2x faster bulk creation.
+- GROWTH ($179/mo): 500k words, 5k Chat msgs.
+- ELITE ($350/mo): 1M words, 10k Chat msgs.
+- ADVANCED ($500/mo): 1.5M words, 12.5k Chat msgs.
+- SCALE I-III ($750 - $2,000/mo): 2.5M to 10M words. 15k-25k Chat msgs.
+* WORD MULTIPLIER: GPT-5 Mini (1x Base). GPT-5.2 & Claude 4.5 Sonnet = 2x usage.
+* Refund: 15-day / <15k words / <100 messages.
+
+CUSTOM SYSTEM PRICING (Pay-As-You-Go):
+- Estimated Cost: ~$0.70 per 2k-word article.
+- No monthly fees; fixed at raw API token/image processing costs.
+
+
+2. USER CONTROL & CONFIGURATION DEPTH (THE "KNOBS")
+--------------------------------------------------------------------------------
+SEOWRITING.AI (High Template Control):
+- Primary Inputs: Title/Keyword, Language, Tone of Voice.
+- Structure: Article Type (Review/Blog), Article Size, Outline Editor.
+- Media: AI Images (Quantity/Style), YouTube Search, Humanize Filter.
+- Advanced: Brand Voice (Paste Sample), NLP Keywords, Internal/External Links, 
+  Connect to Web, WordPress/Shopify Publishing rules.
+
+KOALAWRITER (Advanced SEO & Affiliate Focus):
+- Primary Inputs: Article Type (Blog/Amazon/Review), Target Keyword.
+- Optimization: SEO Level (Default/AI-Powered), Outline Editor.
+- Media: AI Images/Videos (Auto/Manual), Key Takeaways, FAQ Section.
+- Research: Real-Time Data, Deep Research (Web/Niche), POV (1st/2nd/3rd).
+- Tools: KoalaChat, KoalaLinks, KoalaMagnets (Pro Tier solo features).
+
+CUSTOM SYSTEM (Deep Brand Integration):
+- Unique Input: Brand URL Discovery (Learns directly from the site).
+- Configuration: Keywords, Language (Manual/Detect), Content Type.
+- Automated Depth: AI Search Analysis, Semantic Memory Loading, 
+  7x Parallel Image Generation, SEO Header Length Validation.
+
+
+3. WORKFLOW & PIPELINE DEPTH (VERIFIED)
+--------------------------------------------------------------------------------
+CUSTOM SYSTEM (Deep Intelligence):
+Keyword -> Brand Discovery (Deep Crawl) -> Web Research (o4-mini:online) -> 
+SERP Analysis -> Semantic Memory Loading (MiniLM) -> Style Analysis -> 
+Content Strategy -> Outline Gen -> Asynchronous Content Writing -> 
+7x Parallel Image Gen -> JSON-LD Schema Gen -> SEO Validation -> Final Render.
+
+SEOWRITING.AI (Fast Replication):
+Keyword -> SERP Analysis -> Heading Extraction -> Template Outline -> 
+Sequential Generation -> Media Insertion -> Internal/External Linking -> 
+Direct CMS Publishing.
+
+KOALAWRITER (Affiliate Optimization):
+Keyword -> SERP Scrape -> Entity Optimization -> Outline Editor -> 
+Deep Research -> Content Gen -> YouTube/Amazon Data Insertion -> 
+Internal Linking -> WP/Webhook/Sheets Publish.
+
+
+4. FEATURE COMPARISON MATRIX (Expanded 2026)
+--------------------------------------------------------------------------------
+FEATURE                | CUSTOM SYSTEM | SEOWRITING.AI | KOALAWRITER
+-----------------------|---------------|---------------|------------
+SERP Intelligence      | Advanced      | Standard      | Advanced
+Research Depth         | HIGH (Live)   | LOW (Clone)   | MEDIUM (Deep Research)
+Article Types          | Blog Post     | Blog/Product  | Blog/Amazon/Review
+Amazon Affiliate Data  | NO            | NO            | YES (Live Reviews)
+YouTube Embedding      | NO            | YES           | YES (Auto-Smart)
+SEO Optimization       | AI-Powered    | Standard      | AI-Powered (SERP Entity)
+Internal Linking       | YES (Brand)   | YES (Plugin)  | YES (AI-Powered)
+External Linking       | YES (Auth)    | YES (Auto)    | YES (Auto)
+Bulk Generation        | Phase 2       | YES (100+)    | YES (Batch)
+WordPress Integration  | Phase 2       | YES           | YES
+Google Sheets Integration| API Ready    | API Ready    | YES
+AI Chatbot Integration | NO            | NO            | YES (KoalaChat)
+
+
+5. AI MODELS & "THE MULTIPLIER" (2026 OFFICIAL RULES)
+--------------------------------------------------------------------------------
+SEOWRITING.AI MODELLING (16 Models total):
+- 1 Credit (Real-Time SERP + CTA): Llama 4, Claude 4.5 Sonnet, GPT-5.2, etc.
+- 1 Credit (Standard Models): Default, GPT-4o Mini, GPT-5 Mini, Claude 3.5 Haiku.
+- 4 Credits (Premium Models): GPT-4o, GPT-5.2, Claude 4.5 Sonnet.
+- 7-15 Credits (Elite Models): GPT-4 Turbo (7x), Claude 4.1 Opus (10x), GPT-o1 (15x).
+* SPECIAL: Real-Time SERP models do NOT require a title; they analyze the top 10 
+  results automatically to determine headings, article type, and SEO length.
+
+KOALAWRITER MODELLING (GPT Version Details):
+- GPT-5 Mini: 1x usage (Good quality, but less accurate/original).
+- GPT-5.2 & Claude 4.5 Sonnet: 2x usage (Premium models for human-like quality).
+* Note: Claude 4.5 Sonnet is currently the recommended model for Koala.
+
+CUSTOM SYSTEM CORE:
+- Writing: google/gemini-3-flash-preview.
+- Research: openai/o4-mini:online (March 2026 Live Web).
+- Images: Flux.2-pro / Gemini 3.1 Flash Image.
+
+
+6. OUTPUT METRICS & BENCHMARKS
+--------------------------------------------------------------------------------
+METRIC                  | CUSTOM SYSTEM   | SEOWRITING.AI | KOALAWRITER
+------------------------|-----------------|---------------|------------
+Avg Words per Article   | ~1000 - 5000    | 600 - 5200    | 500 - 10,000+
+Avg Generation Time     | ~5 Minutes      | 3 - 5 Minutes | ~1 Minute* 
+Cost per 2k-word post   | ~$0.70          | ~$0.55        | ~$0.74
+
+
+* Note: Koala's 1-minute speed is for text-only. Adding research/images matches 
+  the standard 3-5 minute bench of competitors. Custom System takes 5 mins 
+  because it generates 7+ sectional images in parallel with Deep Brand Research.
+
+
+
+7. MARKET POSITIONING (2026)
+--------------------------------------------------------------------------------
+Tool                  | Primary Focus
+----------------------|---------------------------------------------------------
+SEOWRITING.AI         | Mass production (Bulk), lowest price per post.
+KOALAWRITER           | Affiliate SEO Specialist (Amazon, YouTube, Niche).
+YOUR CUSTOM SYSTEM    | Deep Research Architect (Brand-aware, Technical SEO).
+
+* VERIFIED STRENGTH: Custom system actually "learns" from the brand before writing.
+
+
+8. STRATEGIC ROADMAP (Phase 2)
+--------------------------------------------------------------------------------
+1. BULK GENERATION: Parallel processing for massive keyword lists.
+2. AUTO-PUBLISHING: Direct API for WordPress, Shopify, and Google Sheets.
+3. MEDIA ENHANCEMENT: Automated YouTube/Amazon data integration.
+4. AI EDITOR UI: Fine-grained H2/H3 management before final export.
+
+================================================================================
+FINAL VERDICT 2026: 
+SEOWriting for Scale. Koala for Affiliate Automation. 
+Custom System for Brand Authority & Deep Intelligence (Code Verified).
+================================================================================

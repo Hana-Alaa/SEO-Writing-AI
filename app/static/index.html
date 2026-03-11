@@ -287,24 +287,57 @@
 
         .url-item {
             display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 1rem;
-            margin-bottom: 0.75rem;
-            align-items: end;
+            grid-template-columns: 1.5fr 1fr auto auto;
+            gap: 1.25rem;
+            margin-bottom: 1rem;
+            align-items: center;
             background: rgba(255, 255, 255, 0.02);
-            padding: 1rem;
-            border-radius: 12px;
+            padding: 1.25rem;
+            border-radius: 14px;
             border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .url-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(99, 102, 241, 0.3);
         }
 
         .remove-btn {
             background: rgba(239, 68, 68, 0.1);
             color: var(--error-color);
             border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 0.5rem;
-            border-radius: 6px;
+            padding: 0.6rem;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            margin-top: 1.4rem;
+        }
+
+        .brand-checkbox-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.4rem;
+        }
+
+        .brand-checkbox-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .brand-checkbox {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
         }
 
         .remove-btn:hover {
@@ -418,7 +451,7 @@
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Target URLs (First URL is treated as the Brand Homepage)</label>
+                        <label>Target URLs (Designate your Brand/Homepage to unlock internal linking)</label>
                         <div id="url-container">
                             <div class="url-item">
                                 <div class="form-group">
@@ -429,7 +462,12 @@
                                     <label>Anchor Text (Optional)</label>
                                     <input type="text" class="anchor-input" placeholder="Example Site">
                                 </div>
-                                <button type="button" class="remove-btn" onclick="removeUrl(this)">✕</button>
+                                <div class="brand-checkbox-group">
+                                    <label>Brand</label>
+                                    <input type="checkbox" class="brand-checkbox" onchange="exclusiveBrand(this)">
+                                </div>
+                                <button type="button" class="remove-btn" onclick="removeUrl(this)"
+                                    title="Remove Link">✕</button>
                             </div>
                         </div>
                         <button type="button" class="add-btn" onclick="addUrlField()">+ Add Another Link</button>
@@ -442,18 +480,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Brand Logo (Optional)</label>
+                        <label>Brand Logo (Manual Override)</label>
                         <div class="file-input-wrapper">
                             <input type="file" id="logo_image" accept="image/*" onchange="updateFileInfo(this)">
-                            <div class="file-info">Click to upload or drag logo</div>
+                            <div class="file-info">AI will auto-discover if left empty</div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Reference Image / Frame (Optional)</label>
+                        <label>Reference Frame (Manual Override)</label>
                         <div class="file-input-wrapper">
                             <input type="file" id="reference_image" accept="image/*" onchange="updateFileInfo(this)">
-                            <div class="file-info">Click to upload or drag image</div>
+                            <div class="file-info">AI will generate a matching frame if empty</div>
                         </div>
                     </div>
 
@@ -505,7 +543,11 @@
                     <label>Anchor Text (Optional)</label>
                     <input type="text" class="anchor-input" placeholder="Example Site">
                 </div>
-                <button type="button" class="remove-btn" onclick="removeUrl(this)">✕</button>
+                <div class="brand-checkbox-group">
+                    <label>Brand</label>
+                    <input type="checkbox" class="brand-checkbox" onchange="exclusiveBrand(this)">
+                </div>
+                <button type="button" class="remove-btn" onclick="removeUrl(this)" title="Remove Link">✕</button>
             `;
             container.appendChild(item);
         }
@@ -515,7 +557,15 @@
             if (items.length > 1) {
                 btn.closest('.url-item').remove();
             } else {
-                alert("At least one URL (Brand Homepage) is required.");
+                alert("At least one URL is required.");
+            }
+        }
+
+        function exclusiveBrand(checkbox) {
+            if (checkbox.checked) {
+                document.querySelectorAll('.brand-checkbox').forEach(cb => {
+                    if (cb !== checkbox) cb.checked = false;
+                });
             }
         }
 
@@ -549,12 +599,14 @@
             // Gather Dynamic URLs
             const urlInputs = document.querySelectorAll('.url-input');
             const anchorInputs = document.querySelectorAll('.anchor-input');
+            const brandCheckboxes = document.querySelectorAll('.brand-checkbox');
             const urls = [];
             urlInputs.forEach((input, index) => {
                 if (input.value.trim()) {
                     urls.push({
                         link: input.value.trim(),
-                        text: anchorInputs[index].value.trim() || ""
+                        text: anchorInputs[index].value.trim() || "",
+                        is_brand: brandCheckboxes[index].checked
                     });
                 }
             });

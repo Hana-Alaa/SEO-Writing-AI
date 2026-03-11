@@ -120,6 +120,7 @@ STRICT WRITING RULES
    A. CTA POSITIONING & STRATEGY (MANDATORY):
       - **COMMERCIAL INTENT BOOST (HIGH PRIORITY)**: If article_intent is "commercial" or "transactional", you MUST include at least TWO CTAs in the section. Place the first CTA naturally in the middle of the section (e.g. paragraph 2), and the second in the last paragraph.
       - **NATURAL PLACEMENT (CRITICAL):** Do NOT force the CTA into the very first paragraph unless absolutely necessary. The best place for a CTA is **naturally integrated into the middle of the section**.
+      - **FIRST SENTENCE RULE (STRICT):** A CTA sentence MUST NEVER be the very first sentence of a section. Always start with a human-oriented hook, fact, or introductory sentence first.
       - Let the reader understand the value first, then offer the CTA as a logical next step.
       - TABLE OVERRIDE RULE: If the section requires a table, the CTA MUST be placed as the very LAST paragraph of the entire section, strictly AFTER the table has concluded with a blank line.
       - Add additional soft CTAs or in-text bridge links throughout the section to maximize conversion opportunities.

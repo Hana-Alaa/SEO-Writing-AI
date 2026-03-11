@@ -15,6 +15,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 from langdetect import detect  
 from jinja2 import Template, StrictUndefined
+import hashlib
+import requests
 from typing import Dict, Any, List, Optional, Callable, ClassVar
 from collections import Counter
 from langdetect import detect_langs, DetectorFactory
@@ -68,6 +70,9 @@ class AsyncExecutor:
                 start_time = time.time()
             
             try:
+                # Capture state BEFORE execution for logging
+                input_state = state.copy() if isinstance(state, dict) else state
+                
                 # Execute the async coordination step
                 new_state = await func(state)
                 
@@ -77,6 +82,14 @@ class AsyncExecutor:
                 duration = time.time() - start_time
                 
                 if workflow_logger:
+                    # Log step completion with inputs and outputs
+                    workflow_logger.log_step_details(
+                        step_name=step_name,
+                        duration=duration,
+                        input_data=input_state,
+                        output_data=new_state
+                    )
+                    
                     # Collect token info if available in new_state (requires AI clients to report tokens)
                     tokens = new_state.get("last_step_tokens")
                     workflow_logger.end_step(
@@ -95,6 +108,15 @@ class AsyncExecutor:
             except Exception as e:
                 duration = time.time() - start_time
                 logger.error(f"Error in step '{step_name}' attempt {attempt + 1}: {e}")
+                
+                if workflow_logger:
+                    workflow_logger.log_step_details(
+                        step_name=step_name,
+                        duration=duration,
+                        input_data=state,
+                        error=str(e)
+                    )
+                
                 attempt += 1
                 if attempt <= retries:
                     await asyncio.sleep(1) # Simple backoff
@@ -193,11 +215,12 @@ class AsyncWorkflowController:
             ("outline_generation", self._step_1_outline, 1),
 
             ("content_writing", self._step_2_write_sections, 1),
-            ("image_prompting", self._step_4_generate_image_prompts, 0),
-            ("image_generation", self._step_4_5_download_images, 2),
+            # ("image_prompting", self._step_4_generate_image_prompts, 0),
+            # ("master_frame", self._step_4_1_generate_master_frame, 1),
+            # ("image_generation", self._step_4_5_download_images, 2),
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
-            ("image_inserter", self._step_6_image_inserter, 0),
+            # ("image_inserter", self._step_6_image_inserter, 0),
             ("meta_schema", self._step_7_meta_schema, 0),
             # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
@@ -263,6 +286,29 @@ class AsyncWorkflowController:
         urls = state.get("input_data", {}).get("urls", [])
         state["brand_url"] = urls[0].get("link") if urls else None
         
+        # PRE-INITIALIZE internal_resources with user-provided URLs immediately
+        state["internal_resources"] = []
+        seen_canons = set()
+        
+        # Helper for junk slugs (restore manual link protection)
+        junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
+        def is_junk_init(url_str):
+            try:
+                from urllib.parse import urlparse
+                path = urlparse(url_str).path.lower().rstrip('/')
+                return path.split('/')[-1] in junk_slugs
+            except: return False
+
+        for u in urls:
+            link = u.get("link", "")
+            if link:
+                state["internal_resources"].append({
+                    "link": link, 
+                    "text": u.get("text") or "Internal Resource",
+                    "is_manual": True  # Mark as manual to avoid junk filtering
+                })
+                seen_canons.add(self._canon_url(link))
+
         state["image_frame_path"] = input_data.get("image_frame_path") or input_data.get("image_template_path")
         state["logo_image_path"] = input_data.get("logo_image_path")
         state["brand_visual_style"] = "" # Removed from UI, setting to empty
@@ -332,7 +378,11 @@ class AsyncWorkflowController:
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
 
-            headers = {"User-Agent": "Mozilla/5.0 (SEO-Engine-Bot)"}
+            # Preservation: Modern Browser User-Agent for better crawl success
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+
+            # Preservation: Advanced Logo Discovery (Fixes SVG and Nested Branding)
+            await self._discover_logo_and_colors(brand_url, state)
 
             def fetch_text(url: str) -> str:
                 """
@@ -498,22 +548,18 @@ class AsyncWorkflowController:
 
             junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
             def is_junk(url_str):
-                path = urlparse(url_str).path.lower().rstrip('/')
-                last_segment = path.split('/')[-1]
-                return last_segment in junk_slugs
+                try:
+                    path = urlparse(url_str).path.lower().rstrip('/')
+                    return path.split('/')[-1] in junk_slugs
+                except: return False
 
-            input_urls = state.get("input_data", {}).get("urls", [])
-            seen_canons = set()
-            for u in input_urls:
-                link = u.get("link", "")
-                if link and not is_junk(link):
-                    seen_canons.add(self._canon_url(link))
-                    state["internal_resources"].append({"link": link, "text": u.get("text") or "Internal Resource"})
+            # Existing manual link protection is already handled in _step_0_init
+            seen_canons = {self._canon_url(r['link']) for r in state["internal_resources"] if r.get("link")}
 
             added_count = 0
             for canon, (anchor, score) in sorted_links:
                 # Filter by relevance AND junk slugs
-                if score < 3: # Increased from 1 or 2 to ensure high-value pages
+                if score < 1: # Lowered from 3 to allow structural pages like about/services
                     continue
                 if is_junk(canon):
                     continue
@@ -656,6 +702,237 @@ class AsyncWorkflowController:
             state["brand_pages_index"] = {}
             
         return state
+
+    async def _discover_logo_and_colors(self, url: str, state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Extracts company logo URL and dominant colors from a website.
+        """
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            from urllib.parse import urljoin
+            from PIL import Image
+            from io import BytesIO
+            import numpy as np
+            import hashlib
+            import os
+
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+            r = requests.get(url, timeout=10, headers=headers)
+            if r.status_code != 200:
+                return None
+                
+            soup = BeautifulSoup(r.text, "html.parser")
+            logo_url = None
+
+            # 1. Search for a descriptive brand logo in <img> tags (Prioritize Header/Logo classes)
+            logo_candidates = soup.find_all("img", alt=lambda x: x and 'logo' in x.lower()) + \
+                             soup.find_all("img", id=lambda x: x and 'logo' in x.lower()) + \
+                             soup.find_all("img", class_=lambda x: x and 'logo' in x.lower())
+            
+            # Filter and rank candidates (Largest image with 'logo' is usually the main one)
+            best_img = None
+            max_res = 0
+            for img in logo_candidates:
+                src = img.get("src")
+                if not src: continue
+                # Basic resolution estimation from width/height params if present
+                try:
+                    w = int(img.get("width", 0)) or 1
+                    h = int(img.get("height", 0)) or 1
+                except: w, h = 1, 1
+                if w * h > max_res:
+                    max_res = w * h
+                    best_img = img
+
+            if best_img:
+                logo_url = urljoin(url, best_img.get("src"))
+                logger.info(f"Logo found via image candidate search: {logo_url}")
+
+            # 2. Search for <a> links with 'logo' or 'brand' classes/ids (Handles SVG or text-logos)
+            if not logo_url:
+                # Look for links in header/nav first
+                header = soup.find("header") or soup.find("nav") or soup.find("div", id=lambda x: x and 'header' in x.lower())
+                search_scope = header if header else soup
+                
+                logo_link = search_scope.find("a", class_=lambda x: x and any(k in x.lower() for k in ['logo', 'brand'])) or \
+                            search_scope.find("a", id=lambda x: x and any(k in x.lower() for k in ['logo', 'brand']))
+                
+                if logo_link:
+                    # Check for img inside
+                    inner_img = logo_link.find("img")
+                    if inner_img:
+                        logo_url = urljoin(url, inner_img.get("src"))
+                        logger.info(f"Logo found via nested link image: {logo_url}")
+                    else:
+                        # Check for SVG inside
+                        inner_svg = logo_link.find("svg")
+                        if inner_svg:
+                            # We found an inline SVG! We'll mark it for special handling or try to find its source if it's an <use>
+                            logo_url = "inline_svg"
+                            state["inline_svg_content"] = str(inner_svg)
+                            logger.info("Found inline SVG logo in header link.")
+
+            # 3. Fallback to OpenGraph logo (usually high quality)
+            if not logo_url:
+                og_image = soup.find("meta", property="og:image") or soup.find("meta", attrs={"name": "og:image"})
+                if og_image:
+                    logo_url = og_image.get("content")
+                    logger.info(f"Logo found via OpenGraph: {logo_url}")
+
+            # 4. Fallback: Search for FIRST SVG in header, OR look in FOOTER
+            if not logo_url:
+                header = soup.find("header") or soup.find("nav")
+                if header:
+                    svg = header.find("svg")
+                    if svg:
+                        logo_url = "inline_svg"
+                        state["inline_svg_content"] = str(svg)
+                        logger.info("Found first inline SVG in header as logo.")
+            
+            # New Step: Footer Search (High Priority Fallback requested by user)
+            if not logo_url:
+                footer = soup.find("footer") or soup.find("div", id=lambda x: x and 'footer' in x.lower()) or \
+                         soup.find("div", class_=lambda x: x and 'footer' in x.lower())
+                if footer:
+                    # Look for img with logo keyword in footer
+                    footer_logo = footer.find("img", alt=lambda x: x and 'logo' in x.lower()) or \
+                                  footer.find("img", class_=lambda x: x and 'logo' in x.lower())
+                    if footer_logo:
+                        logo_url = urljoin(url, footer_logo.get("src"))
+                        logger.info(f"Logo found via Footer image search: {logo_url}")
+                    else:
+                        # Look for SVG in footer
+                        footer_svg = footer.find("svg")
+                        if footer_svg:
+                            logo_url = "inline_svg"
+                            state["inline_svg_content"] = str(footer_svg)
+                            logger.info("Found inline SVG logo in footer.")
+                        else:
+                            # Look for brand link in footer
+                            footer_link = footer.find("a", class_=lambda x: x and any(k in x.lower() for k in ['logo', 'brand']))
+                            if footer_link:
+                                footer_img = footer_link.find("img")
+                                if footer_img:
+                                    logo_url = urljoin(url, footer_img.get("src"))
+                                    logger.info(f"Logo found via footer brand link image: {logo_url}")
+
+            # 5. Last fallback: manifest icons or high-res favicons
+            if not logo_url:
+                icon_link = soup.find("link", rel=lambda x: x and 'icon' in x.lower()) or \
+                          soup.find("link", attrs={"rel": "shortcut icon"})
+                if icon_link:
+                    logo_url = urljoin(url, icon_link.get("href"))
+                    logger.info(f"Logo found via link icon: {logo_url}")
+
+            # 6. Extreme Final Fallback: Google Favicon service or similar
+            if not logo_url:
+                from urllib.parse import urlparse
+                domain = urlparse(url).netloc
+                logo_url = f"https://www.google.com/s2/favicons?sz=128&domain={domain}"
+                logger.info(f"Logo fallback to Google Favicon service: {logo_url}")
+
+            if not logo_url:
+                return None
+
+            # Download and Process Logo
+            img_data = None
+            is_svg = False
+            
+            if logo_url == "inline_svg":
+                img_data = state.get("inline_svg_content", "").encode('utf-8')
+                is_svg = True
+            else:
+                lr = requests.get(logo_url, timeout=5, headers=headers)
+                if lr.status_code == 200:
+                    img_data = lr.content
+                    if logo_url.lower().endswith(".svg") or b"<svg" in img_data[:100].lower():
+                        is_svg = True
+
+            if not img_data:
+                return None
+
+            # Save logo to work directory
+            output_dir = state.get("output_dir", self.work_dir)
+            ext = ".svg" if is_svg else ".png"
+            logo_filename = f"brand_logo_{hashlib.md5(url.encode()).hexdigest()[:8]}{ext}"
+            logo_local_path = os.path.join(output_dir, "images", logo_filename)
+            os.makedirs(os.path.dirname(logo_local_path), exist_ok=True)
+            
+            if is_svg:
+                with open(logo_local_path, "wb") as f:
+                    f.write(img_data)
+                
+                # Extract colors from SVG text via regex
+                svg_text = img_data.decode('utf-8', errors='ignore')
+                hex_colors = re.findall(r'#(?:[0-9a-fA-F]{3}){1,2}', svg_text)
+                # Filter out obvious white/black if others exist
+                meaningful_colors = [c for c in hex_colors if c.lower() not in ['#ffffff', '#000000', '#fff', '#000']]
+                brand_colors = meaningful_colors if meaningful_colors else (hex_colors[:3] if hex_colors else ["#333333"])
+                
+                return {
+                    "logo_url": logo_url,
+                    "local_path": logo_local_path,
+                    "colors": brand_colors,
+                    "is_svg": True
+                }
+            else:
+                img = Image.open(BytesIO(img_data)).convert("RGBA")
+                img.save(logo_local_path, "PNG")
+                # ... rest of color extraction ...
+
+                # Extract Dominant Colors
+                filtered_colors = self._extract_colors_from_image(logo_local_path)
+
+                return {
+                    "logo_path": logo_local_path,
+                    "colors": filtered_colors
+                }
+
+        except Exception as e:
+            logger.warning(f"Logo discovery failed: {e}")
+        return None
+
+    def _extract_colors_from_image(self, image_path: str) -> List[str]:
+        """Helper to extract dominant colors from a local image file (Supports Raster and SVG)."""
+        if not image_path or not os.path.exists(image_path):
+            return []
+            
+        try:
+            # Handle SVGs via regex color parsing
+            if image_path.lower().endswith(".svg"):
+                with open(image_path, "r", encoding="utf-8", errors="ignore") as f:
+                    svg_text = f.read()
+                    hex_colors = re.findall(r'#(?:[0-9a-fA-F]{3}){1,2}', svg_text)
+                    # Filter out noise (white/black)
+                    meaningful = [c.lower() for c in hex_colors if c.lower() not in ['#ffffff', '#000000', '#fff', '#000']]
+                    if meaningful:
+                        # Convert to rgb() format for prompt consistency
+                        rgb_colors = []
+                        for hc in meaningful[:3]:
+                            hc = hc.lstrip('#')
+                            if len(hc) == 3: hc = ''.join([c*2 for c in hc])
+                            r, g, b = int(hc[0:2], 16), int(hc[2:4], 16), int(hc[4:6], 16)
+                            rgb_colors.append(f"rgb({r},{g},{b})")
+                        return rgb_colors
+                return ["#333333"] # Fallback
+
+            from PIL import Image
+            with Image.open(image_path) as img:
+                img = img.convert("RGBA")
+                img_small = img.resize((50, 50))
+                colors = img_small.getcolors(50 * 50)
+                filtered_colors = []
+                if colors:
+                    for count, color in sorted(colors, reverse=True):
+                        if color[3] < 50: continue # Skip transparent
+                        if sum(color[:3]) > 720 or sum(color[:3]) < 40: continue # Skip white/black
+                        filtered_colors.append(f"rgb({color[0]},{color[1]},{color[2]})")
+                        if len(filtered_colors) >= 3: break
+                return filtered_colors
+        except Exception as e:
+            logger.error(f"Color extraction failed for {image_path}: {e}")
+            return []
 
     async def _step_0_web_research(self, state):
 
@@ -1002,19 +1279,31 @@ class AsyncWorkflowController:
 
         internal_resources = state.get("internal_resources", [])
         
-        # Filter internal_resources based on junk slugs
+        # Filter internal_resources based on junk slugs, BUT PROTECT manual URLs
         filtered_internal_resources = [
             r for r in internal_resources 
-            if not is_junk(r.get('link', ''))
+            if r.get("is_manual") or not is_junk(r.get('link', ''))
         ]
 
-        # Deduplicate based on 'link' and update the list
-        deduplicated_internal_resources = list({r["link"]: r for r in filtered_internal_resources if r.get("link")}.values())
+        # Deduplicate based on 'link' (using the canonical URL for matching)
+        # Prioritize manual entries during deduplication to keep their specific anchor text
+        temp_map = {}
+        for r in filtered_internal_resources:
+            canon = self._canon_url(r.get("link", ""))
+            if not canon: continue
+            if canon not in temp_map or (r.get("is_manual") and not temp_map[canon].get("is_manual")):
+                temp_map[canon] = r
+                
+        deduplicated_internal_resources = list(temp_map.values())
         
-        logger.info(f"Discovered {len(deduplicated_internal_resources)} high-relevance internal resources (after junk filtering and deduplication).")
+        logger.info(f"Final internal pool: {len(deduplicated_internal_resources)} resources ({sum(1 for r in deduplicated_internal_resources if r.get('is_manual'))} manual, {sum(1 for r in deduplicated_internal_resources if not r.get('is_manual'))} discovered).")
 
         for res in deduplicated_internal_resources:
-            urls_norm.append({"text": res.get("text", "Internal Resource"), "link": res.get("link")})
+            urls_norm.append({
+                "text": res.get("text", "Internal Resource"), 
+                "link": res.get("link"),
+                "is_manual": res.get("is_manual", False)
+            })
 
         for u in urls_norm:
             u["type"] = "internal" 
@@ -1195,7 +1484,7 @@ class AsyncWorkflowController:
 
         state["blocked_external_domains"] = self._extract_competitor_domains(
             state.get("serp_data", {}),
-            brand_url=urls_norm[0].get("link", "") if urls_norm else ""
+            brand_url=state.get("brand_url") or ""
         )
 
         state["link_strategy"] = {
@@ -1242,7 +1531,6 @@ class AsyncWorkflowController:
         ]
 
         state["internal_url_set"] = set(internal_links)
-        state["brand_url"] = internal_links[0] if internal_links else None
 
         missing = mandatory - present_types
 
@@ -1655,6 +1943,70 @@ class AsyncWorkflowController:
 
         state["image_prompts"] = image_prompts
         return state
+
+    async def _step_4_1_generate_master_frame(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generates a unique AI Master Frame based on brand colors and identity.
+        """
+        logo_path = state.get("input_data", {}).get("logo_image_path") or state.get("logo_path")
+        brand_colors = state.get("brand_colors", [])
+        
+        if not logo_path or not brand_colors:
+            logger.info("Skipping Master Frame generation: No logo or brand colors found.")
+            return state
+
+        color_str = ", ".join(brand_colors)
+        primary_keyword = state.get("primary_keyword", "Professional Business")
+        
+        # Design a prompt for a functional 'Picture Frame' border
+        frame_prompt = f"""Sophisticated 'Picture Frame' border template for a {primary_keyword} article.
+        Design a premium horizontal frame with thick elegant borders on all four sides.
+        Borders should feature modern architectural textures, glassmorphism, or abstract geometric patterns.
+        Primary Brand Colors to incorporate into the border: {color_str}.
+        The center of the image MUST be a flat, solid white rectangular area (the content zone).
+        Style: Luxury, 3D depth, professional lighting, soft inner-shadow on the frame edges.
+        NO PEOPLE, NO REAL PHOTOS, NO TEXT. Just a reusable branded frame border."""
+
+        logger.info(f"Generating Master Frame with colors: {color_str}")
+        
+        # We use a single generation for the Master Frame
+        try:
+            # Create a temporary 'prompt' object for the image client
+            frame_prompt_obj = {
+                "prompt": frame_prompt,
+                "alt_text": "Master Brand Frame",
+                "image_type": "MasterFrame"
+            }
+            
+            output_dir = state.get("output_dir", self.work_dir)
+            frames_dir = os.path.join(output_dir, "images")
+            os.makedirs(frames_dir, exist_ok=True)
+            
+            self.image_client.save_dir = frames_dir
+            master_frame_res = await self.image_client.generate_images(
+                [frame_prompt_obj],
+                primary_keyword=primary_keyword,
+                workflow_logger=state.get("workflow_logger")
+            )
+            
+            if master_frame_res and "local_path" in master_frame_res[0]:
+                raw_frame_path = os.path.join(output_dir, master_frame_res[0]["local_path"])
+                
+                # Now, use ImageGenerator to add the LOGO to this new Master Frame permanently
+                final_master_frame_path = self.image_client.create_branded_template(
+                    base_frame_path=raw_frame_path,
+                    logo_path=logo_path,
+                    output_path=os.path.join(frames_dir, "master_brand_template.png")
+                )
+                
+                if final_master_frame_path:
+                    state["master_frame_path"] = final_master_frame_path
+                    logger.info(f"Master Frame created successfully: {final_master_frame_path}")
+                
+        except Exception as e:
+            logger.error(f"Failed to generate Master Frame: {e}")
+            
+        return state
     
     async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Downloads images (now parallel in the client)."""
@@ -1662,13 +2014,16 @@ class AsyncWorkflowController:
         keywords = state.get("input_data", {}).get("keywords", [])
         # primary_keyword = (keywords[0] if keywords else "") or ""
         primary_keyword = state.get("primary_keyword")
-        logo_path = state.get("input_data", {}).get("logo_path")
+        # logo_path = state.get("input_data", {}).get("logo_path")
         brand_visual_style = state.get("brand_visual_style", "")
+        
+        # Prioritize USER OVERRIDES if available, else use auto-discovered
+        image_frame_path = state.get("input_data", {}).get("image_frame_path") or state.get("master_frame_path")
+        logo_path = state.get("input_data", {}).get("logo_image_path") or state.get("logo_path")
         
         # Zero out previous step tokens
         state["last_step_tokens"] = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
-        # Set image directory to project specific output directory
         output_dir = state.get("output_dir", self.work_dir)
         images_dir = os.path.join(output_dir, "images")
         os.makedirs(images_dir, exist_ok=True)
@@ -1677,15 +2032,14 @@ class AsyncWorkflowController:
         images = await self.image_client.generate_images(
             prompts,
             primary_keyword=primary_keyword,
-            image_frame_path=state.get("input_data", {}).get("image_frame_path"),
-            logo_path=state.get("input_data", {}).get("logo_image_path"),
+            image_frame_path=image_frame_path,
+            logo_path=logo_path,
             brand_visual_style=brand_visual_style,
             workflow_logger=state.get("workflow_logger")
         )
 
         for img in images:
             if "local_path" in img:
-                # Store paths strictly relative to the project output dir
                 img["local_path"] = f"images/{os.path.basename(img['local_path'])}"
 
         state["images"] = images

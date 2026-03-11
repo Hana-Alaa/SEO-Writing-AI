@@ -24,9 +24,11 @@ class OpenRouterClient(BaseAIClient):
     """
 
     # GLOBAL limiter for all instances
-    _semaphore = asyncio.Semaphore(2)  # max concurrent requests
+    _semaphore = None 
 
     def __init__(self, api_key: Optional[str] = None):
+        if OpenRouterClient._semaphore is None:
+            OpenRouterClient._semaphore = asyncio.Semaphore(10) # Support more parallel images
         # self.rate_semaphore = asyncio.Semaphore(2)
         self.observer = ObservabilityTracker()
         self.api_key = api_key or OPENROUTER["api_key"]
@@ -350,6 +352,7 @@ class OpenRouterClient(BaseAIClient):
         return ""
 
     async def _post_with_retry(self, url, payload):
+        import random
         async with self._semaphore:
             for attempt in range(4):
                 try:
@@ -361,7 +364,10 @@ class OpenRouterClient(BaseAIClient):
 
                     if r.status_code != 200:
                         logger.error(f"HTTP Error {r.status_code}: {r.text}")
-                        await asyncio.sleep(2 ** attempt)
+                        # await asyncio.sleep(2 ** attempt)
+                        # Jittered backoff to prevent synchronized retries
+                        wait_time = (2 ** attempt) + random.uniform(0.1, 1.0)
+                        await asyncio.sleep(wait_time)
                         continue
 
                     try:

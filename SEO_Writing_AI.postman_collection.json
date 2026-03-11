@@ -73,8 +73,8 @@
                                 },
                                 {
                                     "key": "urls",
-                                    "value": "[]",
-                                    "description": "JSON array of internal links: [{\"url\": \"...\", \"text\": \"...\"}]",
+                                    "value": "[{\"link\": \"https://yourbrand.com\", \"text\": \"Brand Name\", \"is_brand\": true}]",
+                                    "description": "JSON array of objects: [{\"link\": \"...\", \"text\": \"...\", \"is_brand\": true/false}]",
                                     "type": "text"
                                 },
                                 {

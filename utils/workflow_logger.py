@@ -143,6 +143,58 @@ class WorkflowLogger:
             "response_text": str(data)
         })
 
+    def log_step_details(self, step_name: str, duration: float, input_data: Any = None, output_data: Any = None, error: str = None):
+        """Logs comprehensive step details including inputs, outputs, and errors."""
+        
+        def _serialize(obj):
+            try:
+                if isinstance(obj, (dict, list)):
+                    return json.dumps(obj, ensure_ascii=False, indent=2)
+                return str(obj)
+            except:
+                return "Unserializable Data"
+
+        with open(self.log_file, 'a', encoding='utf-8') as f:
+            f.write(f"\n{'#'*30} WORKFLOW STEP: {step_name} ({duration:.2f}s) {'#'*30}\n")
+            
+            if input_data:
+                # Truncate large data blocks for the log if needed, but here we want "real log"
+                # We'll log a filtered version of state to avoid 1GB logs
+                filtered_input = self._filter_state_for_log(input_data)
+                f.write(f"STEP_INPUT:\n{_serialize(filtered_input)}\n")
+            
+            if error:
+                f.write(f"ERROR:\n{error}\n")
+            elif output_data:
+                filtered_output = self._filter_state_for_log(output_data)
+                f.write(f"STEP_OUTPUT:\n{_serialize(filtered_output)}\n")
+                
+            f.write(f"{'#'*80}\n")
+
+    def _filter_state_for_log(self, state: Any) -> Any:
+        """Filters out massive binary or redundant data from state for logging."""
+        if not isinstance(state, dict):
+            return state
+            
+        filtered = {}
+        # List of keys to truncate or skip if they are usually massive
+        SKIP_KEYS = {'brand_pages_index', 'inline_svg_content', 'semantic_model'}
+        TRUNCATE_KEYS = {'sections', 'final_output', 'internal_resources'}
+
+        for k, v in state.items():
+            if k in SKIP_KEYS:
+                filtered[k] = f"<{type(v).__name__} (Hidden for brevity)>"
+            elif k in TRUNCATE_KEYS:
+                if isinstance(v, dict):
+                    filtered[k] = {sk: (str(sv)[:200] + "...") if len(str(sv)) > 200 else sv for sk, sv in v.items()}
+                elif isinstance(v, list):
+                    filtered[k] = [(str(i)[:200] + "...") if len(str(i)) > 200 else i for i in v[:5]] + ([f"... and {len(v)-5} more items"] if len(v) > 5 else [])
+                else:
+                    filtered[k] = (str(v)[:500] + "...") if len(str(v)) > 500 else v
+            else:
+                filtered[k] = v
+        return filtered
+
     def export_text_summary(self, filename: str = "metrics_summary.txt"):
         """Generates a clean, readable text summary of step times and AI tokens."""
         if not self.metrics:
@@ -223,19 +275,42 @@ class WorkflowLogger:
             return None
 
         phases = {}
-        total_time = 0
+        total_time_start = None
+        total_time_end = None
         total_units = 0
 
+        # Pre-process metrics to calculate real durations
+        processed_metrics = []
         for m in self.metrics:
-            info = get_friendly_info(m["step_name"])
-            if not info: continue 
+            try:
+                end_dt = datetime.fromisoformat(m["timestamp"])
+                duration = float(m["duration_sec"])
+                start_dt = end_dt.timestamp() - duration
+                processed_metrics.append({
+                    **m,
+                    "start_ts": start_dt,
+                    "end_ts": end_dt.timestamp()
+                })
+            except Exception:
+                continue
+
+        for m in processed_metrics:
+            raw_name = m["step_name"]
+            info = get_friendly_info(raw_name)
+            if not info:
+                # Fallback for lowercase section_
+                if raw_name.lower().startswith("section_"):
+                    step_parts = raw_name.split('_')
+                    friendly_name = f"Writing: {' '.join(step_parts[2:]).title()}"
+                    info = ("Phase 4: Content Production", friendly_name)
+                else:
+                    continue 
             
             phase_name, friendly_name = info
             if phase_name not in phases: 
-                phases[phase_name] = {"steps": [], "time": 0, "units": 0}
+                phases[phase_name] = {"steps": [], "start_ts": float('inf'), "end_ts": 0, "units": 0}
             
             dur = float(m["duration_sec"])
-            # Fallback for tokens if 0 (e.g. if the image model didn't report them but we know it's AI)
             units_val = int(m["total_tokens"])
             if units_val > 0:
                 units_display = f"{units_val:,}"
@@ -249,11 +324,21 @@ class WorkflowLogger:
                 "time": f"{dur:.1f}s" if dur >= 1 else "< 1s",
                 "units": units_display
             })
-            phases[phase_name]["time"] += dur
+            
+            # Track wall-clock range for phase
+            phases[phase_name]["start_ts"] = min(phases[phase_name]["start_ts"], m["start_ts"])
+            phases[phase_name]["end_ts"] = max(phases[phase_name]["end_ts"], m["end_ts"])
             phases[phase_name]["units"] += units_val
             
-            total_time += dur
+            # Track global wall-clock range
+            if total_time_start is None or m["start_ts"] < total_time_start:
+                total_time_start = m["start_ts"]
+            if total_time_end is None or m["end_ts"] > total_time_end:
+                total_time_end = m["end_ts"]
+            
             total_units += units_val
+
+        overall_duration = (total_time_end - total_time_start) if total_time_start and total_time_end else 0
 
         filepath = os.path.join(self.output_dir, filename)
         try:
@@ -262,7 +347,7 @@ class WorkflowLogger:
                 f.write("║" + " EXECUTIVE ARTICLE GENERATION REPORT ".center(58) + "║\n")
                 f.write("╚" + "═"*58 + "╝\n\n")
                 
-                f.write(f"● OVERALL EXECUTION TIME: {total_time/60:.1f} minutes\n")
+                f.write(f"● OVERALL EXECUTION TIME: {overall_duration/60:.1f} minutes\n")
                 f.write(f"● TOTAL AI PROCESSING UNITS: {total_units:,}\n")
                 f.write(f"● PROJECT STATUS: COMPLETED SUCCESSFULLY\n")
                 f.write(f"● GENERATION DATE: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
@@ -276,8 +361,9 @@ class WorkflowLogger:
                     for s in data["steps"]:
                         f.write(f"  • {s['name']:<38} | {s['time']:>8} | AI: {s['units']}\n")
                     
-                    # Phase Total
-                    phase_time = f"{data['time']/60:.1f}m" if data['time'] > 60 else f"{data['time']:.1f}s"
+                    # Phase Total (Real Duration)
+                    p_dur = data["end_ts"] - data["start_ts"]
+                    phase_time = f"{p_dur/60:.1f}m" if p_dur > 60 else f"{p_dur:.1f}s"
                     f.write("  " + "─"*56 + "\n")
                     f.write(f"  SUB-TOTAL {phase.split(':')[-1].upper():<28} | {phase_time:>8} | AI: {data['units']:,}\n\n")
                 

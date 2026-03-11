@@ -107,13 +107,16 @@ Hard Rules:
    - This prevents flat content and maximizes Featured Snippet potential.
 
 14. Strategic Linking (Internal):
-   - You are provided with a list of "Internal Links" (URLs).
-   - LINK QUOTA (STRICT): Assign between 5 and 7 total internal links for the entire article.
-   - **ALLOW UP TO TWO (2) INTERNAL LINKS PER SECTION** if relevant to the content.
+   - You are provided with a list of "Internal Links" (URLs). Some are marked as **Manual/Permanent** (user-provided) and some are **Discovered** (from the brand site).
+   - LINK QUOTA: Assign as many relevant links as possible from the provided list, up to a maximum of 12. 
+   - **RULE 1: MANUAL LINKS (MANDATORY)**: You MUST use EVERY link marked as "Manual" at least once in the article.
+   - **RULE 2: RELEVANCE (STRICT)**: When using "Discovered" links, you MUST only choose ones that are highly relevant to the specific section topic. DO NOT use generic "Contact" or "Privacy" links.
+   - **RULE 3: BRAND HOMEPAGE**: If a link with the text "Homepage" is provided, you MUST assign it to at least one section (usually the Intro, Conclusion, or "Why Choose Us").
+   - **ALLOW UP TO TWO (2) INTERNAL LINKS PER SECTION** if highly relevant.
    - **STRICT UNIQUENESS: Every URL assigned MUST be unique across the ENTIRE article. NO URL can appear in more than one section.**
    - ANCHOR DIVERSITY: Each assigned link MUST have a unique and highly descriptive anchor text (`text` field) that identifies the target page's content (e.g., "[custom React development solutions](url)").
    - PRIORITIZATION: Prioritize linking to Service or Product pages. Avoid generic "About" or "Contact" pages.
-   - DISTRIBUTION: Distribute these links across different sections by adding them to the `assigned_links` array as objects: `{"url": "...", "text": "..."}`. Ensure links are present in both the introductory sections AND the later sections (Proof, Implementation, or Conclusion).
+   - DISTRIBUTION: Distribute these links across different sections by adding them to the `assigned_links` array as objects: `{"url": "...", "text": "..."}`.
 
 15. Reader Addressing:
    - content_goal and content_angle must be reader-directed (second-person oriented), not generic third-person.
@@ -136,7 +139,7 @@ Output JSON only:
       "assigned_keywords": [],
       "assigned_links": [],
       "cta_type": "primary | moderate | strong | none",
-      "cta_position": "first_paragraph | middle | last_sentence | none",
+      "cta_position": "middle | last_sentence | none",
       "requires_table": false,
       "table_type": "comparison | process | none",
       "requires_list": false,
