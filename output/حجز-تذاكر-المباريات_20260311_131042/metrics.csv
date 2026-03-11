@@ -1,0 +1,964 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,prompt_text,response_text
+2026-03-11T13:10:42.867064,EVENT: Initialization,0,0,0,0,N/A,"{'title': 'منصة حجز تذاكر المباريات', 'language': 'ar', 'primary_keyword': 'حجز تذاكر المباريات', 'output_dir': 'E:\\SEO-Writing-AI\\output\\حجز-تذاكر-المباريات_20260311_131042'}"
+2026-03-11T13:11:03.405268,brand_discovery,6.936,2403,951,3354,"You are a Brand Intelligence Analyst.
+
+        Below is real text scraped from multiple pages of a company's website.
+        The article we are writing is STRICTLY about: ""حجز تذاكر المباريات""
+
+        Website Content:
+        """"""
+        [Page: https://tikevent.com/]
+استكشف، احجز، واستمتع بأفضل التجارب في عالم الفعاليات بكل سهولة.
+لا تفوّت أجواء الملاعب والحماس لحظة بلحظة، احجز تذكرتك الآن وكن جزء من الحدث ⚽
+الحدث الأقوى يعود بأجواء استثنائية في قلب قطر! لا تفوّت اللحظة… احجز تذكرتك الآن وكن جزء من التاريخ ✨
+كأس خادم الحرمين الشريفين 2025/2026 – احجز تذاكرك الآن عبر تيك ايفنت لحضور أبرز مباريات كرة القدم في السعودية والمنافسة على لقب البطولة.
+احجز تذاكر مهرجان قطر لكرة القدم واستمتع بأقوى المباريات وأجواء جماهيرية رائعة وفرصة لمتابعة نجوم كرة القدم العالميين.
+احجز واستمتع بأجواء اليوم كامل بكل فعالياته!
+احجز الآن ولا تفوّت التجربة ✨
+نعد مستخدمينا بتقديم 4 خدمات أساسية بمعايير عالية
+لأول مرة في مواقع التذاكر!عشان تسهّلها على نفسك بدون ضغط على الميزانية.تذكرتك الآن تقدر تدفعها حتى 12 دفعة بكل راحة.
+احجز تذكرتك أونلاين في أي وقت ومن أي مكان، بدون ما تضيع وقتك في الزحمة والطوابير، وبخطوات بسيطة وسريعة.
+فريقنا جاهز لمساعدتك في أي وقت! تواصل معنا عبر قنوات الدعم المتعددة، ونعدك بتقديم حلول سريعة وفعالة لكل استفساراتك.
+تغيّرت خططك؟ ولا يهمك! مع خيار استرجاع التذاكر، تقدر تسترجع قيمة التذكرة حسب الشروط بكل سهولة وبدون أي تعقيدات.
+نستمد قوتنا من شراكاتنا مع نخبة من المستشارين والمرشدين العالميين، الذين يشاركونا رؤيتنا في تطوير سوق التذاكر الثانوية. بدعمهم، نعمل على تقديم تجربة آمنة، موثوقة، ومبتكرة لكل المستخدمين.
+
+[Page: https://tikevent.com/about-us]
+## مرحبًا بك في تيك إيفنت – وجهتك الأولى للفعاليات!
+انطلق في عالم من الترفيه والإثارة مع تيك إيفنت، المنصة الأفضل لحجز تذاكر الفعاليات بكل سهولة وأمان! 🎟️نحن هنا لنغير مفهوم السوق الثانوية للتذاكر، ونوفر لك تجربة حجز استثنائية تلبي جميع تطلعاتك.مع آلاف الفعاليات التي قمنا بتغطيتها، نسعى دائمًا لتقديم الأفضل لأكثر من 30,000 مشتري وبائع حول العالم.اختر فعالتك المفضلة، احجز تذكرتك بكل ثقة، واستعد لخوض تجربة لا تُنسى! 🚀✨
+نتطلع في تيك إيفنت إلى أن نكون الرواد في مجال الفعاليات والترفيه، من خلال الابتكار والتطوير المستمر. نسعى لإعادة تعريف تجربة حجز التذاكر، وجعلها أكثر سهولة وموثوقية للجميع. رؤيتنا هي أن نصبح المنصة الأولى التي تجمع بين أحدث التقنيات وأفضل التجارب لضمان رضا العملاء وتحقيق شغفهم بالفعاليات الاستثنائية.
+في تيك إيفنت، نؤمن بأن الفعاليات ليست مجرد تذاكر، بل تجارب لا تُنسى. نحن ملتزمون بتوفير منصة آمنة وسهلة الاستخدام تتيح للمستخدمين شراء وبيع التذاكر بكل ثقة وراحة. من خلال دعم مجتمع الفعاليات والتركيز على الشفافية والابتكار، نهدف إلى تعزيز تجربة الترفيه وجعلها في متناول الجميع. نسعى دائمًا لتقديم خدمات استثنائية تُلبي احتياجات عملائنا وتضمن لهم لحظات لا تُنسى.
+نعد مستخدمينا بتقديم 4 خدمات أساسية بمعايير عالية
+لأول مرة في مواقع التذاكر!عشان تسهّلها على نفسك بدون ضغط على الميزانية.تذكرتك الآن تقدر تدفعها حتى 12 دفعة بكل راحة.
+احجز تذكرتك أونلاين في أي وقت ومن أي مكان، بدون ما تضيع وقتك في الزحمة والطوابير، وبخطوات بسيطة وسريعة.
+فريقنا جاهز لمساعدتك في أي وقت! تواصل معنا عبر قنوات الدعم المتعددة، ونعدك بتقديم حلول سريعة وفعالة لكل استفساراتك.
+تغيّرت خططك؟ ولا يهمك! مع خيار استرجاع التذاكر، تقدر تسترجع قيمة التذكرة حسب الشروط بكل سهولة وبدون أي تعقيدات.
+
+[Page: https://tikevent.com/contact-us]
+في تيك إيفنت، نحرص على تقديم أفضل الخدمات والتواصل الفعّال مع عملائنا وشركائنا. سواء كنت ترغب في الاستفسار عن فعالياتنا، أو تبحث عن فرص تعاون، أو لديك أي أسئلة، فإن فريقنا المتخصص جاهز دائمًا لمساعدتك.
+لا تتردد في التواصل معنا من خلال القنوات التالية، وسنكون سعداء بخدمتك.
+نستمد قوتنا من شراكاتنا مع نخبة من المستشارين والمرشدين العالميين، الذين يشاركونا رؤيتنا في تطوير سوق التذاكر الثانوية. بدعمهم، نعمل على تقديم تجربة آمنة، موثوقة، ومبتكرة لكل المستخدمين.
+
+[Page: https://tikevent.com/events]
+نستمد قوتنا من شراكاتنا مع نخبة من المستشارين والمرشدين العالميين، الذين يشاركونا رؤيتنا في تطوير سوق التذاكر الثانوية. بدعمهم، نعمل على تقديم تجربة آمنة، موثوقة، ومبتكرة لكل المستخدمين.
+من الحفلات الموسيقية والعروض الحصرية إلى المباريات المشوّقة، اكتشف الفعاليات القادمة واستعد لتجربة استثنائية! احجز تذكرتك الآن ولا تفوّت لحظات لا تُنسى.
+
+[Page: https://tikevent.com/faq]
+احصل على المساعدة والدعم أو تعلم كيفية استخدام المميزات.
+هل لديك أسئلة؟ لدينا إجابات! راجع قسم الأسئلة الشائعة للعثور على إجابات للأسئلة الأكثر شيوعًا حول تيك ايفنت.
+هل التذاكر المعروضة بتيك ايفنت خاصة تيك ايفنت ؟
+اشتريت تذكرة من تيك ايفنت ولم أتمكن من الحضور، هل أستطيع استعادة أموالي؟
+هل يتم عرض جميع الفعاليات للبيع في تيك ايفنت ؟
+هل التذاكر المعروضة بتيك ايفنت خاصة تيك ايفنت ؟
+اشتريت تذكرة من تيك ايفنت ولم أتمكن من الحضور، هل أستطيع استعادة أموالي؟
+هل يتم عرض جميع الفعاليات للبيع في تيك ايفنت ؟
+
+[Page: https://tikevent.com/be-partner]
+## كن شريكًا لـ TIKEVENT واستمتع بعروض حصرية!
+للاستفسار عن الشراكات أو حجز التذاكر لمجموعتك أو لموظفي شركتك، تواصل معنا لاكتشاف فرص تعاون مميزة وعروض مُصممة خصيصًا لتلبية احتياجاتك. نحن هنا لجعل تجربتك أكثر سهولة وامتيازًا! يمكنك التواصل معنا عبر البريد الإلكتروني.
+نستمد قوتنا من شراكاتنا مع نخبة من المستشارين والمرشدين العالميين، الذين يشاركونا رؤيتنا في تطوير سوق التذاكر الثانوية. بدعمهم، نعمل على تقديم تجربة آمنة، موثوقة، ومبتكرة لكل المستخدمين.
+        """"""
+
+        Your task:
+        1. Read through all pages and extract detailed factual information ONLY related to: ""حجز تذاكر المباريات"".
+        2. Write a COMPREHENSIVE FACT SHEET (not a brief summary). Include:
+           - Specific services, sub-services, or features they offer related to this topic.
+           - Exact processes, methodologies, or steps they outline.
+           - Specific technologies, tools, platforms, or frameworks they use.
+           - Unique selling propositions (USPs) and what differentiates their approach.
+           - Target audience, industries served, or specific client types.
+           - Any statistics, numbers, guarantees (SLAs), or case study outcomes mentioned.
+        3. CRITICAL RULE: DO NOT compress the information into a single paragraph. Use bullet points and detailed notes so we don't lose the richness of the data. 
+        4. CRITICAL RULE: IGNORE completely any other services, products, or departments mentioned in the text that are not ""حجز تذاكر المباريات"".
+        5. Only use information found in the text above. Do NOT invent or assume anything.
+
+        Write the detailed fact sheet now:","بناءً على البيانات المستخرجة من منصة ""تيك إيفنت"" (TikEvent)، إليك صحيفة الحقائق التفصيلية المتعلقة بخدمة **""حجز تذاكر المباريات""**:
+
+### **1. الخدمات والفعاليات الرياضية المتاحة**
+*   **تغطية البطولات الكبرى:** توفر المنصة حجز تذاكر لمباريات كرة القدم الكبرى، مع التركيز حالياً على:
+    *   كأس خادم الحرمين الشريفين (موسم 2025/2026) في المملكة العربية السعودية.
+    *   مهرجان قطر لكرة القدم (مباريات بأجواء جماهيرية ونجوم عالميين).
+    *   فعاليات رياضية استثنائية في قلب دولة قطر.
+*   **تذاكر المباريات المشوقة:** توفير وصول مباشر لأجواء الملاعب والحماس لحظة بلحظة.
+*   **سوق التذاكر الثانوية:** تعمل المنصة كوجهة لإعادة تعريف سوق التذاكر الثانوية، مما يتيح للمستخدمين (أكثر من 30,000 مشتري وبائع) تداول التذاكر بأمان.
+
+### **2. المميزات التنافسية (USPs)**
+*   **حلول تمويلية مبتكرة (تقسيط التذاكر):** لأول مرة في مواقع التذاكر، تتيح المنصة دفع قيمة التذكرة على دفعات تصل إلى **12 دفعة** لتسهيل الحجز دون الضغط على الميزانية.
+*   **مرونة الإلغاء (خيار الاسترجاع):** توفير إمكانية استرجاع قيمة التذكرة وفق شروط محددة في حال تغيرت خطط العميل.
+*   **سهولة وسرعة الحجز:** نظام حجز أونلاين يغني عن الزحمة والطوابير، متاح في أي وقت ومن أي مكان بخطوات بسيطة.
+*   **الأمان والموثوقية:** التركيز على تقديم تجربة آمنة ومبتكرة مدعومة بشراكات مع مستشارين ومرشدين عالميين في سوق التذاكر.
+
+### **3. آلية العمل والعمليات**
+*   **خطوات الحجز:** عملية رقمية بالكامل تبدأ باختيار الفعالية الرياضية، ثم الحجز أونلاين، والدفع عبر خيارات متنوعة.
+*   **دعم فني متعدد القنوات:** فريق متخصص جاهز لتقديم حلول سريعة وفعالة للاستفسارات المتعلقة بحجز المباريات.
+*   **نظام الشراكات للمجموعات:** إمكانية حجز تذاكر المباريات للمجموعات أو موظفي الشركات عبر قنوات تواصل مخصصة (البريد الإلكتروني) للحصول على عروض حصرية.
+
+### **4. إحصائيات وأرقام الخدمة**
+*   **قاعدة المستخدمين:** تخدم المنصة أكثر من **30,000 مشتري وبائع** حول العالم.
+*   **المعايير:** الالتزام بـ **4 خدمات أساسية** بمعايير عالية (التقسيط، الحجز السريع، الدعم الفني، استرجاع التذاكر).
+
+### **5. الجمهور المستهدف**
+*   جماهير كرة القدم في السعودية وقطر والمنطقة العربية.
+*   الأفراد الباحثين عن حضور مباريات النجوم العالميين.
+*   الشركات والمجموعات التي ترغب في صفقات حجز جماعية للمباريات.
+*   المشترون والبائعون في سوق التذاكر الثانوية.
+
+### **6. التكنولوجيا والمنصة**
+*   **منصة رقمية متكاملة:** تعتمد على أحدث التقنيات لضمان سهولة الاستخدام والشفافية.
+*   **تطوير مستمر:** السعي لريادة مجال الفعاليات من خلال الابتكار المستمر في أدوات حجز التذاكر.
+
+### **7. الضمانات والالتزامات**
+*   **وعد الخدمة:** تقديم حلول سريعة وفعالة لكل المشكلات عبر قنوات الدعم.
+*   **الشفافية:** الالتزام بالشفافية في عمليات البيع والشراء في السوق الثانوية لضمان حقوق المستخدمين."
+2026-03-11T13:11:04.847982,local_neighborhoods,1.439,470,50,520,"You are a Local SEO expert.
+        Your task: List the top 8-10 most well-known neighborhoods, districts, or business zones in ""السعودية العربية "" that are most relevant to the service: ""حجز تذاكر المباريات"".
+
+        Rules:
+        - Output ONLY a valid JSON array of strings. No explanations, no markdown, just the array.
+        - Use the local language (Arabic if the city is Arab, etc.)
+        - Focus on areas where businesses would search for this service.
+        - Example output: [""العليا"", ""النخيل"", ""الملقا"", ""الروضة"", ""الزهراء"", ""الملز""]
+
+        Output the JSON array now:","[""الملز"", ""العليا"", ""النخيل"", ""حطين"", ""الصحافة"", ""اليرموك"", ""الزهراء"", ""الشاطئ"", ""الخزامى"", ""الروضة""]"
+2026-03-11T13:11:04.847982,STEP_TOTAL: brand_discovery,21.981,470,50,520,"You are a Local SEO expert.
+        Your task: List the top 8-10 most well-known neighborhoods, districts, or business zones in ""السعودية العربية "" that are most relevant to the service: ""حجز تذاكر المباريات"".
+
+        Rules:
+        - Output ONLY a valid JSON array of strings. No explanations, no markdown, just the array.
+        - Use the local language (Arabic if the city is Arab, etc.)
+        - Focus on areas where businesses would search for this service.
+        - Example output: [""العليا"", ""النخيل"", ""الملقا"", ""الروضة"", ""الزهراء"", ""الملز""]
+
+        Output the JSON array now:","[""الملز"", ""العليا"", ""النخيل"", ""حطين"", ""الصحافة"", ""اليرموك"", ""الزهراء"", ""الشاطئ"", ""الخزامى"", ""الروضة""]"
+2026-03-11T13:11:56.944752,web_research,52.093,18851,6025,24876,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: حجز تذاكر المباريات in السعودية العربية 
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+--------------------------------------------
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+--------------------------------------------
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask questions
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- Do NOT invent questions
+- Use only live search results context
+- If element not found, return empty array
+
+-------------------------------------
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+-------------------------------------
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""url"":""https://www.capsulaa.sa/saudi-arabia-services/%D9%85%D9%86%D8%B5%D8%A9-%D8%AD%D8%AC%D8%B2-%D8%AA%D8%B0%D8%A7%D9%83%D8%B1-%D8%A7%D9%84%D9%85%D8%A8%D8%A7%D8%B1%D9%8A%D8%A7%D8%AA-%D9%83%D9%85-%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1-%D8%AA%D8%B0%D8%A7%D9%83/"",""meta_title"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""meta_description"":""إيمان محمد محمود، خريجة تكنولوجيا التعليم والمعلومات، أعمل مدرب حاسبات ونظم، كاتبة مقالات في العديد من المواقع، متخصصة في الأخبار السعودية على موقع كبسولة."",""estimated_word_count"":1500,""headings"":{""h1"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""h2"":[""متوسط أسعار تذاكر الدوري السعودي 2026"",""ما هي المنصات المعتمدة لحجز التذاكر في 2026؟"",""خطوات حجز التذاكر (الطريقة الموحدة)"",""روابط حجز المباريات المباشرة (تحديث 2026)"",""شروط دخول الملاعب (تنبيهات هامة)"",""الأسئلة الأكثر شيوعاً""],""h3"":[""هل يلزمني طباعة التذكرة ورقيًا؟"",""واجهت مشكلة في الدفع أو لم تصلني التذكرة، ماذا أفعل؟"",""المصادر الرسمية والموثوقة""]},""has_faq"":true,""has_tables"":true,""cta_style"":""informational""},{""title"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""url"":""https://www.capsulaa.sa/%D8%B1%D9%8A%D8%A7%D8%B6%D8%A9/%D8%AD%D8%AC%D8%B2-%D8%AA%D8%B0%D8%A7%D9%83%D8%B1-%D9%85%D8%A8%D8%A7%D8%B1%D8%A7%D8%A9-%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9-%D9%88%D9%85%D8%B5%D8%B1-%D8%A7%D9%84%D9%8A%D9%88%D9%85-%D8%A7.html"",""meta_title"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""meta_description"":""أعلنت الجهات المنظمة عن انطلاق عملية بيع تذاكر المواجهة الودية المرتقبة بين “الأخضر” السعودي و”الفراعنة” مساء اليوم الأربعاء 25 فبراير 2026، وذلك في تمام الساعة التاسعة مساءً بتوقيت مكة المكرمة."",""estimated_word_count"":800,""headings"":{""h1"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""h2"":[],""h3"":[""تفاصيل موعد مباراة المنتخب السعودي ضد مصر"",""فئات وأسعار التذاكر الرسمية"",""خطوات حجز تذاكر مباراة السعودية ومصر 2026""]},""has_faq"":true,""has_tables"":false,""cta_style"":""informational""},{""title"":""تذاكر مباراة السعودية والعراق في تصفيات كأس العالم 2026: الأسعار وكيفية الحجز والشراء"",""url"":""https://www.goal.com/ar/%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1/saudi-arabia-iraq-tickets/blt3f9ebae9e4004011"",""meta_title"":""تذاكر مباراة السعودية والعراق في تصفيات كأس العالم 2026: الأسعار وكيفية الحجز والشراء"",""meta_description"":""بالتفاصيل، كيف تحصل على تذاكر مباراة السعودية والعراق في تصفيات كأس العالم 2026."",""estimated_word_count"":900,""headings"":{""h1"":""تذاكر مباراة السعودية والعراق في تصفيات كأس العالم 2026: الأسعار وكيفية الحجز والشراء"",""h2"":[""متى تقام مباراة السعودية والعراق؟"",""أين يمكن شراء تذاكر مباراة السعودية والعراق؟"",""كم تبلغ أسعار تذاكر مباراة السعودية والعراق؟"",""هل تم بيع جميع تذاكر مباراة السعودية والعراق؟"",""أسئلة الأكثر شيوعًا""],""h3"":[]},""has_faq"":true,""has_tables"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[],""content_gaps"":[""طرق الدفع المقبولة وتفاصيلها"",""حجز تذاكر المجموعات أو الشركات"",""مقاعد ذوي الإعاقة وتسهيلات الوصول"",""سياسات الاسترجاع والإلغاء"",""تحديثات توافر التذاكر لحظيًا"",""آليات التحقق من أصالة التذاكر""],""common_patterns"":[""شهادات \""شاهد أيضاً\"" للمواضيع ذات الصلة"",""قوائم مرقمة لشرح خطوات الحجز"",""جداول سعرية لفئات التذاكر أو الجداول الزمنية"",""مرجع دائم للاتحادات والمنصات الرسمية"",""أقسام FAQ للإجابة على الأسئلة الشائعة""],""common_strengths"":[""توفير أسعار مفصلة حسب الفئات"",""تعليمات خطوة بخطوة لحجز التذاكر"",""استخدام عناوين واضحة ومنظمة"",""وجود قسم الأسئلة الشائعة"",""ربط مباشر بالمنصات الرسمية"",""تغطية أحداث ومباريات محددة بجداول زمنية""],""common_weaknesses"":[""وصف ميتا متكرر ويشابه العنوان"",""غياب حالات التوفر اللحظي للتذاكر"",""اعتماد بعض الصفحات فقط على H3 دون H2"",""ندرة آراء المستخدمين وتجارب الشراء"",""قلة التفاصيل حول طرق الدفع البديلة"",""عدم إدراج إشعارات نفاذ التذاكر الفعلية""]}"
+2026-03-11T13:12:45.507228,web_research,47.543,18145,5349,23494,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: حجز تذاكر المباريات in السعودية العربية 
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+--------------------------------------------
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+--------------------------------------------
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask questions
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- Do NOT invent questions
+- Use only live search results context
+- If element not found, return empty array
+
+-------------------------------------
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+-------------------------------------
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""url"":""https://www.capsulaa.sa/saudi-arabia-services/منصة-حجز-تذاكر-المباريات-كم-اسعار-تذاكر/"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":900,""headings"":{""h1"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""h2"":[""متوسط أسعار تذاكر الدوري السعودي 2026"",""ما هي المنصات المعتمدة لحجز التذاكر في 2026؟"",""خطوات حجز التذاكر (الطريقة الموحدة)"",""شروط دخول الملاعب (تنبيهات هامة)"",""الأسئلة الأكثر شيوعاً""],""h3"":[""روابط حجز المباريات المباشرة (تحديث 2026)"",""هل يلزمني طباعة التذكرة ورقيًا؟"",""واجهت مشكلة في الدفع أو لم تصلني التذكرة، ماذا أفعل؟""]},""has_faq"":true,""has_tables"":true,""cta_style"":""soft commercial""},{""title"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""url"":""https://www.capsulaa.sa/رياضة/حجز-تذاكر-مباراة-السعودية-ومصر-اليوم-25-2-2026.html"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":600,""headings"":{""h1"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""h2"":[],""h3"":[""تفاصيل موعد مباراة المنتخب السعودي ضد مصر"",""فئات وأسعار التذاكر الرسمية"",""خطوات حجز تذاكر مباراة السعودية ومصر 2026""]},""has_faq"":true,""has_tables"":true,""cta_style"":""informational""},{""title"":""تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز"",""url"":""https://www.kooora.com/كرة-قدم/أخبار/how-to-buy-al-ittihad-2025-26-tickets-saudi-pro-league-prices-upcoming-fixtures-and-more/bltc2b65a537ccf309e"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":800,""headings"":{""h1"":""تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز"",""h2"":[""مباريات نادي الاتحاد القادمة 2026"",""كيفية شراء تذاكر نادي الاتحاد 2025/26"",""ماذا نتوقع من نادي الاتحاد 2025/26؟"",""تاريخ مدينة الملك عبد الله الرياضية""],""h3"":[""قد يعجبك أيضاً""]},""has_faq"":false,""has_tables"":true,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""حجز تذاكر الدوري السعودي"",""مواعيد مباريات الدوري السعودي"",""أسعار تذاكر المباريات"",""منصة Webook لحجز التذاكر"",""حجز تذاكر نادي الاتحاد"",""طرق حجز التذاكر في السعودية"",""أسعار تذاكر مباراة السعودية ومصر"",""منصات فيكتوري أرينا وBlu Store"",""خطوات حجز التذاكر"",""شروط دخول الملاعب""],""content_gaps"":[""إعادة البيع الآمن ومصادر معتمدة"",""سياسة الاسترجاع والإلغاء"",""تفاصيل درجات المقاعد"",""معلومات مواقف السيارات والوصول للملعب"",""خيارات الدفع الإلكترونية ومحافظ الهواتف"",""عروض وخصومات خاصة ومجموعات الحجز""],""common_patterns"":[""استخدام عبارة \""شاهد أيضاً\"" للربط الداخلي"",""قائمة مرقمة لخطوات الحجز"",""جداول لتوضيح الأسعار والمواعيد"",""سرد المنصات الرسمية في قائمة نقاط"",""عرض روابط شراء \""اشترِ تذكرتك الآن\"" بشكل متكرر""],""common_strengths"":[""توفر دليل خطوة بخطوة لحجز التذاكر"",""تضمين جداول أسعار واضحة للمستخدم"",""توصيات بالمنصات الرسمية وطرق الحجز موثوقة"",""تحديث المحتوى بذكر تاريخ النشر وآخر تعديل"",""ربط المقالات ذات الصلة عبر قسم \""شاهد أيضاً\"""",""شرح تفاصيل المباريات بالمواعيد والأطراف والملعب""],""common_weaknesses"":[""غياب وسوم الميتا (meta title وmeta description) في الصفحات"",""عدم انتظام هيكلية العناوين (بعض الصفحات تفتقد H2)"",""تكرار أنماط CTA دون تنويع"",""نقص قسم الأسئلة المتكررة في بعض الصفحات"",""عدم ذكر سياسات الإلغاء والاسترداد بشكل واضح""]}"
+2026-03-11T13:12:45.507228,STEP_TOTAL: web_research,47.543,18145,5349,23494,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: حجز تذاكر المباريات in السعودية العربية 
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+--------------------------------------------
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+--------------------------------------------
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask questions
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- Do NOT invent questions
+- Use only live search results context
+- If element not found, return empty array
+
+-------------------------------------
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+-------------------------------------
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""url"":""https://www.capsulaa.sa/saudi-arabia-services/منصة-حجز-تذاكر-المباريات-كم-اسعار-تذاكر/"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":900,""headings"":{""h1"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""h2"":[""متوسط أسعار تذاكر الدوري السعودي 2026"",""ما هي المنصات المعتمدة لحجز التذاكر في 2026؟"",""خطوات حجز التذاكر (الطريقة الموحدة)"",""شروط دخول الملاعب (تنبيهات هامة)"",""الأسئلة الأكثر شيوعاً""],""h3"":[""روابط حجز المباريات المباشرة (تحديث 2026)"",""هل يلزمني طباعة التذكرة ورقيًا؟"",""واجهت مشكلة في الدفع أو لم تصلني التذكرة، ماذا أفعل؟""]},""has_faq"":true,""has_tables"":true,""cta_style"":""soft commercial""},{""title"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""url"":""https://www.capsulaa.sa/رياضة/حجز-تذاكر-مباراة-السعودية-ومصر-اليوم-25-2-2026.html"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":600,""headings"":{""h1"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""h2"":[],""h3"":[""تفاصيل موعد مباراة المنتخب السعودي ضد مصر"",""فئات وأسعار التذاكر الرسمية"",""خطوات حجز تذاكر مباراة السعودية ومصر 2026""]},""has_faq"":true,""has_tables"":true,""cta_style"":""informational""},{""title"":""تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز"",""url"":""https://www.kooora.com/كرة-قدم/أخبار/how-to-buy-al-ittihad-2025-26-tickets-saudi-pro-league-prices-upcoming-fixtures-and-more/bltc2b65a537ccf309e"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":800,""headings"":{""h1"":""تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز"",""h2"":[""مباريات نادي الاتحاد القادمة 2026"",""كيفية شراء تذاكر نادي الاتحاد 2025/26"",""ماذا نتوقع من نادي الاتحاد 2025/26؟"",""تاريخ مدينة الملك عبد الله الرياضية""],""h3"":[""قد يعجبك أيضاً""]},""has_faq"":false,""has_tables"":true,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""حجز تذاكر الدوري السعودي"",""مواعيد مباريات الدوري السعودي"",""أسعار تذاكر المباريات"",""منصة Webook لحجز التذاكر"",""حجز تذاكر نادي الاتحاد"",""طرق حجز التذاكر في السعودية"",""أسعار تذاكر مباراة السعودية ومصر"",""منصات فيكتوري أرينا وBlu Store"",""خطوات حجز التذاكر"",""شروط دخول الملاعب""],""content_gaps"":[""إعادة البيع الآمن ومصادر معتمدة"",""سياسة الاسترجاع والإلغاء"",""تفاصيل درجات المقاعد"",""معلومات مواقف السيارات والوصول للملعب"",""خيارات الدفع الإلكترونية ومحافظ الهواتف"",""عروض وخصومات خاصة ومجموعات الحجز""],""common_patterns"":[""استخدام عبارة \""شاهد أيضاً\"" للربط الداخلي"",""قائمة مرقمة لخطوات الحجز"",""جداول لتوضيح الأسعار والمواعيد"",""سرد المنصات الرسمية في قائمة نقاط"",""عرض روابط شراء \""اشترِ تذكرتك الآن\"" بشكل متكرر""],""common_strengths"":[""توفر دليل خطوة بخطوة لحجز التذاكر"",""تضمين جداول أسعار واضحة للمستخدم"",""توصيات بالمنصات الرسمية وطرق الحجز موثوقة"",""تحديث المحتوى بذكر تاريخ النشر وآخر تعديل"",""ربط المقالات ذات الصلة عبر قسم \""شاهد أيضاً\"""",""شرح تفاصيل المباريات بالمواعيد والأطراف والملعب""],""common_weaknesses"":[""غياب وسوم الميتا (meta title وmeta description) في الصفحات"",""عدم انتظام هيكلية العناوين (بعض الصفحات تفتقد H2)"",""تكرار أنماط CTA دون تنويع"",""نقص قسم الأسئلة المتكررة في بعض الصفحات"",""عدم ذكر سياسات الإلغاء والاسترداد بشكل واضح""]}"
+2026-03-11T13:12:52.977341,serp_analysis,7.463,3332,788,4120,"You are an advanced SEO strategist and SERP intelligence analyst.
+
+You are given structured SERP data for a primary keyword.
+
+Your task is to convert this raw SERP data into:
+1. Strategic qualitative intelligence
+2. Structural quantitative intelligence
+3. Search intent validation based strictly on SERP patterns
+
+Primary Keyword: حجز تذاكر المباريات
+SERP DATA:
+{""paa"": [], ""lsi"": [""\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u062f\u0648\u0631\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a"", ""\u0645\u0648\u0627\u0639\u064a\u062f \u0645\u0628\u0627\u0631\u064a\u0627\u062a \u0627\u0644\u062f\u0648\u0631\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a"", ""\u0623\u0633\u0639\u0627\u0631 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u0645\u0628\u0627\u0631\u064a\u0627\u062a"", ""\u0645\u0646\u0635\u0629 Webook \u0644\u062d\u062c\u0632 \u0627\u0644\u062a\u0630\u0627\u0643\u0631"", ""\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0646\u0627\u062f\u064a \u0627\u0644\u0627\u062a\u062d\u0627\u062f"", ""\u0637\u0631\u0642 \u062d\u062c\u0632 \u0627\u0644\u062a\u0630\u0627\u0643\u0631 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629"", ""\u0623\u0633\u0639\u0627\u0631 \u062a\u0630\u0627\u0643\u0631 \u0645\u0628\u0627\u0631\u0627\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0648\u0645\u0635\u0631"", ""\u0645\u0646\u0635\u0627\u062a \u0641\u064a\u0643\u062a\u0648\u0631\u064a \u0623\u0631\u064a\u0646\u0627 \u0648Blu Store"", ""\u062e\u0637\u0648\u0627\u062a \u062d\u062c\u0632 \u0627\u0644\u062a\u0630\u0627\u0643\u0631"", ""\u0634\u0631\u0648\u0637 \u062f\u062e\u0648\u0644 \u0627\u0644\u0645\u0644\u0627\u0639\u0628""], ""related"": [], ""titles_pattern"": [""\u0645\u0646\u0635\u0629 \u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u0645\u0628\u0627\u0631\u064a\u0627\u062a \u0648\u0623\u0633\u0639\u0627\u0631 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u062f\u0648\u0631\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a 2026 \u2013 1447 (\u062a\u0645 \u0627\u0644\u062a\u062d\u062f\u064a\u062b)"", ""\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0645\u0628\u0627\u0631\u0627\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0648\u0645\u0635\u0631 \u0627\u0644\u064a\u0648\u0645 \u0627\u0644\u0623\u0631\u0628\u0639\u0627\u0621 25-2-2026 \u0648\u0627\u0644\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0631\u0633\u0645\u064a\u0629"", ""\u062a\u0630\u0627\u0643\u0631 \u0646\u0627\u062f\u064a \u0627\u0644\u0627\u062a\u062d\u0627\u062f 2025/2026: \u0645\u0648\u0627\u0639\u064a\u062f \u0627\u0644\u0645\u0628\u0627\u0631\u064a\u0627\u062a \u0648\u0627\u0644\u0623\u0633\u0639\u0627\u0631 \u0648\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062d\u062c\u0632""]}
+
+STEP 1 â€” Search Intent Confirmation
+Infer actual search intent ONLY from SERP structure using:
+- Page types (service / blog / landing / ecommerce / directory)
+- CTA presence & positioning
+- Title framing patterns
+- URL structures
+- Pricing sections
+- Schema types
+- Content depth
+
+Return:
+- confirmed_intent
+- intent_confidence_score (0â€“1)
+- dominant_page_type
+- service_vs_guide_ratio
+- commercial_signal_strength
+- informational_signal_strength
+
+
+STEP 2 â€” Structural Intelligence
+Extract:
+- avg_word_count
+- avg_h2_count
+- avg_h3_count
+- dominant_page_type (service | guide | comparison | homepage)
+- CTA_position_pattern (above fold / mid / end / none)
+- CTA_intensity_pattern (none / soft / moderate / aggressive)
+- pricing_presence_ratio (0â€“1)
+- faq_presence_ratio (0â€“1)
+- trust_signal_density (low / medium / high)
+- local_keyword_density (low / medium / high)
+- detected_area (Identify specific city or country if keywords/titles show a clear geographical target. Return ""Global"" if none found).
+
+STEP 3 â€” Strategic Intelligence
+Extract:
+1. Content Gaps
+- Important missing subtopics competitors did not cover
+- Underserved angles
+- Questions not properly answered
+2. Structural Patterns
+- Common H2/H3 patterns across competitors
+- Structural templates they follow
+3. Keyword Clusters
+- Group LSI and related keywords into semantic clusters
+4. Weakness Exploitation Plan
+- Areas where competitors are thin
+- Outdated content opportunities
+- Weak CTAs
+- Missing trust signals (EEAT gaps)
+5. Differentiation Strategy
+- How to be more comprehensive
+- How to structure better
+- What additional value to add
+
+
+Return STRICT JSON only in this structure:
+
+{
+""intent_analysis"": {
+""confirmed_intent"": """",
+""intent_confidence_score"": 0.0,
+""dominant_page_type"": """",
+""service_vs_guide_ratio"": 0.0,
+""commercial_signal_strength"": 0.0,
+""informational_signal_strength"": 0.0
+},
+""structural_intelligence"": {
+""dominant_page_type"": """",
+""avg_word_count"": 0,
+""avg_h2_count"": 0,
+""avg_h3_count"": 0,
+""dominant_heading_pattern"": """",
+""cta_position_pattern"": """",
+""cta_intensity_pattern"": """",
+""pricing_presence_ratio"": 0.0,
+""faq_presence_ratio"": 0.0,
+""trust_signal_density"": """",
+""local_keyword_density"": """",
+""detected_area"": """"
+},
+""strategic_intelligence"": {
+""content_gaps"": [],
+""structural_patterns"": [],
+""keyword_clusters"": [
+{
+""cluster_name"": """",
+""keywords"": []
+}
+],
+""weaknesses_to_exploit"": [],
+""differentiation_strategy"": []
+}
+}
+
+Return JSON only.
+Do not include explanations.","{
+  ""intent_analysis"": {
+    ""confirmed_intent"": ""Transactional / Commercial Investigation"",
+    ""intent_confidence_score"": 0.95,
+    ""dominant_page_type"": ""Service/Booking Guide"",
+    ""service_vs_guide_ratio"": 0.7,
+    ""commercial_signal_strength"": 0.9,
+    ""informational_signal_strength"": 0.4
+  },
+  ""structural_intelligence"": {
+    ""dominant_page_type"": ""Booking Portal / How-to Guide"",
+    ""avg_word_count"": 850,
+    ""avg_h2_count"": 5,
+    ""avg_h3_count"": 4,
+    ""dominant_heading_pattern"": ""Platform Name + Match Date + Price + Booking Steps"",
+    ""cta_position_pattern"": ""Above the fold and Mid-content"",
+    ""cta_intensity_pattern"": ""Aggressive"",
+    ""pricing_presence_ratio"": 1.0,
+    ""faq_presence_ratio"": 0.3,
+    ""trust_signal_density"": ""High"",
+    ""local_keyword_density"": ""High"",
+    ""detected_area"": ""Saudi Arabia""
+  },
+  ""strategic_intelligence"": {
+    ""content_gaps"": [
+      ""Comparison between different booking platforms (Webook vs Blu Store vs Victory Arena)"",
+      ""Troubleshooting payment failures on official platforms"",
+      ""Resale market warnings and how to avoid scams"",
+      ""Specific stadium seating maps and view quality guides"",
+      ""Mobile app vs Web browser booking speed optimization""
+    ],
+    ""structural_patterns"": [
+      ""H2: Official platforms for booking"",
+      ""H2: Step-by-step booking process"",
+      ""H2: Match ticket prices"",
+      ""H3: Terms and conditions for stadium entry""
+    ],
+    ""keyword_clusters"": [
+      {
+        ""cluster_name"": ""Saudi League Booking"",
+        ""keywords"": [
+          ""حجز تذاكر الدوري السعودي"",
+          ""تذاكر نادي الاتحاد"",
+          ""منصة Webook"",
+          ""Blu Store"",
+          ""Victory Arena""
+        ]
+      },
+      {
+        ""cluster_name"": ""Pricing and Logistics"",
+        ""keywords"": [
+          ""أسعار تذاكر المباريات"",
+          ""خطوات حجز التذاكر"",
+          ""شروط دخول الملاعب"",
+          ""مواعيد مباريات الدوري السعودي""
+        ]
+      },
+      {
+        ""cluster_name"": ""Specific Match Interest"",
+        ""keywords"": [
+          ""مباراة السعودية ومصر"",
+          ""تذاكر مباراة السعودية ومصر""
+        ]
+      }
+    ],
+    ""weaknesses_to_exploit"": [
+      ""Competitors focus heavily on specific matches; a 'Hub' page for all platforms is missing"",
+      ""Lack of real-time update timestamps on pricing which fluctuates"",
+      ""Thin content regarding the 'Terms and Conditions' of entry (EEAT gap)"",
+      ""Weak integration of video tutorials for the booking process""
+    ],
+    ""differentiation_strategy"": [
+      ""Create an 'All-in-One' directory for Saudi stadium booking platforms"",
+      ""Include a 'Live Status' section for ticket availability if possible"",
+      ""Add a 'Know Your Seat' visual guide section"",
+      ""Provide a direct comparison table of service fees across different apps""
+    ]
+  }
+}"
+2026-03-11T13:12:52.977341,STEP_TOTAL: serp_analysis,7.47,3332,788,4120,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: حجز تذاكر المباريات in السعودية العربية 
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+--------------------------------------------
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+--------------------------------------------
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask questions
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- Do NOT invent questions
+- Use only live search results context
+- If element not found, return empty array
+
+-------------------------------------
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+-------------------------------------
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""url"":""https://www.capsulaa.sa/saudi-arabia-services/منصة-حجز-تذاكر-المباريات-كم-اسعار-تذاكر/"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":900,""headings"":{""h1"":""منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)"",""h2"":[""متوسط أسعار تذاكر الدوري السعودي 2026"",""ما هي المنصات المعتمدة لحجز التذاكر في 2026؟"",""خطوات حجز التذاكر (الطريقة الموحدة)"",""شروط دخول الملاعب (تنبيهات هامة)"",""الأسئلة الأكثر شيوعاً""],""h3"":[""روابط حجز المباريات المباشرة (تحديث 2026)"",""هل يلزمني طباعة التذكرة ورقيًا؟"",""واجهت مشكلة في الدفع أو لم تصلني التذكرة، ماذا أفعل؟""]},""has_faq"":true,""has_tables"":true,""cta_style"":""soft commercial""},{""title"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""url"":""https://www.capsulaa.sa/رياضة/حجز-تذاكر-مباراة-السعودية-ومصر-اليوم-25-2-2026.html"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":600,""headings"":{""h1"":""حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية"",""h2"":[],""h3"":[""تفاصيل موعد مباراة المنتخب السعودي ضد مصر"",""فئات وأسعار التذاكر الرسمية"",""خطوات حجز تذاكر مباراة السعودية ومصر 2026""]},""has_faq"":true,""has_tables"":true,""cta_style"":""informational""},{""title"":""تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز"",""url"":""https://www.kooora.com/كرة-قدم/أخبار/how-to-buy-al-ittihad-2025-26-tickets-saudi-pro-league-prices-upcoming-fixtures-and-more/bltc2b65a537ccf309e"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":800,""headings"":{""h1"":""تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز"",""h2"":[""مباريات نادي الاتحاد القادمة 2026"",""كيفية شراء تذاكر نادي الاتحاد 2025/26"",""ماذا نتوقع من نادي الاتحاد 2025/26؟"",""تاريخ مدينة الملك عبد الله الرياضية""],""h3"":[""قد يعجبك أيضاً""]},""has_faq"":false,""has_tables"":true,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""حجز تذاكر الدوري السعودي"",""مواعيد مباريات الدوري السعودي"",""أسعار تذاكر المباريات"",""منصة Webook لحجز التذاكر"",""حجز تذاكر نادي الاتحاد"",""طرق حجز التذاكر في السعودية"",""أسعار تذاكر مباراة السعودية ومصر"",""منصات فيكتوري أرينا وBlu Store"",""خطوات حجز التذاكر"",""شروط دخول الملاعب""],""content_gaps"":[""إعادة البيع الآمن ومصادر معتمدة"",""سياسة الاسترجاع والإلغاء"",""تفاصيل درجات المقاعد"",""معلومات مواقف السيارات والوصول للملعب"",""خيارات الدفع الإلكترونية ومحافظ الهواتف"",""عروض وخصومات خاصة ومجموعات الحجز""],""common_patterns"":[""استخدام عبارة \""شاهد أيضاً\"" للربط الداخلي"",""قائمة مرقمة لخطوات الحجز"",""جداول لتوضيح الأسعار والمواعيد"",""سرد المنصات الرسمية في قائمة نقاط"",""عرض روابط شراء \""اشترِ تذكرتك الآن\"" بشكل متكرر""],""common_strengths"":[""توفر دليل خطوة بخطوة لحجز التذاكر"",""تضمين جداول أسعار واضحة للمستخدم"",""توصيات بالمنصات الرسمية وطرق الحجز موثوقة"",""تحديث المحتوى بذكر تاريخ النشر وآخر تعديل"",""ربط المقالات ذات الصلة عبر قسم \""شاهد أيضاً\"""",""شرح تفاصيل المباريات بالمواعيد والأطراف والملعب""],""common_weaknesses"":[""غياب وسوم الميتا (meta title وmeta description) في الصفحات"",""عدم انتظام هيكلية العناوين (بعض الصفحات تفتقد H2)"",""تكرار أنماط CTA دون تنويع"",""نقص قسم الأسئلة المتكررة في بعض الصفحات"",""عدم ذكر سياسات الإلغاء والاسترداد بشكل واضح""]}"
+2026-03-11T13:12:54.723790,intent_title,1.736,0,0,0,"You are a senior SEO intent classifier and title optimizer.
+
+Input:
+- Raw topic: منصة حجز تذاكر المباريات
+- Primary keyword: حجز تذاكر المباريات
+- Language: ar
+- Current Year: 2026
+- Top SERP titles: ['منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)', 'حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية', 'تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز']
+- SERP CTA styles: ['soft commercial', 'informational', 'aggressive']
+- Target Area: السعودية العربية 
+
+Task:
+1. Classify intent from SERP-first signals:
+   - Title framing pattern
+   - CTA style distribution
+   - Service-vs-guide wording
+2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.
+3. Generate one optimized H1 aligned to detected intent.
+
+Allowed intents:
+- commercial → evaluating services, looking for best options, ready to act, ready to buy
+- informational → learning
+- comparative  → comparing options, looking for best options
+
+Title rules:
+- 60–70 characters
+- Must include the primary keyword exactly
+- Must match article language
+- If area is provided, include it naturally
+-  For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year (2026) naturally in the title to indicate freshness (e.g., ""Best Web Design Agency in 2026"" or ""Top Services 2026"").
+- No clickbait, no keyword stuffing.
+- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.
+- Focus 100% on the **Primary keyword** service.
+- No markdown
+- No extra text
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": """"
+}","{
+  ""optimized_title"": ""أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026: الأسعار والطريقة"",
+  ""intent"": ""commercial"",
+  ""metadata"": {
+    ""duration"": 1.7361772060394287,
+    ""prompt"": ""You are a senior SEO intent classifier and title optimizer.\n\nInput:\n- Raw topic: منصة حجز تذاكر المباريات\n- Primary keyword: حجز تذاكر المباريات\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: ['منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)', 'حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية', 'تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز']\n- SERP CTA styles: ['soft commercial', 'informational', 'aggressive']\n- Target Area: السعودية العربية \n\nTask:\n1. Classify intent from SERP-first signals:\n   - Title framing pattern\n   - CTA style distribution\n   - Service-vs-guide wording\n2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.\n3. Generate one optimized H1 aligned to detected intent.\n\nAllowed intents:\n- commercial → evaluating services, looking for best options, ready to act, ready to buy\n- informational → learning\n- comparative  → comparing options, looking for best options\n\nTitle rules:\n- 60–70 characters\n- Must include the primary keyword exactly\n- Must match article language\n- If area is provided, include it naturally\n-  For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year (2026) naturally in the title to indicate freshness (e.g., \""Best Web Design Agency in 2026\"" or \""Top Services 2026\"").\n- No clickbait, no keyword stuffing.\n- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.\n- Focus 100% on the **Primary keyword** service.\n- No markdown\n- No extra text\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""commercial\"",\n  \""confidence\"": 0.85,\n  \""optimized_title\"": \""أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026: الأسعار والطريقة\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 820,
+      ""completion_tokens"": 56,
+      ""total_tokens"": 876
+    }
+  },
+  ""prompt"": ""You are a senior SEO intent classifier and title optimizer.\n\nInput:\n- Raw topic: منصة حجز تذاكر المباريات\n- Primary keyword: حجز تذاكر المباريات\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: ['منصة حجز تذاكر المباريات وأسعار تذاكر الدوري السعودي 2026 – 1447 (تم التحديث)', 'حجز تذاكر مباراة السعودية ومصر اليوم الأربعاء 25-2-2026 والأسعار الرسمية', 'تذاكر نادي الاتحاد 2025/2026: مواعيد المباريات والأسعار وطريقة الحجز']\n- SERP CTA styles: ['soft commercial', 'informational', 'aggressive']\n- Target Area: السعودية العربية \n\nTask:\n1. Classify intent from SERP-first signals:\n   - Title framing pattern\n   - CTA style distribution\n   - Service-vs-guide wording\n2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.\n3. Generate one optimized H1 aligned to detected intent.\n\nAllowed intents:\n- commercial → evaluating services, looking for best options, ready to act, ready to buy\n- informational → learning\n- comparative  → comparing options, looking for best options\n\nTitle rules:\n- 60–70 characters\n- Must include the primary keyword exactly\n- Must match article language\n- If area is provided, include it naturally\n-  For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year (2026) naturally in the title to indicate freshness (e.g., \""Best Web Design Agency in 2026\"" or \""Top Services 2026\"").\n- No clickbait, no keyword stuffing.\n- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.\n- Focus 100% on the **Primary keyword** service.\n- No markdown\n- No extra text\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""\""\n}""
+}"
+2026-03-11T13:12:57.694762,STEP_TOTAL: intent_title,4.717,475,1,476,"You are an SEO Intent Classifier.
+
+GOLD RULE (CRITICAL):
+If the query/title contains any of these terms (or their synonyms), classify as Commercial or Transactional:
+- Arabic: (سعر – شركة – خدمة – أفضل – تواصل – عرض سعر – ارخص – احسن - مكتب - نوفر)
+- English: (Price – Company – Service – Best – Contact – Quote – Cheapest – Agency - Provider)
+
+Classify the search intent of the following query.
+
+Input:
+Title: ""منصة حجز تذاكر المباريات""
+Primary Keyword: ""حجز تذاكر المباريات""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Transactional
+- Comparative
+
+No explanation.",Transactional
+2026-03-11T13:12:57.696120,STEP_TOTAL: style_analysis,0.0,475,1,476,"You are an SEO Intent Classifier.
+
+GOLD RULE (CRITICAL):
+If the query/title contains any of these terms (or their synonyms), classify as Commercial or Transactional:
+- Arabic: (سعر – شركة – خدمة – أفضل – تواصل – عرض سعر – ارخص – احسن - مكتب - نوفر)
+- English: (Price – Company – Service – Best – Contact – Quote – Cheapest – Agency - Provider)
+
+Classify the search intent of the following query.
+
+Input:
+Title: ""منصة حجز تذاكر المباريات""
+Primary Keyword: ""حجز تذاكر المباريات""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Transactional
+- Comparative
+
+No explanation.",Transactional
+2026-03-11T13:13:07.115857,content_strategy,9.42,2090,982,3072,"You are an Elite SEO Content Strategist.
+
+Inputs:
+- Primary Keyword: حجز تذاكر المباريات
+- Intent: transactional / commercial investigation
+- Content Type: brand_commercial
+- Target Area: السعودية العربية 
+- SERP Intelligence: {""content_gaps"": [""Comparison between different booking platforms (Webook vs Blu Store vs Victory Arena)"", ""Troubleshooting payment failures on official platforms"", ""Resale market warnings and how to avoid scams"", ""Specific stadium seating maps and view quality guides"", ""Mobile app vs Web browser booking speed optimization""], ""structural_patterns"": [""H2: Official platforms for booking"", ""H2: Step-by-step booking process"", ""H2: Match ticket prices"", ""H3: Terms and conditions for stadium entry""], ""keyword_clusters"": [{""cluster_name"": ""Saudi League Booking"", ""keywords"": [""\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u062f\u0648\u0631\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a"", ""\u062a\u0630\u0627\u0643\u0631 \u0646\u0627\u062f\u064a \u0627\u0644\u0627\u062a\u062d\u0627\u062f"", ""\u0645\u0646\u0635\u0629 Webook"", ""Blu Store"", ""Victory Arena""]}, {""cluster_name"": ""Pricing and Logistics"", ""keywords"": [""\u0623\u0633\u0639\u0627\u0631 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u0645\u0628\u0627\u0631\u064a\u0627\u062a"", ""\u062e\u0637\u0648\u0627\u062a \u062d\u062c\u0632 \u0627\u0644\u062a\u0630\u0627\u0643\u0631"", ""\u0634\u0631\u0648\u0637 \u062f\u062e\u0648\u0644 \u0627\u0644\u0645\u0644\u0627\u0639\u0628"", ""\u0645\u0648\u0627\u0639\u064a\u062f \u0645\u0628\u0627\u0631\u064a\u0627\u062a \u0627\u0644\u062f\u0648\u0631\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a""]}, {""cluster_name"": ""Specific Match Interest"", ""keywords"": [""\u0645\u0628\u0627\u0631\u0627\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0648\u0645\u0635\u0631"", ""\u062a\u0630\u0627\u0643\u0631 \u0645\u0628\u0627\u0631\u0627\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0648\u0645\u0635\u0631""]}], ""weaknesses_to_exploit"": [""Competitors focus heavily on specific matches; a 'Hub' page for all platforms is missing"", ""Lack of real-time update timestamps on pricing which fluctuates"", ""Thin content regarding the 'Terms and Conditions' of entry (EEAT gap)"", ""Weak integration of video tutorials for the booking process""], ""differentiation_strategy"": [""Create an 'All-in-One' directory for Saudi stadium booking platforms"", ""Include a 'Live Status' section for ticket availability if possible"", ""Add a 'Know Your Seat' visual guide section"", ""Provide a direct comparison table of service fees across different apps""]}
+
+Task:
+Create a practical content strategy that can be directly translated into an outline.
+No theory, no generic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""strategic_positioning"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+
+Brand Commercial Specific Rules:
+- 70% conversion focus / 30% education
+- Service-page architecture
+- Clear conversion path (intro CTA bridge -> proof -> close CTA)","{
+  ""primary_angle"": ""الدليل الشامل والموحد لحجز تذاكر مباريات الدوري السعودي والمنتخب عبر المنصات الرسمية المعتمدة مع مقارنة دقيقة للرسوم وتجربة المستخدم."",
+  ""strategic_positioning"": ""بصفتنا المرجع الأول للمشجع السعودي، نقدم خارطة طريق تقنية تغني المستخدم عن التشتت بين التطبيقات المتعددة (Webook, Blu Store, Victory Arena) وتضمن له الحصول على التذكرة بالسعر الرسمي."",
+  ""target_reader_state"": ""مشجع رياضي في السعودية يشعر بالإحباط من سرعة نفاذ التذاكر، وتعدد المنصات، ويخشى الوقوع في فخ السوق السوداء أو مشاكل الدفع التقنية."",
+  ""pain_point_focus"": [
+    ""تشتت التذاكر بين منصات متعددة حسب النادي المستضيف"",
+    ""فشل عمليات الدفع في اللحظات الأخيرة عند الضغط العالي"",
+    ""الوقوع في فخ الاحتيال عبر مواقع إعادة البيع غير الرسمية"",
+    ""صعوبة اختيار المقاعد ذات الرؤية الجيدة في الملاعب الكبرى""
+  ],
+  ""emotional_trigger"": ""الحماس لعدم تفويت مؤازرة الفريق المفضل في الملعب، مع الشعور بالأمان والثقة عند إتمام عملية الحجز."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""تحليل تقني لمنصات الحجز الرسمية المعتمدة من وزارة الرياضة ورابطة الدوري السعودي"",
+    ""تقديم نصائح احترافية لتجاوز طوابير الانتظار الرقمية (Digital Queues)"",
+    ""شرح دقيق للوائح التنظيمية الخاصة بدخول الملاعب السعودية""
+  ],
+  ""eeat_signals_to_include"": [
+    ""تحديثات حية لمواعيد طرح تذاكر المباريات الكبرى"",
+    ""قائمة المنصات الرسمية لكل نادي (مثل Blu Store للهلال وVictory Arena للنصر)"",
+    ""إرشادات قانونية حول مخاطر شراء التذاكر من منصات إعادة البيع مثل حراج أو Viagogo""
+  ],
+  ""differentiation_focus"": [
+    ""جدول مقارنة بين تطبيقات الحجز من حيث سهولة الاستخدام وطرق الدفع (Apple Pay، مدى)"",
+    ""دليل مرئي لجودة الرؤية من مختلف فئات التذاكر في الملاعب (الجوهرة، الأول بارك، مرسول بارك)"",
+    ""حلول تقنية لمشاكل تعليق التطبيقات أثناء الحجز""
+  ],
+  ""conversion_strategy"": ""توجيه المستخدم مباشرة إلى منصة الحجز الصحيحة بناءً على المباراة المطلوبة مع توفير روابط مباشرة وآمنة، وتوضيح خطوات الحجز السريع."",
+  ""cta_philosophy"": ""حث مباشر وموقوت (Transactional) يركز على السرعة وضمان المقعد قبل نفاذ الكمية."",
+  ""local_strategy"": ""التركيز على خيارات الدفع المحلية (مدى، Stc Pay) والالتزام بتعليمات وزارة الرياضة السعودية وتطبيق توكلنا (إذا لزم الأمر)، مع مراعاة ثقافة الحضور الجماهيري في الملاعب السعودية."",
+  ""tone_direction"": ""حماسي، عملي، وموثوق (Expert-led Sports Guide)."",
+  ""section_role_map"": {
+    ""introduction"": ""ربط شغف المشجع بحتمية الحجز المبكر والآمن وتحديد المنصات الرسمية لتجنب الاحتيال."",
+    ""core_or_benefits"": ""استعراض شامل لمنصات (Webook, Blu Store, Victory Arena) وتصنيفها حسب الأندية والمباريات."",
+    ""proof"": ""جدول مقارنة للأسعار والرسوم، مع توضيح الفروقات بين فئات التذاكر (VVIP, Gold, Silver)."",
+    ""process_or_how"": ""دليل خطوة بخطوة للحجز عبر الجوال مع نصائح لتحسين سرعة المتصفح وتجنب أخطاء الدفع."",
+    ""faq"": ""الإجابة على الأسئلة الشائعة حول استرجاع التذاكر، نقل الملكية، ودخول الأطفال."",
+    ""conclusion"": ""تذكير نهائي بضرورة الحجز عبر القنوات الرسمية لضمان الدخول وتجنب حظر التذاكر.""
+  }
+}"
+2026-03-11T13:13:07.115857,STEP_TOTAL: content_strategy,9.42,2090,982,3072,"You are an Elite SEO Content Strategist.
+
+Inputs:
+- Primary Keyword: حجز تذاكر المباريات
+- Intent: transactional / commercial investigation
+- Content Type: brand_commercial
+- Target Area: السعودية العربية 
+- SERP Intelligence: {""content_gaps"": [""Comparison between different booking platforms (Webook vs Blu Store vs Victory Arena)"", ""Troubleshooting payment failures on official platforms"", ""Resale market warnings and how to avoid scams"", ""Specific stadium seating maps and view quality guides"", ""Mobile app vs Web browser booking speed optimization""], ""structural_patterns"": [""H2: Official platforms for booking"", ""H2: Step-by-step booking process"", ""H2: Match ticket prices"", ""H3: Terms and conditions for stadium entry""], ""keyword_clusters"": [{""cluster_name"": ""Saudi League Booking"", ""keywords"": [""\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u062f\u0648\u0631\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a"", ""\u062a\u0630\u0627\u0643\u0631 \u0646\u0627\u062f\u064a \u0627\u0644\u0627\u062a\u062d\u0627\u062f"", ""\u0645\u0646\u0635\u0629 Webook"", ""Blu Store"", ""Victory Arena""]}, {""cluster_name"": ""Pricing and Logistics"", ""keywords"": [""\u0623\u0633\u0639\u0627\u0631 \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u0645\u0628\u0627\u0631\u064a\u0627\u062a"", ""\u062e\u0637\u0648\u0627\u062a \u062d\u062c\u0632 \u0627\u0644\u062a\u0630\u0627\u0643\u0631"", ""\u0634\u0631\u0648\u0637 \u062f\u062e\u0648\u0644 \u0627\u0644\u0645\u0644\u0627\u0639\u0628"", ""\u0645\u0648\u0627\u0639\u064a\u062f \u0645\u0628\u0627\u0631\u064a\u0627\u062a \u0627\u0644\u062f\u0648\u0631\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a""]}, {""cluster_name"": ""Specific Match Interest"", ""keywords"": [""\u0645\u0628\u0627\u0631\u0627\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0648\u0645\u0635\u0631"", ""\u062a\u0630\u0627\u0643\u0631 \u0645\u0628\u0627\u0631\u0627\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0648\u0645\u0635\u0631""]}], ""weaknesses_to_exploit"": [""Competitors focus heavily on specific matches; a 'Hub' page for all platforms is missing"", ""Lack of real-time update timestamps on pricing which fluctuates"", ""Thin content regarding the 'Terms and Conditions' of entry (EEAT gap)"", ""Weak integration of video tutorials for the booking process""], ""differentiation_strategy"": [""Create an 'All-in-One' directory for Saudi stadium booking platforms"", ""Include a 'Live Status' section for ticket availability if possible"", ""Add a 'Know Your Seat' visual guide section"", ""Provide a direct comparison table of service fees across different apps""]}
+
+Task:
+Create a practical content strategy that can be directly translated into an outline.
+No theory, no generic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""strategic_positioning"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+
+Brand Commercial Specific Rules:
+- 70% conversion focus / 30% education
+- Service-page architecture
+- Clear conversion path (intro CTA bridge -> proof -> close CTA)","{
+  ""primary_angle"": ""الدليل الشامل والموحد لحجز تذاكر مباريات الدوري السعودي والمنتخب عبر المنصات الرسمية المعتمدة مع مقارنة دقيقة للرسوم وتجربة المستخدم."",
+  ""strategic_positioning"": ""بصفتنا المرجع الأول للمشجع السعودي، نقدم خارطة طريق تقنية تغني المستخدم عن التشتت بين التطبيقات المتعددة (Webook, Blu Store, Victory Arena) وتضمن له الحصول على التذكرة بالسعر الرسمي."",
+  ""target_reader_state"": ""مشجع رياضي في السعودية يشعر بالإحباط من سرعة نفاذ التذاكر، وتعدد المنصات، ويخشى الوقوع في فخ السوق السوداء أو مشاكل الدفع التقنية."",
+  ""pain_point_focus"": [
+    ""تشتت التذاكر بين منصات متعددة حسب النادي المستضيف"",
+    ""فشل عمليات الدفع في اللحظات الأخيرة عند الضغط العالي"",
+    ""الوقوع في فخ الاحتيال عبر مواقع إعادة البيع غير الرسمية"",
+    ""صعوبة اختيار المقاعد ذات الرؤية الجيدة في الملاعب الكبرى""
+  ],
+  ""emotional_trigger"": ""الحماس لعدم تفويت مؤازرة الفريق المفضل في الملعب، مع الشعور بالأمان والثقة عند إتمام عملية الحجز."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""تحليل تقني لمنصات الحجز الرسمية المعتمدة من وزارة الرياضة ورابطة الدوري السعودي"",
+    ""تقديم نصائح احترافية لتجاوز طوابير الانتظار الرقمية (Digital Queues)"",
+    ""شرح دقيق للوائح التنظيمية الخاصة بدخول الملاعب السعودية""
+  ],
+  ""eeat_signals_to_include"": [
+    ""تحديثات حية لمواعيد طرح تذاكر المباريات الكبرى"",
+    ""قائمة المنصات الرسمية لكل نادي (مثل Blu Store للهلال وVictory Arena للنصر)"",
+    ""إرشادات قانونية حول مخاطر شراء التذاكر من منصات إعادة البيع مثل حراج أو Viagogo""
+  ],
+  ""differentiation_focus"": [
+    ""جدول مقارنة بين تطبيقات الحجز من حيث سهولة الاستخدام وطرق الدفع (Apple Pay، مدى)"",
+    ""دليل مرئي لجودة الرؤية من مختلف فئات التذاكر في الملاعب (الجوهرة، الأول بارك، مرسول بارك)"",
+    ""حلول تقنية لمشاكل تعليق التطبيقات أثناء الحجز""
+  ],
+  ""conversion_strategy"": ""توجيه المستخدم مباشرة إلى منصة الحجز الصحيحة بناءً على المباراة المطلوبة مع توفير روابط مباشرة وآمنة، وتوضيح خطوات الحجز السريع."",
+  ""cta_philosophy"": ""حث مباشر وموقوت (Transactional) يركز على السرعة وضمان المقعد قبل نفاذ الكمية."",
+  ""local_strategy"": ""التركيز على خيارات الدفع المحلية (مدى، Stc Pay) والالتزام بتعليمات وزارة الرياضة السعودية وتطبيق توكلنا (إذا لزم الأمر)، مع مراعاة ثقافة الحضور الجماهيري في الملاعب السعودية."",
+  ""tone_direction"": ""حماسي، عملي، وموثوق (Expert-led Sports Guide)."",
+  ""section_role_map"": {
+    ""introduction"": ""ربط شغف المشجع بحتمية الحجز المبكر والآمن وتحديد المنصات الرسمية لتجنب الاحتيال."",
+    ""core_or_benefits"": ""استعراض شامل لمنصات (Webook, Blu Store, Victory Arena) وتصنيفها حسب الأندية والمباريات."",
+    ""proof"": ""جدول مقارنة للأسعار والرسوم، مع توضيح الفروقات بين فئات التذاكر (VVIP, Gold, Silver)."",
+    ""process_or_how"": ""دليل خطوة بخطوة للحجز عبر الجوال مع نصائح لتحسين سرعة المتصفح وتجنب أخطاء الدفع."",
+    ""faq"": ""الإجابة على الأسئلة الشائعة حول استرجاع التذاكر، نقل الملكية، ودخول الأطفال."",
+    ""conclusion"": ""تذكير نهائي بضرورة الحجز عبر القنوات الرسمية لضمان الدخول وتجنب حظر التذاكر.""
+  }
+}"

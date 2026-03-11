@@ -18,7 +18,7 @@ Rules:
    - Prohibited: Generic "smiling people in office", "shaking hands", "random code on screen", "generic laptop on desk".
    - Required: Custom-designed, premium visuals. Describe specific, brand-relevant scenarios.
    - Style: "Exclusive Branded Aesthetic" - focus on modern architecture, clean tech-surfaces, isometric 3D abstractions, and professional MENA-region/Riyadh localized contexts.
-3. **Brand Grounding**: Each prompt MUST incorporate elements from the Brand Source Text or its specific services (e.g., "A modern Figma UI prototype for a Riyadh-based e-commerce project", "An isometric 3D visualization of a React + PHP backend architecture").
+3. **Brand Grounding**: Each prompt MUST incorporate elements from the Brand Source Text or its specific services (e.g., "A modern UI prototype for a Riyadh-based business scenario", "An isometric 3D visualization of the core technical architecture mentioned in the brand text").
 4. **Relevance**: Each image must correspond directly to the technical or business value of the section it is assigned to.
 5. **Variety**: Rotate through: 
    - Hero/Featured (High-impact, expressive, artistically cinematic, grand scale)

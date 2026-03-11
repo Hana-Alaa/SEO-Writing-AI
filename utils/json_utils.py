@@ -10,8 +10,10 @@ def recover_json(text: str) -> Optional[Any]:
     if not text or not isinstance(text, str):
         return None
 
-    # Step 1: Clean markdown and basic whitespace
-    cleaned = re.sub(r"```json|```", "", text).strip()
+    # Step 1: Clean markdown, basic whitespace, and convert smart quotes to straight quotes
+    # The LLM sometimes outputs “...” or ‘...’ instead of "..." and '...', which breaks json.loads
+    cleaned = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
+    cleaned = re.sub(r"```(?:json)?|```", "", cleaned).strip()
     
     # Step 2: Try direct parse
     try:

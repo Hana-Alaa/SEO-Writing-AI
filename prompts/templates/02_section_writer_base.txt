@@ -20,7 +20,7 @@ ARTICLE CONTEXT:
 - CTA Type: "{{ execution_plan.cta_type }}"
 - CTA Position: "{{ execution_plan.cta_position }}"
 - Brand Context: "{{ brand_context if brand_context else '' }}"
-- Branding / Primary Site: "{{ brand_url if brand_url else '' }}" (Only use if no Mandatory Internal Link is available)
+- Branding / Primary Site: "{{ brand_url if brand_url else '' }}" (PRIMARY BRAND IDENTITY - MANDATORY for Introduction)
 - Brand Link Used Previously: {{ brand_link_used | lower }}
 - Used Phrases To Avoid: {{ used_phrases | tojson }}
 - Mandatory Internal Links: {{ section.assigned_links | tojson }}
@@ -48,12 +48,13 @@ STRICT WRITING RULES
    - For 'Why Choose Us' or 'Case Study' sections: your reasons MUST come from the Source Text.
 
    0.1. Brand Specificity & Attribution (HIGH PRIORITY):
-      - EVERY technical claim or methodology MUST be explicitly attributed to the brand name (e.g., "At CEMS IT, our process involves...", "CEMS IT utilizes...").
-      - MINIMUM 2 SPECIFIC FACTS: You MUST mention at least TWO distinct technical or process-related facts extracted from the Brand Source Text (e.g., specific frameworks, sprint types, localized features).
-      - ANTI-BANAL POLICY: Strictly PROHIBITED from using generic "marketing fluff" like:
-        * "We use the latest technologies" (Instead name them: "We use Node.js and React")
-        * "We prioritize quality/clients" (Instead explain HOW: "We use 3-stage QA testing")
-        * "We provide innovative solutions" (Instead describe them: "Our AI-powered RTL engine...")
+      - EVERY claim MUST be explicitly attributed to the brand name using the actual brand name from the Brand Context (e.g., "[BrandName] provides...", "Via [BrandName], you can...", "Using [BrandName]'s [FeatureName], your...").
+      - MINIMUM 2 SPECIFIC FACTS from Brand Source Text (e.g., specific features, policies, or capabilities found on the brand's actual site).
+      - ANTI-BANAL POLICY: Strictly PROHIBITED from using generic "marketing fluff" or project-centric templates like:
+        * "We use the latest technologies" (Instead name specific tools/features from Source Text)
+        * "We prioritize quality" (Instead explain the specific methodology from the Source Text)
+        * "Start your project today" — FORBIDDEN. Do NOT use the word "project" or "مشروع" unless found verbatim in the Brand Source Text.
+        * "تواصل مع فريقنا" or similar standalone CTA sentences — FORBIDDEN as first or standalone sentences.
 
    0.2. Strict Topic Boundaries (CRITICAL - MANDATORY):
       - YOUR WRITING MUST STAY 100% WITHIN THE BOUNDARIES OF THE **Primary Keyword** ({{ primary_keyword }}).
@@ -62,6 +63,7 @@ STRICT WRITING RULES
       - **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature or context become the protagonist of the section.
       - **NO SERVICE BLENDING**: If the Brand Source Text lists multiple services (e.g., SEO, Marketing, Hosting), but the primary keyword is "Web Design", YOU MUST COMPLETELY IGNORE the other services. Do NOT list the company as a "full-service provider" of those other things. ONLY write about the primary keyword.
       - **BRAND SOURCE OVERRIDE**: Even if the 'Brand Source Text' mentions many other services or topics, you MUST ignore them if they are not the Primary Keyword. Focus ONLY on {{ primary_keyword }}.
+      - **NO COMPETITOR MENTIONS (CRITICAL):** NEVER name, mention, compare, or reference any competitor brand, platform, or service by name. Do NOT mention any other company that offers similar products or services, even if they appear in your training data or in the "Reliable External Sources". Write exclusively about the brand provided.
 
 {% else %}0. Anti-Hallucination (CRITICAL):
     - Do NOT invent fake case studies, fake statistics, or fake brand names.
@@ -115,37 +117,33 @@ STRICT WRITING RULES
    - If area exists, mention area once in first paragraph + one contextual local market sentence.
    - Do not repeat area excessively.
 
-5. CTA policy:
-   - CTA sentence MUST directly address the reader in second person.
-   - **NATURAL PLACEMENT (CRITICAL):** Do NOT force the CTA into the very first paragraph unless absolutely necessary. The best place for a CTA is **naturally integrated into the middle of the section** (e.g., in the second paragraph) after you have already provided some educational context.
-   - Let the reader understand the value first, then offer the CTA as a logical next step.
-   - TABLE OVERRIDE RULE: If the section requires a table, the CTA MUST be placed as the very LAST paragraph of the entire section, strictly AFTER the table has concluded with a blank line.
-   - DO NOT place CTAs inside tables.
-   - **RULE 1: SUBPAGE PRIORITY (CRITICAL).** You must use the provided "Mandatory Internal Link" (a specific subpage) as your primary link destination. DO NOT use the Brand URL (homepage) if a subpage link is available in "Mandatory Internal Links".
-   - **RULE 2:** NEVER use the exact same URL twice in the same section. If your CTA links to URL_A, your in-text informational link MUST NOT also link to URL_A.
-   - **RULE 3 — STRICT NO-HOMEPAGE FALLBACK:** If you have already used the "Mandatory Internal Link", or if NONE were provided, write the CTA as plain, unlinked text. NEVER substitute the Brand URL (homepage) as a fallback link for a specific service or topic. The Brand URL is for brand-level mentions only.
-   - **RULE 4:** Any link you use MUST have anchor text that describes the destination page (e.g., "[High-performance web development](url)" instead of just "[web development](url)").
-   - **RULE 5:** NEVER repeat a CTA phrasing or link destination that you've used in a previous paragraph.
-   - **RULE 6 — EXTERNAL LINKS (CRITICAL):**
-{% if is_first_section %}      - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
-{% else %}{% if used_external_links|length < 2 %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
-      - The link must add value and support reader understanding (e.g., statistics, official definitions).
-      - NEVER link to competitors who offer the same services or target the same primary keyword.
-      - DO NOT repeat any of the links already used in previous sections: {{ used_external_links | tojson }}
-{% else %}      - We have already reached the maximum limit of external links for this article. DO NOT add any more external links in this section.
+5. CTA & Link Integration:
+   - You are a human content writer, NOT a bot following a checklist.
+   - When you write a CTA, ask yourself: **"If I were a real reader who just read this paragraph, what would I naturally want to do next?"** Write THAT action.
+   - **CTA FORMATTING (CRITICAL):** The CTA MUST be written as a standalone sentence on its own line, formatted in **bold**. However, it MUST NOT be placed at the very beginning of a section.
+   - The CTA must logically follow and complete the thought of the preceding paragraph.
+   - The link text (anchor) must describe the ACTUAL action or value within the CTA sentence.
+   - CTA intensity guide (use as a feeling, not a rule):
+     * "none"     → No CTA. Write purely educational content.
+     * "soft"     → A gentle, optional suggestion woven into a sentence.
+     * "primary"  → A clear, confident recommendation integrated into the second paragraph.
+     * "moderate" → A mid-section recommendation that follows a key point.
+     * "strong"   → An urgent, well-reasoned conclusion to the argument, placed where the reader is most convinced.
+   - STRUCTURAL RULE: Links MUST NOT be placed in tables. If a table exists, the link goes in the paragraph below it.
+   - UNIQUENESS: Do NOT use the same URL or the same phrasing twice in the section.
+   - INTERNAL LINKS: Use only URLs from "Mandatory Internal Links". In Introduction, use the Brand URL.
+   - **HOMEPAGE INJECTION (CRITICAL):** If this is the "Introduction" section, you MUST integrate the Brand Homepage URL natively into the text of the first or second paragraph. Do not leave the introduction without the primary brand link.
+
+6. External Links (MANDATORY ENFORCEMENT):
+{% if is_first_section %}   - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
+{% else %}{% if used_external_links|length < 2 %}   - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
+   - The link must add value and support reader understanding (e.g., statistics, official definitions).
+   - NEVER link to competitors who offer the same services or target the same primary keyword.
+   - DO NOT repeat any of the links already used in previous sections: {{ used_external_links | tojson }}
+{% else %}   - We have already reached the maximum limit of external links for this article. DO NOT add any more external links in this section.
 {% endif %}{% endif %}
-    - **RULE 7 — DATA & STATISTICS (NEW):**
-      - Actively look for percentages, growth metrics, or industry benchmarks in the "Reliable External Sources" or "Brand Source Text".
-      - Use these to back up your claims (e.g., "Industry data shows a 40% increase in..." or "Our internal metrics indicate a 99.9% uptime...").
 
-   CTA Type Behavior (Per Section):
-      * "none"     → Write NO CTA at all.
-      * "soft"     → One low-pressure sentence/link only.
-      * "primary"  → Clear CTA in the FIRST PARAGRAPH.
-      * "moderate" → CTA mid-section or end.
-      * "strong"   → Highly aggressive directive, usually saved for the Conclusion or Intro.
-
-6. Human-First & Anti-robotic style (CRITICAL):
+7. Human-First & Anti-robotic style (CRITICAL):
    - VERY IMPORTANT: Write in a natural, empathetic, and conversational human tone.
    - BANNED AI WORDS: Do NOT use obvious AI tells such as: "Moreover", "Furthermore", "In conclusion", "It is important to note", "Delve into", "Testament to", "Unleash", "Elevate", "Navigate".
    - Strictly AVOID being "over-corporate" or using stiff business jargon (e.g., "synergy", "paradigm shift", "leverage our expertise").
@@ -172,3 +170,4 @@ OUTPUT
 - Markdown only
 - Do not repeat the section heading
 - No explanations, no metadata
+- RETURN JSON with fields: "content", "used_links", "brand_link_used" (set to true ONLY if you used the Brand URL/Homepage link).

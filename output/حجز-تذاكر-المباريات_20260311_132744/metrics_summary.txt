@@ -1,0 +1,148 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 7.08 seconds
+  -- Tokens Used: 3,204
+--------------------------------------------------
+Step: LOCAL_NEIGHBORHOODS
+  -- Duration: 1.66 seconds
+  -- Tokens Used: 521
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 23.74 seconds
+  -- Tokens Used: 521
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 88.42 seconds
+  -- Tokens Used: 29,856
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 88.42 seconds
+  -- Tokens Used: 29,856
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 7.85 seconds
+  -- Tokens Used: 4,497
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 7.88 seconds
+  -- Tokens Used: 4,497
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.29 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.88 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 476
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 7.36 seconds
+  -- Tokens Used: 3,174
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 7.37 seconds
+  -- Tokens Used: 3,174
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 60.60 seconds
+  -- Tokens Used: 34,987
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.39 seconds
+  -- Tokens Used: 6,758
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_واقع سوق حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 4.40 seconds
+  -- Tokens Used: 9,886
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: واقع سوق حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا تختار تيك إيفنت لتأمين حجز تذاكر المباريات؟
+  -- Duration: 4.99 seconds
+  -- Tokens Used: 13,305
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار تيك إيفنت لتأمين حجز تذاكر المباريات؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_آلية العمل: كيف تضمن مقعدك في مدرجات السعودية؟
+  -- Duration: 4.56 seconds
+  -- Tokens Used: 16,937
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: آلية العمل: كيف تضمن مقعدك في مدرجات السعودية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_فوائد حجز تذاكر المباريات عبر سوق التذاكر الثانوية المطور
+  -- Duration: 4.61 seconds
+  -- Tokens Used: 21,025
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: فوائد حجز تذاكر المباريات عبر سوق التذاكر الثانوية المطور
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_بالأرقام: موثوقية تيك إيفنت في الملاعب السعودية والعالمية
+  -- Duration: 4.11 seconds
+  -- Tokens Used: 24,054
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: بالأرقام: موثوقية تيك إيفنت في الملاعب السعودية والعالمية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_الأسئلة الشائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 5.38 seconds
+  -- Tokens Used: 28,299
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_استعد للموسم: احجز تذكرتك الآن واضمن مكانك
+  -- Duration: 29.85 seconds
+  -- Tokens Used: 33,804
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: استعد للموسم: احجز تذكرتك الآن واضمن مكانك
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.19 seconds
+  -- Tokens Used: 37,217
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 104.89 seconds
+  -- Tokens Used: 37,217
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 37,217
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 6.91 seconds
+  -- Tokens Used: 37,217
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.40 seconds
+  -- Tokens Used: 37,217
+--------------------------------------------------

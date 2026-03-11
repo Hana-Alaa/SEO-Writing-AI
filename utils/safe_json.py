@@ -14,6 +14,9 @@ def recover_json(text: str) -> Optional[Any]:
     if not text or not isinstance(text, str):
         return None
 
+    # Clean smart quotes which break json.loads
+    text = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
+
     # Direct attempt
     try:
         return json.loads(text)

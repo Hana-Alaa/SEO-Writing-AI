@@ -5,21 +5,17 @@ Brand Commercial Specific Rules:
    - Focus: Converting segments (e.g., service for startups, service for high-growth firms).
 
 2. CTA Policy:
-   - ALWAYS REMEMBER: The goal is to SELL. Every section is an opportunity to convert the reader.
-   - Default Placement: For almost all commercial sections, use `cta_position = "first_paragraph"`.
-   - section_type = introduction: cta_type = "primary", cta_position = "first_paragraph".
-   - section_type = core or benefits: cta_type = "primary", cta_position = "first_paragraph".
-   - section_type = proof: cta_type = "moderate", cta_position = "first_paragraph".
-   - section_type = process: cta_type = "moderate", cta_position = "first_paragraph".
-   - section_type = why_choose_us: cta_type = "primary", cta_position = "first_paragraph".
-   - section_type = case_study: cta_type = "moderate", cta_position = "first_paragraph".
-   - section_type = conclusion: cta_type = "strong", cta_position = "last_sentence". (This is the ONLY exception that must be at the end).
-   - section_type = faq: cta_type = "none".
-   - The section IMMEDIATELY BEFORE the FAQ section: cta_type = "strong", cta_position = "first_paragraph".
-   - All other sections: cta_type = "moderate" minimum.
-   - CRITICAL — CTA VARIATION: Each section's CTA MUST use DIFFERENT phrasing and a DIFFERENT thematic focus.
-     Rotate through: Service Promotion, Contact Numbers/Methods, Special Offers/Audits, Product Links.
-     NEVER repeat the same CTA sentence or focus twice in the article.
+   - The goal is to convert readers, but conversions come from TRUST, not aggressive placement.
+   - CTA placement should feel natural. The SECTION CONTENT determines where a CTA makes sense.
+   - Set `cta_position` based on when the reader is most likely primed to take action:
+     * introduction: where you introduce the brand → `cta_position: "after_intro"` (mid-section)
+     * core/benefits: after explaining a key value → `cta_position: "mid_section"`
+     * proof/process: after presenting credentials → `cta_position: "mid_section"`
+     * why_choose_us: after the main argument → `cta_position: "end_section"`
+     * conclusion: always last sentence → `cta_position: "last_sentence"`, `cta_type: "strong"`
+     * faq: no CTA → `cta_type: "none"`
+   - NEVER use `cta_position: "first_paragraph"` for any section. A CTA before context is meaningless.
+   - CRITICAL — CTA VARIATION: Each section must have different context for its CTA. The section's own topic naturally determines what the CTA says. Do NOT pre-write CTA text in the outline.
 
 3. Intent Ratio Enforcement (CRITICAL):
    - The article MUST maintain an approximate 70% Commercial / 30% Informational split across its H2 sections.

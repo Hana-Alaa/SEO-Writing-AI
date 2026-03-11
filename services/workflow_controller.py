@@ -284,11 +284,21 @@ class AsyncWorkflowController:
         
         # New: Derive brand_url from the FIRST URL provided in the UI list
         urls = state.get("input_data", {}).get("urls", [])
-        state["brand_url"] = urls[0].get("link") if urls else None
+        brand_url = urls[0].get("link") if urls else None
+        state["brand_url"] = brand_url
         
         # PRE-INITIALIZE internal_resources with user-provided URLs immediately
         state["internal_resources"] = []
         seen_canons = set()
+        
+        if brand_url:
+            state["internal_resources"].append({
+                "link": brand_url,
+                "text": "Homepage",
+                "is_manual": True,
+                "is_homepage": True
+            })
+            seen_canons.add(self._canon_url(brand_url))
         
         # Helper for junk slugs (restore manual link protection)
         junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
@@ -450,10 +460,10 @@ class AsyncWorkflowController:
                 # Heavy boost for individual token matches
                 score += sum(3 for t in kw_tokens if t in text and len(t) > 2)
                 
-                # Minor boost for general structure pages
-                for boost_word in ["about", "work", "portfolio", "project", "offer"]:
+                # Minor boost for general structure pages if they relate to the brand persona
+                for boost_word in ["about", "work", "portfolio", "project", "offer", "services", "contact", "faq", "events"]:
                     if boost_word in text:
-                        score += 1
+                        score += 5 # Increased boost for structural pages to ensure they pass filters
                 return score
 
             # --- Step 1: Crawl homepage and discover all internal links ---
@@ -558,17 +568,14 @@ class AsyncWorkflowController:
 
             added_count = 0
             for canon, (anchor, score) in sorted_links:
-                # Filter by relevance AND junk slugs
-                if score < 1: # Lowered from 3 to allow structural pages like about/services
-                    continue
-                if is_junk(canon):
-                    continue
+                # Removed strict filtering by relevance (score < 1). 
+                # allow structural pages to be collected so AI can decide if they are useful.
 
                 if canon not in seen_canons:
                     state["internal_resources"].append({"link": canon, "text": anchor})
                     seen_canons.add(canon)
                     added_count += 1
-                if added_count >= 10: # Reduced from 20 to keep selection very tight
+                if added_count >= 30: # Increased from 10 to provide more options
                     break
 
             logger.info(f"Discovered {added_count} brand resources.")
@@ -590,10 +597,11 @@ class AsyncWorkflowController:
             state["brand_pages_index"] = brand_pages_index
 
             # --- Step 5: Build AI Brand Context from the most relevant pages ---
+            # Cap increased to allow more context from the 30 pages
             combined_text = "\n\n".join(
                 f"[Page: {url}]\n{text}"
                 for url, text in brand_pages_index.items()
-            )[:7000]  # Cap to avoid token bloat
+            )[:12000]
 
             if combined_text:
                 context_prompt = f"""You are a Brand Intelligence Analyst.
@@ -607,17 +615,19 @@ class AsyncWorkflowController:
         \"\"\"
 
         Your task:
-        1. Read through all pages and find information ONLY related to: "{primary_keyword}"
-        2. Write a detailed 4-6 sentence factual summary of:
-        - Exactly how this company delivers THIS SPECIFIC service (their process/methodology)
-        - What specific technologies, tools, or frameworks they use FOR THIS SERVICE ONLY
-        - What makes their approach to THIS SERVICE different or specific
-        - Who their target clients are FOR THIS SERVICE
-        3. CRITICAL RULE: IGNORE completely any other services, products, or departments mentioned in the text that are not "{primary_keyword}". Do not summarize their entire business, only the part relevant to our topic.
-        4. Only use information found in the text above. Do NOT invent or assume anything.
-        5. If you cannot find enough specific info about "{primary_keyword}", clearly state what you DID find related to it, but do not pad it with unrelated services.
+        1. Read through all pages and extract detailed factual information ONLY related to: "{primary_keyword}".
+        2. Write a COMPREHENSIVE FACT SHEET (not a brief summary). Include:
+           - Specific services, sub-services, or features they offer related to this topic.
+           - Exact processes, methodologies, or steps they outline.
+           - Specific technologies, tools, platforms, or frameworks they use.
+           - Unique selling propositions (USPs) and what differentiates their approach.
+           - Target audience, industries served, or specific client types.
+           - Any statistics, numbers, guarantees (SLAs), or case study outcomes mentioned.
+        3. CRITICAL RULE: DO NOT compress the information into a single paragraph. Use bullet points and detailed notes so we don't lose the richness of the data. 
+        4. CRITICAL RULE: IGNORE completely any other services, products, or departments mentioned in the text that are not "{primary_keyword}".
+        5. Only use information found in the text above. Do NOT invent or assume anything.
 
-        Write the summary now:"""
+        Write the detailed fact sheet now:"""
 
                 res = await self.ai_client.send(context_prompt, step="brand_discovery")
                 brand_content = res["content"]
@@ -1054,14 +1064,20 @@ class AsyncWorkflowController:
             
         if not serp_insights["strategic_intelligence"].get("keyword_clusters"):
             # Robust fallback: use LSI and related keywords if AI fails to cluster
-            lsi = light_serp.get("lsi") or []
-            related = light_serp.get("related") or []
-            fallback_keywords = [primary_keyword] + lsi[:5] + related[:5]
-            
+            # Ensure all fallback keywords are strings before deduplicating
+            raw_fallback = [primary_keyword] + lsi[:5] + related[:5]
+            safe_fallback = []
+            for kw in raw_fallback:
+                if isinstance(kw, dict):
+                    safe_kw = kw.get("keyword") or kw.get("text", str(kw))
+                    safe_fallback.append(str(safe_kw))
+                else:
+                    safe_fallback.append(str(kw))
+
             serp_insights["strategic_intelligence"]["keyword_clusters"] = [
                 {
                     "cluster_name": "Semantic Cluster (Fallback)",
-                    "keywords": list(dict.fromkeys(fallback_keywords)) # Remove duplicates
+                    "keywords": list(dict.fromkeys(safe_fallback)) # Remove duplicates
                 }
             ]
 
@@ -1189,10 +1205,20 @@ class AsyncWorkflowController:
             semantic = full_intel.get("semantic_assets", {})
             lsi = semantic.get("lsi_keywords", [])
             related = semantic.get("related_searches", [])
-            fallback_keywords = [primary_keyword] + lsi[:5] + related[:5]
+            
+            # Ensure all fallback keywords are strings before deduplicating
+            raw_fallback = [primary_keyword] + lsi[:5] + related[:5]
+            safe_fallback = []
+            for kw in raw_fallback:
+                if isinstance(kw, dict):
+                    safe_kw = kw.get("keyword") or kw.get("text", str(kw))
+                    safe_fallback.append(str(safe_kw))
+                else:
+                    safe_fallback.append(str(kw))
+
             clusters = [{
                 "cluster_name": "Semantic Keywords Cluster (Safety Fallback)",
-                "keywords": list(dict.fromkeys(fallback_keywords))
+                "keywords": list(dict.fromkeys(safe_fallback))
             }]
 
         template = self.content_strategy_templates.get(
@@ -1658,14 +1684,31 @@ class AsyncWorkflowController:
         section_id = section.get("section_id") or section.get("id")
         brand_url = state.get("brand_url")
         brand_link_used = state.get("brand_link_used", False)
-        can_use_brand_link = bool(brand_url) and (not brand_link_used)
+        section_type = (section.get("section_type") or "").lower()
+        
+        # Always allow the introduction to use the brand link, regardless of state.
+        is_introduction = section_type == "introduction"
+        can_use_brand_link = bool(brand_url) and (is_introduction or not brand_link_used)
 
         execution_plan = self._build_execution_plan(section, state)
         if force_local:
             execution_plan["local_context_required"] = True
             
-        execution_plan["brand_link_allowed"] = bool(brand_url) and (not brand_link_used)
+        execution_plan["brand_link_allowed"] = can_use_brand_link
         execution_plan["brand_url"] = brand_url
+
+        # --- GUARANTEE: Inject the brand homepage link into the Introduction's assigned links ---
+        # This ensures the AI ALWAYS has the brand link available for the introduction,
+        # even if the outline generator failed to assign it.
+        if is_introduction and brand_url:
+            assigned = section.setdefault("assigned_links", [])
+            existing_urls = {
+                (lnk.get("url") if isinstance(lnk, dict) else lnk)
+                for lnk in assigned
+            }
+            if brand_url not in existing_urls:
+                assigned.insert(0, {"url": brand_url, "text": f"Brand Homepage ({brand_url})"})
+                logger.info(f"[brand_link] Injected brand homepage link into introduction: {brand_url}")
 
         used_phrases = state.get("used_phrases", [])
 
@@ -2088,12 +2131,6 @@ class AsyncWorkflowController:
             brand_url = state.get("brand_url", "")
             brand_domain = self._domain(brand_url) if brand_url else ""
             md = self._deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
-
-            # Inject commercial CTAs for brand_commercial articles
-            content_type = state.get("content_type", "informational")
-            article_language = state.get("article_language", "en")
-            if content_type == "brand_commercial":
-                md = self._inject_commercial_ctas(md, article_language)
 
             assembled["final_markdown"] = md
 
@@ -3213,12 +3250,19 @@ class AsyncWorkflowController:
         if not paa_questions:
             return {"paa_ok": True, "paa_ratio": 1.0, "missing_count": 0}
 
+        safe_paa = []
+        for q in paa_questions:
+            if isinstance(q, dict):
+                safe_paa.append(str(q.get("question") or q.get("text", str(q))).lower())
+            else:
+                safe_paa.append(str(q).lower())
+
         covered = sum(
             1
             for sec in h2_sections
             if any(
-                q.lower() in sec.get("heading_text", "").lower()
-                for q in paa_questions
+                q_text in sec.get("heading_text", "").lower()
+                for q_text in safe_paa
             )
         )
 
@@ -3300,8 +3344,17 @@ class AsyncWorkflowController:
             elif s.get("heading_level") in ["H2", "H3"]:
                 all_questions.append(s["heading_text"])
 
+        # Ensure all questions are strings before deduplicating
+        safe_questions = []
+        for q in all_questions:
+            if isinstance(q, dict):
+                safe_q = q.get("question") or q.get("text", str(q))
+                safe_questions.append(str(safe_q))
+            else:
+                safe_questions.append(str(q))
+
         # Update the first FAQ section
-        first_faq["questions"] = list(dict.fromkeys(all_questions)) # Deduplicate
+        first_faq["questions"] = list(dict.fromkeys(safe_questions)) # Deduplicate
         first_faq["section_type"] = "faq"
         first_faq["heading_level"] = "H2"
         if "parent_section" in first_faq:
@@ -3726,14 +3779,19 @@ class AsyncWorkflowController:
         cleaned = re.sub(pattern, repl, content)
         return cleaned
     
-    def _normalize_url_for_dedup(self, url: str) -> str:
+    def _normalize_url_for_dedup(self, url: Any) -> str:
         """Normalize URL for deduplication by removing trailing slashes, fragments, and queries."""
         import urllib.parse
         if not url:
             return ""
         
+        if isinstance(url, dict):
+            url = url.get("url") or url.get("link", "")
+            if not url:
+                return ""
+        
         try:
-            url = url.strip()
+            url = str(url).strip()
             parsed = urllib.parse.urlparse(url)
             # Remove www., force lowercase for netloc
             netloc = parsed.netloc.lower()

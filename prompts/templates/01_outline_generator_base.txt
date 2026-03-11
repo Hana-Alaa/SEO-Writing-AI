@@ -28,6 +28,7 @@ Hard Rules:
 
 2. FAQ Section Rules:
    - Exactly ONE FAQ section (H2) with 4 to 6 FAQs related to the primary keyword.
+   - BRAND-SPECIFIC FAQs (CRITICAL): The questions MUST address specific services, features, pricing, processes, or objections related to the Brand Context. DO NOT generate generic dictionary-definition FAQs.
    - Each FAQ must be unique, helpful, and include keyword variations.
    - At least one FAQ question MUST address a local market need/context.
 
@@ -111,11 +112,11 @@ Hard Rules:
    - LINK QUOTA: Assign as many relevant links as possible from the provided list, up to a maximum of 12. 
    - **RULE 1: MANUAL LINKS (MANDATORY)**: You MUST use EVERY link marked as "Manual" at least once in the article.
    - **RULE 2: RELEVANCE (STRICT)**: When using "Discovered" links, you MUST only choose ones that are highly relevant to the specific section topic. DO NOT use generic "Contact" or "Privacy" links.
-   - **RULE 3: BRAND HOMEPAGE**: If a link with the text "Homepage" is provided, you MUST assign it to at least one section (usually the Intro, Conclusion, or "Why Choose Us").
+    - **RULE 3: MANDATORY BRAND IDENTITY (CRITICAL)**: You MUST assign the "Homepage" link to the Introduction section. This is not optional.
    - **ALLOW UP TO TWO (2) INTERNAL LINKS PER SECTION** if highly relevant.
    - **STRICT UNIQUENESS: Every URL assigned MUST be unique across the ENTIRE article. NO URL can appear in more than one section.**
    - ANCHOR DIVERSITY: Each assigned link MUST have a unique and highly descriptive anchor text (`text` field) that identifies the target page's content (e.g., "[custom React development solutions](url)").
-   - PRIORITIZATION: Prioritize linking to Service or Product pages. Avoid generic "About" or "Contact" pages.
+    - PRIORITIZATION: Prioritize linking to Service or Product pages. Avoid generic pages unless they are highly relevant to the brand's core mission.
    - DISTRIBUTION: Distribute these links across different sections by adding them to the `assigned_links` array as objects: `{"url": "...", "text": "..."}`.
 
 15. Reader Addressing:
