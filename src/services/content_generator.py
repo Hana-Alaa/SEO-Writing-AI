@@ -185,8 +185,21 @@ class OutlineGenerator:
             area_neighborhoods: Optional[List[str]] = None,
             feedback: Optional[str] = None,
             mandatory_section_types: Optional[List[str]] = None,
-            prohibited_competitors: Optional[List[str]] = None
+            prohibited_competitors: Optional[List[str]] = None,
+            # Advanced Customization
+            article_size: str = "1000",
+            include_conclusion: bool = True,
+            include_faq: bool = True,
+            include_tables: bool = True,
+            include_bullet_lists: bool = True,
+            include_comparison_blocks: bool = True,
+            bold_key_terms: bool = True,
+            secondary_keywords: List[str] = None,
+            competitor_count: int = 5,
+            external_resources: List[Dict[str, str]] = None
         ) -> Dict[str, Any]:
+
+
 
         current_year = str(datetime.now().year)
 
@@ -210,8 +223,21 @@ class OutlineGenerator:
             feedback=feedback,
             mandatory_section_types=mandatory_section_types or [],
             current_year=current_year,
-            prohibited_competitors=prohibited_competitors or []
+            prohibited_competitors=prohibited_competitors or [],
+            # Pass advanced settings to template
+            article_size=article_size,
+            include_conclusion=include_conclusion,
+            include_faq=include_faq,
+            include_tables=include_tables,
+            include_bullet_lists=include_bullet_lists,
+            include_comparison_blocks=include_comparison_blocks,
+            bold_key_terms=bold_key_terms,
+            secondary_keywords=secondary_keywords or [],
+            competitor_count=competitor_count,
+            external_resources=external_resources or []
         )
+
+
 
         logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
         logger.info(prompt)
@@ -322,8 +348,17 @@ class SectionWriter:
         section_source_text: str = "",
         external_sources: List[Dict[str, str]] = None,
         workflow_logger: Optional[Any] = None,
-        prohibited_competitors: List[str] = None
+        prohibited_competitors: List[str] = None,
+        # Advanced Customization
+        tone: Optional[str] = None,
+        pov: Optional[str] = None,
+        brand_voice_description: Optional[str] = None,
+        brand_voice_guidelines: Optional[str] = None,
+        brand_voice_examples: Optional[str] = None,
+        custom_keyword_density: Optional[float] = None,
+        bold_key_terms: bool = True
     ) -> Dict[str, Any]:
+
 
         brand_url = brand_url if brand_url not in ["None", ""] else None
         primary_keyword = section.get("primary_keyword") or global_keywords.get("primary", "")
@@ -419,8 +454,17 @@ class SectionWriter:
             is_first_section=(section_index == 0),
             is_last_section=(section_index == total_sections - 1),
             prohibited_competitors=prohibited_competitors or [],
-            current_year=current_year
+            current_year=current_year,
+            # Advanced Customization
+            tone=tone,
+            pov=pov,
+            brand_voice_description=brand_voice_description,
+            brand_voice_guidelines=brand_voice_guidelines,
+            brand_voice_examples=brand_voice_examples,
+            custom_keyword_density=custom_keyword_density,
+            bold_key_terms=bold_key_terms
         )
+
 
         logger.info("\n================ FINAL PROMPT (SectionWriter) ================\n")
         logger.info(prompt)

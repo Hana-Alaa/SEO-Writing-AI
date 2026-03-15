@@ -1,0 +1,132 @@
+# SEO Writing AI - Comprehensive System Workflow (Core vs Advanced)
+================================================================================
+
+This document provides a deep dive into the internal logic, decision-making, and execution steps
+of the SEO Writing AI system. It explains how the system adapts to different modes and user inputs.
+
+============================================================
+1. CORE MODE: EFFICIENCY & COST OPTIMIZATION
+============================================================
+Designed for high-speed generation and minimal API token consumption.
+
+Step 1: Analysis Initialization
+-------------------------------
+- Directory Setup: Creates a unique folder for the article inside the `output/` directory.
+- Keyword Extraction: Identifies the primary keyword from the user's title.
+- Language Detection: Automatically detects if the article should be in Arabic, English, or another supported language.
+
+Step 2: Brand Discovery (Light)
+-------------------------------
+- Scope: Scrapes the Homepage ONLY.
+- Extraction: Uses regular expressions and computer vision heuristics to find:
+  * Brand Logo (SVG or high-res PNG).
+  * Brand Color Palette (Primary and Secondary RGB values).
+- Performance: Skips all internal pages to minimize crawling time.
+
+Step 3: Hybrid Research
+-----------------------
+- Optimization: To save costs, it executes ONE AI call that does two things:
+  1. Gathers SERP (Search Engine Result Page) data (competitor snippets).
+  2. Creates a "Draft Strategy" based on that data.
+- Goal: Provides enough "Common Knowledge" to write a factual article without deep digging.
+
+Step 4: Intent & Title Strategy
+-------------------------------
+- Intent Classification: AI classifies the topic as "Informational" or "Commercial".
+- Title Refinement: Optimizes the user's title to improve CTR (Click-Through Rate).
+
+Step 5: Static Content Strategy
+-------------------------------
+- Templates: Uses pre-optimized industry templates for the content angle.
+- Differentiation: Focuses on standard SEO best practices rather than unique brand positioning.
+
+Step 6: Outline Generation
+--------------------------
+- Structure: Generates a standard H1 -> H2 -> FAQ -> Conclusion hierarchy.
+- Safety: Ensures the outline is logically sound but keeps the number of sections moderate.
+
+Step 7: Content Writing (Sequential)
+------------------------------------
+- Execution: Writes sections one by one in a linear fashion.
+- Focus: Speed and general accuracy.
+
+Step 8: Final Assembly & Render
+-------------------------------
+- Markdown Consolidation: Merges all sections into a single markdown file.
+- HTML Generation: Renders the markdown into a premium, responsive HMTL page.
+
+============================================================
+2. ADVANCED MODE: AUTHORITY & DEEP CUSTOMIZATION
+============================================================
+Designed for maximum quality, brand authority, and technical SEO excellence.
+
+Step 1: Parametric Initialization
+---------------------------------
+- Custom Settings: Ingests specific instructions for Tone (e.g., Casual, Formal), POV (e.g., First Person), and specific Target Word Counts.
+- SEO Setup: Pre-populates a list of secondary keywords and prohibited competitors.
+
+Step 2: Deep Brand Discovery (Decision Engine)
+----------------------------------------------
+- Extended Crawl: System identifies the most important subpages (Services, About, Portfolio).
+- AI Fact Sheet: AI reads thousands of words from those pages to create a "Neural Brand Identity".
+- Result: The AI writes with the tone and internal knowledge of an actual employee.
+
+Step 3: High-Fidelity Web Research
+----------------------------------
+- Independent Search: Executes a dedicated research phase to find real-time data, statistics, and trends that aren't in the top 10 SERP results.
+- Authority: Finds high-DA (Domain Authority) sources to cite.
+
+Step 4: Deep SERP Analysis
+--------------------------
+- Competitor Audit: AI analyzes the top 10 results specifically to find "Content Gaps" (What did they miss?).
+- Intent Refinement: Verifies if users are looking to buy (Commercial) or learn (Informational).
+
+Step 5: AI-Driven Content Strategy
+----------------------------------
+- Unique Angle: AI creates a specific strategy to "Beat the Competition" by being more detailed or using a different perspective.
+- Local Positioning: If an "Area/City" is provided, the strategy is adapted for that specific location.
+
+Step 6: Specialized Outline Generation
+--------------------------------------
+- Structural Intelligence: Mandatory includes "Pricing" for Commercial, "Comparison Tables" for Comparison articles, etc.
+- Local Injection: Injects the "Area" name and "Local Neighborhoods" into the H2 headings automatically.
+
+Step 7: Context-Aware Section Writing
+-------------------------------------
+- Semantic Memory: The system uses a cross-section memory. Section 4 knows what Section 1 said to prevent repetition.
+- POV/Tone Enforcement: Strictly enforces the user's chosen writing style throughout every paragraph.
+
+Step 8: Multi-Layer Quality Validation
+--------------------------------------
+- Semantic Overlap: Rejects and regenerates sections that are too similar to previous ones.
+- Paragraph Structure: Strictly enforces 3-5 sentences per paragraph for mobile readability.
+- Local SEO Check: Ensures the city/area is mentioned exactly enough times to rank but not spam.
+
+Step 9: Premium Branded Image Pipeline
+--------------------------------------
+- Master Frame: Generates a unique AI design template using the brand's primary colors.
+- Branded Assets: Every image in the article is melded with the brand template so it looks unique to that company.
+
+Step 10: Expert SEO Agent Audit
+-------------------------------
+- Final Review: A dedicated "SEO Auditor" AI reviews the entire article against 20+ checkpoints (Keywords, Internal Linking, CTA quality).
+- Report: Generates a "Manager Report" explaining exactly how the article was optimized.
+
+Step 11: Final Assembly & Rendering
+-----------------------------------
+- Commercial Injection: Naturally places CTA buttons and contact cards for Commercial articles.
+- Link Sanitization: Cleans up all URLs and ensures no dead links are included.
+
+============================================================
+3. BRAND RESEARCH LOGIC: THE DECISION TREE
+============================================================
+The system chooses its research depth based on the following hierarchy:
+
+*   PRIORITY 1 (The Human Rule): If you fill the "Brand Voice Description" or "Guidelines" in the UI, the system skips all internal page discovery. It assumes your manual text is the absolute truth. It only visits the homepage for the Logo.
+*   PRIORITY 2 (The Mode Rule): 
+    - If CORE: 1 Page maximum (Homepage).
+    - If ADVANCED: 10 Pages maximum (Deep crawl).
+*   PRIORITY 3 (The Context Rule): The AI prioritizes "Service" and "Portfolio" pages over "Contact" or "Privacy" pages when selecting what to read.
+
+================================================================================
+END OF DOCUMENT

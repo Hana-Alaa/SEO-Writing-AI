@@ -24,6 +24,18 @@ PROHIBITED BRANDS (CRITICAL CONSTRAINT):
 - Localized Angle: "{{ section.localized_angle }}"
 - Decision Layer: "{{ section.decision_layer }}"
 - Sales Intensity: "{{ section.sales_intensity }}"
+- User Tone: "{{ tone if tone else 'Empathetic and conversational' }}"
+- User Point of View (POV): "{{ pov if pov else '2nd person' }}"
+- Brand Voice Description: "{{ brand_voice_description if brand_voice_description else 'Senior consultant' }}"
+{% if brand_voice_guidelines %}- Brand Voice Guidelines (File Path): "{{ brand_voice_guidelines }}" (Prioritize these rules!){% endif %}
+{% if brand_voice_examples %}- Brand Voice Examples (Reference Content):
+"""
+{{ brand_voice_examples }}
+"""
+{% endif %}
+- Keyword Density Target: {{ custom_keyword_density if custom_keyword_density else 1.5 }}%
+- Bold Key Terms: {{ bold_key_terms | lower }}
+
 - Required Keywords: {{ section.assigned_keywords | tojson }}
 - CTA Type: "{{ execution_plan.cta_type }}"
 - CTA Position: "{{ execution_plan.cta_position }}"
@@ -35,6 +47,7 @@ PROHIBITED BRANDS (CRITICAL CONSTRAINT):
 - Mandatory Internal Links: {{ section.assigned_links | tojson }}
 - Used Internal Links: {{ used_internal_links | tojson }}
 - Reliable External Sources: {{ external_sources | tojson }}
+- Manual External Links (PRIORITIZE THESE): {{ external_resources | tojson }}
 - Used External Links: {{ used_external_links | tojson }}
 - Requires Table: {{ section.requires_table }}
 - Table Type: "{{ section.table_type | default('none') }}"
@@ -79,17 +92,24 @@ STRICT WRITING RULES
 {% endif %}
 1. Language lock:
    - Write strictly in {{ article_language }}.
-   1.1 Perspective & Pronouns (MANDATORY):
-      - Address the reader directly in SECOND PERSON in the target language.
-      - Use natural second-person pronouns:
-      Arabic: "أنت / لك / لديك / عملك / شركتك"
-      English: "you / your"
-      French: "vous / votre"
-      German: "Sie / Ihr"
-      Spanish: "tú/usted / tu/su"
-      Turkish: "sen/siz / sizin"
-      - At least one second-person construction in each paragraph.
-      - Avoid detached third-person style like "businesses should..." unless used briefly for contrast.
+    1.1 Perspective & Pronouns (MANDATORY):
+       {% if pov == "1st person singular" %}
+       - Use FIRST PERSON SINGULAR perspective ("I", "me", "my", "mine").
+       - Act as a single expert or a personal author.
+       {% elif pov == "1st person plural" %}
+       - Use FIRST PERSON PLURAL perspective ("we", "us", "our", "ours").
+       - Act as a team or corporate entity.
+       {% elif pov == "2nd person" %}
+       - Address the reader directly in SECOND PERSON in the target language.
+       - Use natural second-person pronouns (Arabic: "أنت / لك / لديك / عملك / شركتك", English: "you / your").
+       {% elif pov == "3rd person" %}
+       - Use THIRD PERSON perspective ("the company", "professionals", "it", "they").
+       - Maintain a more objective, detached tone.
+       {% else %}
+       - DEFAULT: Address the reader directly in SECOND PERSON.
+       {% endif %}
+       - Consistent pronoun usage throughout the section.
+
 
 2. Structure (CRITICAL):
    - **MAXIMUM 3 PARAGRAPHS PER SECTION.**
@@ -100,8 +120,10 @@ STRICT WRITING RULES
      * A line = ~11 words. So 36 words ≈ 3 short lines. This is the hard ceiling.
      * NEVER merge two paragraphs. NEVER write a 70-word paragraph split into two sentences.
    - DO NOT write wall-of-text paragraphs. Short = readable = better SEO.
-   - If requires_list = true: add ONE markdown list (3–5 items) after paragraph 2.
-   - If requires_table = true: add ONE markdown table (3+ rows) after paragraph 2.
+    - If requires_list = true: add ONE markdown list (3–5 items) after paragraph 2.
+    - If requires_list = false: CRITICAL - DO NOT generate any bullet points or numbered lists.
+    - If requires_table = true: add ONE markdown table (3+ rows) after paragraph 2.
+    - If requires_table = false: CRITICAL - DO NOT generate any markdown tables.
     - CRITICAL TABLE FORMATTING RULE (MANDATORY):
       1. A table MUST strictly begin with a BLANK EMPTY LINE.
       2. EVERY SINGLE ROW of the table (including the header, alignment row, and all data rows) MUST start with a `|` AND end with a `|`.
@@ -114,11 +136,17 @@ STRICT WRITING RULES
       7. A table MUST strictly end with a BLANK EMPTY LINE.
    - FAQ sections keep H3 Q&A format only.
 
-3. Keyword usage (Density target: 1.2%–1.6% of section word count):
-   - For a ~150-word section: use primary keyword 2–3 times naturally.
-   - First mention MUST be in the first paragraph.
-   - At least one mention should be bolded (**keyword**) — but ONCE only per section.
-   - Support with semantic synonyms and related phrases from "Required Keywords".
+3. Keyword usage (Density target: {{ custom_keyword_density if custom_keyword_density else '1.2%–1.6%' }}% of section word count):
+   - For a ~150-word section: use primary keyword naturally.
+
+    - First mention MUST be in the first paragraph.
+    {% if bold_key_terms %}
+    - At least one mention should be bolded (**keyword**) — but ONCE only per section.
+    - Also bold other highly relevant industry terms or USP phrases to guide the reader's eye.
+    {% else %}
+    - CRITICAL: DO NOT BOLD ANY TEXT IN THIS SECTION. No `**text**` formatting is allowed anywhere, including keywords or phrases.
+    {% endif %}
+    - Support with semantic synonyms and related phrases from "Required Keywords".
    - Never stuff: if keyword already has 2 mentions, switch to synonyms.
    - FAQ question headings should include keyword variations naturally (do NOT avoid the keyword entirely).
 
@@ -145,16 +173,22 @@ STRICT WRITING RULES
     - **BRAND NAME IN CTA (MANDATORY for First 2 Sections):** If this is one of the first two sections (section_index < 2), you MUST explicitly mention the brand name "{{ brand_name }}" within your bolded CTA sentence.
 
 6. External Links (MANDATORY ENFORCEMENT):
-{% if is_first_section %}   - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
-{% else %}{% if used_external_links|length < 2 %}   - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
+{% if workflow_mode == 'core' %}   - **STRICT RULE**: DO NOT add any external links or references in this section. External linking is disabled for this article.
+{% elif is_first_section %}   - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
+{% else %}{% if used_external_links|length < 3 %}   - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
+   - **PRIORITY 1**: If there are any unused "Manual External Links" provided in the context, you MUST use one of them.
+   - **PRIORITY 2**: If no manual links are left or none were provided, you MUST autonomously generate a highly relevant, real-world link to a credible authority (e.g., Wikipedia, Statista, industry journals).
    - The link must add value and support reader understanding (e.g., statistics, official definitions).
    - NEVER link to competitors who offer the same services or target the same primary keyword.
    - DO NOT repeat any of the links already used in previous sections: {{ used_external_links | tojson }}
-{% else %}   - We have already reached the maximum limit of external links for this article. DO NOT add any more external links in this section.
+{% else %}   - We have already reached the ideal threshold (3+) of external links for this article. DO NOT add any more external links in this section.
 {% endif %}{% endif %}
 
-7. Human-First & Anti-robotic style (CRITICAL):
-   - VERY IMPORTANT: Write in a natural, empathetic, and conversational human tone.
+7. Tone & Voice Enforcement (CRITICAL):
+   - **MANDATORY TONE**: You MUST write in a **{{ tone if tone else 'conversational and human' }}** tone.
+   {% if brand_voice_description %}- **BRAND VOICE**: Adhere to this specific voice profile: "{{ brand_voice_description }}"{% endif %}
+   - VERY IMPORTANT: Write like a real person, not an AI bot following a checklist.
+
    - BANNED AI WORDS: Do NOT use obvious AI tells such as: "Moreover", "Furthermore", "In conclusion", "It is important to note", "Delve into", "Testament to", "Unleash", "Elevate", "Navigate".
    - Strictly AVOID being "over-corporate" or using stiff business jargon (e.g., "synergy", "paradigm shift", "leverage our expertise").
    - Avoid repetitive openings like: "Maximize your", "Accelerate your", "Drive sustainable growth", "In today's fast-paced digital landscape".

@@ -3,10 +3,21 @@ Context:
 - Article Title: "{{ title }}"
 - Primary Keyword: "{{ keywords[0] if keywords else title }}"
 - Core Keywords: {{ keywords | tojson }}
+- Secondary Keywords (MANDATORY TO INCLUDE): {{ secondary_keywords | tojson }}
 - Article Language: "{{ article_language }}"
 - Intent: "{{ intent }}"
 - Content Type: "{{ content_type }}"
 - Area: "{{ area }}"
+- Global Customization Settings:
+    - Target Size: {{ article_size }} words
+    - Include Conclusion: {{ include_conclusion }}
+    - Include FAQ: {{ include_faq }}
+    - Include Tables: {{ include_tables }}
+    - Include Lists: {{ include_bullet_lists }}
+    - Include Comparison Blocks: {{ include_comparison_blocks }}
+    - Competitor Analysis Count: {{ competitor_count }}
+
+
 Topic Protagonist Rule (HIGHEST PRIORITY):
 - The **Primary Keyword** must be the absolute protagonist of at least 80% of the sections. 
 - **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature, technology, or niche sub-topic become the main subject of an H2. They can only be mentioned as supporting tools or context that enhances the main service.
@@ -16,6 +27,7 @@ Topic Protagonist Rule (HIGHEST PRIORITY):
 - Content Strategy: {{ content_strategy | tojson }}
 {% if brand_context %}- Brand Context: "{{ brand_context }}"{% endif %}
 - Internal Links (Available to Assign): {{ urls | tojson }}
+- External Manual Links (Available to Assign): {{ external_resources | tojson }}
 - Current Year: {{ current_year }}
 - Prohibited Competitors (NEVER MENTION THESE): {{ prohibited_competitors | tojson }}
 {% if prohibited_competitors %}
@@ -33,7 +45,12 @@ Hard Rules:
 1. Language: all headings in {{ article_language }} only.
 
 2. FAQ Section Rules:
+   {% if not include_faq %}
+   - DO NOT generate an FAQ section. Skip this step entirely.
+   {% else %}
    - Exactly ONE FAQ section (H2) with 4 to 6 FAQs related to the primary keyword.
+   {% endif %}
+
    - BRAND-SPECIFIC FAQs (CRITICAL): The questions MUST address specific services, features, pricing, processes, or objections related to the Brand Context. DO NOT generate generic dictionary-definition FAQs.
    - Each FAQ must be unique, helpful, and include keyword variations.
    - At least one FAQ question MUST address a local market need/context.
@@ -76,15 +93,33 @@ Hard Rules:
    - low: purely educational, no selling (e.g., FAQ, Market Reality).
 
 9. Rich-format requirement:
+   {% if include_tables %}
    - At least ONE non-FAQ section must have requires_table = true.
-   - At least TWO non-FAQ sections must have requires_list = true.
    - Exactly ONE table (comparison or process) in a core section.
+   {% else %}
+   - CRITICAL: DO NOT include tables. All `requires_table` fields MUST be `false`.
+   {% endif %}
+   
+   {% if include_bullet_lists %}
+   - At least TWO non-FAQ sections must have requires_list = true.
    - At least TWO bulleted/numbered lists.
+   {% else %}
+   - CRITICAL: DO NOT include lists. All `requires_list` fields MUST be `false`.
+   {% endif %}
+
+   {% if not include_comparison_blocks %}
+   - CRITICAL: DO NOT generate any sections dedicated to comparisons, and ensure `table_type` is never set to "comparison".
+   {% endif %}
 
 10. Conclusion enforcement (CRITICAL):
+    {% if not include_conclusion %}
+    - CRITICAL: DO NOT generate a specific "conclusion" section. The article should end after the last core or FAQ section. DO NOT add `section_type: "conclusion"`.
+    {% else %}
     - The VERY LAST section of the outline MUST have `section_type: "conclusion"`.
     - Do NOT name it "core" or anything else. It must be explicitly tagged as "conclusion".
     - It must have `cta_type: "strong"` and `cta_position: "last_sentence"`.
+    {% endif %}
+
 
 11. Table placement:
    - Prefer table in "Proof Layer" or "Implementation Process" only.
@@ -124,6 +159,7 @@ Hard Rules:
    - ANCHOR DIVERSITY: Each assigned link MUST have a unique and highly descriptive anchor text (`text` field) that identifies the target page's content (e.g., "[custom React development solutions](url)").
     - PRIORITIZATION: Prioritize linking to Service or Product pages. Avoid generic pages unless they are highly relevant to the brand's core mission.
    - DISTRIBUTION: Distribute these links across different sections by adding them to the `assigned_links` array as objects: `{"url": "...", "text": "..."}`.
+- **EXTERNAL MANUAL LINKS (MANDATORY)**: If manually provided external links exist, treat them with the SAME priority as manual internal links. You MUST include every provided manual external link exactly once in the article.
 
 15. Reader Addressing:
    - content_goal and content_angle must be reader-directed (second-person oriented), not generic third-person.

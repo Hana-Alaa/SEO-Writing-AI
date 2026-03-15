@@ -3,7 +3,8 @@ import json
 import logging
 from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 import shutil
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +22,26 @@ app = FastAPI(
     description="API for the autonomous SEO content generation pipeline.",
     version="1.0.0"
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Log validation errors clearly in the terminal."""
+    error_details = exc.errors()
+    # Remove non-serializable objects from context (like ValueError)
+    serializable_errors = []
+    for err in error_details:
+        err_copy = dict(err)
+        if 'ctx' in err_copy:
+            # Context often contains Exception objects which fail JSON serialization
+            err_copy['ctx'] = {k: str(v) for k, v in err_copy['ctx'].items()}
+        serializable_errors.append(err_copy)
+
+    logger.error(f"Validation Error 422: {serializable_errors}")
+    print(f"\n[VALIDATION ERROR 422] Received invalid request format:")
+    for err in serializable_errors:
+        print(f" -> Field: {err.get('loc')}, Error: {err.get('msg')}")
+    print("\n")
+    return JSONResponse(status_code=422, content={"detail": serializable_errors})
 
 # Add CORS middleware
 app.add_middleware(
@@ -57,10 +78,41 @@ async def generate_article(
     article_language: str = Form(None),
     area: str = Form(None),
     urls: str = Form("[]"),
+    external_urls: str = Form("[]"),
     include_meta_keywords: bool = Form(True),
     generate_images: bool = Form(True),
     logo_image: UploadFile = File(None),
-    reference_image: UploadFile = File(None)
+    reference_image: UploadFile = File(None),
+    brand_voice_guidelines: UploadFile = File(None),
+    brand_voice_examples: UploadFile = File(None),
+    
+    # Advanced Customization
+    workflow_mode: str = Form("core"),
+    article_type: str = Form(None),
+    tone: str = Form(None),
+    pov: str = Form(None),
+    article_size: str = Form("1000"),
+    brand_voice_description: str = Form(None),
+    
+    # Structure Controls
+    include_conclusion: bool = Form(True),
+    include_faq: bool = Form(True),
+    include_tables: bool = Form(True),
+    include_bullet_lists: bool = Form(True),
+    include_comparison_blocks: bool = Form(True),
+    bold_key_terms: bool = Form(True),
+    
+    # Media Controls
+    num_images: int = Form(7),
+    image_style: str = Form("illustration"),
+    image_size: str = Form("1024x1024"),
+    include_featured_image: bool = Form(True),
+    custom_branding_frame: bool = Form(False),
+    
+    # SEO Controls
+    custom_keyword_density: float = Form(None),
+    secondary_keywords: str = Form("[]"),
+    competitor_count: int = Form(5)
 ):
     """
     Generate an SEO-optimized article based on the input parameters.
@@ -88,6 +140,17 @@ async def generate_article(
     except json.JSONDecodeError:
         urls_list = []
 
+    try:
+        external_urls_list = json.loads(external_urls) if external_urls else []
+    except json.JSONDecodeError:
+        external_urls_list = []
+
+    try:
+        secondary_keywords_list = json.loads(secondary_keywords) if secondary_keywords else []
+    except json.JSONDecodeError:
+        secondary_keywords_list = [k.strip() for k in secondary_keywords.split(",")] if secondary_keywords else []
+
+
     # Handle file uploads
     # Ensure upload directory exists
     upload_dir = os.path.join(os.getcwd(), "output", "uploads")
@@ -112,6 +175,22 @@ async def generate_article(
         with open(saved_ref_path, "wb") as buffer:
             shutil.copyfileobj(reference_image.file, buffer)
 
+    saved_guidelines_path = None
+    if brand_voice_guidelines and brand_voice_guidelines.filename:
+        ext = brand_voice_guidelines.filename.split(".")[-1] if "." in brand_voice_guidelines.filename else "pdf"
+        safe_filename = f"guidelines_{uuid.uuid4().hex[:8]}.{ext}"
+        saved_guidelines_path = os.path.join(upload_dir, safe_filename)
+        with open(saved_guidelines_path, "wb") as buffer:
+            shutil.copyfileobj(brand_voice_guidelines.file, buffer)
+
+    saved_examples_path = None
+    if brand_voice_examples and brand_voice_examples.filename:
+        ext = brand_voice_examples.filename.split(".")[-1] if "." in brand_voice_examples.filename else "txt"
+        safe_filename = f"examples_{uuid.uuid4().hex[:8]}.{ext}"
+        saved_examples_path = os.path.join(upload_dir, safe_filename)
+        with open(saved_examples_path, "wb") as buffer:
+            shutil.copyfileobj(brand_voice_examples.file, buffer)
+
     # Initialize the centralized orchestrator
     work_dir = os.path.join(os.getcwd(), "output")
     controller = AsyncWorkflowController(work_dir=work_dir)
@@ -124,10 +203,33 @@ async def generate_article(
             "article_language": article_language,
             "area": area,
             "urls": urls_list,
-            "include_meta_keywords": include_meta_keywords,
+            "external_urls": external_urls_list,
             "generate_images": generate_images,
-            "logo_image_path": saved_logo_path,
-            "image_frame_path": saved_ref_path
+            "logo_image": saved_logo_path,
+            "reference_image": saved_ref_path,
+            "brand_voice_guidelines": saved_guidelines_path,
+            "brand_voice_examples": saved_examples_path,
+            "workflow_mode": workflow_mode,
+            "tone": tone,
+            "article_type": article_type,
+            "pov": pov,
+            "article_size": article_size,
+            "brand_voice_description": brand_voice_description,
+            "include_meta_keywords": include_meta_keywords,
+            "include_conclusion": include_conclusion,
+            "include_faq": include_faq,
+            "include_tables": include_tables,
+            "include_bullet_lists": include_bullet_lists,
+            "include_comparison_blocks": include_comparison_blocks,
+            "bold_key_terms": bold_key_terms,
+            "num_images": num_images,
+            "image_style": image_style,
+            "image_size": image_size,
+            "include_featured_image": include_featured_image,
+            "custom_branding_frame": custom_branding_frame,
+            "custom_keyword_density": custom_keyword_density,
+            "secondary_keywords": secondary_keywords_list,
+            "competitor_count": competitor_count
         }
     }
     

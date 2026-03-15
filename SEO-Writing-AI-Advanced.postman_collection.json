@@ -1,0 +1,235 @@
+{
+	"info": {
+		"_postman_id": "7dc3eedc-8ef3-48c7-8847-5982c01b1fa3",
+		"name": "SEO Writing AI - Core vs Advanced",
+		"description": "Collection for testing the SEO Writing AI system. Includes Core (Autopilot) and Advanced (Granular) workflows.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Generate Article (Core Mode)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "title",
+							"value": "Top SEO Trends for 2026",
+							"type": "text"
+						},
+						{
+							"key": "keywords",
+							"value": "[\"seo 2026\", \"ai seo trends\"]",
+							"type": "text"
+						},
+						{
+							"key": "workflow_mode",
+							"value": "core",
+							"type": "text"
+						},
+						{
+							"key": "logo_image",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "reference_image",
+							"type": "file",
+							"src": []
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/generate",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"generate"
+					]
+				},
+				"description": "Simple request with Title and Keywords. AI handles all structure and style."
+			},
+			"response": []
+		},
+		{
+			"name": "Generate Article (Advanced Mode)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "title",
+							"value": "Advanced Python Patterns",
+							"type": "text"
+						},
+						{
+							"key": "keywords",
+							"value": "[\"python design patterns\", \"clean code python\"]",
+							"type": "text"
+						},
+						{
+							"key": "workflow_mode",
+							"value": "advanced",
+							"type": "text"
+						},
+						{
+							"key": "article_type",
+							"value": "informational",
+							"type": "text"
+						},
+						{
+							"key": "tone",
+							"value": "technical",
+							"type": "text"
+						},
+						{
+							"key": "pov",
+							"value": "1st person plural",
+							"type": "text"
+						},
+						{
+							"key": "article_size",
+							"value": "2000",
+							"type": "text"
+						},
+						{
+							"key": "article_language",
+							"value": "ar",
+							"type": "text"
+						},
+						{
+							"key": "area",
+							"value": "Riyadh",
+							"type": "text"
+						},
+						{
+							"key": "external_urls",
+							"value": "[{\"link\": \"https://en.wikipedia.org/wiki/Python_(programming_language)\", \"text\": \"Python Wikipedia\"}]",
+							"type": "text"
+						},
+						{
+							"key": "bold_key_terms",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "include_faq",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "include_tables",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "num_images",
+							"value": "7",
+							"type": "text"
+						},
+						{
+							"key": "image_style",
+							"value": "isometric",
+							"type": "text"
+						},
+						{
+							"key": "image_size",
+							"value": "1792x1024",
+							"type": "text"
+						},
+						{
+							"key": "secondary_keywords",
+							"value": "[\"clean architecture\", \"dry principle\"]",
+							"type": "text"
+						},
+						{
+							"key": "include_featured_image",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "custom_branding_frame",
+							"value": "false",
+							"type": "text"
+						},
+						{
+							"key": "include_conclusion",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "include_bullet_lists",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "include_comparison_blocks",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "custom_keyword_density",
+							"value": "1.5",
+							"type": "text"
+						},
+						{
+							"key": "competitor_count",
+							"value": "5",
+							"type": "text"
+						},
+						{
+							"key": "urls",
+							"value": "[{\"link\": \"https://yourbrand.com/related\", \"text\": \"Related Topic\"}]",
+							"type": "text"
+						},
+						{
+							"key": "brand_voice_description",
+							"value": "Professional and helpful expert in Python",
+							"type": "text"
+						},
+						{
+							"key": "logo_image",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "reference_image",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "brand_voice_guidelines",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "brand_voice_examples",
+							"type": "file",
+							"src": []
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/generate",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"generate"
+					]
+				},
+				"description": "Granular control over Tone, POV, Size, Media, and SEO Settings."
+			},
+			"response": []
+		}
+	]
+}

@@ -21,13 +21,15 @@ class ImagePromptPlanner:
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read())
 
-    async def generate(self, title: str, primary_keyword, keywords: list, outline: list, brand_visual_style: str = "") -> list:
+    async def generate(self, title: str, primary_keyword, keywords: list, outline: list, brand_visual_style: str = "", num_images: int = 7, image_style: str = "illustration") -> list:
         prompt_text = self.template.render(
             title=title,
             primary_keyword=primary_keyword,
             keywords=keywords,
             outline=outline,
-            brand_visual_style=brand_visual_style
+            brand_visual_style=brand_visual_style,
+            num_images=num_images,
+            image_style=image_style
         )
         response_data = await self.ai_client.send(prompt_text, step="image")
         raw_response = response_data.get("content", "[]") if isinstance(response_data, dict) else str(response_data or "[]")
