@@ -3,7 +3,7 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from services.image_generator import ImageGenerator
+from src.services.image_generator import ImageGenerator
 
 async def test_images():
     generator = ImageGenerator(save_dir="output/images")

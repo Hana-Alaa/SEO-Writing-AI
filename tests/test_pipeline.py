@@ -21,7 +21,7 @@ logging.basicConfig(
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from services.workflow_controller import AsyncWorkflowController
+from src.services.workflow_controller import AsyncWorkflowController
 
 async def main():
     # work_dir="output" ensures all final products go into the output/ folder
@@ -118,7 +118,7 @@ async def main():
         summary = {
             "title": final_result.get("title"),
             "slug": final_result.get("slug"),
-            "images_count": len(final_result.get("images", [])),
+            "images_count": len(final_result.get("assets/images", [])),
             "meta_title": final_result.get("meta_title"),
             "meta_description": final_result.get("meta_description"),
             "seo_report_keys": list(final_result.get("seo_report", {}).keys()),

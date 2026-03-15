@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+jinja2
+requests
+httpx
+langdetect
+markdown
+Pillow
+openai
+beautifulsoup4
+numpy
+sentence-transformers
+python-multipart

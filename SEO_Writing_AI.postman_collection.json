@@ -84,6 +84,12 @@
                                     "type": "text"
                                 },
                                 {
+                                    "key": "generate_images",
+                                    "value": "true",
+                                    "description": "Toggle AI image generation pipeline",
+                                    "type": "text"
+                                },
+                                {
                                     "key": "logo_image",
                                     "description": "PNG/JPG logo for branding",
                                     "type": "file",

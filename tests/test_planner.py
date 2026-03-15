@@ -9,14 +9,14 @@ logging.basicConfig(level=logging.DEBUG)
 # Add the project scope
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from services.image_generator import ImagePromptPlanner
-from services.openrouter_client import OpenRouterClient
+from src.services.image_generator import ImagePromptPlanner
+from src.services.openrouter_client import OpenRouterClient
 
 async def main():
     client = OpenRouterClient()
     planner = ImagePromptPlanner(
         ai_client=client,
-        template_path="prompts/templates/06_image_planner.txt"
+        template_path="assets/prompts/templates/06_image_planner.txt"
     )
     
     print("Testing image planner generation...")

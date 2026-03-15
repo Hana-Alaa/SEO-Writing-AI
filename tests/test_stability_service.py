@@ -7,7 +7,7 @@ import base64
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from services.image_service import StabilityImageService
+from src.services.image_service import StabilityImageService
 
 class TestStabilityImageService(unittest.TestCase):
     def setUp(self):

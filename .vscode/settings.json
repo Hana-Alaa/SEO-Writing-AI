@@ -1,0 +1,9 @@
+{
+    "python.defaultInterpreterPath": "E:\\SEO-Writing-AI\\.venv\\Scripts\\python.exe",
+    "python.analysis.extraPaths": [
+        ".",
+        "E:\\SEO-Writing-AI\\.venv\\Lib\\site-packages"
+    ],
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.diagnosticMode": "workspace"
+}
