@@ -460,6 +460,22 @@
             gap: 1.5rem;
             margin-top: 1rem;
         }
+
+        /* Faded / Disabled State for Image Section */
+        .section-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(0.5);
+            transition: all 0.4s ease;
+        }
+
+        .toggle-label-text {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 
@@ -532,8 +548,18 @@
 
                         <!-- Brand Assets in Core Mode (Media) -->
                         <div class="full-width">
-                            <div class="section-header"><i class="fas fa-images"></i> Media & Brand Assets</div>
-                            <div class="file-grid">
+                            <div class="section-header">
+                                <i class="fas fa-images"></i> Media & Brand Assets
+                                <div style="margin-left: auto; display: flex; align-items: center; gap: 0.75rem;">
+                                    <span class="toggle-label-text">Generate Images</span>
+                                    <label class="toggle-container">
+                                        <input type="checkbox" id="core-gen-images" checked onchange="toggleImageSection('core')">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="core-image-section">
+                                <div class="file-grid">
                                 <div class="custom-file-input">
                                     <i class="fas fa-image file-icon"></i>
                                     <span class="file-label">Brand Logo (Optional)</span>
@@ -545,15 +571,48 @@
                                     <span class="file-label">Style Reference (Optional)</span>
                                     <span class="file-name" id="core-style-name">No file selected</span>
                                     <input type="file" id="core-style-file" accept="image/*" onchange="updateFileName(this, 'core-style-name')">
+                                </div> <!-- closes custom-file-input -->
+                            </div> <!-- closes file-grid -->
+                        </div> <!-- closes core-image-section -->
+                    </div> <!-- closes full-width -->
+                </div> <!-- closes form-grid -->
+
+                <!-- Internal Links inside Core Mode -->
+                <div id="core-internal-links-section">
+                    <div class="section-header"><i class="fas fa-link"></i> Internal URLs / Brand URL</div>
+                    <div id="core-internal-url-container">
+                        <div class="url-item">
+                            <div class="form-group" style="flex: 2;">
+                                <label>URL</label>
+                                <input type="text" class="url-link" placeholder="https://yourbrand.com/page">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Anchor Text</label>
+                                <input type="text" class="url-text" placeholder="Title">
+                            </div>
+                            <div class="form-group" style="width: 64px;">
+                                <label>Brand</label>
+                                <div style="height: 48px; display: flex; align-items: center; justify-content: center;">
+                                    <label class="toggle-container">
+                                        <input type="checkbox" class="is-brand" onchange="exclusiveBrand(this)">
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
                             </div>
+                            <button type="button" class="btn-secondary"
+                                style="color: var(--error-color); height: 48px; width: 48px; padding: 0; align-self: flex-end;"
+                                onclick="removeUrl(this)">✕</button>
                         </div>
                     </div>
+                    <button type="button" class="btn-secondary" style="margin-top: 1rem;"
+                        onclick="addCoreInternalUrlField()">+ Add Internal Link</button>
                 </div>
 
-                <!-- ADVANCED MODE INTERFACE -->
-                <div id="advanced-interface" class="form-section">
-                    <div class="form-grid">
+            </div> <!-- closes core-interface -->
+
+            <!-- ADVANCED MODE INTERFACE -->
+            <div id="advanced-interface" class="form-section">
+                <div class="form-grid">
                         <!-- Writing Controls -->
                         <div class="form-group">
                             <label>Article Type</label>
@@ -664,9 +723,19 @@
 
                         <!-- Media Control -->
                         <div class="full-width">
-                            <div class="section-header"><i class="fas fa-images"></i> Media Parameters</div>
+                            <div class="section-header">
+                                <i class="fas fa-images"></i> Media Parameters
+                                <div style="margin-left: auto; display: flex; align-items: center; gap: 0.75rem;">
+                                    <span class="toggle-label-text">Generate Images</span>
+                                    <label class="toggle-container">
+                                        <input type="checkbox" id="adv-gen-images" checked onchange="toggleImageSection('adv')">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
                             
-                            <!-- Brand Assets inside Media -->
+                            <div id="adv-image-section">
+                                <!-- Brand Assets inside Media -->
                             <div class="file-grid" style="margin-bottom: 2rem;">
                                 <div class="custom-file-input">
                                     <i class="fas fa-image file-icon"></i>
@@ -712,9 +781,9 @@
                                         Featured image</label>
                                     <label class="checkbox-control"><input type="checkbox" id="ctrl-branding-frame">
                                         custom branding frame</label>
-                                </div>
-                            </div>
-                        </div>
+                                </div> <!-- closes form-grid -->
+                            </div> <!-- closes adv-image-section -->
+                        </div> <!-- closes full-width (Media Parameters) -->
 
                         <!-- SEO Controls -->
                         <div class="full-width">
@@ -737,12 +806,12 @@
                                     <input type="text" id="adv-sec-keywords"
                                         placeholder="Enter keywords separated by commas">
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                            </div> <!-- closes form-grid inside SEO Controls -->
+                        </div> <!-- closes full-width SEO Controls -->
+                    </div> <!-- closes form-grid of advanced-interface -->
 
                     <!-- External Links Section (Advanced Only) -->
-                    <div id="external-links-section">
+                    <div id="external-links-section" style="display: block; width: 100%; margin-top: 1.5rem; grid-column: 1 / -1;">
                         <div class="section-header"><i class="fas fa-link"></i> External URLs</div>
                         <div id="external-url-container">
                             <div class="url-item">
@@ -754,53 +823,60 @@
                                     <label>Anchor Text</label>
                                     <input type="text" class="url-text" placeholder="Title">
                                 </div>
+                                <div class="form-group" style="width: 64px;">
+                                    <label>&nbsp;</label>
+                                    <div style="height: 48px; display: flex; align-items: center; justify-content: center;"></div>
+                                </div>
                                 <button type="button" class="btn-secondary"
-                                    style="color: var(--error-color); height: 48px; width: 48px; padding: 0;"
+                                    style="color: var(--error-color); height: 48px; width: 48px; padding: 0; align-self: flex-end;"
                                     onclick="removeUrl(this)">✕</button>
                             </div>
                         </div>
                         <button type="button" class="btn-secondary" style="margin-top: 1rem;"
                             onclick="addExternalUrlField()">+ Add External Link</button>
                     </div>
-                </div>
 
-                <!-- Internal Links Section -->
-                <div id="internal-links-section">
-                    <div class="section-header"><i class="fas fa-link"></i> Internal URLs / Brand URL</div>
-                    <div id="internal-url-container">
-                        <div class="url-item">
-                            <div class="form-group" style="flex: 2;">
-                                <label>URL</label>
-                                <input type="text" class="url-link" placeholder="https://yourbrand.com/page">
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label>Anchor Text</label>
-                                <input type="text" class="url-text" placeholder="Title">
-                            </div>
-                            <div class="form-group" style="width: 64px;">
-                                <label>Brand</label>
-                                <div style="height: 48px; display: flex; align-items: center; justify-content: center;">
-                                    <label class="toggle-container">
-                                        <input type="checkbox" class="is-brand" onchange="exclusiveBrand(this)">
-                                        <span class="slider"></span>
-                                    </label>
+                    <!-- Internal Links inside Advanced Mode -->
+                    <div id="adv-internal-links-section" style="display: block; width: 100%; margin-top: 1.5rem; grid-column: 1 / -1;">
+                        <div class="section-header"><i class="fas fa-link"></i> Internal URLs / Brand URL</div>
+                        <div id="internal-url-container">
+                            <div class="url-item">
+                                <div class="form-group" style="flex: 2;">
+                                    <label>URL</label>
+                                    <input type="text" class="url-link" placeholder="https://yourbrand.com/page">
                                 </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Anchor Text</label>
+                                    <input type="text" class="url-text" placeholder="Title">
+                                </div>
+                                <div class="form-group" style="width: 64px;">
+                                    <label>Brand</label>
+                                    <div style="height: 48px; display: flex; align-items: center; justify-content: center;">
+                                        <label class="toggle-container">
+                                            <input type="checkbox" class="is-brand" onchange="exclusiveBrand(this)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-secondary"
+                                    style="color: var(--error-color); height: 48px; width: 48px; padding: 0; align-self: flex-end;"
+                                    onclick="removeUrl(this)">✕</button>
                             </div>
-                            <button type="button" class="btn-secondary"
-                                style="color: var(--error-color); height: 48px; width: 48px; padding: 0;"
-                                onclick="removeUrl(this)">✕</button>
                         </div>
+                        <button type="button" class="btn-secondary" style="margin-top: 1rem;"
+                            onclick="addInternalUrlField()">+ Add Internal Link</button>
                     </div>
-                    <button type="button" class="btn-secondary" style="margin-top: 1rem;"
-                        onclick="addInternalUrlField()">+ Add Internal Link</button>
-                </div>
 
-                <button type="submit" class="submit-btn" id="submitBtn">
-                    <span>Generate Content</span>
-                    <div class="loader" id="loader"></div>
-                </button>
-            </form>
-        </div>
+            </div> <!-- closes advanced-interface -->
+
+            <!-- Remove old shared internal-links-section -->
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span>Generate Content</span>
+                <div class="loader" id="loader"></div>
+            </button>
+        </form>
+    </div>
 
         <!-- Result Card -->
         <div class="card result-card" id="result-card">
@@ -839,6 +915,19 @@
             document.getElementById('external-links-section').style.display = (mode === 'core') ? 'none' : 'block';
         }
 
+        function toggleImageSection(mode) {
+            const isChecked = document.getElementById(`${mode}-gen-images`).checked;
+            const section = document.getElementById(`${mode}-image-section`);
+            
+            if (isChecked) {
+                section.classList.remove('section-disabled');
+                section.querySelectorAll('input, select').forEach(el => el.disabled = false);
+            } else {
+                section.classList.add('section-disabled');
+                section.querySelectorAll('input, select').forEach(el => el.disabled = true);
+            }
+        }
+
         function updateFileName(input, targetId) {
             const fileName = input.files[0] ? input.files[0].name : 'No file selected';
             document.getElementById(targetId).textContent = fileName;
@@ -866,7 +955,34 @@
                         </label>
                     </div>
                 </div>
-                <button type="button" class="btn-secondary" style="color: var(--error-color); height: 48px; width: 48px; padding: 0;" onclick="removeUrl(this)">✕</button>
+                <button type="button" class="btn-secondary" style="color: var(--error-color); height: 48px; width: 48px; padding: 0; align-self: flex-end;" onclick="removeUrl(this)">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addCoreInternalUrlField() {
+            const container = document.getElementById('core-internal-url-container');
+            const div = document.createElement('div');
+            div.className = 'url-item';
+            div.innerHTML = `
+                <div class="form-group" style="flex: 2;">
+                    <label>URL</label>
+                    <input type="text" class="url-link" placeholder="https://yourbrand.com/page">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Anchor Text</label>
+                    <input type="text" class="url-text" placeholder="Title">
+                </div>
+                <div class="form-group" style="width: 64px;">
+                    <label>Brand</label>
+                    <div style="height: 48px; display: flex; align-items: center; justify-content: center;">
+                        <label class="toggle-container">
+                            <input type="checkbox" class="is-brand" onchange="exclusiveBrand(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" style="color: var(--error-color); height: 48px; width: 48px; padding: 0; align-self: flex-end;" onclick="removeUrl(this)">✕</button>
             `;
             container.appendChild(div);
         }
@@ -883,6 +999,10 @@
                 <div class="form-group" style="flex: 1;">
                     <label>Anchor Text</label>
                     <input type="text" class="url-text" placeholder="Title">
+                </div>
+                <div class="form-group" style="width: 64px;">
+                    <label>&nbsp;</label>
+                    <div style="height: 48px; display: flex; align-items: center; justify-content: center;"></div>
                 </div>
                 <button type="button" class="btn-secondary" style="color: var(--error-color); height: 48px; width: 48px; padding: 0;" onclick="removeUrl(this)">✕</button>
             `;
@@ -928,9 +1048,10 @@
             const kw = document.getElementById('keywords').value.split(',').map(s => s.trim());
             formData.append('keywords', JSON.stringify(kw));
 
-            // Collect Internal URLs
+            // Collect Internal URLs (from mode-specific container)
             const internalUrlData = [];
-            document.querySelectorAll('#internal-url-container .url-item').forEach(item => {
+            const internalContainerId = (currentMode === 'core') ? '#core-internal-url-container' : '#internal-url-container';
+            document.querySelectorAll(`${internalContainerId} .url-item`).forEach(item => {
                 const link = item.querySelector('.url-link').value.trim();
                 const text = item.querySelector('.url-text').value.trim();
                 const isBrand = item.querySelector('.is-brand').checked;
@@ -980,7 +1101,7 @@
                 formData.append('image_style', document.getElementById('adv-img-style').value);
                 formData.append('image_size', document.getElementById('adv-img-size').value);
                 formData.append('num_images', document.getElementById('adv-img-num').value);
-                formData.append('generate_images', true);
+                formData.append('generate_images', document.getElementById('adv-gen-images').checked);
                 formData.append('include_featured_image', document.getElementById('ctrl-featured').checked);
                 formData.append('custom_branding_frame', document.getElementById('ctrl-branding-frame').checked);
 
@@ -1009,8 +1130,12 @@
                 const guidelinesFile = document.getElementById('adv-voice-guidelines').files[0];
                 if (guidelinesFile) formData.append('brand_voice_guidelines', guidelinesFile);
                 
-                const examplesFile = document.getElementById('adv-voice-examples').files[0];
-                if (examplesFile) formData.append('brand_voice_examples', examplesFile);
+                formData.append('brand_voice_examples', examplesFile);
+            }
+
+            // Sync generate_images for core mode
+            if (currentMode === 'core') {
+                formData.append('generate_images', document.getElementById('core-gen-images').checked);
             }
 
             try {

@@ -27,7 +27,7 @@ Title rules:
 - Must include the primary keyword exactly
 - Must match article language
 - If area is provided, include it naturally
--  For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year ({{ current_year }}) naturally in the title to indicate freshness (e.g., "Best Web Design Agency in 2026" or "Top Services 2026").
+- For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year ({{ current_year }}) naturally in the title to indicate freshness (e.g., "Best Web Design Agency in 2026" or "Top Services 2026").
 - No clickbait, no keyword stuffing.
 - **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.
 - Focus 100% on the **Primary keyword** service.

@@ -238,23 +238,25 @@ class AsyncWorkflowController:
         ]
 
         # Dynamic Image Skipping
-        # num_images = state.get("num_images", 7)
-        # if num_images > 0:
-        #     steps.extend([
-        #         ("image_prompting", self._step_4_generate_image_prompts, 0),
-        #         ("master_frame", self._step_4_1_generate_master_frame, 1),
-        #         ("image_generation", self._step_4_5_download_images, 2),
-        #     ])
-        # else:
-        #     logger.info("Skipping image generation steps: num_images is set to 0.")
+        generate_images = state.get("generate_images", True)
+        num_images = state.get("num_images", 7)
+        
+        if generate_images and num_images > 0:
+            steps.extend([
+                ("image_prompting", self._step_4_generate_image_prompts, 0),
+                ("master_frame", self._step_4_1_generate_master_frame, 1),
+                ("image_generation", self._step_4_5_download_images, 2),
+            ])
+        else:
+            logger.info(f"Skipping image generation: generate_images={generate_images}, num_images={num_images}")
 
         steps.extend([
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
         ])
 
-        # if num_images > 0:
-        #     steps.append(("image_inserter", self._step_6_image_inserter, 0))
+        if generate_images and num_images > 0:
+            steps.append(("image_inserter", self._step_6_image_inserter, 0))
 
         steps.extend([
             ("meta_schema", self._step_7_meta_schema, 0),

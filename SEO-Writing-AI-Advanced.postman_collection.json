@@ -30,6 +30,29 @@
 							"type": "text"
 						},
 						{
+							"key": "article_language",
+							"value": "",
+							"description": "Leave empty for Auto-Detect. Options: ar, en, fr, es, de, it, pt, tr, ru, zh, ja, ko, hi, id, ms, vi, th, nl, pl",
+							"type": "text"
+						},
+						{
+							"key": "area",
+							"value": "",
+							"description": "Target location, e.g. Riyadh, Dubai (Optional)",
+							"type": "text"
+						},
+						{
+							"key": "urls",
+							"value": "[{\"link\": \"https://yourbrand.com/page\", \"text\": \"Brand Page\", \"is_brand\": true}]",
+							"description": "Internal/brand URLs as JSON array. Each item: {link, text, is_brand}",
+							"type": "text"
+						},
+						{
+							"key": "generate_images",
+							"value": "true",
+							"type": "text"
+						},
+						{
 							"key": "logo_image",
 							"type": "file",
 							"src": []
@@ -186,7 +209,8 @@
 						},
 						{
 							"key": "urls",
-							"value": "[{\"link\": \"https://yourbrand.com/related\", \"text\": \"Related Topic\"}]",
+							"value": "[{\"link\": \"https://yourbrand.com/related\", \"text\": \"Related Topic\", \"is_brand\": false}]",
+							"description": "Internal/brand URLs as JSON array. Each item: {link, text, is_brand}",
 							"type": "text"
 						},
 						{
@@ -213,6 +237,11 @@
 							"key": "brand_voice_examples",
 							"type": "file",
 							"src": []
+						},
+						{
+							"key": "generate_images",
+							"value": "true",
+							"type": "text"
 						}
 					]
 				},

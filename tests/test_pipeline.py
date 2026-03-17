@@ -82,11 +82,11 @@ async def main():
             "title": "Web Design Agency",
             "keywords": [
                 "Web Design Agency",
-                "Web Design Riyadh",
-                "CEMS IT"
+                "Web Design in Riyadh",
+                "CREATIVE MINDS"
             ],
             "urls": [
-                {"text": "CEMS IT Official Website", "link": "https://cems-it.com/"}
+                {"text": "Website & Mobile App Development", "link": "https://cems-it.com/"}
             ],
             "area": "Riyadh",
             # Source assets for the test
