@@ -9,7 +9,12 @@ Context:
 - Content Type: "{{ content_type }}"
 - Area: "{{ area }}"
 - Global Customization Settings:
+    {% if article_size == "core_dynamic_expansion" %}
+    - Target Size: Minimum 1000 words.
+    - Expansion Strategy: Expand the article naturally up to 3000-5000 words ONLY if the provided Research Context and Brand Context contain sufficient unique, high-value data. DO NOT add fluff or redundant sections.
+    {% else %}
     - Target Size: {{ article_size }} words
+    {% endif %}
     - Include Conclusion: {{ include_conclusion }}
     - Include FAQ: {{ include_faq }}
     - Include Tables: {{ include_tables }}
@@ -25,6 +30,8 @@ Topic Protagonist Rule (HIGHEST PRIORITY):
 - If the AI suggests topics that deviate from the core intent of the Primary Keyword, YOU MUST REJECT THOSE SUGGESTIONS.
 - SEO Intelligence: {{ seo_intelligence | tojson }}
 - Content Strategy: {{ content_strategy | tojson }}
+- **STRUCTURAL ROADMAP (CRITICAL)**: You MUST strictly follow the "STRUCTURE (MANDATORY)" or "Roadmap" defined in the `content_strategy`. Use the specific section order and goals provided.
+- **SEMANTIC EXPANSION (NEW)**: While you MUST include the mandatory pillars, you are ENCOURAGED to add 1–2 additional high-value sections IF they are semantically necessary for topical completeness based on **SEO Intelligence**. Insert these extra sections within the logical "Main Body" flow.
 {% if brand_context %}- Brand Context: "{{ brand_context }}"{% endif %}
 - Internal Links (Available to Assign): {{ urls | tojson }}
 - External Manual Links (Available to Assign): {{ external_resources | tojson }}
@@ -48,15 +55,15 @@ Hard Rules:
    {% if not include_faq %}
    - DO NOT generate an FAQ section. Skip this step entirely.
    {% else %}
-   - Exactly ONE FAQ section (H2) with 4 to 6 FAQs related to the primary keyword.
+   - Exactly ONE FAQ section (H2) with 4 to 6 FAQs.
+   - **PAA RATIO (CRITICAL)**: Use 3-4 questions from **SEO Intelligence** (`paa_questions`). These are the highest priority.
    {% endif %}
+ 
+   - **CONTEXTUAL SUPPLEMENT**: Complete the section to reach 4-6 total questions by adding 1-2 questions that address the reader's intent or logical next steps for this specific topic.
+   - At least one FAQ question MUST address a local market need/context (Area: {{ area }}).
 
-   - BRAND-SPECIFIC FAQs (CRITICAL): The questions MUST address specific services, features, pricing, processes, or objections related to the Brand Context. DO NOT generate generic dictionary-definition FAQs.
-   - Each FAQ must be unique, helpful, and include keyword variations.
-   - At least one FAQ question MUST address a local market need/context.
-
-3. No duplicate H2 meanings.
-
+3. No duplicate H2 meanings or semantic overlap.
+   - **ZERO-WASTE POLICY (CRITICAL)**: Every section MUST provide unique, non-redundant value. If two sections cover similar ground, MERGE them or delete the less valuable one. "Fluff" or "filler" sections are strictly PROHIBITED.
 4. Domain Separation: 
    - Each H2 must focus on a distinct "Decision Layer" to prevent semantic overlap.:
      - Market Reality: Landscape/Trends.
@@ -75,10 +82,10 @@ Hard Rules:
 6. If area exists:
    - First H2 must include area naturally.
    - Each section must have a different localized_angle.
-   6b. Primary Keyword in Headings:
-      - The primary keyword (or a close semantic variant) MUST appear in at least 2 heading_text values.
-      - It MUST appear in at least one other H2 (e.g., Proof Layer or Technical Systems).
-
+   6b. Primary Keyword in Headings (MANDATORY):
+      - The Primary Keyword ("{{ keywords[0] }}") or its direct LSI variants MUST appear in at least **70% of all H2 heading_text values**.
+      - **NO GENERIC H2s**: Headings like "Introduction", "Benefits", "Conclusion", "How it Works" are FORBIDDEN on their own. They MUST be integrated with the keyword (e.g., "Main Benefits of [Keyword] for [Area]").
+      - Every H2 MUST be "Search-Ready": descriptive enough that a reader (and Google) knows exactly what unique sub-topic is covered.
 7. Human-First & Anti-Robotic Style:
    - **INTRODUCTION EXCEPTION (MANDATORY)**: The very first section of your outline MUST be the introduction. Because it immediately follows the main article Title (H1), it MUST NOT have an actual visible H2 heading. Therefore, for the first section ONLY, set `"heading_text": "Introduction"`. The system will automatically remove this specific word to keep the formatting clean.
    - For all other sections: Headings (heading_text) MUST sound natural, conversational, and human. 
@@ -121,7 +128,20 @@ Hard Rules:
     {% endif %}
 
 
-11. Table placement:
+11. CTA Rules (CRITICAL ENFORCEMENT):
+    - **ONE CTA PER SECTION MAXIMUM**: Under no circumstances should a section have more than one CTA.
+    - **CTA FREQUENCY**: Limit CTAs to a maximum of **3 per 1,000 words** of expected article length.
+    - **PLACEMENT**: NEVER place a CTA immediately following a heading. It MUST appear after at least one paragraph of content.
+    - **CTA TONE & INTENT**:
+        - **Informational Intent**: Use "Soft" CTAs that serve the article (e.g., "explore related topics", "read more about [Topic]").
+        - **Commercial/Transactional Intent**: Use "Moderate" or "Strong" CTAs that serve the brand (e.g., "request a quote", "contact our experts").
+    - **COMMERCIAL INTRO EXCEPTION**: For `brand_commercial` articles, the Introduction MUST only contain **one very soft, low-commitment CTA** at the end of the section (e.g., "see how we approach this"). Do NOT use hard conversion CTAs in the intro.
+    - **CONCLUSION**: The VERY LAST section MUST have a `cta_type: "strong"` (e.g., "book now", "contact us today").
+
+11c. Strategic Intent Distribution:
+    Follow the specific distribution rules (ratio, intent, and intensity) provided in the article-type sub-template (e.g., brand_commercial, informational).
+
+12. Table placement:
    - Prefer table in "Proof Layer" or "Implementation Process" only.
 
 12. Mandatory section types enforcement:
@@ -142,13 +162,30 @@ Hard Rules:
    12e. Why Choose Us:
       - Ensure the heading text for the 'why_choose_us' section uses a strong converting phrase like "Why Choose [Brand Name] for [Keyword]" or similar.
 
-13. Hierarchical Depth (Featured Snippets):
+13b. LOGICAL FACT MAPPING (CRITICAL):
+   - Scan the **Brand Context** for unique numbers, statistics, and core claims (e.g., 30k users, 12-month installments).
+   - UNIQUE ASSIGNMENT: Assign each major fact to EXACTLY ONE section where it is most contextually relevant:
+     - Trust/Proof facts -> Proof Layer.
+     - Operational/Technical facts -> Technical Systems.
+     - Payment/Pricing facts -> Implementation Process.
+   - List these in the `mandatory_facts` field for that section.
+   - Summarize all unique brand claims identified in the `global_fact_pool`.
+13. Hierarchical Depth & Narrative Flow (Featured Snippets):
+   - **HEADING HIERARCHY (STRICT)**: 
+     - Use **H2** for all main semantic blocks/sections (Market Reality, Business Risk, etc.).
+     - Use **H3** to break down an H2 into specific sub-topics such as: "Comparison of services", "Technical components", "Step-by-step processes", "Specific customer categories", or "Common obstacles".
+     - **H4** is strictly reserved for deep-dive technical explanations, granular specifications, or nested sub-steps that are already inside an H3 hierarchy.
    - At least 2 non-FAQ H2 sections MUST have 1-2 internal H3 subheadings.
-   - Use H3 to break down: "Comparison of services", "Technical components", "Step-by-step processes", or "Specific customer categories".
-   - H3 headings must directly support the parent H2 and follow it immediately in the JSON list.
-   - This prevents flat content and maximizes Featured Snippet potential.
+   - H3/H4 headings must directly support the parent heading and follow it immediately in the JSON list.
+   - **NARRATIVE CONTINUITY**: The sequence of headings must follow a logical narrative journey (e.g., Problem -> Solution -> Technical Detail -> Proof -> Action). Avoid a disjointed "list of facts" structure.
 
-14. Strategic Linking (Internal):
+14. Keyword Expansion & Semantic Coverage:
+   - **SECONDARY KEYWORD SUPPLEMENTATION**: If the provided "Secondary Keywords" list contains fewer than 5 items, YOU MUST autonomously expand it to at least 15 highly relevant LSI, semantic, and long-tail keywords.
+   - Use the provided SEO Intelligence (PAA, Related Searches, Competitor Clusters) as your primary source for this expansion.
+   - Distribute these keywords naturally across all sections by assigning them to the `assigned_keywords` field in the JSON output.
+   - Return the full list of these expanded keywords in the `keyword_expansion` object at the end of your response.
+
+15. Strategic Linking (Internal):
    - You are provided with a list of "Internal Links" (URLs). Some are marked as **Manual/Permanent** (user-provided) and some are **Discovered** (from the brand site).
    - LINK QUOTA: Assign as many relevant links as possible from the provided list, up to a maximum of 12. 
    - **RULE 1: MANUAL LINKS (MANDATORY)**: You MUST use EVERY link marked as "Manual" at least once in the article.
@@ -159,9 +196,10 @@ Hard Rules:
    - ANCHOR DIVERSITY: Each assigned link MUST have a unique and highly descriptive anchor text (`text` field) that identifies the target page's content (e.g., "[custom React development solutions](url)").
     - PRIORITIZATION: Prioritize linking to Service or Product pages. Avoid generic pages unless they are highly relevant to the brand's core mission.
    - DISTRIBUTION: Distribute these links across different sections by adding them to the `assigned_links` array as objects: `{"url": "...", "text": "..."}`.
+- **PRIORITIZATION (CRITICAL)**: The `Mandatory Internal Links` list is pre-scored. **YOU MUST prioritize the first 3-5 links** in this list, as they are the most relevant to the topic and target geographical area.
 - **EXTERNAL MANUAL LINKS (MANDATORY)**: If manually provided external links exist, treat them with the SAME priority as manual internal links. You MUST include every provided manual external link exactly once in the article.
 
-15. Reader Addressing:
+16. Reader Addressing:
    - content_goal and content_angle must be reader-directed (second-person oriented), not generic third-person.
 
 
@@ -187,9 +225,11 @@ Output JSON only:
       "table_type": "comparison | process | none",
       "requires_list": false,
       "list_type": "bullets | numbered | none",
-      "questions": []
+      "questions": [],
+      "mandatory_facts": []
     }
   ],
+  "global_fact_pool": [],
   "keyword_expansion": {
     "primary": "",
     "core": [],

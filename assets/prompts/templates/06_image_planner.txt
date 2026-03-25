@@ -32,7 +32,11 @@ Rules:
    - Process Infographic (Technical, structured)
    - Abstract Illustration (Minimalist, conceptual)
    - High-End Mockup (Real-world application)
-6. **Alt Text**: ALT text must be descriptive and include the primary keyword naturally.
+6. **Alt Text Strategy (STRICT SEO RULES)**:
+   - **FEATURED IMAGE (HERO)**: The Alt text MUST include the **Primary Keyword** ({{ primary_keyword }}) naturally.
+   - **ALL OTHER IMAGES**: The Alt text MUST use a relevant **LSI or Secondary Keyword** from the provided list ({{ keywords | tojson }}).
+   - **NATURAL PHRASING**: Write Alt texts as natural, descriptive phrases (e.g., "A modern office layout in Riyadh showing digital collaboration tools" instead of just "office Riyadh").
+   - **UNIQUE & NON-REPETITIVE**: Never repeat the exact same Alt text across different images. Each description must be unique and specific to the image content.
 7. **Image Types**: Use strictly: Featured, Infographic, Illustration, Mockup.
 8. **Prompt Engineering for Clean Visuals (CRITICAL)**: 
    - Image generators produce "messy" or garbled results when given overly complex or crowded prompts. 

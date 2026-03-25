@@ -98,7 +98,16 @@ class OpenRouterClient(BaseAIClient):
 
         if not data or "choices" not in data or not data["choices"]:
             logger.error(f"Invalid API response in step '{step}': {data}")
-            return {"content": "Error: AI response failed.", "metadata": {"tokens": {"total_tokens": 0}}}
+            return {
+                "content": "Error: AI response failed.", 
+                "metadata": {
+                    "tokens": {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0},
+                    "prompt": prompt,
+                    "response": "Error: AI response failed.",
+                    "model": self.model_writing,
+                    "duration": time.time() - start_time
+                }
+            }
 
         end_time = time.time()
 

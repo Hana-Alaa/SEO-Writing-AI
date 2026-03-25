@@ -1,0 +1,164 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 1.21 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 84.96 seconds
+  -- Tokens Used: 34,475
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 85.39 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.50 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.81 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 23.87 seconds
+  -- Tokens Used: 9,911
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 3.45 seconds
+  -- Tokens Used: 12,202
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_ما هي TIKEVENT أفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 4.14 seconds
+  -- Tokens Used: 15,674
+--------------------------------------------------
+Step: SECTION_2_ما هي TIKEVENT أفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 5.19 seconds
+  -- Tokens Used: 14,908
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ما هي TIKEVENT أفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_أبرز مزايا حلول الحجز الذكية للجماهير والمنظمين
+  -- Duration: 4.76 seconds
+  -- Tokens Used: 22,010
+--------------------------------------------------
+Step: SECTION_3_أبرز مزايا حلول الحجز الذكية للجماهير والمنظمين
+  -- Duration: 5.46 seconds
+  -- Tokens Used: 20,546
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أبرز مزايا حلول الحجز الذكية للجماهير والمنظمين
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا يفضل المشجعون TIKEVENT عن المنصات التقليدية؟
+  -- Duration: 5.23 seconds
+  -- Tokens Used: 30,742
+--------------------------------------------------
+Step: SECTION_4_لماذا يفضل المشجعون TIKEVENT عن المنصات التقليدية؟
+  -- Duration: 5.00 seconds
+  -- Tokens Used: 28,490
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يفضل المشجعون TIKEVENT عن المنصات التقليدية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_نتائج ملموسة وأرقام تعكس ثقة الجمهور الرياضي
+  -- Duration: 4.53 seconds
+  -- Tokens Used: 38,658
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: نتائج ملموسة وأرقام تعكس ثقة الجمهور الرياضي
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة بين فئات التذاكر وتجربة الحجز عبر المنصة
+  -- Duration: 5.54 seconds
+  -- Tokens Used: 44,525
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة بين فئات التذاكر وتجربة الحجز عبر المنصة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_رحلة حجز تذكرة مباراتك القادمة في 4 خطوات بسيطة
+  -- Duration: 6.22 seconds
+  -- Tokens Used: 55,566
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: رحلة حجز تذكرة مباراتك القادمة في 4 خطوات بسيطة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 8.25 seconds
+  -- Tokens Used: 64,004
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_احجز مكانك في المدرج الآن مع TIKEVENT
+  -- Duration: 5.86 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: SECTION_9_احجز مكانك في المدرج الآن مع TIKEVENT
+  -- Duration: 5.36 seconds
+  -- Tokens Used: 71,678
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: احجز مكانك في المدرج الآن مع TIKEVENT
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 98.39 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 6.89 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.19 seconds
+  -- Tokens Used: 78,256
+--------------------------------------------------

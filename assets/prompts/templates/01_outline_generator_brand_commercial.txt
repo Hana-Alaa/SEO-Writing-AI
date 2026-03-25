@@ -1,23 +1,93 @@
-Brand Commercial Specific Rules:
-1. Intent Distribution (MANDATORY):
-   - Ratio: 70% Commercial/Transactional sections, 30% Informational.
-   - Must include: "Why Choose Us" (Uniqueness), "Proof/Trust", and "Implementation/Process".
-   - Focus: Converting segments (e.g., service for startups, service for high-growth firms).
 
-2. CTA Policy:
-   - The goal is to convert readers, but conversions come from TRUST, not aggressive placement.
-   - CTA placement should feel natural. The SECTION CONTENT determines where a CTA makes sense.
-   - Set `cta_position` based on when the reader is most likely primed to take action:
-     * introduction: where you introduce the brand → `cta_position: "after_intro"` (mid-section)
-     * core/benefits: after explaining a key value → `cta_position: "mid_section"`
-     * proof/process: after presenting credentials → `cta_position: "mid_section"`
-     * why_choose_us: after the main argument → `cta_position: "end_section"`
-     * conclusion: always last sentence → `cta_position: "last_sentence"`, `cta_type: "strong"`
-     * faq: no CTA → `cta_type: "none"`
-   - NEVER use `cta_position: "first_paragraph"` for any section. A CTA before context is meaningless.
-   - CRITICAL — CTA VARIATION: Each section must have different context for its CTA. The section's own topic naturally determines what the CTA says. Do NOT pre-write CTA text in the outline.
 
-3. Intent Ratio Enforcement (CRITICAL):
-   - The article MUST maintain an approximate 70% Commercial / 30% Informational split across its H2 sections.
-   - At least 70% of the H2 sections must have `section_intent`: "Commercial" and `sales_intensity`: "high" or "medium".
-   - Only reserve "Informational" intent for introductory concepts, definitions, or the FAQ.
+Brand Commercial Specific Rules (MANDATORY STRUCTURE & QUALITY):
+
+You MUST generate the outline in this EXACT order, while adhering to the Quality Rules below:
+
+---
+### I. THE STRUCTURE (STRICT ORDER)
+
+1. **Intro (The Problem)**: 
+   - Focus: Speak directly to the reader's problem or need.
+   - Constraint: EXACTLY 1-2 paragraphs only. 
+   - Requirement: Primary keyword in the first paragraph.
+   - CTA: MAXIMUM ONE (1) very soft CTA at the absolute end. Avoid any other sales noise.
+   - section_type: "introduction"
+
+2. **What the service/product is (The Definition)**: 
+   - H2 Heading: MUST include the primary keyword.
+   - Requirement (COLD START): The first sentence MUST be a clear, objective definition (e.g., "[Brand] is a platform/service that [Verb] [Target]..."). No marketing fluff in the first two sentences.
+   - section_type: "what_is"
+
+3. **Key features or what's included (The Offering)**: 
+   - H2 Heading: MUST NOT use the exact primary keyword. Use a synonym (e.g., "Platform Features", "Key Services").
+   - Content: Use bullet points for scannability.
+   - Target: Features and specific inclusions.
+   - section_type: "key_features"
+
+4. **Why choose us / differentiators (The Value)**: 
+   - H2 Heading: MUST NOT use the exact primary keyword.
+   - Content: Specific brand value and hyper-local/technical differentiators. 
+   - FORBIDDEN: Do NOT use naked generic claims like "Safe", "Easy", or "Fast" without a specific local reason (e.g., "Safe 3D Secure payments", "Local 24/7 Saudi support", "Instant QR delivery").
+   - section_type: "why_choose_us"
+
+5. **Proof (The Authority)**: 
+   - H2 Heading: Use authority terms like "Client Results" or "Success Stories".
+   - Requirement: STATISTICS, CASE STUDIES, or CLIENT RESULTS.
+   - H2 Section Type: `section_type: "proof"` or `section_type: "case_study"`.
+   - Content: Use a "Challenge → Solution → Result" narrative. Include a small table if it helps visualize ROI.
+   - section_type: "proof"
+
+6. **Comparison table (The Clarity)**: 
+   - H2 Heading: Comparison of service tiers or key features.
+   - Requirement: Comparison of service tiers or key features.
+   - Format: Must be a table.
+   - section_type: "comparison_table"
+
+7. **How it works / Process (The Journey)**: 
+   - H2 Heading: Descriptive (e.g., "How to get started", "Booking Process").
+   - Content: Numbered steps. Reduces friction and objection.
+   - section_type: "process"
+
+8. **FAQ section (The Objection Handler)**: 
+   - H2 Heading: MANDATORY FAQ heading.
+   - Focus: Pricing, process, and common objections.
+   - Requirement: Minimum 4-5 questions.
+   - section_type: "faq"
+
+9. **Strong Conclusion + CTA (The Close)**: 
+   - Requirement: `cta_type: "strong"`, `cta_position: "last_sentence"`.
+   - **MANDATORY LINK**: You MUST assign the Brand URL or a Contact/Booking URL to this section. Never leave the conclusion without an internal link.
+   - section_type: "conclusion"
+
+---
+### II. GLOBAL HEADING CONSTRAINTS (CRITICAL - ANTI-STUFFING)
+
+1. **KEYWORD PARITY (UNDER-USE OVER OVER-USE)**:
+   - The Primary Keyword ({{ keywords[0] }}) is STRICTLY FORBIDDEN from appearing in more than TWO (2) H2 headings.
+   - Slot 1: Introduction (Optional in heading).
+   - Slot 2: Definition (Required in heading).
+   - ALL OTHER HEADINGS: You MUST use descriptive synonyms (e.g., "حصن الأمان"، "خيارات السداد"، "رحلة الحجز").
+   - If you use the exact primary keyword in a 3rd heading, the outline is a failure.
+
+2. **Fact Siloing (CRITICAL - ANTI-REPETITION)**:
+   - You MUST assign each major brand selling point to EXACTLY ONE section to avoid redundant articles.
+   - **Installments (Tabby/Tamara/12 months)**: Assign ONLY to `key_features` or `pricing_faq`.
+   - **Security (Encrypted/3D Secure/Official)**: Assign ONLY to `introduction` or `why_choose_us`.
+   - **Social Proof (30,000 users / Success stats)**: Assign ONLY to `proof` or `case_study`.
+   - **Operational Details (Real-time updates / MSOP)**: Assign ONLY to `process`.
+   - **FORBIDDEN**: Do NOT include the same fact in the `content_goal` or `mandatory_facts` of more than one section.
+
+3. **The 4 Practicality Pillars (MANDATORY)**:
+   - You MUST integrate these into the sections above:
+     1. **Risk & Security**: Official vs. Secondary market risks (in Proof or FAQ).
+     2. **Operational Journey**: Post-purchase steps, QR delivery, entry (in Process).
+     3. **Pricing Dynamics**: Why prices change, transparency (in Features or FAQ).
+     4. **Transaction Mastery**: Installments (Taby/Tamara), refund policies (in FAQ).
+
+3. **Tone & Style**:
+   - Tone: Confident and solution-focused. Persuasive but NOT pushy (avoid urgency overkill).
+   - Arabic Style: Conversational Modern Standard Arabic (MSA).
+
+4. **Brand Portfolio (Optional Exception)**:
+   - You MAY include one section (`section_type: "brand_service_portfolio"`) if the brand context provides multiple unrelated but valuable services.

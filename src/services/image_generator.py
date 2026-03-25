@@ -81,6 +81,22 @@ class ImageGenerator:
         self.template_path = template_path
         os.makedirs(self.save_dir, exist_ok=True)
 
+    async def generate_images(self, items, primary_keyword="", image_frame_path=None, logo_path=None, workflow_logger=None):
+        """Orchestrates parallel image generation and processing."""
+        tasks = []
+        for i, item in enumerate(items):
+            tasks.append(self._process_single_image(
+                item, 
+                item.get("section_id", f"img_{i}"), 
+                item.get("image_type", "Illustration"), 
+                seed=None, 
+                image_frame_path=image_frame_path, 
+                logo_path=logo_path, 
+                workflow_logger=workflow_logger
+            ))
+        results = await asyncio.gather(*tasks)
+        return [r for r in results if r is not None]
+
     async def _process_single_image(self, item, section_id, image_type, seed, image_frame_path=None, logo_path=None, workflow_logger=None):
         start_time = datetime.now() if workflow_logger else None
         prompt = item.get("prompt", "")

@@ -126,13 +126,18 @@ class LinkManager:
             cu = cls.canon_url(raw_url)
             dom = cls.domain(cu)
 
+            is_internal = cu in internal_set or (brand_url and cls.is_same_site(cu, brand_url))
+
+            # Relaxed Deduplication:
+            # We ONLY strip if the EXACT URL (Canonical) was already used globally.
+            # We NO LONGER strip based on anchor text alone here.
             if cu in state["used_all_urls"]:
                 return text
 
-            is_internal = cu in internal_set or (brand_url and cls.is_same_site(cu, brand_url))
-
             if is_internal:
                 state["used_all_urls"].add(cu)
+                counts = state.setdefault("internal_link_counts", {})
+                counts[cu] = counts.get(cu, 0) + 1
                 return f"[{text}]({raw_url})"
             else:
                 if dom in blocked_domains:
@@ -226,7 +231,9 @@ class LinkManager:
             return brand_domain and brand_domain.lower() in url.lower()
 
         def is_seo_valuable(url):
-            junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
+            # purely administrative, legal or noise pages that offer zero marketing value to a reader.
+            # We ALLOW 'login', 'signup', 'register', 'account' as they can be valid conversion points.
+            junk_slugs = {'privacy', 'terms', 'cookies', 'legal', 'disclaimer'}
             path = urlparse(url).path.lower().rstrip('/')
             last_segment = path.split('/')[-1]
             return last_segment not in junk_slugs
@@ -249,17 +256,19 @@ class LinkManager:
                     return anchor
             
             if is_internal(url) and not is_seo_valuable(url):
-                return anchor
+                # SPECIAL EXCEPTION: If the link is to a contact/help/faq page AND it is at the end of the article, keep it.
+                # Since we don't have block-level context here easily, we rely on the junk_slug reduction above.
+                pass
 
             if is_internal(url) and internal_count >= max_internal:
                 return anchor
 
-            anchor_key = anchor.lower().strip()
-            if anchor_key in seen_anchors:
-                return anchor
+            # Relaxed Anchor Deduplication:
+            # We allow the same anchor (e.g., "احجز الآن") if the URL is different.
+            # The `seen_anchors` set is no longer used for deduplication.
             
             seen_urls.add(core_url)
-            seen_anchors.add(anchor_key)
+            # seen_anchors.add(anchor_key) # DISABLED: Allow duplicate anchors for different URLs
             if is_internal(url):
                 internal_count += 1
                 links_in_current_h2 += 1

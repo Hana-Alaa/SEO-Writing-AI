@@ -26,6 +26,9 @@ For each result extract:
 - Top 3 H3 headings
 - has_faq (true/false)
 - has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
 - CTA style (informational / soft commercial / aggressive / none)
 
 B. Extract real SERP elements:
@@ -71,6 +74,9 @@ Return STRICT JSON only in this format:
       },
       "has_faq": false,
       "has_tables": false,
+      "has_lists": false,
+      "has_images": false,
+      "has_charts": false,
       "cta_style": ""
     }
   ],

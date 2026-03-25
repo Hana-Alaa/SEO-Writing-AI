@@ -28,6 +28,19 @@ class WorkflowLogger:
             "google/gemini-2.0-flash-001": {"prompt": 0.0001, "completion": 0.0003}
         }
         
+    def _safe_json(self, obj: Any, indent: Optional[int] = None) -> str:
+        """Serializes object to JSON safely, handling StrictUndefined or other types."""
+        def default_handler(o):
+            try:
+                return str(o)
+            except Exception:
+                return f"<Unserializable {type(o).__name__}>"
+        
+        try:
+            return json.dumps(obj, ensure_ascii=False, indent=indent, default=default_handler)
+        except Exception:
+            return "Unserializable Data"
+
     def start_step(self, step_name: str) -> float:
         """Returns the start time of a step."""
         logger.info(f"Starting workflow step: {step_name}")
@@ -47,7 +60,7 @@ class WorkflowLogger:
         resp_str = ""
         if response:
             if isinstance(response, (dict, list)):
-                resp_str = json.dumps(response, ensure_ascii=False, indent=2)
+                resp_str = self._safe_json(response, indent=2)
             else:
                 resp_str = str(response)
                 
@@ -75,7 +88,7 @@ class WorkflowLogger:
         """Logs an AI call immediately, useful for nested or parallel steps."""
         resp_str = ""
         if isinstance(response, (dict, list)):
-            resp_str = json.dumps(response, ensure_ascii=False, indent=2)
+            resp_str = self._safe_json(response, indent=2)
         else:
             resp_str = str(response)
 
@@ -172,12 +185,7 @@ class WorkflowLogger:
         """Logs comprehensive step details including inputs, outputs, and errors."""
         
         def _serialize(obj):
-            try:
-                if isinstance(obj, (dict, list)):
-                    return json.dumps(obj, ensure_ascii=False, indent=2)
-                return str(obj)
-            except:
-                return "Unserializable Data"
+            return self._safe_json(obj, indent=2)
 
         with open(self.log_file, 'a', encoding='utf-8') as f:
             f.write(f"\n{'#'*30} WORKFLOW STEP: {step_name} ({duration:.2f}s) {'#'*30}\n")

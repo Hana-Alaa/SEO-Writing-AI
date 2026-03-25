@@ -197,7 +197,7 @@ class AsyncWorkflowController:
             strategy_templates=self.content_strategy_templates,
             intent_template=self.intent_template
         )
-        self.validator = ValidationService(self.semantic_model)
+        self.validator = ValidationService(ai_client=self.ai_client, semantic_model=self.semantic_model)
 
         # Image generator
         self.image_client = ImageGenerator(
@@ -223,6 +223,9 @@ class AsyncWorkflowController:
         state.setdefault("blocked_external_domains", set())
         state.setdefault("brand_name", "")
         state["max_external_links"] = 3
+        state.setdefault("global_keyword_count", 0)
+        state.setdefault("used_topics", [])
+        state.setdefault("full_content_so_far", "")
 
         steps = [
             # ("semantic_layer", self._step_semantic_layer, 1),
@@ -402,15 +405,6 @@ class AsyncWorkflowController:
                 return path.split('/')[-1] in junk_slugs
             except: return False
 
-        for u in urls:
-            link = u.get("link", "")
-            if link:
-                state["internal_resources"].append({
-                    "link": link, 
-                    "text": u.get("text") or "Internal Resource",
-                    "is_manual": True  # Mark as manual to avoid junk filtering
-                })
-                seen_canons.add(LinkManager.canon_url(link))
 
         state["image_frame_path"] = input_data.get("image_frame_path") or input_data.get("image_template_path")
         state["logo_image_path"] = input_data.get("logo_image_path")
@@ -453,31 +447,16 @@ class AsyncWorkflowController:
 
     # ---------------- ROUTING HELPERS (COST OPTIMIZATION) ----------------
     async def _step_brand_discovery_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Routes brand discovery based on manual data availability and mode."""
-        voice_desc = state.get("brand_voice_description")
-        voice_guidelines = state.get("brand_voice_guidelines")
-        mode = state.get("workflow_mode", "core")
-        num_images = state.get("num_images", 7)
+        """
+        Routes brand discovery.
+        UNIFIED: Now always performs DEEP discovery to ensure maximum quality and internal link variety.
+        """
+        brand_url = state.get("brand_url")
+        if not brand_url:
+            logger.info("No brand URL provided. Skipping brand discovery.")
+            return state
 
-        if voice_desc or voice_guidelines:
-            logger.info("Skipping deep brand discovery: Manual Brand Voice provided.")
-            state["brand_context"] = voice_desc or ""
-            
-            # Skip logo/color discovery if no images are needed
-            if num_images == 0:
-                logger.info("Skipping asset discovery: num_images is 0.")
-                return state
-                
-            # Fallback to minimal asset discovery (logo/colors only)
-            return await self.research_service.run_brand_discovery_light(state)
-        
-        if mode == "core":
-            if num_images == 0:
-                logger.info("Core Mode & num_images is 0: Skipping discovery entirely.")
-                return state
-            logger.info("Using Light Brand Discovery for Core Mode.")
-            return await self.research_service.run_brand_discovery_light(state)
-
+        logger.info(f"Enforcing DEEP Brand Discovery for quality stabilization (URL: {brand_url}).")
         return await self.research_service.run_brand_discovery(state)
 
     async def _step_web_research_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -535,12 +514,16 @@ class AsyncWorkflowController:
         
         logger.info(f"Final internal pool: {len(deduplicated_internal_resources)} resources ({sum(1 for r in deduplicated_internal_resources if r.get('is_manual'))} manual, {sum(1 for r in deduplicated_internal_resources if not r.get('is_manual'))} discovered).")
 
+        state["internal_url_set"] = set()
         for res in deduplicated_internal_resources:
             urls_norm.append({
                 "text": res.get("text", "Internal Resource"), 
                 "link": res.get("link"),
                 "is_manual": res.get("is_manual", False)
             })
+            canon = LinkManager.canon_url(res.get("link", ""))
+            if canon:
+                state["internal_url_set"].add(canon)
 
         for u in urls_norm:
             u["type"] = "internal" 
@@ -865,6 +848,19 @@ class AsyncWorkflowController:
                 state["brand_link_used"] = True
 
             sections_content[res["section_id"]] = res
+            if res.get("section_index") == 0:
+                state["introduction_text"] = res.get("generated_content", "")
+
+            # Update global keyword count
+            primary_keyword = global_keywords.get("primary", "")
+            if primary_keyword:
+                full_text_for_search = (res.get("heading_text") or "") + "\n" + res.get("generated_content", "")
+                matches = re.findall(re.escape(primary_keyword), full_text_for_search, re.IGNORECASE)
+                state["global_keyword_count"] = state.get("global_keyword_count", 0) + len(matches)
+
+            # Update full content summary
+            state["full_content_so_far"] = state.get("full_content_so_far", "") + "\n\n" + res.get("generated_content", "")
+
 
         state["sections"] = sections_content
 
@@ -1007,6 +1003,7 @@ class AsyncWorkflowController:
             allow_external_links=state.get("workflow_mode") != "core",
             workflow_mode=state.get("workflow_mode", "core"),
             execution_plan=execution_plan,
+            area=state.get("area"),
             used_phrases=used_phrases,
             used_internal_links=state.get("used_internal_links", []),
             used_external_links=state.get("used_external_links", []),
@@ -1023,7 +1020,14 @@ class AsyncWorkflowController:
             brand_voice_guidelines=state.get("brand_voice_guidelines"),
             brand_voice_examples=state.get("brand_voice_examples"),
             custom_keyword_density=state.get("custom_keyword_density"),
-            bold_key_terms=state.get("bold_key_terms", True)
+            bold_key_terms=state.get("bold_key_terms", True),
+            keyword_budget_exhausted=state.get("global_keyword_count", 0) >= 4,
+            used_topics=state.get("used_topics", []),
+            previous_content_summary=state.get("full_content_so_far", ""),
+            full_outline=state.get("outline", []),
+            introduction_text=state.get("introduction_text", ""),
+            external_resources=state.get("external_resources", []),
+            brand_name=state.get("brand_name", "")
         )
         
         content = res_data.get("content", "")
@@ -1071,7 +1075,10 @@ class AsyncWorkflowController:
                     external_sources=external_sources,
                     brand_name=state.get("brand_name", ""),
                     workflow_logger=state.get("workflow_logger"),
-                    prohibited_competitors=state.get("prohibited_competitors", [])
+                    prohibited_competitors=state.get("prohibited_competitors", []),
+                    full_outline=state.get("outline", []),
+                    introduction_text=state.get("introduction_text", ""),
+                    external_resources=state.get("external_resources", [])
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1120,7 +1127,10 @@ class AsyncWorkflowController:
                     external_sources=external_sources,
                     brand_name=state.get("brand_name", ""),
                     workflow_logger=state.get("workflow_logger"),
-                    prohibited_competitors=state.get("prohibited_competitors", [])
+                    prohibited_competitors=state.get("prohibited_competitors", []),
+                    full_outline=state.get("outline", []),
+                    introduction_text=state.get("introduction_text", ""),
+                    external_resources=state.get("external_resources", [])
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1155,7 +1165,10 @@ class AsyncWorkflowController:
                     external_sources=external_sources,
                     brand_name=state.get("brand_name", ""),
                     workflow_logger=state.get("workflow_logger"),
-                    prohibited_competitors=state.get("prohibited_competitors", [])
+                    prohibited_competitors=state.get("prohibited_competitors", []),
+                    full_outline=state.get("outline", []),
+                    introduction_text=state.get("introduction_text", ""),
+                    external_resources=state.get("external_resources", [])
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1167,13 +1180,22 @@ class AsyncWorkflowController:
             state.setdefault("used_claims", [])
             state.setdefault("used_internal_links", [])
             state.setdefault("used_external_links", [])
-
             substantial_sentences = [s for s in new_sentences if len(s) > 40]
             state["used_phrases"].extend(substantial_sentences)
             if getattr(self, "semantic_model", None):
                 state["used_claims"].extend(substantial_sentences)
 
-            content = LinkManager.sanitize_links(
+            # --- SEMANTIC MEMORY PERSISTENCE (CRITICAL) ---
+            # Update the global article context so the next section can avoid repetition
+            state["full_content_so_far"] = state.get("full_content_so_far", "") + "\n\n" + (content or "")
+            topics_covered = res_data.get("topics_covered", [])
+            if topics_covered:
+                if "used_topics" not in state:
+                    state["used_topics"] = []
+                state["used_topics"].extend(topics_covered)
+            # ----------------------------------------------
+
+            content = LinkManager.sanitize_section_links(
                 content=content,
                 state=state,
                 brand_url=brand_url or "",
@@ -1441,10 +1463,13 @@ class AsyncWorkflowController:
             final_markdown=final_md,
             primary_keyword=state.get("primary_keyword"),
             intent=state.get("intent"),
-            article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "en"),
+            article_language=state.get("article_language") or state.get("input_data", {}).get("article_language", "en"),
+            state=state,
             secondary_keywords=state.get("input_data", {}).get("keywords", []),
             include_meta_keywords=state.get("include_meta_keywords", False),
-            article_url=state.get("final_url")
+            article_url=state.get("final_url"),
+            images=state.get("assets/images", []),
+            word_count=len(final_md.split())
         )
 
         meta_json = recover_json(meta_raw)
@@ -1574,7 +1599,9 @@ class AsyncWorkflowController:
             word_count=word_count,
             keyword_count=keyword_count,
             keyword_density=keyword_density,
-            content_strategy=state.get("content_strategy", {})
+            content_strategy=state.get("content_strategy", {}),
+            prohibited_competitors=state.get("prohibited_competitors", []),
+            reference_authority_links=state.get("serp_data", {}).get("reference_authority_links", [])
         )
 
         report_json = recover_json(report_raw)
@@ -1630,9 +1657,11 @@ class AsyncWorkflowController:
 
         # Inject CTAs for brand_commercial articles before rendering HTML
         if state.get("content_type") == "brand_commercial" and render_data.get("final_markdown"):
-            render_data["final_markdown"] = self.validator.inject_commercial_ctas(
+            render_data["final_markdown"] = await self.validator.inject_commercial_ctas(
                 render_data["final_markdown"], 
-                state.get("article_language", "en")
+                state.get("article_language", "en"),
+                brand_url=state.get("brand_url", ""),
+                brand_name=state.get("brand_name", "")
             )
         
         try:

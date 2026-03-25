@@ -1,0 +1,164 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 60.76 seconds
+  -- Tokens Used: 28,544
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 60.77 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.90 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.25 seconds
+  -- Tokens Used: 479
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 479
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 479
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 8.19 seconds
+  -- Tokens Used: 3,360
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 21.02 seconds
+  -- Tokens Used: 479
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 25.96 seconds
+  -- Tokens Used: 12,586
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 3.94 seconds
+  -- Tokens Used: 8,487
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_تطور سوق حجز تذاكر المباريات في السعودية العربية والتوجهات الرقمية لعام 2026
+  -- Duration: 5.56 seconds
+  -- Tokens Used: 11,374
+--------------------------------------------------
+Step: SECTION_2_تطور سوق حجز تذاكر المباريات في السعودية العربية والتوجهات الرقمية لعام 2026
+  -- Duration: 5.88 seconds
+  -- Tokens Used: 11,454
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: تطور سوق حجز تذاكر المباريات في السعودية العربية والتوجهات الرقمية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا تختار تيك إيفنت من أجل حجز تذاكر المباريات في السعودية العربية؟
+  -- Duration: 4.38 seconds
+  -- Tokens Used: 17,521
+--------------------------------------------------
+Step: SECTION_3_لماذا تختار تيك إيفنت من أجل حجز تذاكر المباريات في السعودية العربية؟
+  -- Duration: 5.42 seconds
+  -- Tokens Used: 17,558
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار تيك إيفنت من أجل حجز تذاكر المباريات في السعودية العربية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_آلية حجز تذاكر المباريات في السعودية العربية عبر منصتنا المتطورة
+  -- Duration: 5.21 seconds
+  -- Tokens Used: 23,057
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: آلية حجز تذاكر المباريات في السعودية العربية عبر منصتنا المتطورة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_خدمات تيك إيفنت الشاملة: ما وراء حجز تذاكر المباريات في السعودية العربية
+  -- Duration: 5.41 seconds
+  -- Tokens Used: 28,502
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خدمات تيك إيفنت الشاملة: ما وراء حجز تذاكر المباريات في السعودية العربية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_الأرقام تتحدث: موثوقية حجز تذاكر المباريات في السعودية العربية عبر تيك إيفنت
+  -- Duration: 4.04 seconds
+  -- Tokens Used: 33,422
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأرقام تتحدث: موثوقية حجز تذاكر المباريات في السعودية العربية عبر تيك إيفنت
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_قصة نجاح: كيف سهلت تيك إيفنت حضور نهائي كبير في السعودية العربية
+  -- Duration: 4.49 seconds
+  -- Tokens Used: 36,995
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: قصة نجاح: كيف سهلت تيك إيفنت حضور نهائي كبير في السعودية العربية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول حجز تذاكر المباريات في السعودية العربية لعام 2026
+  -- Duration: 8.04 seconds
+  -- Tokens Used: 40,533
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول حجز تذاكر المباريات في السعودية العربية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_احجز مقعدك الآن واستمتع بمبارياتك المفضلة في السعودية العربية
+  -- Duration: 3.75 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: SECTION_9_احجز مقعدك الآن واستمتع بمبارياتك المفضلة في السعودية العربية
+  -- Duration: 3.78 seconds
+  -- Tokens Used: 47,267
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: احجز مقعدك الآن واستمتع بمبارياتك المفضلة في السعودية العربية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 77.18 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.51 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.40 seconds
+  -- Tokens Used: 47,219
+--------------------------------------------------

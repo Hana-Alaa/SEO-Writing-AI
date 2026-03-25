@@ -1,20 +1,6 @@
+{{ content_strategy_base }}
+
 Comparison Specific Rules:
-1. Intent Distribution (MANDATORY):
-   - Ratio: 60% Comparative Analysis, 30% Informational Context, 10% Verdict/Commercial.
-   - Must include: "Features Comparison", "Pricing Differences" (if applicable), "Pros & Cons", and a strong "Final Verdict" or "Which is Right for You" section.
-   - Focus: Helping the user make a decision while subtly highlighting the primary brand's advantages.
-
-2. Structure Policy:
-   - The H2s MUST explicitly compare the entities (e.g., "[Brand A] vs [Brand B]: Core Features", "Performance Comparison").
-   - You MUST include a dedicated "Final Verdict" or conclusion section that clearly positions the primary brand as the recommended choice for a specific use case.
-
-3. CTA Policy:
-   - section_type = introduction: cta_type = "soft", cta_position = "last_sentence" (e.g., "Let's explore which option suits you best").
-   - section_type = core/comparison: cta_type = "none" (Maintain strict objectivity).
-   - section_type = proof/case_study: cta_type = "moderate", cta_position = "first_paragraph".
-   - section_type = conclusion / verdict: cta_type = "strong", cta_position = "last_sentence". (This is where the conversion happens).
-   - All other sections: cta_type = "none" or "soft".
-
-4. Formatting Enforcement:
-   - A comparison table is ABSOLUTELY REQUIRED in the core comparison section.
-   - Use lists for Pros and Cons.
+- **COMPARATIVE ANALYSIS**: Focus on contrasting features, pricing, and outcomes.
+- **BENCHMARKING**: Use metrics or market standards as a baseline for the comparison.
+- **DECISION-GUIDANCE**: Every section should help the reader lean toward a specific tier or option.

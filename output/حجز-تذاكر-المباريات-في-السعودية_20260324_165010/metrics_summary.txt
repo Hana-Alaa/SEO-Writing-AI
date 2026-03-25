@@ -1,0 +1,148 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 76.33 seconds
+  -- Tokens Used: 30,087
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 76.82 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 8.15 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 9.48 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 7.43 seconds
+  -- Tokens Used: 3,522
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 20.55 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 18.95 seconds
+  -- Tokens Used: 73,263
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.20 seconds
+  -- Tokens Used: 16,910
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_المنصات الرسمية المعتمدة لشراء تذاكر كرة القدم في السعودية
+  -- Duration: 4.18 seconds
+  -- Tokens Used: 23,759
+--------------------------------------------------
+Step: SECTION_2_المنصات الرسمية المعتمدة لشراء تذاكر كرة القدم في السعودية
+  -- Duration: 5.72 seconds
+  -- Tokens Used: 23,829
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: المنصات الرسمية المعتمدة لشراء تذاكر كرة القدم في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_كيفية حجز تذاكر دوري أبطال آسيا للنخبة 2026
+  -- Duration: 13.03 seconds
+  -- Tokens Used: 36,157
+--------------------------------------------------
+Step: SECTION_3_كيفية حجز تذاكر دوري أبطال آسيا للنخبة 2026
+  -- Duration: 7.60 seconds
+  -- Tokens Used: 35,978
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: كيفية حجز تذاكر دوري أبطال آسيا للنخبة 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_مميزات وعيوب أنظمة حجز تذاكر المباريات الحالية
+  -- Duration: 5.99 seconds
+  -- Tokens Used: 44,666
+--------------------------------------------------
+Step: SECTION_4_مميزات وعيوب أنظمة حجز تذاكر المباريات الحالية
+  -- Duration: 6.47 seconds
+  -- Tokens Used: 44,605
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مميزات وعيوب أنظمة حجز تذاكر المباريات الحالية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_نماذج وتجارب حجز تذاكر المباريات الكبرى في السعودية
+  -- Duration: 5.07 seconds
+  -- Tokens Used: 53,718
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: نماذج وتجارب حجز تذاكر المباريات الكبرى في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_أسئلة شائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 6.89 seconds
+  -- Tokens Used: 60,985
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_الخلاصة: نصائح ذهبية لضمان حجز تذاكر المباريات في السعودية بنجاح
+  -- Duration: 5.88 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الخلاصة: نصائح ذهبية لضمان حجز تذاكر المباريات في السعودية بنجاح
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 97.23 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.11 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.89 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.07 seconds
+  -- Tokens Used: 75,763
+--------------------------------------------------

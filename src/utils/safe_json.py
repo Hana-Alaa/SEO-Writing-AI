@@ -31,6 +31,9 @@ def recover_json(text: str) -> Optional[Any]:
         except Exception as e:
             logger.debug(f"Failed to parse markdown JSON: {e}")
 
+    # Aggressive Cleanup: Remove control characters and non-printable stuff
+    text = "".join(char for char in text if char.isprintable() or char in "\n\r\t")
+
     # Fallback: Find the first and last brackets/braces to ignore conversational text
     first_bracket = text.find('[')
     last_bracket = text.rfind(']')
@@ -38,19 +41,18 @@ def recover_json(text: str) -> Optional[Any]:
     first_brace = text.find('{')
     last_brace = text.rfind('}')
     
-    # Try array if it starts first
-    if first_bracket != -1 and (first_brace == -1 or first_bracket < first_brace) and last_bracket != -1:
+    # Try object if it contains "content" (The most likely target for SectionWriter)
+    if first_brace != -1 and last_brace != -1:
+        candidate = text[first_brace:last_brace+1]
         try:
-            return json.loads(text[first_bracket:last_bracket+1])
+            return json.loads(candidate)
         except Exception:
-            pass
-            
-    # Try object if it starts first
-    if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket) and last_brace != -1:
-        try:
-            return json.loads(text[first_brace:last_brace+1])
-        except Exception:
-            pass
+            # Last ditch: try to fix common JSON errors (like trailing commas)
+            try:
+                fixed = re.sub(r',\s*([\]}])', r'\1', candidate)
+                return json.loads(fixed)
+            except Exception:
+                 pass
 
     logger.debug("Regex JSON recovery and outermost bracket extraction failed.")
     return None

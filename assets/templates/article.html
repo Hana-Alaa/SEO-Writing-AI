@@ -8,6 +8,19 @@
     <meta name="description" content="{{ meta_description }}">
     <meta name="keywords" content="{{ meta_keywords }}">
 
+    <!-- Structured Data (Schema.org) -->
+    {% if article_schema %}
+    <script type="application/ld+json">
+    {{ article_schema | tojson }}
+    </script>
+    {% endif %}
+
+    {% if faq_schema %}
+    <script type="application/ld+json">
+    {{ faq_schema | tojson }}
+    </script>
+    {% endif %}
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -1,4 +1,15 @@
-Informational Specific Rules:
-- 100% educational tone
-- No direct selling
-- Internal-link bridge toward service pages
+### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Educate, empower, and build authority (Top-of-Funnel Mastery).
+- **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and authoritative.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Foundation (Intro)**: Direct topic definition + context on why it matters. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed.
+2. **The Definition (What is)**: H2 with Primary Keyword. Clear, authoritative, and concise description.
+3. **The Relevance (Why it matters)**: Strategic context building + Key Benefits for the reader.
+4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
+5. **The Action (Practical Tips)**: Actionable "How-to" examples or practical advice to maximize dwell time and utility.
+6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
+7. **The Clarity (FAQ)**: Exactly 4-5 high-intent questions derived from PAA (People Also Ask).
+8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., "Learn more" or "Explore further").
+

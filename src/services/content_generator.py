@@ -333,13 +333,16 @@ class SectionWriter:
         content_type: str,
         link_strategy: str,
         brand_url: str,
-        brand_link_used: int,
+        brand_link_used: bool,
         brand_link_allowed: bool,
         allow_external_links: bool,
         execution_plan: Dict[str, Any],
         area: str,
+        workflow_mode: str = "core",
         brand_name: str = "",
         used_phrases: List[str] = None,
+        used_topics: List[str] = None,
+        previous_content_summary: str = "",
         used_internal_links: List[str] = None,
         used_external_links: List[str] = None,
         section_index: int = 0,
@@ -356,7 +359,11 @@ class SectionWriter:
         brand_voice_guidelines: Optional[str] = None,
         brand_voice_examples: Optional[str] = None,
         custom_keyword_density: Optional[float] = None,
-        bold_key_terms: bool = True
+        bold_key_terms: bool = True,
+        introduction_text: str = "",
+        full_outline: List[Dict[str, Any]] = None,
+        external_resources: List[Dict[str, Any]] = None,
+        keyword_budget_exhausted: bool = False
     ) -> Dict[str, Any]:
 
 
@@ -383,6 +390,17 @@ class SectionWriter:
             "differentiation_strategy": strategic_intelligence.get("differentiation_strategy", []),
             "structural_patterns": strategic_intelligence.get("structural_patterns", [])
         }
+        
+        # Target: ~3 CTAs per 1000 words (or 1 per ~333 words)
+        # Assuming avg 300-400 words per section, 1 CTA every 2-3 sections is ideal
+        show_cta = False
+        if total_sections <= 3:
+            show_cta = True # Show in all if very short article
+        else:
+            # Smart Interval Calculation (e.g. 9 sections -> 9/3 = 3 -> slots 0, 3, 6, 9)
+            interval = max(2, total_sections // 3)
+            if section_index == 0 or section_index == total_sections - 1 or section_index % interval == 0:
+                show_cta = True
 
         # Provide defaults for section fields
         safe_section = {
@@ -397,13 +415,13 @@ class SectionWriter:
             "brand_mentions": section.get("brand_mentions", []),
             "estimated_word_count_min": section.get("estimated_word_count_min", 300),
             "estimated_word_count_max": section.get("estimated_word_count_max", 600),
-            # "primary_keywords": primary_keywords,
             "article_language": article_language,
             "requires_table": section.get("requires_table", False),
             "table_type": section.get("table_type", "none"),
             "requires_list": section.get("requires_list", False),
             "list_type": section.get("list_type", "none"),
             "cta_position": section.get("cta_position", "none"),
+            "show_cta": show_cta, # Injected flag
 
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
@@ -414,6 +432,7 @@ class SectionWriter:
             "sales_intensity": section.get("sales_intensity", "medium"),
             "questions": section.get("questions", []),
             "assigned_links": section.get("assigned_links", []),
+            "mandatory_facts": section.get("mandatory_facts", [])
         }
 
         print("Assigned links:", safe_section["assigned_links"])
@@ -443,6 +462,8 @@ class SectionWriter:
             execution_plan=execution_plan,
             area=area,
             used_phrases=used_phrases or [],
+            used_topics=used_topics or [],
+            previous_content_summary=previous_content_summary or "",
             used_internal_links=used_internal_links or [],
             used_external_links=used_external_links or [], 
             brand_name=brand_name,
@@ -451,10 +472,12 @@ class SectionWriter:
             brand_context=brand_context,
             section_source_text=section_source_text,
             external_sources=external_sources or [],
+            external_resources=external_resources or [],
             is_first_section=(section_index == 0),
             is_last_section=(section_index == total_sections - 1),
             prohibited_competitors=prohibited_competitors or [],
             current_year=current_year,
+            workflow_mode=workflow_mode,
             # Advanced Customization
             tone=tone,
             pov=pov,
@@ -462,7 +485,10 @@ class SectionWriter:
             brand_voice_guidelines=brand_voice_guidelines,
             brand_voice_examples=brand_voice_examples,
             custom_keyword_density=custom_keyword_density,
-            bold_key_terms=bold_key_terms
+            bold_key_terms=bold_key_terms,
+            keyword_budget_exhausted=keyword_budget_exhausted,
+            introduction_text=introduction_text,
+            full_outline=full_outline,
         )
 
 
@@ -499,9 +525,21 @@ class SectionWriter:
 
             data = recover_json(response_content)
             if not data:
-                # Fallback to pure string if JSON recovery fails
+                # Aggressive fallback: Extract "content" value using regex if JSON parse fails
+                content_match = re.search(r'"content":\s*"(.*?)"(?=,\s*"\w+":|\s*\})', response_content, re.DOTALL)
+                if content_match:
+                    extracted_content = content_match.group(1).encode().decode('unicode_escape', errors='ignore')
+                    return {
+                        "content": extracted_content,
+                        "used_links": [],
+                        "brand_link_used": False,
+                        "metadata": metadata
+                    }
+                
+                # If everything fails, clean the string of ANY JSON-like structure before returning
+                cleaned_fallback = re.sub(r'\{.*?\}|\[.*?\]', '', response_content, flags=re.DOTALL).strip()
                 return {
-                    "content": response_content,
+                    "content": cleaned_fallback if cleaned_fallback else response_content,
                     "used_links": [],
                     "brand_link_used": False,
                     "metadata": metadata
@@ -510,6 +548,7 @@ class SectionWriter:
             return {
                 "content": data.get("content", ""),
                 "used_links": data.get("used_links", []),
+                "topics_covered": data.get("topics_covered", []),
                 "brand_link_used": data.get("brand_link_used", False),
                 "metadata": metadata
             }

@@ -1,5 +1,10 @@
-Comparison Specific Rules:
-- 100% objective tone with subtle positioning of the primary brand/service.
-- Head-to-head analysis architecture (Features, Pricing, Pros/Cons).
-- Position the primary brand as the ultimate, superior choice without aggressive direct selling.
-- Create a clear path for the reader to conclude the primary brand is the winner (intro -> comparison -> clear verdict CTA).
+Comparison Articles (Review/Versus/Tiered)
+The goal is to help the reader decide between options.
+STRUCTURE:
+1. Intro: Context of the comparison. No CTA.
+2. The Protagonist (What is): Clear definition of the main subject.
+3. Feature-by-Feature Comparison: Multi-section body comparing specific attributes.
+4. Comparison Table: Summary of tiers or features (MANDATORY).
+5. Pros & Cons: Balanced view to build authority.
+6. FAQ: Pricing, compatibility, or decision-making questions.
+7. Conclusion: Final verdict + strong CTA based on tiers.

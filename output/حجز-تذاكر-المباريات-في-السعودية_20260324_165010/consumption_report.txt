@@ -1,0 +1,49 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0695
+Total Tokens: 1,131,258
+
+Google (Gemini) Cost: $0.0695
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+hybrid_research           | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | google/gemini-3-flash-pr  | $0.000048
+STEP_TOTAL: style_analys  | google/gemini-3-flash-pr  | $0.000048
+STEP_TOTAL: content_stra  | google/gemini-3-flash-pr  | $0.000048
+brand_discovery           | unknown                   | $0.000000
+STEP_TOTAL: brand_discov  | google/gemini-3-flash-pr  | $0.000048
+STEP_TOTAL: outline_gene  | google/gemini-3-flash-pr  | $0.007956
+section_1_Introduction    | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_2_المنصات الرسمي  | unknown                   | $0.000000
+section_2_المنصات الرسمي  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_3_كيفية حجز تذاك  | unknown                   | $0.000000
+section_3_كيفية حجز تذاك  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_4_مميزات وعيوب أ  | unknown                   | $0.000000
+section_4_مميزات وعيوب أ  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_5_نماذج وتجارب ح  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_6_أسئلة شائعة حو  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_7_الخلاصة: نصائح  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+STEP_TOTAL: content_writ  | google/gemini-3-flash-pr  | $0.007671
+STEP_TOTAL: image_prompt  | google/gemini-3-flash-pr  | $0.007671
+STEP_TOTAL: master_frame  | google/gemini-3-flash-pr  | $0.007671
+STEP_TOTAL: image_genera  | google/gemini-3-flash-pr  | $0.007671
+STEP_TOTAL: assembly      | google/gemini-3-flash-pr  | $0.007671
+STEP_TOTAL: image_insert  | google/gemini-3-flash-pr  | $0.007671
+STEP_TOTAL: meta_schema   | google/gemini-3-flash-pr  | $0.007671
+STEP_TOTAL: render_html   | google/gemini-3-flash-pr  | $0.007671

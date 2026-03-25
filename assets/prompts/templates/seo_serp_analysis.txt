@@ -40,6 +40,9 @@ Extract:
 - CTA_intensity_pattern (none / soft / moderate / aggressive)
 - pricing_presence_ratio (0–1)
 - faq_presence_ratio (0–1)
+- list_presence_ratio (0–1)
+- image_density_pattern (low / medium / high)
+- chart_presence_ratio (0–1)
 - trust_signal_density (low / medium / high)
 - local_keyword_density (low / medium / high)
 - detected_area (Identify specific city or country if keywords/titles show a clear geographical target. Return "Global" if none found).
@@ -86,9 +89,12 @@ Return STRICT JSON only in this structure:
 "cta_position_pattern": "",
 "cta_intensity_pattern": "",
 "pricing_presence_ratio": 0.0,
-"faq_presence_ratio": 0.0,
-"trust_signal_density": "",
-"local_keyword_density": "",
+    "faq_presence_ratio": 0.0,
+    "list_presence_ratio": 0.0,
+    "image_density_pattern": "",
+    "chart_presence_ratio": 0.0,
+    "trust_signal_density": "",
+    "local_keyword_density": "",
 "detected_area": ""
 },
 "strategic_intelligence": {

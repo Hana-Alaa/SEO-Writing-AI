@@ -834,7 +834,8 @@
                         </div>
                         <button type="button" class="btn-secondary" style="margin-top: 1rem;"
                             onclick="addExternalUrlField()">+ Add External Link</button>
-                    </div>
+                    </div> <!-- closes external-url-container -->
+                </div> <!-- closes external-links-section -->
 
                     <!-- Internal Links inside Advanced Mode -->
                     <div id="adv-internal-links-section" style="display: block; width: 100%; margin-top: 1.5rem; grid-column: 1 / -1;">
@@ -869,12 +870,13 @@
 
             </div> <!-- closes advanced-interface -->
 
-            <!-- Remove old shared internal-links-section -->
-
-            <button type="submit" class="submit-btn" id="submitBtn">
-                <span>Generate Content</span>
-                <div class="loader" id="loader"></div>
-            </button>
+            <!-- Global Action Bar (Always Visible) -->
+            <div style="padding-top: 2rem; border-top: 1px solid var(--border-color); margin-top: 2rem;">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span>Generate Content</span>
+                    <div class="loader" id="loader"></div>
+                </button>
+            </div>
         </form>
     </div>
 
@@ -1127,10 +1129,8 @@
                 const refFile = document.getElementById('adv-style-file').files[0];
                 if (refFile) formData.append('reference_image', refFile);
                 
-                const guidelinesFile = document.getElementById('adv-voice-guidelines').files[0];
-                if (guidelinesFile) formData.append('brand_voice_guidelines', guidelinesFile);
-                
-                formData.append('brand_voice_examples', examplesFile);
+                const examplesFile = document.getElementById('adv-voice-examples').files[0];
+                if (examplesFile) formData.append('brand_voice_examples', examplesFile);
             }
 
             // Sync generate_images for core mode
@@ -1149,7 +1149,7 @@
 
                 if (data.status === 'success') {
                     statusText.innerHTML = `<span style="color: var(--success-color); font-weight: 700;">ARTICLE GENERATED:</span> ${data.slug}`;
-                    viewBtn.href = `/output/${data.slug}/page.html`;
+                    viewBtn.href = `${baseUrl}/output/${encodeURIComponent(data.slug)}/page.html`;
                     viewBtn.style.display = 'block';
                 } else {
                     statusText.innerHTML = `<span style="color: var(--error-color); font-weight: 700;">ERROR:</span> ${data.message || 'Check terminal'}`;

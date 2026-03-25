@@ -20,7 +20,8 @@ class TitleGenerator:
         article_language: str,
         serp_titles: Optional[List[str]] = None,
         serp_cta_styles: Optional[List[str]] = None,
-        area: Optional[str] = None
+        area: Optional[str] = None,
+        brand_name: str = ""
     ) -> Dict[str, Any]:
 
         current_year = str(datetime.now().year)
@@ -35,6 +36,7 @@ class TitleGenerator:
             serp_titles=serp_titles or [],
             serp_cta_styles=serp_cta_styles or [],
             area=area,
+            brand_name=brand_name,
             current_year=current_year
         )
 

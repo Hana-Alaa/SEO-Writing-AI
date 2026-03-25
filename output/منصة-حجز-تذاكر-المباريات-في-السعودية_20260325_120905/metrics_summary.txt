@@ -1,0 +1,180 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 83.05 seconds
+  -- Tokens Used: 39,652
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 83.40 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.40 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.44 seconds
+  -- Tokens Used: 480
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 480
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 480
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 7.51 seconds
+  -- Tokens Used: 3,654
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 20.82 seconds
+  -- Tokens Used: 480
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 23.23 seconds
+  -- Tokens Used: 13,277
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.05 seconds
+  -- Tokens Used: 17,511
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_ما هي منصة حجز تذاكر المباريات في السعودية تيك إيفنت؟
+  -- Duration: 4.59 seconds
+  -- Tokens Used: 22,712
+--------------------------------------------------
+Step: SECTION_2_ما هي منصة حجز تذاكر المباريات في السعودية تيك إيفنت؟
+  -- Duration: 3.67 seconds
+  -- Tokens Used: 22,640
+--------------------------------------------------
+Step: SECTION_2_ما هي منصة حجز تذاكر المباريات في السعودية تيك إيفنت؟
+  -- Duration: 4.79 seconds
+  -- Tokens Used: 22,799
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ما هي منصة حجز تذاكر المباريات في السعودية تيك إيفنت؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_الخدمات والمميزات الحصرية في منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 5.29 seconds
+  -- Tokens Used: 30,327
+--------------------------------------------------
+Step: SECTION_3_الخدمات والمميزات الحصرية في منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 5.72 seconds
+  -- Tokens Used: 30,300
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الخدمات والمميزات الحصرية في منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_تغطية شاملة لمباريات دوري روشن ودوري أبطال آسيا للنخبة
+  -- Duration: 5.74 seconds
+  -- Tokens Used: 36,220
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: تغطية شاملة لمباريات دوري روشن ودوري أبطال آسيا للنخبة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_لماذا يفضل المشجعون تيك إيفنت كأفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 4.43 seconds
+  -- Tokens Used: 43,754
+--------------------------------------------------
+Step: SECTION_5_لماذا يفضل المشجعون تيك إيفنت كأفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 5.87 seconds
+  -- Tokens Used: 43,838
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يفضل المشجعون تيك إيفنت كأفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_نتائج ملموسة: نجاح منصة حجز تذاكر المباريات في السعودية بالأرقام
+  -- Duration: 6.31 seconds
+  -- Tokens Used: 52,698
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: نتائج ملموسة: نجاح منصة حجز تذاكر المباريات في السعودية بالأرقام
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_مقارنة بين منصة حجز تذاكر المباريات في السعودية والخدمات الأخرى
+  -- Duration: 7.11 seconds
+  -- Tokens Used: 60,313
+--------------------------------------------------
+Step: SECTION_7_مقارنة بين منصة حجز تذاكر المباريات في السعودية والخدمات الأخرى
+  -- Duration: 6.94 seconds
+  -- Tokens Used: 60,312
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة بين منصة حجز تذاكر المباريات في السعودية والخدمات الأخرى
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_خطوات الحجز عبر منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 5.82 seconds
+  -- Tokens Used: 69,051
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات الحجز عبر منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_الأسئلة الشائعة حول منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 6.20 seconds
+  -- Tokens Used: 76,147
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_10_احجز مكانك الآن عبر أفضل منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 6.13 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: احجز مكانك الآن عبر أفضل منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 107.06 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.10 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.71 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.24 seconds
+  -- Tokens Used: 88,676
+--------------------------------------------------

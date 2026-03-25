@@ -1,4 +1,16 @@
-Brand Commercial Specific Rules:
-- 70% conversion focus / 30% education
-- Service-page architecture
-- Clear conversion path (intro CTA bridge -> proof -> close CTA)
+### COMMERCIAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Direct Conversion via Trust building and authority (Bottom-of-Funnel Mastery).
+- **Core Philosophy**: 70% Transactional focus / 30% Supportive Education. 
+- **Tone**: Confident, solution-focused, persuasive but NOT pushy. 
+- **Service-Page Standards**: Built for conversion speed and scannability.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Hook (Intro)**: Address the user's specific problem/need immediately. Primary Keyword in paragraph 1. Optional SOFT CTA at the end of the intro.
+2. **The Essence (What is it?)**: H2 with Primary Keyword. Clear, concise, and professional service/product description.
+3. **The Value (Key Features)**: Bullet points are preferred for high scannability. Show exactly what is included.
+4. **The Edge (Differentiators)**: Why choose us over the market? Specific USPs only. Absolute prohibition on generic "Quality/Experience" claims.
+5. **The Proof (Trust Building)**: Stats, case studies, client results, or factual evidence. This is where you earn the conversion.
+6. **The Matrix (Comparison)**: Service tiers, tiered pricing, or comparison vs market standards. Flexible but scannable format.
+7. **The Path (How it Works)**: Numbered steps defining the operational process to reduce friction and eliminate uncertainty.
+8. **The Support (FAQ)**: Specifically handle objections, pricing questions, and "How to start" logistics.
+9. **The Close (Conclusion)**: Strong, direct, and confident sign-off + Final Primary CTA for conversion.

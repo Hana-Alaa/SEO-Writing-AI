@@ -145,10 +145,11 @@ Hard Rules:
 
 16. Strategic Linking (Internal):
    - You are provided with a list of "Internal Links" (URLs).
-   - LINK QUOTA (STRICT): Assign between 3 and 6 total internal links for the entire article.
+   - **MANDATORY QUOTA (STRICT)**: You MUST assign between 3 and 6 total internal links for the entire article.
    - **MAXIMUM ONE (1) INTERNAL LINK PER SECTION.**
-   - **STRICT UNIQUENESS: Every URL assigned MUST be unique across the ENTIRE article. NO URL can appear in more than one section.**
-   - ANCHOR DIVERSITY: Each assigned link MUST have a unique and highly descriptive anchor text (`text` field) that identifies the target page's content (e.g., "[custom React development solutions](url)").
+   - **STRICT UNIQUENESS (CRITICAL)**: Every URL assigned MUST be unique across the ENTIRE article. YOU ARE FORBIDDEN FROM ASSIGNING THE SAME URL TWICE.
+   - **LINK DIVERSITY**: Do NOT only use the brand homepage. You MUST distribute links to specific services, products, or portfolios from the list.
+   - **ANCHOR DIVERSITY**: Each assigned link MUST have a unique and highly descriptive anchor text (`text` field) that identifies the target page's content (e.g., "[custom React development solutions](url)").
    - PRIORITIZATION: Prioritize linking to Service or Product pages. Avoid generic "About" or "Contact" pages.
    - DISTRIBUTION: Distribute these links across different sections by adding them to the `assigned_links` array as objects: `{"url": "...", "text": "..."}`.
 

@@ -97,7 +97,8 @@ class StrategyService:
             article_language=article_language,
             serp_titles=top_titles,
             serp_cta_styles=cta_styles,
-            area=area
+            area=area,
+            brand_name=state.get("brand_name", "")
         )
         
         if state.get("workflow_logger"):
@@ -331,6 +332,7 @@ class StrategyService:
             "conversion_strategy": "Intro CTA bridge -> proof -> close CTA",
             "cta_philosophy": "One clear CTA early, one decisive CTA in conclusion",
             "local_strategy": f"Reflect market behavior, trust factors, and payment context in {area}" if area else "No local constraint",
+            "cultural_peer_areas": [],
             "tone_direction": "Confident, direct, benefit-led",
             "section_role_map": {
                 "introduction": "Hook with local market urgency + primary CTA",
@@ -363,7 +365,7 @@ class StrategyService:
             "primary_angle", "strategic_positioning", "target_reader_state",
             "pain_point_focus", "emotional_trigger", "depth_level",
             "authority_strategy", "eeat_signals_to_include", "differentiation_focus",
-            "conversion_strategy", "cta_philosophy", "local_strategy",
+            "conversion_strategy", "cta_philosophy", "local_strategy", "cultural_peer_areas",
             "tone_direction", "section_role_map"
         ]
         if not isinstance(data, dict) or not data:

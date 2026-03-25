@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 class ValidationService:
     """Service dedicated to content validation, quality checks, and structure enforcement."""
 
-    def __init__(self, semantic_model=None):
+    def __init__(self, ai_client=None, semantic_model=None):
+        self.ai_client = ai_client
         self.semantic_model = semantic_model
 
     def validate_h1_length(self, h1: str) -> bool:
@@ -129,84 +130,6 @@ class ValidationService:
 
         return out
 
-    def inject_commercial_ctas(self, markdown: str, article_language: str) -> str:
-        """
-        Post-processing CTA injector for brand_commercial articles.
-        """
-        CTA_BANK = {
-            "ar": [
-                "تواصل مع فريقنا اليوم وابدأ مشروعك في أقرب وقت.",
-                "احصل على استشارة مجانية من خبرائنا المتخصصين — بدون أي التزام.",
-                "لا تدع منافسيك يسبقونك — ابدأ مشروعك الرقمي الآن.",
-                "اكتشف كيف يمكننا تحويل رؤيتك إلى نتائج رقمية حقيقية.",
-                "خبراؤنا جاهزون للإجابة على كل تساؤلاتك — تواصل معنا الآن.",
-                "خطوتك الأولى نحو النجاح تبدأ بمحادثة واحدة — دعنا نبدأ.",
-            ],
-            "en": [
-                "Contact our team today and get your project moving within days.",
-                "Get a free consultation with our specialists — zero commitment required.",
-                "Don't let your competitors launch first — start your digital project now.",
-                "See how our team can turn your vision into measurable digital results.",
-                "Our experts are standing by — reach out and get direct answers today.",
-                "Your path to digital success starts with one conversation — let's begin.",
-            ],
-        }
-
-        MAX_CTAS = 6
-        cta_idx = [0]
-        ctas_injected = [0]
-
-        lang = "ar" if article_language and "ar" in article_language.lower() else "en"
-        ctas = CTA_BANK.get(lang, CTA_BANK["en"])
-
-        def next_cta() -> str:
-            if ctas_injected[0] >= MAX_CTAS:
-                return ""
-            cta = ctas[cta_idx[0] % len(ctas)]
-            cta_idx[0] += 1
-            ctas_injected[0] += 1
-            return f"\n\n**{cta}**\n"
-
-        SKIP_KEYWORDS = [
-            "faq", "أسئلة", "frequently asked", "questions", "خاتمة",
-            "conclusion", "في ختام", "summary", "في النهاية",
-            "cta", "تواصل", "contact"
-        ]
-
-        sections = markdown.split("\n## ")
-        processed = [sections[0]]
-
-        for i in range(1, len(sections)):
-            sec = sections[i]
-            # split heading from body
-            parts = sec.split("\n", 1)
-            heading = parts[0]
-            body = parts[1] if len(parts) > 1 else ""
-
-            is_skip = any(k in heading.lower() for k in SKIP_KEYWORDS)
-
-            if not is_skip and body.strip():
-                # 1. Injected after FIRST paragraph of body
-                paragraphs = body.split("\n\n")
-                if len(paragraphs) > 0:
-                    cta = next_cta()
-                    if cta:
-                        paragraphs[0] = paragraphs[0].strip() + cta
-                    body = "\n\n".join(paragraphs)
-
-                # 2. Injected after any table
-                if "|" in body and "-|-" in body:
-                    # simplistic approach: find end of table blocks
-                    table_blocks = re.findall(r'((?:^\s*\|?.*\|.*\|?.*$\n?){2,})', body, re.MULTILINE)
-                    for table in table_blocks:
-                        cta = next_cta()
-                        if cta:
-                            body = body.replace(table, table + cta)
-
-            processed.append(f"{heading}\n{body}")
-
-        return "\n## ".join(processed)
-
     def extract_sentences(self, text: str) -> List[str]:
         """Extracts sentences using regex that supports Arabic and English."""
         if not text:
@@ -236,7 +159,7 @@ class ValidationService:
                     
         return list(set(repeated))
 
-    async def check_semantic_overlap(self, text: str, used_claims: List[str], threshold: float = 0.85) -> Tuple[bool, float, str]:
+    async def check_semantic_overlap(self, text: str, used_claims: List[str], threshold: float = 0.75) -> Tuple[bool, float, str]:
         """Checks if the new text has high semantic overlap with any previously used claims."""
         if not self.semantic_model or not text or not used_claims:
             return False, 0.0, ""
@@ -310,14 +233,21 @@ class ValidationService:
         elif is_last and cta_type in ["primary", "strong"] and not looks_like_cta:
             errors.append("Missing required Decisive CTA in Conclusion")
 
-        # 5. Primary Keyword Density Check
+        # 5. Primary Keyword Density Check (Fuzzy/Semantic Match)
         primary_kw = section.get("assigned_keywords", [""])[0] if section.get("assigned_keywords") else ""
         if primary_kw and not is_faq_or_pricing:
-            kw_lower = primary_kw.lower()
+            kw_words = [w.lower() for w in re.findall(r'\b\w+\b', primary_kw) if len(w) > 1]
             content_lower = content.lower()
-            kw_count = len(re.findall(re.escape(kw_lower), content_lower))
-            if kw_count < 1:
-                errors.append(f"Primary keyword '{primary_kw}' missing from core content")
+            
+            # Check if all major words of the keyword exist in the section
+            # This allows for "Web design in Riyadh" to match "Web Design Riyadh"
+            found_words = [w for w in kw_words if w in content_lower]
+            
+            # We require at least 80% of the keyword's words to be present to pass
+            match_ratio = len(found_words) / max(len(kw_words), 1)
+            
+            if match_ratio < 0.8:
+                errors.append(f"Primary keyword components '{primary_kw}' missing or too fragmented in core content")
 
         # 6. Flexible External Link Validation
         found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
@@ -411,13 +341,22 @@ class ValidationService:
 
     REQUIRED_STRUCTURE_BY_TYPE = {
         "brand_commercial": {
-            "mandatory": {"introduction", "why_choose_us", "proof", "faq", "conclusion"}
+            "mandatory": {
+                "introduction", "what_is", "key_features", "why_choose_us", 
+                "proof", "process", "faq", "conclusion"
+            }
         },
         "informational": {
-            "mandatory": {"introduction", "core", "examples_or_use_cases", "pros_cons", "faq", "conclusion"}
+            "mandatory": {
+                "introduction", "definition", "key_benefits", "core", 
+                "examples_or_use_cases", "common_mistakes", "faq", "conclusion"
+            }
         },
         "comparison": {
-            "mandatory": {"introduction", "comparison", "criteria", "pros_cons_each", "who_should_choose_what", "faq", "conclusion"}
+            "mandatory": {
+                "introduction", "comparison", "criteria", "pros_cons_each", 
+                "who_should_choose_what", "faq", "conclusion"
+            }
         }
     }
 
@@ -435,6 +374,42 @@ class ValidationService:
                 sec["section_id"] = f"sec_{i+1:02d}"
         return outline
 
+    def calculate_max_ctas(self, article_size_input: str) -> int:
+        """Calculates the allowed number of CTAs based on article size (3 per 1,000 words)."""
+        if article_size_input == "core_dynamic_expansion":
+            # For dynamic expansion (1000-5000), we'll allow a flexible budget.
+            # Base budget for 1000 words is 3. We'll allow up to 9 for 3000-5000 articles.
+            return 9 
+        
+        try:
+            size = int(re.sub(r'\D', '', article_size_input))
+            return max(1, (size // 1000) * 3)
+        except:
+            return 3 # Default fallback
+
+    def enforce_cta_budget(self, outline: List[Dict[str, Any]], article_size: str) -> List[Dict[str, Any]]:
+        """Ensures the total number of CTAs does not exceed the budget."""
+        max_ctas = self.calculate_max_ctas(article_size)
+        
+        cta_sections = [s for s in outline if s.get("cta_type") not in [None, "none", ""]]
+        
+        if len(cta_sections) > max_ctas:
+            logger.info(f"Reducing CTAs from {len(cta_sections)} to {max_ctas} to fit budget.")
+            # Keep intro and conclusion CTAs, prune middle ones
+            intro = cta_sections[0] if cta_sections[0].get("section_type") == "introduction" else None
+            conclusion = cta_sections[-1] if cta_sections[-1].get("section_type") == "conclusion" else None
+            
+            middle_ctas = [s for s in cta_sections if s != intro and s != conclusion]
+            # Prune middle CTAs to fit budget
+            to_keep = max_ctas - (1 if intro else 0) - (1 if conclusion else 0)
+            
+            for i, s in enumerate(middle_ctas):
+                if i >= to_keep:
+                    s["cta_type"] = "none"
+                    s["cta_position"] = "none"
+        
+        return outline
+
     def validate_outline_quality(self, outline: List[Dict[str, Any]]) -> List[str]:
         errors = []
         h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
@@ -446,7 +421,7 @@ class ValidationService:
             errors.append("Duplicate H2 headings detected. Each heading must be unique.")
 
         faq_section = next((s for s in outline if s.get("section_type") == "faq"), None)
-        faq_count = len(faq_section.get("questions", [])) if faq_section else 0
+        faq_count = len(faq_section.get("questions") or []) if faq_section else 0
         if faq_count > 0 and faq_count < 3:
             errors.append(f"Too few FAQ questions detected ({faq_count}). Minimum required is 3.")
         return errors
@@ -507,6 +482,7 @@ class ValidationService:
                 if s.get("source") == "paa":
                     s["heading_level"] = "H3"
                     s["parent_section"] = "sec_faq"
+        return outline
     def enforce_intent_distribution(self, outline: List[Dict], intent: str, content_type: str) -> Tuple[List[Dict], List[str]]:
         errors = []
         h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
@@ -534,6 +510,10 @@ class ValidationService:
                     if s_intent not in ["Commercial", "Transactional"]:
                         s["section_intent"] = "Commercial"
                         s["sales_intensity"] = s.get("sales_intensity", "medium")
+                        
+                        # CTA Budgeting: 3 CTAs per 1000 words logic
+                        # Simplified check: limit CTAs based on total expected word count
+                        # We'll calculate the maximum allowed CTAs later or use a safe heuristic here
                         if s.get("cta_type") in [None, "none", ""]:
                             s["cta_type"] = "moderate"
                             s["cta_position"] = "last_sentence"
@@ -554,9 +534,13 @@ class ValidationService:
 
         if intent.lower() == "informational":
             for s in outline:
-                if s.get("cta_allowed"):
-                    errors.append(f"Section '{s.get('heading_text')}' allows CTA but article intent is Informational.")
-                s["cta_allowed"] = False
+                # Force ALL sections to Informational intent, but ALLOW CTAs
+                s["section_intent"] = "Informational"
+                s["sales_intensity"] = "low"
+                
+                # Allow the AI's requested CTA type unless it's 'strong' in a non-conclusion
+                if s.get("cta_type") == "strong" and s.get("section_type") != "conclusion":
+                    s["cta_type"] = "primary" # Downgrade to informational primary
 
         return outline, errors
 
@@ -717,3 +701,47 @@ class ValidationService:
                 new_paragraphs.append(" ".join(chunk))
                 
         return "\n\n".join(new_paragraphs)
+
+    async def inject_commercial_ctas(self, markdown: str, language: str, brand_url: str = "", brand_name: str = "") -> str:
+        """AI-driven fallback to ensure a high-conversion CTA in commercial articles."""
+        if not markdown or not self.ai_client:
+            return markdown
+            
+        if self.validate_final_cta(markdown, language):
+            return markdown # Already has a strong CTA
+            
+        logger.info("[CTA_REFINER] Conclusion is weak. Triggering AI-driven CTA refinement...")
+        
+        prompt = f"""You are a conversion optimization expert.
+Refine the conclusion of the following article to include a POWERFUL, EMPATHETIC, and DIRECT Call-To-Action.
+
+Brand: {brand_name}
+Link: {brand_url}
+Language: {language}
+
+Constraints:
+- Return ONLY the refined conclusion text (last 2-3 paragraphs).
+- Must include a bolded link like [**Text**]({brand_url}).
+- Tone must be high-authority and persuasive.
+
+Current Article Content (Snippet):
+\"\"\"
+{markdown[-1500:]}
+\"\"\"
+
+Refined Conclusion:"""
+
+        try:
+            res = await self.ai_client.send(prompt, step="cta_refinement")
+            refined = res["content"].strip()
+            if not refined:
+                 return markdown
+            
+            # Replace the last paragraph or append
+            paragraphs = markdown.split("\n\n")
+            if len(paragraphs) > 1:
+                return "\n\n".join(paragraphs[:-1]) + "\n\n" + refined
+            return markdown + "\n\n" + refined
+        except Exception as e:
+            logger.error(f"CTA Refinement AI call failed: {e}")
+            return markdown

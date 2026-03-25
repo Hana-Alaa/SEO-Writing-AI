@@ -8,6 +8,7 @@ Input:
 - Top SERP titles: {{ serp_titles }}
 - SERP CTA styles: {{ serp_cta_styles }}
 - Target Area: {{ area if area else "Global" }}
+- Brand Name: {{ brand_name if brand_name else "Not provided" }}
 
 Task:
 1. Classify intent from SERP-first signals:
@@ -23,11 +24,12 @@ Allowed intents:
 - comparative  → comparing options, looking for best options
 
 Title rules:
-- 60–70 characters
-- Must include the primary keyword exactly
-- Must match article language
-- If area is provided, include it naturally
-- For commercial intent **YEAR INCLUSION (MANDATORY)**: You MUST include the current year ({{ current_year }}) naturally in the title to indicate freshness (e.g., "Best Web Design Agency in 2026" or "Top Services 2026").
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- CORE: Must include the **primary keyword** naturally.
+- SALES FOCUS (COMMERCIAL): For commercial intent, the title MUST be persuasive and sales-oriented (e.g., "Best", "Top", "Reliable").
+- FRESHNESS (YEAR): Prefer adding the current year ({{ current_year }}) where relevant to indicate up-to-date content, but avoid it if it makes the title feel forced.
+- BRANDING (OPTIONAL): You may include the Brand Name ({{ brand_name }}) if it adds trust and authority, but keep the primary focus on the keyword.
+- AREA: If an area is provided, it MUST be integrated into the title.
 - No clickbait, no keyword stuffing.
 - **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.
 - Focus 100% on the **Primary keyword** service.

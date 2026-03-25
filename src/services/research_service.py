@@ -43,7 +43,17 @@ class ResearchService:
                 brand_url = urls[0].get("link")
         
         if not brand_url or not brand_url.startswith("http"):
-            logger.info("Skipping brand discovery: No valid brand_url found.")
+            logger.info("Skipping brand discovery: No valid brand_url found. Implementing Pseudo-Brand fallback.")
+            # Fallback: Derive a generic but professional brand persona from keywords
+            primary_kw = state.get("primary_keyword", "المزود")
+            article_lang = state.get("article_language", "ar")
+            
+            if article_lang == "ar":
+                state["brand_name"] = f"منصة {primary_kw}"
+                state["brand_context"] = f"منصة رائدة متخصصة في {primary_kw} وتقديم أفضل الخدمات الاحترافية في هذا المجال."
+            else:
+                state["brand_name"] = f"{primary_kw} Platform"
+                state["brand_context"] = f"A leading platform specializing in {primary_kw} and providing professional services in the industry."
             return state
 
         primary_keyword = state.get("primary_keyword", "").lower()
@@ -54,14 +64,22 @@ class ResearchService:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
 
         try:
-            # Discover Logo, Colors, and Brand Name
+            # Discover Logo, Colors, and Brand Name (Only if images are enabled)
+            # We always try to get the brand name as it helps the AI context
             brand_assets = await self._discover_logo_and_colors(brand_url, state)
             if brand_assets:
-                state["logo_path"] = brand_assets.get("logo_path")
-                state["brand_colors"] = brand_assets.get("brand_colors", [])
+                # Only store image assets if requested
+                if state.get("generate_images", True):
+                    state["logo_path"] = brand_assets.get("logo_path")
+                    state["brand_colors"] = brand_assets.get("brand_colors", [])
+                    logger.info(f"Brand image assets added to state: Logo={state.get('logo_path')} | Colors={state.get('brand_colors')}")
+                
                 if brand_assets.get("brand_name"):
                     state["brand_name"] = brand_assets.get("brand_name")
-                logger.info(f"Brand assets discovered: {state.get('brand_name')} | Logo: {state.get('logo_path')} | Colors: {state.get('brand_colors')}")
+                logger.info(f"Brand identity identified: {state.get('brand_name')}")
+            else:
+                # Fallback brand name if discovery fails
+                state["brand_name"] = LinkManager.domain(brand_url).split('.')[0].capitalize()
 
             # Internal helper for fetching clean text
             def fetch_text(url: str) -> str:
@@ -95,10 +113,40 @@ class ResearchService:
             def relevance_score(url: str, anchor: str) -> int:
                 text = (url + " " + anchor).lower()
                 score = 0
+                
+                # 1. Primary Keyword Boost
                 if primary_keyword.lower() in text: score += 20
                 score += sum(3 for t in kw_tokens if t in text and len(t) > 2)
-                for boost_word in ["about", "work", "portfolio", "project", "offer", "services", "contact", "faq", "events"]:
-                    if boost_word in text: score += 5
+                
+                # 2. Content Type Boost (Prioritize Services/Products/Pillars)
+                service_patterns = ["service", "solution", "product", "pillar", "offer", "خدمات", "حلول", "منتج"]
+                if any(p in text for p in service_patterns): score += 15
+                
+                blog_patterns = ["blog", "article", "news", "guide", "مدونة", "مقال"]
+                if any(p in text for p in blog_patterns): score += 5
+                
+                # 3. Area & Neighborhood Boost (MANDATORY LOCAL SEO)
+                area = state.get("area", "").lower()
+                neighborhoods = state.get("area_neighborhoods", [])
+                
+                if area and area in text:
+                    score += 30 # Highest priority for exact local match
+                elif neighborhoods:
+                    if any(nb.lower() in text for nb in neighborhoods):
+                        score += 15 # High priority for local neighborhood match
+                
+                # 4. Cultural/Regional Proximity Boost (AI-Driven)
+                # Use culturally similar areas suggested by the strategy AI
+                strategy = state.get("content_strategy", {})
+                peer_areas = strategy.get("cultural_peer_areas", [])
+                
+                if peer_areas and any(p.lower() in text for p in peer_areas):
+                    score += 10
+                
+                # 5. Core Utility Boost (Contact/Booking for conclusion)
+                utility_patterns = ["contact", "book", "appointment", "tours", "تواصل", "حجز"]
+                if any(p in text for p in utility_patterns): score += 5
+                
                 return score
 
             # Crawl homepage
@@ -141,7 +189,11 @@ class ResearchService:
             added_count = 0
             for canon, (anchor, score) in sorted_links:
                 if canon not in seen_canons:
-                    state["internal_resources"].append({"link": canon, "text": anchor})
+                    state["internal_resources"].append({
+                        "link": canon, 
+                        "text": anchor, 
+                        "score": score
+                    })
                     seen_canons.add(canon)
                     added_count += 1
                 if added_count >= 30: break
@@ -194,8 +246,8 @@ Write the detailed fact sheet now:"""
     async def run_brand_discovery_light(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Lightweight brand discovery:
-        1. Only discovers Logo and Colors.
-        2. Skips subpage scraping and AI Fact Sheet generation.
+        1. Discovers Logo and Colors.
+        2. Performs a RAPID scrape of the homepage for internal links to populate the pool.
         """
         brand_url = state.get("brand_url")
         if not brand_url:
@@ -205,12 +257,39 @@ Write the detailed fact sheet now:"""
         if brand_url and brand_url.startswith("http"):
             logger.info(f"Starting light brand discovery for: {brand_url}")
             brand_assets = await self._discover_logo_and_colors(brand_url, state)
+            
             if brand_assets:
-                state["logo_path"] = brand_assets.get("logo_path")
-                state["brand_colors"] = brand_assets.get("brand_colors", [])
+                if state.get("generate_images", True):
+                    state["logo_path"] = brand_assets.get("logo_path")
+                    state["brand_colors"] = brand_assets.get("brand_colors", [])
+                
                 if brand_assets.get("brand_name"):
                     state["brand_name"] = brand_assets.get("brand_name")
-        
+                
+                # POPULATE INTERNAL RESOURCES (Even in Light Mode)
+                # This ensures we have a pool of 3-6 internal links to distribute
+                discovered_links = brand_assets.get("discovered_links", [])
+                if discovered_links:
+                    seen_canons = {LinkManager.canon_url(brand_url)}
+                    # Add existing manual links
+                    for r in state.get("internal_resources", []):
+                        seen_canons.add(LinkManager.canon_url(r["link"]))
+                    
+                    # Add up to 8 most relevant discovered links
+                    added_count = 0
+                    for lnk in discovered_links:
+                        canon = LinkManager.canon_url(lnk["link"])
+                        if canon not in seen_canons:
+                            state["internal_resources"].append({
+                                "link": lnk["link"],
+                                "text": lnk["text"],
+                                "is_manual": False
+                            })
+                            seen_canons.add(canon)
+                            added_count += 1
+                        if added_count >= 8: break
+                    logger.info(f"Discovered {added_count} relevant internal sub-pages from homepage.")
+
         # Ensure brand_context exists even if empty, or use manual voice
         if not state.get("brand_context"):
             state["brand_context"] = state.get("brand_voice_description", "Standard Brand Context (Light Discovery)")
@@ -228,7 +307,9 @@ Write the detailed fact sheet now:"""
 
         async def _do_serp_call(query: str):
             research_prompt = template.render(primary_keyword=query)
-            res = await self.ai_client.send_with_web(prompt=research_prompt, max_results=3)
+            # Default to 3 results unless explicitly requested otherwise
+            max_results = state.get("competitor_count", 3)
+            res = await self.ai_client.send_with_web(prompt=research_prompt, max_results=max_results)
             raw = res["content"]
             metadata = res["metadata"]
             if state.get("workflow_logger"):
@@ -268,8 +349,9 @@ Write the detailed fact sheet now:"""
 
         research_prompt = template.render(primary_keyword=search_query)
         
-        # Crucial: Use send_with_web to get real SERP results in the same call
-        res = await self.ai_client.send_with_web(prompt=research_prompt, max_results=3)
+        # Default to 3 results unless explicitly requested otherwise
+        max_results = state.get("competitor_count", 3)
+        res = await self.ai_client.send_with_web(prompt=research_prompt, max_results=max_results)
         raw = res["content"]
         metadata = res["metadata"]
         
@@ -314,7 +396,7 @@ Write the detailed fact sheet now:"""
             state["workflow_logger"].log_ai_call(step_name="serp_analysis", prompt=analysis_prompt, response=res["content"], tokens=metadata.get("tokens", {}), duration=metadata.get("duration", 0))
 
         serp_insights = recover_json(res["content"]) or {}
-        serp_insights["semantic_assets"] = {k: serp_data.get(k, []) for k in ["paa_questions", "lsi_keywords", "related_searches", "autocomplete_suggestions"]}
+        serp_insights["semantic_assets"] = {k: (serp_data.get(k) or []) for k in ["paa_questions", "lsi_keywords", "related_searches", "autocomplete_suggestions"]}
 
         # Keyword Clusters Fallback
         if not serp_insights.get("strategic_intelligence", {}).get("keyword_clusters"):
@@ -346,34 +428,50 @@ Write the detailed fact sheet now:"""
             if not discovered_brand_name:
                 discovered_brand_name = LinkManager.extract_brand_name(url)
 
-            # Logo Extraction (simplified version of the multi-step search)
-            logo_candidates = soup.find_all("img", alt=lambda x: x and 'logo' in x.lower())
-            if not logo_candidates:
-                 logo_candidates = soup.find_all("img", class_=lambda x: x and 'logo' in x.lower())
+            # Logo Extraction (Only if images are enabled)
+            logo_local_path = None
+            colors = []
+            is_svg = False
             
-            if logo_candidates:
-                logo_url = urljoin(url, logo_candidates[0].get("src"))
-            else:
-                og_image = soup.find("meta", property="og:image")
-                if og_image: logo_url = og_image.get("content")
-
-            if not logo_url:
-                domain = urlparse(url).netloc
-                logo_url = f"https://www.google.com/s2/favicons?sz=128&domain={domain}"
-
-            # Download and Save
-            lr = requests.get(logo_url, timeout=5, headers=headers)
-            if lr.status_code == 200:
-                img_data = lr.content
-                is_svg = logo_url.lower().endswith(".svg") or b"<svg" in img_data[:100].lower()
-                output_dir = state.get("output_dir", self.work_dir)
-                ext = ".svg" if is_svg else ".png"
-                logo_local_path = os.path.join(output_dir, "assets/images", f"brand_logo_{uuid.uuid4().hex[:8]}{ext}")
-                os.makedirs(os.path.dirname(logo_local_path), exist_ok=True)
-                with open(logo_local_path, "wb") as f: f.write(img_data)
+            num_images = state.get("num_images", 7)
+            should_gen = state.get("generate_images", True)
+            
+            if should_gen and num_images > 0:
+                logo_candidates = soup.find_all("img", alt=lambda x: x and 'logo' in x.lower())
+                if not logo_candidates:
+                     logo_candidates = soup.find_all("img", class_=lambda x: x and 'logo' in x.lower())
                 
-                colors = self._extract_colors_from_image(logo_local_path)
-                return {"logo_path": logo_local_path, "brand_colors": colors, "brand_name": discovered_brand_name, "is_svg": is_svg}
+                if logo_candidates:
+                    logo_url = urljoin(url, logo_candidates[0].get("src"))
+                else:
+                    og_image = soup.find("meta", property="og:image")
+                    if og_image: logo_url = og_image.get("content")
+
+                if not logo_url:
+                    domain = urlparse(url).netloc
+                    logo_url = f"https://www.google.com/s2/favicons?sz=128&domain={domain}"
+
+                # Download and Save
+                try:
+                    lr = requests.get(logo_url, timeout=5, headers=headers)
+                    if lr.status_code == 200:
+                        img_data = lr.content
+                        is_svg = logo_url.lower().endswith(".svg") or b"<svg" in img_data[:100].lower()
+                        output_dir = state.get("output_dir", self.work_dir)
+                        ext = ".svg" if is_svg else ".png"
+                        logo_local_path = os.path.join(output_dir, "assets/images", f"brand_logo_{uuid.uuid4().hex[:8]}{ext}")
+                        os.makedirs(os.path.dirname(logo_local_path), exist_ok=True)
+                        with open(logo_local_path, "wb") as f: f.write(img_data)
+                        colors = self._extract_colors_from_image(logo_local_path)
+                except Exception as e:
+                    logger.warning(f"Logo download failed: {e}")
+
+            return {
+                "logo_path": logo_local_path, 
+                "brand_colors": colors, 
+                "brand_name": discovered_brand_name, 
+                "is_svg": is_svg
+            }
 
         except Exception as e:
             logger.warning(f"Logo discovery failed: {e}")

@@ -36,25 +36,19 @@ TASKS:
 - If Target Area is provided, Title MUST include the area naturally.
 
 1. META TITLE
-- Length: 60–70 characters
-- Must include the Primary Keyword naturally
-- If Target Area is provided, MUST include the area naturally.
-- Must match the Article Intent:
-    - Informational → Educational / helpful tone
-    - Commercial → Persuasive but not spammy
-    - Transactional → Action-focused
-    - Comparison → Neutral comparison tone
-- Do NOT stuff keywords
-- Do NOT use clickbait
-- Respect article language
+- Length: Exactly **60–70 characters** for SEO effectiveness.
+- KEYWORD: Must include the **Primary Keyword** naturally.
+- SALES FOCUS: For commercial/transactional intent, make it persuasive and action-oriented.
+- FRESHNESS: Prefer adding the current year where relevant.
+- BRANDING (OPTIONAL): Include the **Brand Name** ({{ brand_name }}) if it fits naturally and enhances trust.
+- AREA: If a **Target Area** ({{ area }}) is provided, it MUST be integrated into the Meta Title.
 
 2. META DESCRIPTION
-- Length: 150–160 characters
-- Must include the Primary Keyword naturally
-- If Target Area is provided, MUST include the area naturally.
-- Clear, value-driven, action-oriented
-- Must accurately reflect the article content
-- Respect article language
+- Length: **150–160 characters** (maximum click-through rate).
+- KEYWORD: Must include the **Primary Keyword** naturally.
+- ATTRACTION: Focus on the value proposition and include a clear call-to-action (CTA).
+- AREA: If a **Target Area** ({{ area }}) is provided, it MUST be integrated into the Meta Description.
+- Sales-Oriented: Use strong verbs and persuasive language for commercial topics.
 
 3. META KEYWORDS
 - ONLY generate if Include Meta Keywords = true
@@ -66,14 +60,20 @@ TASKS:
 
 4. ARTICLE SCHEMA (JSON-LD)
 - Type: Article
-- Include:
-  - headline (meta title)
-  - description (meta description)
-  - author (use "Editorial Team" if missing)
-  - publisher (use "YourBrand" if missing)
-  - mainEntityOfPage
-- Schema must reflect FINAL article only
-- Use correct language
+- **MANDATORY FIELDS**:
+  - `headline`: Use the Meta Title.
+  - `description`: Use the Meta Description.
+  - `author`: Use {"@type": "Organization", "name": "{{ brand_name if brand_name else 'Editorial Team' }}"}.
+  - `publisher`: Use {"@type": "Organization", "name": "{{ brand_name if brand_name else 'YourBrand' }}", "logo": {"@type": "ImageObject", "url": "{{ brand_logo_url if brand_logo_url else '' }}"}}.
+  - `mainEntityOfPage`: Use {"@type": "WebPage", "@id": "{{ article_url }}"}. (CRITICAL: Must point to the article URL, not the homepage).
+  - `url`: "{{ article_url }}"
+  - `datePublished`: "{{ publish_date }}"
+  - `dateModified`: "{{ modified_date }}"
+  - `image`: Use the list of images provided: {{ images | tojson }}.
+  - `articleSection`: "{{ intent }}"
+  - `wordCount`: {{ word_count }}
+- Schema must reflect FINAL article only.
+- Ensure all dates are in ISO 8601 format.
 
 5. FAQ SCHEMA (JSON-LD)
 - Generate ONLY if the article contains a real FAQ section

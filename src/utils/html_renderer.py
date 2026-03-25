@@ -359,6 +359,8 @@ def render_html_page(final_result: dict):
             meta_title=page_title,
             meta_description=final_result.get("meta_description", ""),
             meta_keywords=final_result.get("meta_keywords", ""),
+            article_schema=final_result.get("article_schema"),
+            faq_schema=final_result.get("faq_schema"),
             content=html_content,
             lang=final_result.get("article_language", "ar"),
             dir=direction,
