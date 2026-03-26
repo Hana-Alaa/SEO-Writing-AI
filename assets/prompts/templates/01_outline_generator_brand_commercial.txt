@@ -64,7 +64,7 @@ You MUST generate the outline in this EXACT order, while adhering to the Quality
 ### II. GLOBAL HEADING CONSTRAINTS (CRITICAL - ANTI-STUFFING)
 
 1. **KEYWORD PARITY (UNDER-USE OVER OVER-USE)**:
-   - The Primary Keyword ({{ keywords[0] }}) is STRICTLY FORBIDDEN from appearing in more than TWO (2) H2 headings.
+   - The Primary Keyword ({{ (keywords | default([title | default('Main Topic')]))[0] if (keywords | default([])) else (title | default('Main Topic')) }}) is STRICTLY FORBIDDEN from appearing in more than TWO (2) H2 headings.
    - Slot 1: Introduction (Optional in heading).
    - Slot 2: Definition (Required in heading).
    - ALL OTHER HEADINGS: You MUST use descriptive synonyms (e.g., "حصن الأمان"، "خيارات السداد"، "رحلة الحجز").

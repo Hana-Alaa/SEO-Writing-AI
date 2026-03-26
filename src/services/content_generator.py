@@ -196,7 +196,8 @@ class OutlineGenerator:
             bold_key_terms: bool = True,
             secondary_keywords: List[str] = None,
             competitor_count: int = 5,
-            external_resources: List[Dict[str, str]] = None
+            external_resources: List[Dict[str, str]] = None,
+            style_blueprint: Dict[str, Any] = None
         ) -> Dict[str, Any]:
 
 
@@ -207,6 +208,20 @@ class OutlineGenerator:
             content_type,
             self.templates["informational"]
         )
+
+        # Rich Defaults with Deep Resilience
+        final_blueprint = {
+            "tonal_dna": {"persona": "Professional", "audience_level": "General", "forbidden_jargon": [], "sentence_rhythm": "Balanced"},
+            "formatting_blueprint": {"bolding_frequency": "Standard"},
+            "cta_strategy": {"density": "Balanced", "total_ideal_count": 3, "wording_patterns": []},
+            "structural_skeleton": []
+        }
+        if style_blueprint:
+            for k, v in style_blueprint.items():
+                if isinstance(v, dict) and k in final_blueprint and isinstance(final_blueprint[k], dict):
+                    final_blueprint[k].update(v)
+                else:
+                    final_blueprint[k] = v
 
         prompt = template.render(
             title=title,
@@ -234,7 +249,8 @@ class OutlineGenerator:
             bold_key_terms=bold_key_terms,
             secondary_keywords=secondary_keywords or [],
             competitor_count=competitor_count,
-            external_resources=external_resources or []
+            external_resources=external_resources or [],
+            style_blueprint=final_blueprint
         )
 
 
@@ -363,7 +379,11 @@ class SectionWriter:
         introduction_text: str = "",
         full_outline: List[Dict[str, Any]] = None,
         external_resources: List[Dict[str, Any]] = None,
-        keyword_budget_exhausted: bool = False
+        keyword_budget_exhausted: bool = False,
+        style_blueprint: Dict[str, Any] = None,
+        used_claims: List[str] = None,
+        ctas_placed: int = 0,
+        serp_data: Dict[str, Any] = None
     ) -> Dict[str, Any]:
 
 
@@ -432,7 +452,12 @@ class SectionWriter:
             "sales_intensity": section.get("sales_intensity", "medium"),
             "questions": section.get("questions", []),
             "assigned_links": section.get("assigned_links", []),
-            "mandatory_facts": section.get("mandatory_facts", [])
+            "assigned_keywords": section.get("assigned_keywords", []),
+            "mandatory_facts": section.get("mandatory_facts", []),
+            "requires_table": section.get("requires_table", False),
+            "table_type": section.get("table_type", "none"),
+            "requires_list": section.get("requires_list", False),
+            "list_type": section.get("list_type", "none")
         }
 
         print("Assigned links:", safe_section["assigned_links"])
@@ -443,6 +468,24 @@ class SectionWriter:
             content_type,
             self.templates["informational"]
         )
+
+        # Rich Defaults with Deep Resilience
+        final_blueprint = {
+            "tonal_dna": {"persona": "Professional", "audience_level": "General", "forbidden_jargon": [], "sentence_rhythm": "Balanced"},
+            "formatting_blueprint": {"bolding_frequency": "Standard"},
+            "cta_strategy": {"density": "Balanced", "total_ideal_count": 3, "wording_patterns": []},
+            "structural_skeleton": []
+        }
+        if style_blueprint:
+            for k, v in style_blueprint.items():
+                if isinstance(v, dict) and k in final_blueprint and isinstance(final_blueprint[k], dict):
+                    final_blueprint[k].update(v)
+                else:
+                    final_blueprint[k] = v
+
+        final_serp = {"reference_authority_links": []}
+        if serp_data:
+            final_serp.update(serp_data)
 
         prompt = template.render(
             title=title,
@@ -459,7 +502,7 @@ class SectionWriter:
             brand_link_used=brand_link_used,
             brand_link_allowed=brand_link_allowed,
             allow_external_links=allow_external_links,
-            execution_plan=execution_plan,
+            execution_plan=execution_plan or {},
             area=area,
             used_phrases=used_phrases or [],
             used_topics=used_topics or [],
@@ -473,6 +516,8 @@ class SectionWriter:
             section_source_text=section_source_text,
             external_sources=external_sources or [],
             external_resources=external_resources or [],
+            used_claims=used_claims or [],
+            ctas_placed=ctas_placed,
             is_first_section=(section_index == 0),
             is_last_section=(section_index == total_sections - 1),
             prohibited_competitors=prohibited_competitors or [],
@@ -488,7 +533,9 @@ class SectionWriter:
             bold_key_terms=bold_key_terms,
             keyword_budget_exhausted=keyword_budget_exhausted,
             introduction_text=introduction_text,
-            full_outline=full_outline,
+            full_outline=full_outline or [],
+            style_blueprint=final_blueprint,
+            serp_data=final_serp
         )
 
 

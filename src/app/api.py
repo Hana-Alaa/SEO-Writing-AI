@@ -112,7 +112,9 @@ async def generate_article(
     # SEO Controls
     custom_keyword_density: float = Form(None),
     secondary_keywords: str = Form("[]"),
-    competitor_count: int = Form(5)
+    competitor_count: int = Form(5),
+    style_reference: str = Form(None),
+    style_file: UploadFile = File(None)
 ):
     """
     Generate an SEO-optimized article based on the input parameters.
@@ -190,6 +192,15 @@ async def generate_article(
         saved_examples_path = os.path.join(upload_dir, safe_filename)
         with open(saved_examples_path, "wb") as buffer:
             shutil.copyfileobj(brand_voice_examples.file, buffer)
+            
+    # Handle Style Reference File (priority over manual text)
+    if style_file and style_file.filename:
+        logger.info(f"Reading style reference from uploaded file: {style_file.filename}")
+        content = await style_file.read()
+        # Decode as utf-8, ignore errors for binary-ish files
+        style_reference = content.decode("utf-8", errors="ignore")
+        # Reset file handle for potential other uses (though unlikely here)
+        await style_file.seek(0)
 
     # Initialize the centralized orchestrator
     work_dir = os.path.join(os.getcwd(), "output")
@@ -229,7 +240,8 @@ async def generate_article(
             "custom_branding_frame": custom_branding_frame,
             "custom_keyword_density": custom_keyword_density,
             "secondary_keywords": secondary_keywords_list,
-            "competitor_count": competitor_count
+            "competitor_count": competitor_count,
+            "style_reference": style_reference
         }
     }
     

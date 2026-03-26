@@ -8,8 +8,8 @@ If the query/title contains any of these terms (or their synonyms), classify as 
 Classify the search intent of the following query.
 
 Input:
-Title: "{{ raw_title }}"
-Primary Keyword: "{{ primary_keyword }}"
+Title: "{{ raw_title | default('Untitled') }}"
+Primary Keyword: "{{ primary_keyword | default('Main Topic') }}"
 
 Output:
 Return only one of:

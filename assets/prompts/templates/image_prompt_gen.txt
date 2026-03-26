@@ -1,7 +1,7 @@
 Context:
-- Article Title: "{{ title }}"
-- Core Keywords: {{ keywords | tojson }}
-- Article Outline: {{ outline | tojson }}
+- Article Title: "{{ title | default('Untitled Article') }}"
+- Core Keywords: {{ (keywords | default([])) | tojson }}
+- Article Outline: {{ (outline | default([])) | tojson }}
 
 Your Task:
 Act as an AI Visual Director. Your goal is to plan the visual assets for this article.

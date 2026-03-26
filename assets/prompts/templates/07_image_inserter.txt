@@ -12,8 +12,8 @@ Rules:
 5. Only modify the markdown to insert images in their correct sections.
 
 Context:
-- Article Markdown: {{ final_markdown }}
-- Image Plan: {{ image_plan | tojson }}
+- Article Markdown: {{ final_markdown | default('# Untitled Article\n\n[Content Missing]') }}
+- Image Plan: {{ (image_plan | default([])) | tojson }}
 
 Output:
 - Return ONLY the updated markdown with image placeholders inserted.

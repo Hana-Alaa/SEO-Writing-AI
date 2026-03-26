@@ -1,14 +1,14 @@
 Context:
-- Article Title: "{{ title }}"
+- Article Title: "{{ title | default('Untitled Article') }}"
 - Overall Topic Keywords: {{ global_keywords | default([]) | tojson }}
 - Current Section:
-  - Heading ({{ section.heading_level }}): "{{ section.heading_text }}"
-  - Section Intent: "{{ section.section_intent }}"
-  - Assigned Keywords: {{ section.assigned_keywords | default([]) | tojson }}
-  - Mandatory Links: {{ section.assigned_links | default([]) | tojson }}
-  - Allowed Flow Steps: {{ section.allowed_flow_steps | default([]) | tojson }}
-  - Content Scope: {{ section.content_scope }}
-  - Forbidden Elements: {{ section.forbidden_elements | default([]) | tojson }}
+  - Heading ({{ (section | default({})).get('heading_level', 'H2') }}): "{{ (section | default({})).get('heading_text', 'New Section') }}"
+  - Section Intent: "{{ (section | default({})).get('section_intent', 'Informational') }}"
+  - Assigned Keywords: {{ (section | default({})).get('assigned_keywords', []) | tojson }}
+  - Mandatory Links: {{ (section | default({})).get('assigned_links', []) | tojson }}
+  - Allowed Flow Steps: {{ (section | default({})).get('allowed_flow_steps', []) | tojson }}
+  - Content Scope: {{ (section | default({})).get('content_scope', 'General content') }}
+  - Forbidden Elements: {{ (section | default({})).get('forbidden_elements', []) | tojson }}
 
 Your Role:
 You are an Elite SEO Content Writer. Write ONLY the content for the current section.
@@ -22,7 +22,7 @@ Critical Rules:
 6. Forbidden elements must never appear.
 7. First paragraph may include a CTA only if allowed by section intent.
 8. Follow the section scope exactly.
-9. Minimum word count: {{ section.estimated_word_count | default(300) }} words
+9. Minimum word count: {{ (section | default({})).get('estimated_word_count', 300) }} words
 10. Natural keyword usage only (no stuffing)
 11. Maintain H3/H4 only if necessary
 12. Place links naturally

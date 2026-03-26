@@ -238,6 +238,7 @@ class AsyncWorkflowController:
             ("content_strategy", self.strategy_service.run_content_strategy, 3),
             ("outline_generation", self._step_1_outline, 1),
             ("content_writing", self._step_2_write_sections, 1),
+            ("humanizer", self._step_3_humanizer, 1),
         ]
 
         # Dynamic Image Skipping
@@ -591,7 +592,8 @@ class AsyncWorkflowController:
                 bold_key_terms=state.get("bold_key_terms", True),
                 secondary_keywords=state.get("secondary_keywords", []),
                 competitor_count=state.get("competitor_count", 5),
-                external_resources=state.get("external_resources", [])
+                external_resources=state.get("external_resources", []),
+                style_blueprint=state.get("style_blueprint", {})
             )
 
 
@@ -800,6 +802,11 @@ class AsyncWorkflowController:
 
         content_type = state.get("content_type", "informational")
 
+        # Initialize global quality tracking
+        state["used_claims"] = []
+        state["ctas_placed"] = 0
+        state["full_content_so_far"] = ""
+
         if PARALLEL_SECTIONS:
             tasks = [
                 self._write_single_section(
@@ -834,6 +841,17 @@ class AsyncWorkflowController:
                     section_index=idx,
                     total_sections=len(outline)
                 )
+                
+                # Update quality state after each section in sequential mode
+                if res and res.get("generated_content"):
+                    # Extract claims (simulated for now, actually handled by AI in next steps)
+                    # We will update these properly once we update SectionWriter
+                    state["full_content_so_far"] += "\n\n" + res["generated_content"]
+                    
+                    # Track CTAs
+                    if "[CTA]" in res["generated_content"] or "btn-" in res["generated_content"]:
+                         state["ctas_placed"] = state.get("ctas_placed", 0) + 1
+                         
                 results.append(res)
 
         sections_content = {}
@@ -1027,7 +1045,11 @@ class AsyncWorkflowController:
             full_outline=state.get("outline", []),
             introduction_text=state.get("introduction_text", ""),
             external_resources=state.get("external_resources", []),
-            brand_name=state.get("brand_name", "")
+            brand_name=state.get("brand_name", ""),
+            style_blueprint=state.get("style_blueprint", {}),
+            used_claims=state.get("used_claims", []),
+            ctas_placed=state.get("ctas_placed", 0),
+            serp_data=state.get("serp_data", {})
         )
         
         content = res_data.get("content", "")
@@ -1078,7 +1100,11 @@ class AsyncWorkflowController:
                     prohibited_competitors=state.get("prohibited_competitors", []),
                     full_outline=state.get("outline", []),
                     introduction_text=state.get("introduction_text", ""),
-                    external_resources=state.get("external_resources", [])
+                    external_resources=state.get("external_resources", []),
+                    style_blueprint=state.get("style_blueprint", {}),
+                    used_claims=state.get("used_claims", []),
+                    ctas_placed=state.get("ctas_placed", 0),
+                    serp_data=state.get("serp_data", {})
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1130,7 +1156,11 @@ class AsyncWorkflowController:
                     prohibited_competitors=state.get("prohibited_competitors", []),
                     full_outline=state.get("outline", []),
                     introduction_text=state.get("introduction_text", ""),
-                    external_resources=state.get("external_resources", [])
+                    external_resources=state.get("external_resources", []),
+                    style_blueprint=state.get("style_blueprint", {}),
+                    used_claims=state.get("used_claims", []),
+                    ctas_placed=state.get("ctas_placed", 0),
+                    serp_data=state.get("serp_data", {})
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1168,7 +1198,11 @@ class AsyncWorkflowController:
                     prohibited_competitors=state.get("prohibited_competitors", []),
                     full_outline=state.get("outline", []),
                     introduction_text=state.get("introduction_text", ""),
-                    external_resources=state.get("external_resources", [])
+                    external_resources=state.get("external_resources", []),
+                    style_blueprint=state.get("style_blueprint", {}),
+                    used_claims=state.get("used_claims", []),
+                    ctas_placed=state.get("ctas_placed", 0),
+                    serp_data=state.get("serp_data", {})
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1184,10 +1218,17 @@ class AsyncWorkflowController:
             state["used_phrases"].extend(substantial_sentences)
             if getattr(self, "semantic_model", None):
                 state["used_claims"].extend(substantial_sentences)
+            
+            # Persist explicit AI topics
+            if res_data.get("topics_covered"):
+                for topic in res_data["topics_covered"]:
+                    if topic not in state["used_claims"]:
+                        state["used_claims"].append(topic)
 
             # --- SEMANTIC MEMORY PERSISTENCE (CRITICAL) ---
-            # Update the global article context so the next section can avoid repetition
-            state["full_content_so_far"] = state.get("full_content_so_far", "") + "\n\n" + (content or "")
+            # The global article context is updated via state['used_claims'] above
+            # so the next section can avoid repetition.
+            
             topics_covered = res_data.get("topics_covered", [])
             if topics_covered:
                 if "used_topics" not in state:
@@ -1195,12 +1236,15 @@ class AsyncWorkflowController:
                 state["used_topics"].extend(topics_covered)
             # ----------------------------------------------
 
-            content = LinkManager.sanitize_section_links(
+            transformed_content = LinkManager.sanitize_section_links(
                 content=content,
                 state=state,
                 brand_url=brand_url or "",
                 max_external=2 # Increased to allow 3-4 across article
             )
+
+            res_data["content"] = transformed_content
+            content = transformed_content
 
             logger.info(f"Section '{section.get('heading_text')}' finalized. Current external links in state: {len(state.get('used_external_links', []))}")
             if state.get("workflow_logger"):
@@ -1780,3 +1824,44 @@ class AsyncWorkflowController:
             # Debug / Storage
             "output_dir": state.get("output_dir", ""),
         }
+    async def _step_3_humanizer(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Final editorial pass to smooth transitions and remove redundancies."""
+        logger.info("Starting final 'Humanizer' editorial pass...")
+        
+        full_content = state.get("full_content_so_far", "")
+        if not full_content:
+            logger.warning("No content found to humanize.")
+            return state
+            
+        style_blueprint = state.get("style_blueprint", {})
+        tone = state.get("tone") or style_blueprint.get("writing_tone", "Conversational")
+        audience_level = style_blueprint.get("tonal_dna", {}).get("audience_level", "General")
+        
+        # In this system, StrategyService or Template loader should handle the template
+        # Let's ensure we use a generic render if the template isn't explicitly in self.templates
+        humanizer_template = self.outline_gen.templates.get("humanizer") # OutlineGen usually has access to common templates
+        if not humanizer_template:
+            # Fallback to loading it manually if necessary, but typically we want it in the registry
+            # For now, let's use the template I just created
+            from jinja2 import Environment, FileSystemLoader
+            env = Environment(loader=FileSystemLoader("assets/prompts/templates"))
+            humanizer_template = env.get_template("09_humanizer_editor.txt")
+
+        humanize_prompt = humanizer_template.render(
+            full_content=full_content,
+            tone=tone,
+            audience_level=audience_level
+        )
+        
+        try:
+            res = await self.ai_client.send(humanize_prompt, step="humanizer_polish")
+            polished_content = res.get("content", full_content)
+            
+            # Update state with polished content
+            state["full_content_so_far"] = polished_content
+            
+            logger.info("Humanizer pass completed successfully.")
+        except Exception as e:
+            logger.error(f"Humanizer pass failed: {e}")
+            
+        return state

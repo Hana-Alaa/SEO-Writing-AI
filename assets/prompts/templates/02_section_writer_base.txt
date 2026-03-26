@@ -2,78 +2,94 @@ You are an Elite SEO section writer.
 Write ONLY the current section body in markdown.
 
 FULL ARTICLE STRUCTURE (MANDATORY TO RESPECT):
-{% for s in full_outline %}
+{% for s in (full_outline | default([])) %}
 - Section {{ loop.index }}: {{ s.heading_text }} (Goal: {{ s.content_goal }})
 {% endfor %}
-(CRITICAL: You are writing section {{ section_index + 1 }}. DO NOT cover topics assigned to other sections!)
+(CRITICAL: You are writing section {{ (section_index | default(0)) + 1 }}. DO NOT cover topics assigned to other sections!)
 
 ARTICLE CONTEXT:
-- Title: "{{ title }}"
-- Intent: "{{ article_intent }}"
-- Current Year: {{ current_year }}
-- Prohibited Competitors (NEVER MENTION THESE): {{ prohibited_competitors | tojson }}
-{% if prohibited_competitors %}
+- Title: "{{ title | default('Untitled Article') }}"
+- Intent: "{{ article_intent | default('informational') }}"
+- Current Year: {{ current_year | default('2026') }}
+- Prohibited Competitors (NEVER MENTION THESE): {{ (prohibited_competitors | default([])) | tojson }}
+{% if (prohibited_competitors | default([])) %}
 PROHIBITED BRANDS (CRITICAL CONSTRAINT):
 - You MUST NOT mention, reference, or compare to any of the following competitor brands: {{ prohibited_competitors | join(', ') }}.
 - Focus exclusively on our brand and its unique advantages.
 - If you need to mention "competitors" generally, do so without naming any specific brand.
 {% endif %}
-- Content Type: "{{ content_type }}"
-- Primary Keyword: "{{ primary_keyword }}"
-- Language: "{{ article_language }}"
-- Area: "{{ area }}"
-- Section Type: "{{ section.section_type }}"
-- Section Intent: "{{ section.section_intent }}"
-- Heading: "{{ section.heading_text }}"
-- Content Goal: "{{ section.content_goal }}"
-- Content Angle: "{{ section.content_angle }}"
-- Localized Angle: "{{ section.localized_angle }}"
-- Decision Layer: "{{ section.decision_layer }}"
-- Sales Intensity: "{{ section.sales_intensity }}"
-- User Tone: "{{ tone if tone else 'Empathetic and conversational' }}"
-- User Point of View (POV): "{{ pov if pov else '2nd person' }}"
-- Brand Voice Description: "{{ brand_voice_description if brand_voice_description else 'Senior consultant' }}"
-{% if brand_voice_guidelines %}- Brand Voice Guidelines (File Path): "{{ brand_voice_guidelines }}" (Prioritize these rules!){% endif %}
-{% if brand_voice_examples %}- Brand Voice Examples (Reference Content):
+- Content Type: "{{ content_type | default('article') }}"
+- Primary Keyword: "{{ primary_keyword | default('Main Topic') }}"
+- Language: "{{ article_language | default('Arabic') }}"
+- Area: "{{ area | default('General') }}"
+- Section Type: "{{ (section | default({})).get('section_type', 'core') }}"
+- Section Intent: "{{ (section | default({})).get('section_intent', 'Informational') }}"
+- Heading: "{{ (section | default({})).get('heading_text', 'New Section') }}"
+- Content Goal: "{{ (section | default({})).get('content_goal', 'Provide helpful information') }}"
+- Content Angle: "{{ (section | default({})).get('content_angle', 'General') }}"
+- Localized Angle: "{{ (section | default({})).get('localized_angle', 'General') }}"
+- Decision Layer: "{{ (section | default({})).get('decision_layer', 'Market Reality') }}"
+- Sales Intensity: "{{ (section | default({})).get('sales_intensity', 'medium') }}"
+- User Tone: "{{ (tone | default('Empathetic and conversational')) }}"
+- User Point of View (POV): "{{ (pov | default('2nd person')) }}"
+- Brand Voice Description: "{{ (brand_voice_description | default('Senior consultant')) }}"
+{% if (brand_voice_guidelines | default('')) %}- Brand Voice Guidelines (File Path): "{{ brand_voice_guidelines }}" (Prioritize these rules!){% endif %}
+{% if (brand_voice_examples | default('')) %}- Brand Voice Examples (Reference Content):
 """
 {{ brand_voice_examples }}
 """
 {% endif %}
-- Keyword Density Target: {{ custom_keyword_density if custom_keyword_density else 0.6 }}% (PRIORITIZE NATURAL FLOW OVER EXACT DENSITY)
-- Bold Key Terms: FALSE (Only bold if absolutely necessary for emphasis)
+- Keyword Density Target: {{ (custom_keyword_density | default(0.6)) }}% (PRIORITIZE NATURAL FLOW OVER EXACT DENSITY)
+- Bold Key Terms: {{ (bold_key_terms | default('True')) | lower }}
+- Style Blueprint (MANDATORY TONE & CTA REPLICA): {{ (style_blueprint | default({})) | tojson }}
+{% if (style_blueprint | default({})) %}
+STYLE REPLICATION RULES (CRITICAL):
+- **TONE**: Mimic the following persona: "{{ style_blueprint.get('tonal_dna', {}).get('persona', 'Professional') }}".
+- **AUDIENCE**: This content is for a {{ style_blueprint.get('tonal_dna', {}).get('audience_level', 'General') }} audience. 
+{% set tonal_dna = style_blueprint.get('tonal_dna', {}) %}
+- **FORBIDDEN JARGON**: Because the audience is {{ tonal_dna.get('audience_level', 'General') }}, you MUST NOT use these terms: {{ (tonal_dna.get('forbidden_jargon', [])) | join(', ') }}.
+- **READABILITY**: Use vocabulary that a {{ tonal_dna.get('audience_level', 'General') }} reader will find natural and easy to understand.
+- **RHYTHM**: Follow this sentence rhythm: "{{ tonal_dna.get('sentence_rhythm', 'Balanced') }}".
+- **FORMATTING**: Use this bolding frequency: "{{ style_blueprint.get('formatting_blueprint', {}).get('bolding_frequency', 'Standard') }}".
+- **CTA STRATEGY**: 
+    * Density: {{ style_blueprint.get('cta_strategy', {}).get('density', 'Balanced') }} 
+    * Total Budget: {{ style_blueprint.get('cta_strategy', {}).get('total_ideal_count', 3) }}
+    * Current Placed: {{ (ctas_placed | default(0)) }}
+{% endif %}
 
-- Required Mandatory Facts: {{ section.mandatory_facts | tojson }}
-- Required Keywords: {{ section.assigned_keywords | tojson }}
-- CTA Type: "{{ execution_plan.cta_type }}"
-- CTA Position: "{{ execution_plan.cta_position }}"
-- Brand Context: "{{ brand_context if brand_context else '' }}"
-- Brand Name: "{{ brand_name }}"
-- Branding / Primary Site: "{{ brand_url if brand_url else '' }}" (PRIMARY BRAND IDENTITY - MANDATORY for Introduction)
-- Brand Link Used Previously: {{ brand_link_used | lower }}
-- Used Phrases To Avoid: {{ used_phrases | tojson }}
-- TOPICS/FACTS ALREADY COVERED (FORBIDDEN): {{ used_topics | tojson }}
-- Mandatory Internal Links: {{ section.assigned_links | tojson }}
-- Used Internal Links: {{ used_internal_links | tojson }}
-- Reliable External Sources: {{ external_sources | tojson }}
-- Manual External Links (PRIORITIZE THESE): {{ external_resources | tojson }}
-- Used External Links: {{ used_external_links | tojson }}
-- Requires Table: {{ section.requires_table }}
-- Table Type: "{{ section.table_type | default('none') }}"
-- Requires List: {{ section.requires_list | default(false) }}
-- List Type: "{{ section.list_type | default('none') }}"
-{% if brand_context %}- Brand Context (CRITICAL): "{{ brand_context }}"{% endif %}
-{% if introduction_text %}- Introduction (ALREADY WRITTEN):
+- Required Mandatory Facts: {{ ((section | default({})).get('mandatory_facts', [])) | tojson }}
+- Required Keywords: {{ ((section | default({})).get('assigned_keywords', [])) | tojson }}
+- CTA Type: "{{ (execution_plan | default({})).get('cta_type', 'none') }}"
+- CTA Position: "{{ (execution_plan | default({})).get('cta_position', 'none') }}"
+- Brand Context: "{{ (brand_context | default('')) }}"
+- Brand Name: "{{ brand_name | default('The Company') }}"
+- Branding / Primary Site: "{{ brand_url | default('') }}" (PRIMARY BRAND IDENTITY - MANDATORY for Introduction)
+- Brand Link Used Previously: {{ (brand_link_used | default(False)) | lower }}
+- Used Phrases To Avoid: {{ (used_phrases | default([])) | tojson }}
+- TOPICS/FACTS ALREADY COVERED (FORBIDDEN): {{ (used_topics | default([])) | tojson }}
+- SEMANTIC CLAIMS ALREADY MADE (ZERO REPETITION): {{ (used_claims | default([])) | tojson }}
+- Mandatory Internal Links: {{ ((section | default({})).get('assigned_links', [])) | tojson }}
+- Used Internal Links: {{ (used_internal_links | default([])) | tojson }}
+- Reliable External Sources: {{ (external_sources | default([])) | tojson }}
+- Manual External Links (PRIORITIZE THESE): {{ (external_resources | default([])) | tojson }}
+- Used External Links: {{ (used_external_links | default([])) | tojson }}
+- Requires Table: {{ (section | default({})).get('requires_table', False) }}
+- Table Type: "{{ (section | default({})).get('table_type', 'none') }}"
+- Requires List: {{ (section | default({})).get('requires_list', false) }}
+- List Type: "{{ (section | default({})).get('list_type', 'none') }}"
+{% if (brand_context | default('')) %}- Brand Context (CRITICAL): "{{ brand_context }}"{% endif %}
+{% if (introduction_text | default('')) %}- Introduction (ALREADY WRITTEN):
 """
 {{ introduction_text }}
 """
 {% endif %}
-{% if previous_content_summary %}- PREVIOUS SECTIONS (FORBIDDEN TO REPEAT PHRASING/CONCEPTS):
+{% if (previous_content_summary | default('')) %}- PREVIOUS SECTIONS (FORBIDDEN TO REPEAT PHRASING/CONCEPTS):
 """
 {{ previous_content_summary }}
 """
 {% endif %}
 (USE THESE FOR CONTEXT ONLY - DO NOT REPEAT ANY INFORMATION, TOPICS, OR PHRASING FROM THESE TEXTS!)
-{% if section_source_text %}- Brand Source Text (real content from brand site - USE THIS!):
+{% if (section_source_text | default('')) %}- Brand Source Text (real content from brand site - USE THIS!):
 """
 {{ section_source_text }}
 """
@@ -105,7 +121,7 @@ PROHIBITED BRANDS (CRITICAL CONSTRAINT):
       - AVOID REPETITION: Do NOT use the primary keyword in more than 2 consecutive paragraphs
 
 STRICT WRITING RULES
-{% if section_source_text %}0. Source-Grounded Writing (CRITICAL - MANDATORY):
+{% if (section_source_text | default('')) %}0. Source-Grounded Writing (CRITICAL - MANDATORY):
    - Real text from the brand's website is provided above (Brand Source Text).
    - YOU MUST PRIORITIZE THIS TEXT over your general knowledge.
    - Extract specific facts, methodologies, or features RELEVANT to this section from that text.
@@ -123,7 +139,7 @@ STRICT WRITING RULES
         * "تواصل مع فريقنا" or similar standalone CTA sentences — FORBIDDEN as first or standalone sentences.
 
    0.2. Strict Topic Boundaries & ZERO REPETITION (CRITICAL):
-      - YOUR WRITING MUST STAY 100% WITHIN THE BOUNDARIES OF THE **Primary Keyword** ({{ primary_keyword }}).
+      - YOUR WRITING MUST STAY 100% WITHIN THE BOUNDARIES OF THE **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}).
       - FACT DEACTIVATION: If you mention a specific number or unique brand fact (e.g., "30,000 users", "12-month installments"), it is now DEACTIVATED. No other section may use it.
       - ZERO REPETITION: You are strictly FORBIDDEN from repeating facts, explanations, or "filler" concepts (e.g., Vision 2030, digital trends) already covered in previous sections.
       - Check "Used Phrases To Avoid" and "Introduction (ALREADY WRITTEN)" below. If it's there, DO NOT MENTION IT AGAIN.
@@ -134,18 +150,18 @@ STRICT WRITING RULES
     - Do NOT invent fake case studies, fake statistics, or fake brand names.
 {% endif %}
 1. Language lock:
-   - Write strictly in {{ article_language }}.
+   - Write strictly in {{ article_language | default('Arabic') }}.
     1.1 Perspective & Pronouns (MANDATORY):
-       {% if pov == "1st person singular" %}
+       {% if (pov | default('2nd person')) == "1st person singular" %}
        - Use FIRST PERSON SINGULAR perspective ("I", "me", "my", "mine").
        - Act as a single expert or a personal author.
-       {% elif pov == "1st person plural" %}
+       {% elif (pov | default('2nd person')) == "1st person plural" %}
        - Use FIRST PERSON PLURAL perspective ("we", "us", "our", "ours").
        - Act as a team or corporate entity.
-       {% elif pov == "2nd person" %}
+       {% elif (pov | default('2nd person')) == "2nd person" %}
        - Address the reader directly in SECOND PERSON in the target language.
        - Use natural second-person pronouns (Arabic: "أنت / لك / لديك / عملك / شركتك", English: "you / your").
-       {% elif pov == "3rd person" %}
+       {% elif (pov | default('2nd person')) == "3rd person" %}
        - Use THIRD PERSON perspective ("the company", "professionals", "it", "they").
        - Maintain a more objective, detached tone.
        {% else %}
@@ -178,18 +194,18 @@ STRICT WRITING RULES
       6. If a CTA is required in a section with a table, it MUST be placed as a separate paragraph BELOW the table, with a blank line between them.
       7. A table MUST strictly end with a BLANK EMPTY LINE.
 3. Keyword Usage & Strategic Placement:
-   - **GLOBAL KEYWORD BUDGET (CRITICAL)**: The Primary Keyword ({{ primary_keyword }}) MUST NOT appear more than **5 times in the ENTIRE ARTICLE**.
-   - **BUDGET STATUS**: `keyword_budget_exhausted` is {{ keyword_budget_exhausted | lower }}.
-   - If `keyword_budget_exhausted` is True: You are STRICTLY FORBIDDEN from using the exact string "{{ primary_keyword }}". You MUST use natural synonyms or pronouns.
+   - **GLOBAL KEYWORD BUDGET (CRITICAL)**: The Primary Keyword ({{ primary_keyword | default('Main Topic') }}) MUST NOT appear more than **5 times in the ENTIRE ARTICLE**.
+   - **BUDGET STATUS**: `keyword_budget_exhausted` is {{ (keyword_budget_exhausted | default(false)) | lower }}.
+   - If `keyword_budget_exhausted` is True: You are STRICTLY FORBIDDEN from using the exact string "{{ primary_keyword | default('Main Topic') }}". You MUST use natural synonyms or pronouns.
    - **SYNONYM-FIRST POLICY (MANDATORY)**: Aim for a "Fluid Phrasing" style. Instead of repeating the long keyword, use variations like:
      * Arabic: "المنصة"، "خدمة الحجز"، "تذاكر الفعاليات"، "النظام".
      * English: "The platform", "Booking service", "The system".
    - **NATURAL LINGUISTIC INTEGRATION**: You are FORBIDDEN from using robotically concatenated strings (e.g., "تعتمد منصة حجز تذاكر المباريات في السعودية على..."). Instead, break it up: "تعتمد منصتنا في السعودية على نظام متطور لحجز التذاكر...".
    - **SEO RELEVANCE SIGNAL**: The exact-match keyword is ONLY REQUIRED in the Introduction and one other section. In all other sections, PREFER synonyms.
-   - Support with semantic synonyms and related phrases from: {{ section.assigned_keywords | tojson }}.
+   - Support with semantic synonyms and related phrases from: {{ ((section | default({})).get('assigned_keywords', [])) | tojson }}.
    - **FAQ HEADINGS**: Use semantic variations of the keyword in FAQ questions. Avoid using the exact Primary Keyword string in every single question heading.
-   {% if is_first_section %}- Because this is the introduction, ensure the Primary Keyword is gracefully integrated into the opening two sentences.{% endif %}
-   - Support with semantic synonyms and related phrases from: {{ section.assigned_keywords | tojson }}.
+   {% if (is_first_section | default(false)) %}- Because this is the introduction, ensure the Primary Keyword is gracefully integrated into the opening two sentences.{% endif %}
+   - Support with semantic synonyms and related phrases from: {{ ((section | default({})).get('assigned_keywords', [])) | tojson }}.
    - **FAQ HEADINGS**: Use semantic variations of the keyword in FAQ questions. Avoid using the exact Primary Keyword string in every single question heading.
 
 4. Local SEO:
@@ -197,12 +213,16 @@ STRICT WRITING RULES
    - Do not repeat area excessively.
 
 5. CTA & Link Integration:
-{% if section.show_cta %}
+{% set cta_strategy = (style_blueprint | default({})).get('cta_strategy', {}) %}
+{% set budget_ok = (not cta_strategy or (ctas_placed | default(0)) < (cta_strategy.get('total_ideal_count', 3))) %}
+{% if (section | default({})).get('show_cta', false) and budget_ok %}
    - You are a human content writer, NOT a bot following a checklist.
    - When you write a CTA, ask yourself: **"If I were a real reader who just read this paragraph, what would I naturally want to do next?"** Write THAT action.
     - **CTA FORMATTING (CRITICAL):** The CTA MUST be written as a standalone sentence on its own line, formatted in **bold**. However, it MUST NOT be placed at the very beginning of a section.
     - **CLICKABLE CTA RULE (MANDATORY):** Every bolded CTA sentence MUST contain exactly one clickable link using the `<a>` tag (e.g., **To start your journey, [click here to visit Tikevent](https://tikevent.com/) today.**). A CTA without a link is a failure.
     - **LOGICAL CTA BRIDGING (NEW)**: The CTA MUST NOT be a generic boilerplate sentence. It MUST explicitly bridge the key benefit or insight mentioned in the preceding paragraph to the action required. 
+    {% set wording_patterns = style_blueprint.get('cta_strategy', {}).get('wording_patterns', []) %}
+    {% if wording_patterns %}- **REFERENCE CTA PATTERN**: Try to use wording similar to: {{ wording_patterns | tojson }}{% endif %}
     - **MAXIMUM ONE CTA PER SECTION**: You are strictly forbidden from writing more than one CTA in this section.
     - **CTA INTENSITY (CRITICAL)**:
       * **Introduction (Section 1)**: MUST be **Soft & Empathetic**. One very soft CTA at the end of intro is acceptable and recommended here. Use phrases like "Learn more", "Explore how we help", or "Start your discovery". NO hard selling.
@@ -216,22 +236,23 @@ STRICT WRITING RULES
     - CTA intensity guide: Use the specific intensity and tone guidelines provided in the article-type sub-template.
     - **PLACEMENT (STRICT)**: The CTA MUST NOT be the first element in a section or follow immediately after a heading. It must come after at least one paragraph of context.
     - **NO EMBEDDED CTAs**: NEVER embed a bolded CTA sentence or a sales-driven booking link inside a paragraph of text. It MUST be a standalone line.
+    - **UX RULE (H3 FLOW)**: NEVER place a CTA immediately after an H3 or H2 heading. It MUST follow at least one logical paragraph of content.
     - STRUCTURAL RULE: Links MUST NOT be placed in tables. If a table exists, the link goes in the paragraph below it.
    - UNIQUENESS: Do NOT use the same URL or the same phrasing twice in the section.
    - INTERNAL LINKS: Use only URLs from "Mandatory Internal Links". In Introduction, use the Brand URL.
     - **DYNAMIC URGENCY (FOMO)**: Within your bolded CTA, you MUST occasionally (especially in the Intro and Conclusion) inject a brand-appropriate element of urgency or scarcity (e.g., "Limited seats available", "Offer expires soon", "High demand for early-bird booking"). Keep it natural and context-aware.
-    - **HOMEPAGE INJECTION (CRITICAL):** If this is the "Introduction" section (section_index == 0), you MUST integrate the Brand Homepage URL ({{ brand_url }}) natively into a CTA sentence within the VERY FIRST paragraph. Do not leave the opening paragraph without the primary brand link.
+    - **HOMEPAGE INJECTION (CRITICAL):** If this is the "Introduction" section ((section_index | default(0)) == 0), you MUST integrate the Brand Homepage URL ({{ (brand_url | default('')) }}) natively into a CTA sentence within the VERY FIRST paragraph. Do not leave the opening paragraph without the primary brand link.
     - **BRAND NAME IN CTA (MANDATORY for First 2 Sections):** If this is one of the first two sections (section_index < 2), you MUST explicitly mention the brand name "{{ brand_name }}" within your bolded CTA sentence.
 {% else %}
    - **STRICT RULE**: DO NOT add any CTA (Call to Action) sentences or commercial links in this section. Focus entirely on providing value through content and external/internal contextual links only.
 {% endif %}
 
 6. External Links (CONTEXTUAL RELEVANCE ONLY):
-{% if is_first_section %}   - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
-{% else %}{% if used_external_links|length < 3 %}    - **RELEVANCE HIERARCHY (UTILITY FIRST)**:
+{% if (is_first_section | default(False)) %}   - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
+{% else %}{% if (used_external_links | default([]))|length < 3 %}    - **RELEVANCE HIERARCHY (UTILITY FIRST)**:
       - **TIER 1 (OFFICIAL)**: League official sites (e.g., SPL, FIFA), Government entities (e.g., Ministry of Sport), Article-specific organizers, or official documentation (e.g., stadium maps, refund policies).
       - **TIER 2 (SPECIFIC NEWS/DATA)**: Major news outlets reporting ON THE SPECIFIC TOPIC of this section.
-    - **REFERENCE POOL**: Use one of these discovered authority links IF they relate to your section: {{ serp_data.reference_authority_links | tojson }}
+    - **REFERENCE POOL**: Use one of these discovered authority links IF they relate to your section: {{ ((serp_data | default({})).get('reference_authority_links', [])) | tojson }}
     - **FORBIDDEN (IRRELEVANT & GENERIC)**: 
       - **NO GENERIC PORTAL BAIT**: Strictly FORBIDDEN from linking to generic main pages (e.g., mosa.gov.sa, cert.gov.sa, gov.sa) IF they are not directly related to the specific fact being discussed. 
       - **RULE OF THUMB**: If the link doesn't help the user *apply* or *verify* exactly what you wrote in the paragraph, DELETE IT.
@@ -241,7 +262,7 @@ STRICT WRITING RULES
     - **PRIORITY 2**: Otherwise, use a specific link from the "REFERENCE POOL" above.
     - **PRIORITY 3**: Only autonomously generate a link if none of the above are available AND it is a high-authority Tier 1 site.
     - NEVER link to competitors who offer the same services or target the same primary keyword.
-    - DO NOT repeat any of the links already used in previous sections: {{ used_external_links | tojson }}
+    - DO NOT repeat any of the links already used in previous sections: {{ (used_external_links | default([])) | tojson }}
 {% else %}   - We have already reached the ideal threshold (3+) of external links for this article. DO NOT add any more external links in this section.
 {% endif %}{% endif %}
 
@@ -265,16 +286,16 @@ STRICT WRITING RULES
       1. **Paragraph Capacity**: MAXIMUM 36 words per paragraph (3 lines). Use blank lines between blocks.
       2. **MAGNETIC HOOK (CRITICAL - Section 1 Only)**: The first sentence of the article MUST be a "Problem-Centric Hook". It MUST speak directly to a pain point or a high-value desire (e.g., "Finding authentic tickets shouldn't be a gamble...", "Your next event deserves a stress-free booking experience..."). 
       3. **Scannable Intro**: The introduction of this section must be punchy and direct. Avoid long, winding sentences.
-    - **MANDATORY TONE**: You MUST write in a **{{ tone if tone else 'conversational and human' }}** tone.
-   {% if brand_voice_description %}- **BRAND VOICE**: Adhere to this specific voice profile: "{{ brand_voice_description }}"{% endif %}
+    - **MANDATORY TONE**: You MUST write in a **{{ tone | default('conversational and human') }}** tone.
+   {% if (brand_voice_description | default('')) %}- **BRAND VOICE**: Adhere to this specific voice profile: "{{ brand_voice_description }}"{% endif %}
     - **CTA PLACEMENT (CRITICAL)**: If show_cta is True, the CTA MUST be the ABSOLUTE LAST element of the section. Never continue writing after the CTA. It must serve as the conclusion of the section's last idea.
 
 9. Decision Layer Enforcement:
-   - Strictly adhere to the assigned Decision Layer: {{ section.decision_layer }}.
+   - Strictly adhere to the assigned Decision Layer: {{ (section | default({})).get('decision_layer', 'Market Reality') }}.
    - Do NOT cover themes belonging to other layers (e.g., if layer is Technical Systems, do not discuss Market Trends or ROI).
 
 10. FAQ behavior:
-   - If section_type = faq, you MUST answer EVERY question listed in the "questions" array.
+   - If section_type = faq, you MUST answer EVERY question listed in the "questions" array (Questions Total: {{ (questions | default([])) | length }}).
    - **PAA AUTHORITY (STRICT)**: These questions are often derived from Google's "People Also Ask". Your answers MUST be direct, factual, and helpful enough to potentially win a Featured Snippet.
    - Use an H3 heading for each question, followed by a concise, unique, and helpful answer. Exactly 4-6 questions MUST be present.
    - Apply FAQ Schema (HTML Microdata) to the questions and answers when possible.

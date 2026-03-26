@@ -7,28 +7,28 @@ Your ONLY task is to validate the provided section content against the rules.
 ----------------------------------------------------
 
 Context:
-- Article Title: "{{ title }}"
-- Article Language: "{{ article_language }}"
+- Article Title: "{{ title | default('Untitled Article') }}"
+- Article Language: "{{ article_language | default('Arabic') }}"
 
 - Current Section:
-  - Section Heading: "{{ section.heading_text }}"
-  - Section Intent: "{{ section.section_intent }}"
-  - Primary Keyword: "{{ section.primary_keyword | default('') }}"
-  - Assigned Keywords: {{ section.assigned_keywords | default([]) | tojson }}
-  - Mandatory Links: {{ section.assigned_links | default([]) | tojson }}
-  - Forbidden Elements: {{ section.forbidden_elements | default([]) | tojson }}
-  - Allowed Flow Steps: {{ section.allowed_flow_steps | default([]) | tojson }}
-  - CTA Allowed: {{ section.cta_allowed }}
-  - CTA Type: "{{ section.cta_type }}"
-  - Requires Table: {{ section.requires_table }}
-  - Minimum Word Count: {{ section.estimated_word_count_min }}
-  - Maximum Word Count: {{ section.estimated_word_count_max }}
+  - Section Heading: "{{ (section | default({})).get('heading_text', 'New Section') }}"
+  - Section Intent: "{{ (section | default({})).get('section_intent', 'Informational') }}"
+  - Primary Keyword: "{{ (section | default({})).get('primary_keyword', '') }}"
+  - Assigned Keywords: {{ (section | default({})).get('assigned_keywords', []) | tojson }}
+  - Mandatory Links: {{ (section | default({})).get('assigned_links', []) | tojson }}
+  - Forbidden Elements: {{ (section | default({})).get('forbidden_elements', []) | tojson }}
+  - Allowed Flow Steps: {{ (section | default({})).get('allowed_flow_steps', []) | tojson }}
+  - CTA Allowed: {{ (section | default({})).get('cta_allowed', False) }}
+  - CTA Type: "{{ (section | default({})).get('cta_type', 'none') }}"
+  - Requires Table: {{ (section | default({})).get('requires_table', False) }}
+  - Minimum Word Count: {{ (section | default({})).get('estimated_word_count_min', 300) }}
+  - Maximum Word Count: {{ (section | default({})).get('estimated_word_count_max', 600) }}
 
 ----------------------------------------------------
 
 Input:
 - Section Content:
-{{ generated_section_content }}
+{{ (generated_section_content | default('[Empty Content]')) }}
 
 ----------------------------------------------------
 

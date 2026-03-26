@@ -545,6 +545,18 @@
                             <label>Target Location (area)</label>
                             <input type="text" id="core-area" placeholder="e.g. Riyadh, Dubai (Optional)">
                         </div>
+                        <div class="form-group full-width">
+                            <label>Reference Article (URL / HTML / File)</label>
+                            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                                <textarea id="core-style-ref" style="flex: 1;" rows="2" placeholder="Paste a link or HTML content..."></textarea>
+                                <div class="custom-file-input" style="flex: 0 0 200px; padding: 0.75rem;">
+                                    <i class="fas fa-file-upload file-icon" style="font-size: 1rem; margin-bottom: 0.25rem;"></i>
+                                    <span class="file-label" style="font-size: 0.7rem;">Or Upload HTML</span>
+                                    <span class="file-name" id="core-style-file-name" style="font-size: 0.6rem;">No file</span>
+                                    <input type="file" id="core-style-file-upload" accept=".html,.htm,.txt,.md" onchange="updateFileName(this, 'core-style-file-name')">
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Brand Assets in Core Mode (Media) -->
                         <div class="full-width">
@@ -800,6 +812,18 @@
                                         <option value="5" selected>top 5</option>
                                         <option value="10">top 10</option>
                                     </select>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Reference Article (URL / HTML / File)</label>
+                                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                                        <textarea id="adv-style-ref" style="flex: 1;" rows="2" placeholder="Paste a link or HTML content..."></textarea>
+                                        <div class="custom-file-input" style="flex: 0 0 200px; padding: 0.75rem;">
+                                            <i class="fas fa-file-upload file-icon" style="font-size: 1rem; margin-bottom: 0.25rem;"></i>
+                                            <span class="file-label" style="font-size: 0.7rem;">Or Upload HTML</span>
+                                            <span class="file-name" id="adv-style-file-name" style="font-size: 0.6rem;">No file</span>
+                                            <input type="file" id="adv-style-file-upload" accept=".html,.htm,.txt,.md" onchange="updateFileName(this, 'adv-style-file-name')">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-group full-width">
                                     <label>Custom secondary keywords</label>
@@ -1075,6 +1099,9 @@
             if (currentMode === 'core') {
                 formData.append('article_language', document.getElementById('core-language').value);
                 formData.append('area', document.getElementById('core-area').value);
+                formData.append('style_reference', document.getElementById('core-style-ref').value);
+                const styleFile = document.getElementById('core-style-file-upload').files[0];
+                if (styleFile) formData.append('style_file', styleFile);
             } else {
                 formData.append('tone', document.getElementById('adv-tone').value);
                 formData.append('pov', document.getElementById('adv-pov').value);
@@ -1083,6 +1110,9 @@
                 formData.append('article_language', document.getElementById('adv-language').value);
                 formData.append('area', document.getElementById('adv-area').value);
                 formData.append('brand_voice_description', document.getElementById('adv-voice').value);
+                formData.append('style_reference', document.getElementById('adv-style-ref').value);
+                const styleFileAdv = document.getElementById('adv-style-file-upload').files[0];
+                if (styleFileAdv) formData.append('style_file', styleFileAdv);
 
                 // Files
                 const voiceGuidelines = document.getElementById('adv-voice-guidelines').files[0];

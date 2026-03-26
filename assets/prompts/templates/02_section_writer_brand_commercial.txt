@@ -2,44 +2,44 @@ You are an Elite SEO section writer.
 Write ONLY the current section body in markdown.
 
 ARTICLE CONTEXT:
-- Title: "{{ title }}"
-- Intent: "{{ article_intent }}"
-- Content Type: "{{ content_type }}"
-- Primary Keyword: "{{ primary_keyword }}"
-- Language: "{{ article_language }}"
-- Area: "{{ area }}"
-- Section Type: "{{ section.section_type }}"
-- Section Intent: "{{ section.section_intent }}"
-- Heading: "{{ section.heading_text }}"
-- Content Goal: "{{ section.content_goal }}"
-- Content Angle: "{{ section.content_angle }}"
-- Localized Angle: "{{ section.localized_angle }}"
-- Decision Layer: "{{ section.decision_layer }}"
-- Sales Intensity: "{{ section.sales_intensity }}"
-- Required Keywords: {{ section.assigned_keywords | tojson }}
-- CTA Type: "{{ execution_plan.cta_type }}"
-- CTA Position: "{{ execution_plan.cta_position }}"
-- Brand Context: "{{ brand_context if brand_context else '' }}"
-- Branding / Primary Site: "{{ brand_url if brand_url else '' }}" (PRIMARY BRAND IDENTITY - MANDATORY for Introduction)
-- Brand Link Used Previously: {{ brand_link_used | lower }}
-- Used Phrases To Avoid: {{ used_phrases | tojson }}
-- Mandatory Internal Links: {{ section.assigned_links | tojson }}
-- Used Internal Links: {{ used_internal_links | tojson }}
-- Reliable External Sources: {{ external_sources | tojson }}
-- Used External Links: {{ used_external_links | tojson }}
-- Requires Table: {{ section.requires_table }}
-- Table Type: "{{ section.table_type | default('none') }}"
-- Requires List: {{ section.requires_list | default(false) }}
-- List Type: "{{ section.list_type | default('none') }}"
-{% if brand_context %}- Brand Context (CRITICAL): "{{ brand_context }}"{% endif %}
-{% if section_source_text %}- Brand Source Text (real content from brand site - USE THIS!):
+- Title: "{{ title | default('Untitled Article') }}"
+- Intent: "{{ article_intent | default('brand_commercial') }}"
+- Content Type: "{{ content_type | default('article') }}"
+- Primary Keyword: "{{ primary_keyword | default('Main Topic') }}"
+- Language: "{{ article_language | default('Arabic') }}"
+- Area: "{{ area | default('General') }}"
+- Section Type: "{{ (section | default({})).get('section_type', 'content') }}"
+- Section Intent: "{{ (section | default({})).get('section_intent', 'commercial') }}"
+- Heading: "{{ (section | default({})).get('heading_text', 'New Section') }}"
+- Content Goal: "{{ (section | default({})).get('content_goal', 'Provide commercial value') }}"
+- Content Angle: "{{ (section | default({})).get('content_angle', 'Standard') }}"
+- Localized Angle: "{{ (section | default({})).get('localized_angle', 'Global') }}"
+- Decision Layer: "{{ (section | default({})).get('decision_layer', 'Executive') }}"
+- Sales Intensity: "{{ (section | default({})).get('sales_intensity', 'high') }}"
+- Required Keywords: {{ ((section | default({})).get('assigned_keywords', [])) | tojson }}
+- CTA Type: "{{ (execution_plan.get('cta_type', 'none')) if execution_plan is defined else 'none' }}"
+- CTA Position: "{{ (execution_plan.get('cta_position', 'none')) if execution_plan is defined else 'none' }}"
+- Brand Context: "{{ (brand_context | default('')) }}"
+- Branding / Primary Site: "{{ (brand_url | default('')) }}" (PRIMARY BRAND IDENTITY - MANDATORY for Introduction)
+- Brand Link Used Previously: {{ (brand_link_used | default(false)) | lower }}
+- Used Phrases To Avoid: {{ (used_phrases | default([])) | tojson }}
+- Mandatory Internal Links: {{ ((section | default({})).get('assigned_links', [])) | tojson }}
+- Used Internal Links: {{ (used_internal_links | default([])) | tojson }}
+- Reliable External Sources: {{ (external_sources | default([])) | tojson }}
+- Used External Links: {{ (used_external_links | default([])) | tojson }}
+- Requires Table: {{ (section | default({})).get('requires_table', false) }}
+- Table Type: "{{ (section | default({})).get('table_type', 'none') }}"
+- Requires List: {{ (section | default({})).get('requires_list', false) }}
+- List Type: "{{ (section | default({})).get('list_type', 'none') }}"
+{% if (brand_context | default('')) %}- Brand Context (CRITICAL): "{{ brand_context }}"{% endif %}
+{% if (section_source_text | default('')) %}- Brand Source Text (real content from brand site - USE THIS!):
 """
 {{ section_source_text }}
 """
 {% endif %}
 
 STRICT WRITING RULES
-{% if section_source_text %}0. Source-Grounded Writing (CRITICAL - MANDATORY):
+{% if (section_source_text | default('')) %}0. Source-Grounded Writing (CRITICAL - MANDATORY):
    - Real text from the brand's website is provided above (Brand Source Text).
    - YOU MUST PRIORITIZE THIS TEXT over your general knowledge.
    - Extract specific facts, methodologies, or features RELEVANT to this section from that text.
@@ -58,17 +58,17 @@ STRICT WRITING RULES
       - **SPECIFIC DIFFERENTIATORS**: In "Why Choose Us", you are FORBIDDEN from using generic claims like "Safe", "Easy", or "Fast" alone. Every claim MUST be backed by a specific local or technical reason (e.g., "3D Secure payments", "24/7 Saudi WhatsApp support").
 
    0.2. Strict Topic Boundaries (CRITICAL - MANDATORY):
-      - YOUR WRITING MUST STAY 100% WITHIN THE BOUNDARIES OF THE **Primary Keyword** ({{ primary_keyword }}).
+      - YOUR WRITING MUST STAY 100% WITHIN THE BOUNDARIES OF THE **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}).
       - Every paragraph MUST focus on the specific topic defined by the keyword.
       - DO NOT pivot to secondary technologies or broad industry trends unless they are explicitly describing **Supporting Capabilities** of the main service.
       - **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature or context become the protagonist of the section.
-      - **BRAND SOURCE OVERRIDE**: Even if the 'Brand Source Text' mentions many other services or topics, you MUST ignore them if they are not the Primary Keyword. Focus ONLY on {{ primary_keyword }}.
+      - **BRAND SOURCE OVERRIDE**: Even if the 'Brand Source Text' mentions many other services or topics, you MUST ignore them if they are not the Primary Keyword. Focus ONLY on {{ primary_keyword | default('Main Topic') }}.
 
 {% else %}0. Anti-Hallucination (CRITICAL):
     - Do NOT invent fake case studies, fake statistics, or fake brand names.
 {% endif %}
 1. Language lock:
-   - Write strictly in {{ article_language }}.
+   - Write strictly in {{ article_language | default('Arabic') }}.
    1.1 Perspective & Pronouns (MANDATORY):
       - Address the reader directly in SECOND PERSON in the target language.
       - Use natural second-person pronouns:
@@ -144,11 +144,11 @@ STRICT WRITING RULES
    - Use transition words naturally (e.g., "But", "And", "Because of this", "Here's why") instead of academic connectors.
 
 7. Decision Layer Enforcement:
-   - Strictly adhere to the assigned Decision Layer: {{ section.decision_layer }}.
+   - Strictly adhere to the assigned Decision Layer: {{ (section | default({})).get('decision_layer', 'Executive') }}.
    - Do NOT cover themes belonging to other layers (e.g., if layer is Technical Systems, do not discuss Market Trends or ROI).
 
 8. Sales Intensity & Tone:
-   - Adjust writing tone based on Sales Intensity: {{ section.sales_intensity }}.
+   - Adjust writing tone based on Sales Intensity: {{ (section | default({})).get('sales_intensity', 'medium') }}.
    - high: Use persuasive, benefit-driven language. Strong focus on value and conversion.
    - medium: Balanced tone. Informative but with subtle sales nudges.
    - low: Strictly educational and objective. No sales pressure.
@@ -169,11 +169,11 @@ STRICT WRITING RULES
        - CRITICAL: Skip any URL that already appears in "Used Internal Links" (this is a backup safety, but assigned links should already be unique).
    
    B. External Links:
-{% if is_first_section %}      - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
-{% else %}{% if used_external_links|length < 2 %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
+{% if (is_first_section | default(false)) %}      - THIS IS THE FIRST SECTION. YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY EXTERNAL LINKS HERE.
+{% else %}{% if (used_external_links | default([]))|length < 2 %}      - **MANDATORY**: You MUST include EXACTLY ONE (1) external link in this section to a credible, high-authority source.
       - The link must add value and support reader understanding (e.g., statistics, official definitions).
-      - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword }}".
-      - DO NOT repeat any of the links already used in previous sections: {{ used_external_links | tojson }}
+      - NEVER link to competitors who are targeting the same primary keyword: "{{ primary_keyword | default('Main Topic') }}".
+      - DO NOT repeat any of the links already used in previous sections: {{ (used_external_links | default([])) | tojson }}
       - Format as natural inline markdown: [Catchy Descriptive Title](https://actual-url.com)
 {% else %}      - We have already reached the maximum limit of external links for this article. DO NOT add any more external links in this section.
 {% endif %}{% endif %}
@@ -196,9 +196,9 @@ STRICT WRITING RULES
     - Describe the real-world impact, process, and results in a confident, story-driven way.
     - Do NOT make up fake metrics; focus on the proven capability to deliver high-end solutions.
 
-3. **GLOBAL KEYWORD BUDGET (CRITICAL)**: The Primary Keyword ({{ primary_keyword }}) MUST NOT appear more than **5 times in the ENTIRE ARTICLE**.
-   - **BUDGET STATUS**: `keyword_budget_exhausted` is {{ keyword_budget_exhausted | lower }}.
-   - If `keyword_budget_exhausted` is True: You are STRICTLY FORBIDDEN from using the exact string "{{ primary_keyword }}". You MUST use natural synonyms or pronouns.
+3. **GLOBAL KEYWORD BUDGET (CRITICAL)**: The Primary Keyword ({{ primary_keyword | default('Main Topic') }}) MUST NOT appear more than **5 times in the ENTIRE ARTICLE**.
+   - **BUDGET STATUS**: `keyword_budget_exhausted` is {{ (keyword_budget_exhausted | default(false)) | lower }}.
+   - If `keyword_budget_exhausted` is True: You are STRICTLY FORBIDDEN from using the exact string "{{ primary_keyword | default('Main Topic') }}". You MUST use natural synonyms or pronouns.
 
 4. **SEMANTIC EXHAUSTION (ANTI-REPETITION)**:
    - Scan the `previous_content_summary` and `used_topics` carefully.

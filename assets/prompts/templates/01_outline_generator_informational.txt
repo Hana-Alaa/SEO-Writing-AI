@@ -1,29 +1,29 @@
 Context:
-- Feedback: "{{ feedback }}"
-- Article Title: "{{ title }}"
-- Primary Keyword: "{{ keywords[0] if keywords else title }}"
-- Core Keywords: {{ keywords | tojson }}
-- Article Language: "{{ article_language }}"
-- Intent: "{{ intent }}"
-- Content Type: "{{ content_type }}"
-- Area: "{{ area }}"
+- Feedback: "{{ feedback | default('') }}"
+- Article Title: "{{ title | default('Untitled Article') }}"
+- Primary Keyword: "{{ (keywords | default(['Main Topic']))[0] if (keywords | default([])) else (title | default('Untitled Article')) }}"
+- Core Keywords: {{ (keywords | default([])) | tojson }}
+- Article Language: "{{ article_language | default('Arabic') }}"
+- Intent: "{{ intent | default('informational') }}"
+- Content Type: "{{ content_type | default('article') }}"
+- Area: "{{ area | default('General') }}"
 Topic Protagonist Rule (HIGHEST PRIORITY):
 - The **Primary Keyword** must be the absolute protagonist of at least 80% of the sections. 
 - **NO TOPIC HIJACKING**: Under no circumstances should a secondary feature, technology, or niche sub-topic become the main subject of an H2. They can only be mentioned as supporting tools or context that enhances the main service.
 - If the AI suggests topics that deviate from the core intent of the Primary Keyword, YOU MUST REJECT THOSE SUGGESTIONS.
-- SEO Intelligence: {{ seo_intelligence | tojson }}
-- Content Strategy: {{ content_strategy | tojson }}
-{% if brand_context %}- Brand Context: "{{ brand_context }}"{% endif %}
-- Internal Links (Available to Assign): {{ urls | tojson }}
-- Mandatory Section Types (YOU MUST INCLUDE THESE): {{ mandatory_section_types | tojson }}
-- Current Year: {{ current_year }}
+- SEO Intelligence: {{ (seo_intelligence | default({})) | tojson }}
+- Content Strategy: {{ (content_strategy | default({})) | tojson }}
+{% if (brand_context | default('')) %}- Brand Context: "{{ brand_context }}"{% endif %}
+- Internal Links (Available to Assign): {{ (urls | default([])) | tojson }}
+- Mandatory Section Types (YOU MUST INCLUDE THESE): {{ (mandatory_section_types | default([])) | tojson }}
+- Current Year: {{ current_year | default('2026') }}
 
 Role:
 You are an SEO Content Architect.
 Generate OUTLINE ONLY.
 
 Hard Rules:
-1. Language: all headings in {{ article_language }} only.
+1. Language: all headings in {{ article_language | default('Arabic') }} only.
 
 2. Intent Distribution (MANDATORY):
    - brand_commercial (Sales):

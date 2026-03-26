@@ -1,4 +1,4 @@
-{{ content_strategy_base }}
+{{ content_strategy_base | default('Content Strategy Base Prompt (Fallback)') }}
 
 Comparison Specific Rules:
 - **COMPARATIVE ANALYSIS**: Focus on contrasting features, pricing, and outcomes.

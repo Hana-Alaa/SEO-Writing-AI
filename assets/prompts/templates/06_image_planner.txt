@@ -2,28 +2,28 @@ Do NOT write article content.
 Do NOT modify headings.
 
 Context:
-- Article Title: "{{ title }}"
-- Primary Keyword: "{{ primary_keyword }}"
-- Core Keywords: {{ keywords | tojson }}
-- Article Outline: {{ outline | tojson }}
-- Brand Visual Style: {{ brand_visual_style if brand_visual_style else 'Generic Professional' }}
-- Target Image Quantity: {{ num_images }}
-- Preferred Image Style: {{ image_style }}
-- Target Aspect Ratio / Size: {{ image_size }}
+- Article Title: "{{ title | default('Untitled Article') }}"
+- Primary Keyword: "{{ primary_keyword | default('Main Topic') }}"
+- Core Keywords: {{ (keywords | default([])) | tojson }}
+- Article Outline: {{ (outline | default([])) | tojson }}
+- Brand Visual Style: {{ (brand_visual_style | default('Generic Professional')) }}
+- Target Image Quantity: {{ (num_images | default(0)) }}
+- Preferred Image Style: {{ (image_style | default('Premium')) }}
+- Target Aspect Ratio / Size: {{ (image_size | default('1024x1024')) }}
 
 
 Your Task:
 Act as an AI Visual Director. Your goal is to plan the visual assets for this article.
-You must generate a list of **{{ num_images }} high-quality image prompts** that will be used to generate images for this article.
+You must generate a list of **{{ (num_images | default(0)) }} high-quality image prompts** that will be used to generate images for this article.
 
 
 Rules:
-1. **Quantity**: You MUST generate exactly **{{ num_images }} image prompts**. If there are fewer than {{ num_images }} sections, assign multiple images to the most important sections (Introduction, Core services).
+1. **Quantity**: You MUST generate exactly **{{ (num_images | default(0)) }} image prompts**. If there are fewer than {{ (num_images | default(0)) }} sections, assign multiple images to the most important sections (Introduction, Core services).
 
 2. **Exclusivity (STRICT - NO STOCK IMAGES)**: 
    - Prohibited: Generic "smiling people in office", "shaking hands", "random code on screen", "generic laptop on desk".
    - Required: Custom-designed, premium visuals. Describe specific, brand-relevant scenarios.
-   - Style: **{{ image_style | capitalize }}** - focus on modern architecture, clean tech-surfaces, isometric 3D abstractions, and professional MENA-region/Riyadh localized contexts.
+   - Style: **{{ (image_style | default('premium')) | capitalize }}** - focus on modern architecture, clean tech-surfaces, isometric 3D abstractions, and professional MENA-region/Riyadh localized contexts.
 
 3. **Brand Grounding**: Each prompt MUST incorporate elements from the Brand Source Text or its specific services (e.g., "A modern UI prototype for a Riyadh-based business scenario", "An isometric 3D visualization of the core technical architecture mentioned in the brand text").
 4. **Relevance**: Each image must correspond directly to the technical or business value of the section it is assigned to.
@@ -33,8 +33,8 @@ Rules:
    - Abstract Illustration (Minimalist, conceptual)
    - High-End Mockup (Real-world application)
 6. **Alt Text Strategy (STRICT SEO RULES)**:
-   - **FEATURED IMAGE (HERO)**: The Alt text MUST include the **Primary Keyword** ({{ primary_keyword }}) naturally.
-   - **ALL OTHER IMAGES**: The Alt text MUST use a relevant **LSI or Secondary Keyword** from the provided list ({{ keywords | tojson }}).
+   - **FEATURED IMAGE (HERO)**: The Alt text MUST include the **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}) naturally.
+   - **ALL OTHER IMAGES**: The Alt text MUST use a relevant **LSI or Secondary Keyword** from the provided list ({{ (keywords | default([])) | tojson }}).
    - **NATURAL PHRASING**: Write Alt texts as natural, descriptive phrases (e.g., "A modern office layout in Riyadh showing digital collaboration tools" instead of just "office Riyadh").
    - **UNIQUE & NON-REPETITIVE**: Never repeat the exact same Alt text across different images. Each description must be unique and specific to the image content.
 7. **Image Types**: Use strictly: Featured, Infographic, Illustration, Mockup.

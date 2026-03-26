@@ -7,6 +7,8 @@ from typing import Dict, Any, List, Optional
 from jinja2 import Template
 from src.utils.json_utils import recover_json
 
+from src.utils.style_extractor import StyleExtractor
+
 logger = logging.getLogger(__name__)
 
 class StrategyService:
@@ -17,6 +19,7 @@ class StrategyService:
         self.title_generator = title_generator
         self.strategy_templates = strategy_templates
         self.intent_template = intent_template
+        self.style_extractor = StyleExtractor(ai_client)
 
     SUPPORTED_LANGS = {"ar", "en", "de", "fr", "es", "it", "tr", "pt"}
     LANG_ALIASES = {
@@ -159,30 +162,33 @@ class StrategyService:
         return state
 
     async def run_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyzes the reference image to determine the brand's visual style."""
+        """Analyzes the reference article/image to determine the brand's style."""
         input_data = state.get("input_data", {})
         ref_path = input_data.get("logo_reference_path")
+        style_ref = input_data.get("style_reference")
         
         state["brand_visual_style"] = ""
+        state["style_blueprint"] = {}
 
+        # 1. Structural/Writing Style Analysis (from Article Reference)
+        if style_ref:
+            logger.info("Analyzing style reference article...")
+            blueprint = await self.style_extractor.extract_blueprint(style_ref)
+            state["style_blueprint"] = blueprint
+            logger.info(f"Style Blueprint extracted: {list(blueprint.keys())}")
+
+        # 2. Visual Style Analysis (from Logo Reference)
         if ref_path and isinstance(ref_path, str) and os.path.exists(ref_path):
             if state.get("workflow_mode") == "core":
-                logger.info("Core Mode: Skipping deep style analysis, using default.")
+                logger.info("Core Mode: Skipping deep visual style analysis.")
                 state["brand_visual_style"] = "Professional, modern corporate identity, clean lighting"
-                return state
-                
-            logger.info(f"Analyzing brand style from reference: {ref_path}")
-            try:
-                style_res = await self.ai_client.describe_image_style(ref_path)
-                if isinstance(style_res, dict):
-                    state["brand_visual_style"] = style_res.get("content", "")
-                    state["last_step_model"] = style_res.get("metadata", {}).get("model", "unknown")
-                    state["last_step_tokens"] = style_res.get("metadata", {}).get("tokens", {})
-                else:
-                    state["brand_visual_style"] = str(style_res)
-            except Exception as e:
-                logger.error(f"Failed to analyze reference image: {e}")
-                state["brand_visual_style"] = "Professional, modern corporate identity, clean lighting"
+            else:
+                try:
+                    style_res = await self.ai_client.describe_image_style(ref_path)
+                    state["brand_visual_style"] = style_res.get("content", "") if isinstance(style_res, dict) else str(style_res)
+                except Exception as e:
+                    logger.error(f"Failed to analyze reference image: {e}")
+                    state["brand_visual_style"] = "Professional, modern corporate identity"
 
         return state
 

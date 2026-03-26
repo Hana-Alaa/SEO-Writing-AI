@@ -7,9 +7,9 @@ Your task is to convert this raw SERP data into:
 2. Structural quantitative intelligence
 3. Search intent validation based strictly on SERP patterns
 
-Primary Keyword: {{ primary_keyword }}
+Primary Keyword: {{ primary_keyword | default('Main Topic') }}
 SERP DATA:
-{{ serp_data }}
+{{ serp_data | default('No data available.') }}
 
 STEP 1 — Search Intent Confirmation
 Infer actual search intent ONLY from SERP structure using:

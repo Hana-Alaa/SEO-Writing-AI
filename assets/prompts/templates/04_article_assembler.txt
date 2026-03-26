@@ -5,12 +5,13 @@ You MUST NOT rewrite, optimize, judge, or generate new content.
 Your ONLY task is to assemble pre-written sections into a single article.
 
 Context:
-- Article Title: "{{ title }}"
-- Article Language: "{{ article_language }}"
-- Primary Keyword: "{{ primary_keyword }}"
+- Article Title: "{{ title | default('Untitled Article') }}"
+- Article Language: "{{ article_language | default('Arabic') }}"
+- Primary Keyword: "{{ primary_keyword | default('Main Topic') }}"
+- Total Sections: {{ (sections | default([])) | length }}
 
 Input Sections (already validated):
-{% for section in sections %}
+{% for section in (sections | default([])) %}
 --- SECTION START ---
 Heading Level: {{ section.heading_level }}
 Heading Text: {{ section.heading_text }}

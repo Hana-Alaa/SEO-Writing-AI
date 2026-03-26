@@ -1,11 +1,11 @@
 Context:
-You have received a set of written sections for the article titled: "{{ title }}".
+You have received a set of written sections for the article titled: "{{ title | default('Untitled Article') }}".
 Your job is to assemble them into a single, cohesive, finalized Masterpiece.
 
 Input Sections:
-{% for section in sections %}
---- SECTION: {{ section.heading_text }} ---
-{{ section.generated_content }}
+{% for section in (sections | default([])) %}
+--- SECTION: {{ section.heading_text | default('New Section') }} ---
+{{ section.generated_content | default('No content.') }}
 -------------------------------------------
 {% endfor %}
 

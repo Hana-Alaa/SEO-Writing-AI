@@ -1,0 +1,172 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 7.28 seconds
+  -- Tokens Used: 3,647
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 48.20 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 125.93 seconds
+  -- Tokens Used: 77,297
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 125.94 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.81 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.92 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 7.09 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 25.22 seconds
+  -- Tokens Used: 67,477
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.89 seconds
+  -- Tokens Used: 22,638
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_ما هي منصة حجز تذاكر المباريات وكيف تعمل في السوق السعودي؟
+  -- Duration: 5.43 seconds
+  -- Tokens Used: 34,941
+--------------------------------------------------
+Step: SECTION_2_ما هي منصة حجز تذاكر المباريات وكيف تعمل في السوق السعودي؟
+  -- Duration: 5.00 seconds
+  -- Tokens Used: 32,890
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ما هي منصة حجز تذاكر المباريات وكيف تعمل في السوق السعودي؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_أبرز مزايا استخدام منصة حجز تذاكر المباريات المتطورة
+  -- Duration: 7.51 seconds
+  -- Tokens Used: 48,059
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أبرز مزايا استخدام منصة حجز تذاكر المباريات المتطورة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_دليل شامل: خطوات حجز التذاكر والأسعار المتوقعة لعام 2026
+  -- Duration: 6.51 seconds
+  -- Tokens Used: 69,437
+--------------------------------------------------
+Step: SECTION_4_دليل شامل: خطوات حجز التذاكر والأسعار المتوقعة لعام 2026
+  -- Duration: 7.53 seconds
+  -- Tokens Used: 63,511
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: دليل شامل: خطوات حجز التذاكر والأسعار المتوقعة لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_كيف تختار المقعد المثالي عبر خريطة الملعب التفاعلية؟
+  -- Duration: 6.53 seconds
+  -- Tokens Used: 84,847
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: كيف تختار المقعد المثالي عبر خريطة الملعب التفاعلية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_أمثلة وحالات استخدام: منصة حجز تذاكر المباريات في الفعاليات الكبرى
+  -- Duration: 7.26 seconds
+  -- Tokens Used: 103,766
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أمثلة وحالات استخدام: منصة حجز تذاكر المباريات في الفعاليات الكبرى
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_أخطاء شائعة يجب تجنبها عند استخدام منصة حجز تذاكر المباريات
+  -- Duration: 7.44 seconds
+  -- Tokens Used: 122,566
+--------------------------------------------------
+Step: SECTION_7_أخطاء شائعة يجب تجنبها عند استخدام منصة حجز تذاكر المباريات
+  -- Duration: 8.26 seconds
+  -- Tokens Used: 110,879
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أخطاء شائعة يجب تجنبها عند استخدام منصة حجز تذاكر المباريات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 13.65 seconds
+  -- Tokens Used: 135,384
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 9.14 seconds
+  -- Tokens Used: 122,306
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول منصة حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_الخلاصة: مستقبلك مع منصة حجز تذاكر المباريات
+  -- Duration: 13.67 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الخلاصة: مستقبلك مع منصة حجز تذاكر المباريات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 141.99 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 14.33 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.03 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.72 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.14 seconds
+  -- Tokens Used: 163,489
+--------------------------------------------------

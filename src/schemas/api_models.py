@@ -22,6 +22,7 @@ class ArticleRequest(BaseModel):
     pov: Optional[str] = Field(None, description="Point of view: 1st person singular, 1st person plural, 2nd person, 3rd person")
     article_size: Optional[str] = Field("1000", description="Target word count: 1000, 2000, 3000")
     brand_voice_description: Optional[str] = Field(None, description="Textual description of the brand voice")
+    style_reference: Optional[str] = Field(None, description="URL or HTML/MD of a reference article to mimic its style and structure")
     
     # Structure Controls
     include_conclusion: bool = Field(True, description="Whether to include a conclusion section")

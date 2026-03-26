@@ -3,18 +3,18 @@ You are an SEO Article Validator.
 Your task is to validate the full, finalized article markdown, including metadata and image plan, against global SEO and content rules.
 
 Context:
-- Article Title: "{{ title }}"
-- Article Language: "{{ article_language }}"
-- Primary Keyword: "{{ primary_keyword }}"
-- Article Markdown: {{ final_markdown[:15000]}}
-- Meta Title: "{{ meta_title }}"
-- Meta Description: "{{ meta_description }}"
-- Image Plan: {{ image_plan | tojson }}
-- Article Schema: {{ article_schema | tojson }}
-- FAQ Schema: {{ faq_schema | tojson }}
-- Word Count: {{ word_count }}
-- Keyword Count: {{ keyword_count }}
-- Keyword Density (per 1000 words): {{ keyword_density }}
+- Article Title: "{{ title | default('Untitled Article') }}"
+- Article Language: "{{ article_language | default('Arabic') }}"
+- Primary Keyword: "{{ primary_keyword | default('Main Topic') }}"
+- Article Markdown: {{ (final_markdown | default(''))[:15000] }}
+- Meta Title: "{{ meta_title | default('') }}"
+- Meta Description: "{{ meta_description | default('') }}"
+- Image Plan: {{ (image_plan | default({})) | tojson }}
+- Article Schema: {{ (article_schema | default({})) | tojson }}
+- FAQ Schema: {{ (faq_schema | default(None)) | tojson }}
+- Word Count: {{ word_count | default(0) }}
+- Keyword Count: {{ keyword_count | default(0) }}
+- Keyword Density (per 1000 words): {{ keyword_density | default(0) }}
 
 Validation Checklist:
 
@@ -65,17 +65,17 @@ Validation Checklist:
    - No "Hype" word clusters (max 2 per section). [CRITICAL]
    - No fabrication of quantitative metrics (numbers/percentages) not in Source Text. [CRITICAL]
    - No references to images, schema, meta inside content. [CRITICAL]
-   - **No Competitor Mentions**: YOU ARE STRICTLY FORBIDDEN from mentioning, referencing, or comparing to any of the following competitor brands: {{ prohibited_competitors | join(', ') }}. Any mention is a CRITICAL violation. [CRITICAL]
+   - **No Competitor Mentions**: YOU ARE STRICTLY FORBIDDEN from mentioning, referencing, or comparing to any of the following competitor brands: {{ (prohibited_competitors | default([])) | join(', ') }}. Any mention is a CRITICAL violation. [CRITICAL]
 
 9. **Topic Integrity (CRITICAL)**
-    - The article MUST focus strictly on the **Primary Keyword** ({{ primary_keyword }}).
+    - The article MUST focus strictly on the **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}).
     - If the article drifts into unrelated or secondary topics (supporting technologies, unrelated services, or broad industry fluff) for more than 10% of the content, it is a CRITICAL violation.
     - The Primary Keyword must be the absolute "subject" of the expertise shown.
 
 10. **Content Angle & Tone (STRICT)**
-   - Primary Angle: "{{ content_strategy.primary_angle if content_strategy else 'N/A' }}"
-   - Strategic Positioning: "{{ content_strategy.strategic_positioning if content_strategy else 'N/A' }}"
-   - Tone Direction: "{{ content_strategy.tone_direction if content_strategy else 'N/A' }}"
+   - Primary Angle: "{{ (content_strategy.primary_angle | default('N/A')) if content_strategy is defined else 'N/A' }}"
+   - Strategic Positioning: "{{ (content_strategy.strategic_positioning | default('N/A')) if content_strategy is defined else 'N/A' }}"
+   - Tone Direction: "{{ (content_strategy.tone_direction | default('N/A')) if content_strategy is defined else 'N/A' }}"
    - **Requirement**: The article must strictly adhere to this angle and tone. If the writing is generic, misses the emotional triggers, or fails to implement the strategic positioning, mark as a CRITICAL violation.
 
 Output:
