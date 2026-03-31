@@ -143,9 +143,12 @@ class ResearchService:
                 if peer_areas and any(p.lower() in text for p in peer_areas):
                     score += 10
                 
-                # 5. Core Utility Boost (Contact/Booking for conclusion)
+                # 5. Core Utility Boost (Contact/Booking/FAQ for conversion & authority)
                 utility_patterns = ["contact", "book", "appointment", "tours", "تواصل", "حجز"]
                 if any(p in text for p in utility_patterns): score += 5
+                
+                faq_patterns = ["faq", "frequently-asked", "help", "support", "أسئلة", "شائعة", "مساعدة"]
+                if any(p in text for p in faq_patterns): score += 40
                 
                 return score
 
@@ -208,17 +211,31 @@ class ResearchService:
             # AI Brand Context Extraction
             combined_text = "\n\n".join(f"[Page: {url}]\n{text}" for url, text in brand_pages_index.items())[:12000]
             if combined_text:
-                context_prompt = f"""You are a Brand Intelligence Analyst.
-Below image represents text scraped from multiple pages of a company's website.
+                paa_questions = state.get("serp_data", {}).get("paa_questions", [])
+                paa_str = "\n".join([f"- {q}" for q in paa_questions[:10]])
+                
+                context_prompt = f"""You are a Brand Intelligence Analyst and SEO Strategist.
+Below text represents scraped data from multiple pages of a company's website.
 Article Topic: "{primary_keyword}"
+
+POPULAR USER QUESTIONS (Google PAA):
+\"\"\"
+{paa_str}
+\"\"\"
 
 Website Content:
 \"\"\"
 {combined_text}
 \"\"\"
 
-Extract a detailed FACT SHEET related to "{primary_keyword}". Include services, processes, technologies, USPs, and target audience. 
-Write the detailed fact sheet now:"""
+TASK:
+1. Extract a detailed FACT SHEET about "{primary_keyword}".
+2. **BRAND FAQ HARVESTING**: Identify the top 5-7 most important Frequently Asked Questions (FAQs) found on the site.
+3. **SERP VALIDATION**: Prioritize FAQs that answer the popular user questions (PAA) listed above.
+4. If a PAA question is NOT in the official FAQ but is answered elsewhere in the website content, incorporate it into your extracted FAQ list.
+5. Discard generic corporate boilerplate (e.g., anniversary dates) unless relevant to trust.
+
+Write the detailed Fact Sheet and the Validated FAQ list now:"""
                 res = await self.ai_client.send(context_prompt, step="brand_discovery")
                 brand_content = res["content"]
                 metadata = res["metadata"]

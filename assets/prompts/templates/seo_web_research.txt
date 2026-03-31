@@ -32,7 +32,8 @@ For each result extract:
 - CTA style (informational / soft commercial / aggressive / none)
 
 B. Extract real SERP elements:
-- 10 unique People Also Ask questions
+- 10 unique People Also Ask (PAA) questions. 
+- **CRITICAL**: If no real PAA boxes are found, you MUST synthesize 10 highly logical and helpful user questions based on the content of the top ranking results.
 - 10 unique related searches
 - 10 unique autocomplete-style suggestions
 - 10 LSI keyword variations observed across ranking pages
@@ -40,9 +41,8 @@ B. Extract real SERP elements:
 Rules:
 - Remove duplicates
 - Normalize similar phrasing
-- Do NOT invent questions
+- If real element not found, SYNTHESIZE based on search context. NEVER return an empty array for PAA or LSI.
 - Use only live search results context
-- If element not found, return empty array
 
 -------------------------------------
 PHASE 2 – LIGHT COMPETITIVE ANALYSIS

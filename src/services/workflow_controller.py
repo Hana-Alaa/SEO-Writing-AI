@@ -278,6 +278,7 @@ class AsyncWorkflowController:
         # Final Export
         if state.get("workflow_logger"):
             state["workflow_logger"].export_csv()
+            state["workflow_logger"].export_diagnostic_report(state)
 
         return self._assemble_final_output(state)
 
@@ -313,7 +314,7 @@ class AsyncWorkflowController:
         state["tone"] = input_data.get("tone")
         state["article_type"] = input_data.get("article_type")
         state["pov"] = input_data.get("pov")
-        state["article_size"] = input_data.get("article_size", "1000")
+        state["article_size"] = input_data.get("article_size") or "core_dynamic_expansion"
         state["brand_voice_description"] = input_data.get("brand_voice_description")
         
         state["include_conclusion"] = input_data.get("include_conclusion", True)
@@ -487,7 +488,7 @@ class AsyncWorkflowController:
         
         # We use state["internal_resources"] which was populated in brand_discovery
         # Junk link filter (avoid Contact, Login, etc.)
-        junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
+        junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help'}
         
         def is_junk(url):
             path = urlparse(url).path.lower().rstrip('/')
@@ -647,6 +648,9 @@ class AsyncWorkflowController:
             outline,
             content_type=content_type
         )
+        
+        # Enforce CTA Budget: Max 3 CTAs for 1000 words (prevents excessive sales repetition)
+        outline = self.validator.enforce_cta_budget(outline, str(state.get("article_size", "1000")))
 
         outline = self.validator.enforce_content_angle(
             outline,
@@ -806,6 +810,7 @@ class AsyncWorkflowController:
         state["used_claims"] = []
         state["ctas_placed"] = 0
         state["full_content_so_far"] = ""
+        state["last_section_content"] = ""
 
         if PARALLEL_SECTIONS:
             tasks = [
@@ -844,13 +849,14 @@ class AsyncWorkflowController:
                 
                 # Update quality state after each section in sequential mode
                 if res and res.get("generated_content"):
-                    # Extract claims (simulated for now, actually handled by AI in next steps)
-                    # We will update these properly once we update SectionWriter
-                    state["full_content_so_far"] += "\n\n" + res["generated_content"]
-                    
-                    # Track CTAs
-                    if "[CTA]" in res["generated_content"] or "btn-" in res["generated_content"]:
-                         state["ctas_placed"] = state.get("ctas_placed", 0) + 1
+                     # Update Full Content (Cumulative Memory)
+                     state["full_content_so_far"] += "\n\n" + res["generated_content"]
+                     # Update Last Section Content (For Logical Flow)
+                     state["last_section_content"] = res["generated_content"]
+                     
+                     # Track CTAs
+                     if "[CTA]" in res["generated_content"] or "btn-" in res["generated_content"]:
+                          state["ctas_placed"] = state.get("ctas_placed", 0) + 1
                          
                 results.append(res)
 
@@ -1041,13 +1047,14 @@ class AsyncWorkflowController:
             bold_key_terms=state.get("bold_key_terms", True),
             keyword_budget_exhausted=state.get("global_keyword_count", 0) >= 4,
             used_topics=state.get("used_topics", []),
-            previous_content_summary=state.get("full_content_so_far", ""),
+            used_claims=state.get("used_claims", []),
+            previous_section_text=state.get("last_section_content", ""),
+            previous_content_summary=state.get("full_content_so_far", ""),  # REMOVED CAP FOR MAXIMUM MEMORY
             full_outline=state.get("outline", []),
             introduction_text=state.get("introduction_text", ""),
             external_resources=state.get("external_resources", []),
             brand_name=state.get("brand_name", ""),
             style_blueprint=state.get("style_blueprint", {}),
-            used_claims=state.get("used_claims", []),
             ctas_placed=state.get("ctas_placed", 0),
             serp_data=state.get("serp_data", {})
         )
@@ -1065,7 +1072,7 @@ class AsyncWorkflowController:
 
         # Semantic Overlap Rejection
         if content and getattr(self, "semantic_model", None) and state.get("used_claims"):
-            is_rejected, overlap_score, overlap_sentence = await self.validator.check_semantic_overlap(content, state.get("used_claims", []), threshold=0.85)
+            is_rejected, overlap_score, overlap_sentence = await self.validator.check_semantic_overlap(content, state.get("used_claims", []), threshold=0.70)
             if is_rejected:
                 logger.warning(f"Semantic Overlap Rejected ({overlap_score:.2f}) for '{title}'. Sentence: '{overlap_sentence}'. Retrying...")
                 res_data = await self.section_writer.write(
@@ -1103,6 +1110,10 @@ class AsyncWorkflowController:
                     external_resources=state.get("external_resources", []),
                     style_blueprint=state.get("style_blueprint", {}),
                     used_claims=state.get("used_claims", []),
+
+                    previous_section_text=state.get("last_section_content", ""),
+
+                    previous_content_summary=state.get("full_content_so_far", ""),
                     ctas_placed=state.get("ctas_placed", 0),
                     serp_data=state.get("serp_data", {})
                 )
@@ -1159,6 +1170,10 @@ class AsyncWorkflowController:
                     external_resources=state.get("external_resources", []),
                     style_blueprint=state.get("style_blueprint", {}),
                     used_claims=state.get("used_claims", []),
+
+                    previous_section_text=state.get("last_section_content", ""),
+
+                    previous_content_summary=state.get("full_content_so_far", ""),
                     ctas_placed=state.get("ctas_placed", 0),
                     serp_data=state.get("serp_data", {})
                 )
@@ -1201,6 +1216,10 @@ class AsyncWorkflowController:
                     external_resources=state.get("external_resources", []),
                     style_blueprint=state.get("style_blueprint", {}),
                     used_claims=state.get("used_claims", []),
+
+                    previous_section_text=state.get("last_section_content", ""),
+
+                    previous_content_summary=state.get("full_content_so_far", ""),
                     ctas_placed=state.get("ctas_placed", 0),
                     serp_data=state.get("serp_data", {})
                 )

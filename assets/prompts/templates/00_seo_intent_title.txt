@@ -11,34 +11,35 @@ Input:
 - Brand Name: {{ brand_name | default("Not provided") }}
 
 Task:
-1. Classify intent from SERP-first signals:
-   - Title framing pattern
-   - CTA style distribution
-   - Service-vs-guide wording
-2. If >60% of SERP signals point to one intent, that intent MUST override raw topic.
-3. Generate one optimized H1 aligned to detected intent.
+1. Classify intent using the "Strategic Hierarchy":
+   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about "Web Design" becomes `commercial` if a Brand is present).
+   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.
+   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves "Vs", "Comparison", "Better between X and Y", or comparing different options, the intent is **comparative**.
+   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.
 
 Allowed intents:
-- commercial → evaluating services, looking for best options, ready to act, ready to buy
-- informational → learning
-- comparative  → comparing options, looking for best options
+- informational → searching for knowledge, guides, or tutorials.
+- commercial → evaluating a specific service/product or ready to take action.
+- comparative → comparing different options with brand positioning as the preferred choice.
 
 Title rules:
 - LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
-- CORE: Must include the **primary keyword** naturally.
-- SALES FOCUS (COMMERCIAL): For commercial intent, the title MUST be persuasive and sales-oriented (e.g., "Best", "Top", "Reliable").
-- FRESHNESS (YEAR): Prefer adding the current year ({{ current_year | default('2026') }}) where relevant to indicate up-to-date content, but avoid it if it makes the title feel forced.
-- BRANDING (OPTIONAL): You may include the Brand Name ({{ brand_name | default('The Company') }}) if it adds trust and authority, but keep the primary focus on the keyword.
-- AREA: If an area is provided, it MUST be integrated into the title.
-- No clickbait, no keyword stuffing.
-- **TOPIC BOUNDARY**: Do NOT add secondary concepts or industry buzzwords unless they are specifically mentioned in the **Raw topic** or **Primary keyword**.
-- Focus 100% on the **Primary keyword** service.
-- No markdown
-- No extra text
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use **Decisive Authority** (e.g., "Best", "Professional", "Top-Rated", "Exclusive"). 
+- SALES FOCUS: The title MUST be persuasive and highlight a direct benefit or USP.
+- FRESHNESS (YEAR): Include the current year ({{ current_year | default('2026') }}) to signal relevance and authority.
+- BRANDING (FALLBACK): 
+    * If `Brand Name` is "Not provided", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK): 
+    * If `Target Area` is "Global", "General", or "International", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.
+- No markdown, no extra text.
 
 Return STRICT JSON only:
 {
   "intent": "commercial | informational | comparative",
   "confidence": 0.0,
-  "optimized_title": ""
+  "optimized_title": "The Decisive, Keyword-Rich, Brand-Focused H1"
 }

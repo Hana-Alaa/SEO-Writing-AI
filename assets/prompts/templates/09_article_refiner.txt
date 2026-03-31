@@ -12,16 +12,29 @@ Rules:
 8. Eliminate redundant "Vision 2030" or "Digital Transformation" filler if repetitive.
 9. Enhance the transition between sections for a smoother reader experience.
 10. CONCEPTUAL DEDUPLICATION: Scan the entire article for information duplication (e.g., if "installment plans" are mentioned in section 2, they must NOT be mentioned in section 4). Remove the less relevant occurrence.
-11. NATURAL FLOW AUDIT (CRITICAL): Scan the entire article for "Keyword Stuffing". If a keyword feels forced, clunky, or out of context, REPHRASE it immediately.
-12. GLOBAL KEYWORD BUDGET (STRICT): Ensure the Primary Keyword appears NO MORE THAN 5 TIMES in the entire article. If it appears more, replace extra occurrences with synonyms (e.g., "The platform", "The service", "The system").
-13. FACT DEDUPLICATION: Scan the entire article for repeated numbers, statistics, or unique brand claims (e.g., "30,000 users"). These MUST appear ONLY once in the most relevant section. Remove all other occurrences.
-14. Semantic Variety: Use synonyms or natural variations instead of repeating the same exact word in every sentence.
-15. CTA UX AUDIT: Ensure all CTAs are at the ABSOLUTE END of their respective sections. If a CTA is found in the middle of a paragraph or idea, move it to the end of the logical block.
-16. CTA Frequency: Ensure the CTA frequency follows a ratio of ~3 CTAs per 1000 words (approx 1 every 2-3 sections).
-17. COMMERCIAL BLUEPRINT AUDIT (CRITICAL): If content_type is "brand_commercial", ensure:
+11. **AUDIENCE-FIRST COMPREHENSION & READABILITY AUDIT (CRITICAL)**: 
+    * **THE HUMAN TEST**: Imagine you are a person from the target audience in {{ area }}. Read every sentence and ask: "Is this clear and useful, or is it corporate noise?".
+    * **DE-CLUTTERING**: Ruthlessly rephrase or DELETE any "Heavy Corporate Masks" (الكلام المكلكل). If a sentence sounds like a CEO address or a formal report, humanize it.
+    * **VALUE TRANSLATION**: Ensure every technical or brand fact is translated into a direct benefit for the reader. If a fact stands alone as "Brand Pride" without helping the reader, delete it or make it useful. 
+    * Prioritize active verbs, a natural human rhythm, and conversational Arabic phrasing that fits the topic and region.
+12. NATURAL FLOW & DIALECT AUDIT (CRITICAL): Scan the entire article for "Keyword Stuffing" and "Foreign Phrasing". Ensure the dialect perfectly matches the target area for the specific topic and niche. REPHRASE any awkward or out-of-place regionalisms. 
+13. STYLE MIRROR CHECK: Compare the flow against the provided Editorial DNA. Ensure paragraph cohesion and transition styles are maintained.
+14. GLOBAL KEYWORD BUDGET (STRICT): Ensure the Primary Keyword appears NO MORE THAN 5 TIMES in the entire article. If it appears more, replace extra occurrences with synonyms (e.g., "The platform", "The service", "The system").
+15. FACT DEDUPLICATION: Scan the entire article for repeated numbers, statistics, or unique brand claims (e.g., "30,000 users"). These MUST appear ONLY once in the most relevant section. Remove all other occurrences.
+16. **BENEFIT TRANSLATION**: Ensure every "Brand Claim" (e.g., certifications, partnerships) is logically linked to a reader benefit. If a claim stands alone as "Company Pride" without helping the reader, rephrase it to make it useful.
+17. **SIMPLE LINGUISTICS**: Shorten any sentences that feel "winding" or typical of AI writing. Favor punchy, direct language. Avoid "Clunky" (مكلكلة) or overly formal Arabic that sounds like a corporate legal document.
+18. Semantic Variety: Use synonyms or natural variations instead of repeating the same exact word in every sentence.
+19. CTA UX AUDIT: Ensure all CTAs are at the ABSOLUTE END of their respective sections. If a CTA is found in the middle of a paragraph or idea, move it to the end of the logical block.
+20. CTA Frequency: Ensure the CTA frequency follows a ratio of ~3 CTAs per 1000 words (approx 1 every 2-3 sections).
+21. COMMERCIAL BLUEPRINT AUDIT (CRITICAL): If content_type is "brand_commercial", ensure:
     - Intro is MAX 2 paragraphs with exactly 1 soft CTA.
     - "Service Definition" starts with a direct, objective "Cold Start" sentence.
     - "Why Choose Us" contains SPECIFIC local/technical differentiators (No generic claims).
     - Final CTA is the highest impact point and no other hard CTAs were used earlier.
-17. JSON METADATA CLEANUP (CRITICAL): Strictly REMOVE any curly braces {}, square brackets [], or JSON-like metadata blocks (e.g., "content":, "used_links":) if they accidentally appear at the end of the text. The final output must be PURE MARKDOWN.
-18. Output ONLY the refined markdown.
+22. **LOGIC & FLOW AUDIT (CRITICAL)**: Scan the entire article as a single story. 
+    * If a paragraph feels "disconnected" or suddenly switches topics, fix the transition.
+    * Ensure the "Value-First" 80/20 balance is maintained in every single H2.
+    * **RUTHLESS DEDUPLICATION**: If a USP or fact appears in Section 1, and again in Section 3, DELETE the second occurrence or replace it with a "Callback" (e.g., "وكما ذكرنا فإن..."). Never repeat the full explanation.
+23. **REPETITION GUARD**: Actively scan for repeated sentence structures or repetitive vocabulary. If a word is used twice in close proximity, replace it with a synonym.
+24. **JSON METADATA CLEANUP (CRITICAL)**: Strictly REMOVE any curly braces {}, square brackets [], or JSON-like metadata blocks (e.g., "content":, "used_links":) if they accidentally appear at the end of the text. The final output must be PURE MARKDOWN.
+25. **Output ONLY the refined markdown.**

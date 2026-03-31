@@ -1,0 +1,184 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 6.95 seconds
+  -- Tokens Used: 4,093
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 22.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 124.96 seconds
+  -- Tokens Used: 81,192
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 124.97 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.41 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.45 seconds
+  -- Tokens Used: 480
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 480
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 480
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 21.80 seconds
+  -- Tokens Used: 17,377
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 3.24 seconds
+  -- Tokens Used: 18,352
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_ما هي تيك ايفينت أفضل منصة حجز تذاكر المباريات في المملكة؟
+  -- Duration: 3.74 seconds
+  -- Tokens Used: 25,496
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ما هي تيك ايفينت أفضل منصة حجز تذاكر المباريات في المملكة؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_المزايا الحصرية والخدمات التي تقدمها المنصة للمشجعين
+  -- Duration: 5.65 seconds
+  -- Tokens Used: 33,360
+--------------------------------------------------
+Step: SECTION_3_المزايا الحصرية والخدمات التي تقدمها المنصة للمشجعين
+  -- Duration: 4.99 seconds
+  -- Tokens Used: 31,995
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: المزايا الحصرية والخدمات التي تقدمها المنصة للمشجعين
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا يفضل المشجعون تيك ايفينت لتأمين مقاعدهم؟
+  -- Duration: 4.39 seconds
+  -- Tokens Used: 42,175
+--------------------------------------------------
+Step: SECTION_4_لماذا يفضل المشجعون تيك ايفينت لتأمين مقاعدهم؟
+  -- Duration: 5.24 seconds
+  -- Tokens Used: 40,324
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يفضل المشجعون تيك ايفينت لتأمين مقاعدهم؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_أرقام وإنجازات تعكس ريادتنا في سوق التذاكر
+  -- Duration: 5.80 seconds
+  -- Tokens Used: 50,429
+--------------------------------------------------
+Step: SECTION_5_أرقام وإنجازات تعكس ريادتنا في سوق التذاكر
+  -- Duration: 7.53 seconds
+  -- Tokens Used: 48,030
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أرقام وإنجازات تعكس ريادتنا في سوق التذاكر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة الحلول: تيك ايفينت مقابل الطرق التقليدية
+  -- Duration: 5.69 seconds
+  -- Tokens Used: 57,118
+--------------------------------------------------
+Step: SECTION_6_مقارنة الحلول: تيك ايفينت مقابل الطرق التقليدية
+  -- Duration: 6.23 seconds
+  -- Tokens Used: 54,097
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة الحلول: تيك ايفينت مقابل الطرق التقليدية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات حجز تذكرة مباراتك القادمة بكل بساطة
+  -- Duration: 6.19 seconds
+  -- Tokens Used: 70,178
+--------------------------------------------------
+Step: SECTION_7_خطوات حجز تذكرة مباراتك القادمة بكل بساطة
+  -- Duration: 6.01 seconds
+  -- Tokens Used: 66,368
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات حجز تذكرة مباراتك القادمة بكل بساطة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 6.53 seconds
+  -- Tokens Used: 77,257
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 5.26 seconds
+  -- Tokens Used: 73,105
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_احجز مقعدك الآن واستمتع بإثارة الملاعب السعودية
+  -- Duration: 4.13 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: SECTION_9_احجز مقعدك الآن واستمتع بإثارة الملاعب السعودية
+  -- Duration: 4.78 seconds
+  -- Tokens Used: 87,081
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: احجز مقعدك الآن واستمتع بإثارة الملاعب السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 104.64 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 12.79 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 5.82 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.18 seconds
+  -- Tokens Used: 91,717
+--------------------------------------------------

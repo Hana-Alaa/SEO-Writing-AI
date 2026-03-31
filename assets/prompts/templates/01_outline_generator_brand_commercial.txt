@@ -1,6 +1,9 @@
-
-
 Brand Commercial Specific Rules (MANDATORY STRUCTURE & QUALITY):
+
+### 0. INTENT DISTRIBUTION (THE 70/30 RULE - CRITICAL)
+- **THE MANDATE**: This article MUST maintain a balance of **70% Commercial/Transactional intent** and **30% Informational intent**.
+- **EXECUTION**: Informational content (Intro, FAQ, Process) must only serve as the foundation to justify the Commercial claims (Features, Proof, Why Choose Us).
+- **EXPANSION LOGIC**: If expanding to 15-25 sections, YOU MUST ensure that 70% of the newly mined sub-topics focus on competitive advantages, ROI details, and specific brand superiorities.
 
 You MUST generate the outline in this EXACT order, while adhering to the Quality Rules below:
 
@@ -11,7 +14,7 @@ You MUST generate the outline in this EXACT order, while adhering to the Quality
    - Focus: Speak directly to the reader's problem or need.
    - Constraint: EXACTLY 1-2 paragraphs only. 
    - Requirement: Primary keyword in the first paragraph.
-   - CTA: MAXIMUM ONE (1) very soft CTA at the absolute end. Avoid any other sales noise.
+   - **CTA (STRICT)**: `cta_type: "none"` or one very soft, low-commitment CTA at the absolute end.
    - section_type: "introduction"
 
 2. **What the service/product is (The Definition)**: 
@@ -26,9 +29,9 @@ You MUST generate the outline in this EXACT order, while adhering to the Quality
    - section_type: "key_features"
 
 4. **Why choose us / differentiators (The Value)**: 
-   - H2 Heading: MUST NOT use the exact primary keyword.
+   - H2 Heading: Focus on unique brand value. MUST NOT use the exact primary keyword.
    - Content: Specific brand value and hyper-local/technical differentiators. 
-   - FORBIDDEN: Do NOT use naked generic claims like "Safe", "Easy", or "Fast" without a specific local reason (e.g., "Safe 3D Secure payments", "Local 24/7 Saudi support", "Instant QR delivery").
+   - **CTA (SLOT 1 - OPTIONAL)**: `cta_type: "moderate"` (contextual).
    - section_type: "why_choose_us"
 
 5. **Proof (The Authority)**: 
@@ -36,6 +39,7 @@ You MUST generate the outline in this EXACT order, while adhering to the Quality
    - Requirement: STATISTICS, CASE STUDIES, or CLIENT RESULTS.
    - H2 Section Type: `section_type: "proof"` or `section_type: "case_study"`.
    - Content: Use a "Challenge → Solution → Result" narrative. Include a small table if it helps visualize ROI.
+   - **CTA (SLOT 2 - OPTIONAL)**: `cta_type: "moderate"` (contextual).
    - section_type: "proof"
 
 6. **Comparison table (The Clarity)**: 
@@ -53,41 +57,28 @@ You MUST generate the outline in this EXACT order, while adhering to the Quality
    - H2 Heading: MANDATORY FAQ heading.
    - Focus: Pricing, process, and common objections.
    - Requirement: Minimum 4-5 questions.
+   - **CTA PROHIBITION**: `cta_type: "none"`.
    - section_type: "faq"
 
 9. **Strong Conclusion + CTA (The Close)**: 
    - Requirement: `cta_type: "strong"`, `cta_position: "last_sentence"`.
    - **MANDATORY LINK**: You MUST assign the Brand URL or a Contact/Booking URL to this section. Never leave the conclusion without an internal link.
+   - **CTA (SLOT 3 - MANDATORY)**: `cta_type: "strong"`, `cta_position: "last_sentence"`.
    - section_type: "conclusion"
 
 ---
-### II. GLOBAL HEADING CONSTRAINTS (CRITICAL - ANTI-STUFFING)
+---
+### II. STRATEGIC GUIDELINES (BRAND CONTEXT)
 
-1. **KEYWORD PARITY (UNDER-USE OVER OVER-USE)**:
-   - The Primary Keyword ({{ (keywords | default([title | default('Main Topic')]))[0] if (keywords | default([])) else (title | default('Main Topic')) }}) is STRICTLY FORBIDDEN from appearing in more than TWO (2) H2 headings.
-   - Slot 1: Introduction (Optional in heading).
-   - Slot 2: Definition (Required in heading).
-   - ALL OTHER HEADINGS: You MUST use descriptive synonyms (e.g., "حصن الأمان"، "خيارات السداد"، "رحلة الحجز").
-   - If you use the exact primary keyword in a 3rd heading, the outline is a failure.
-
-2. **Fact Siloing (CRITICAL - ANTI-REPETITION)**:
-   - You MUST assign each major brand selling point to EXACTLY ONE section to avoid redundant articles.
-   - **Installments (Tabby/Tamara/12 months)**: Assign ONLY to `key_features` or `pricing_faq`.
-   - **Security (Encrypted/3D Secure/Official)**: Assign ONLY to `introduction` or `why_choose_us`.
-   - **Social Proof (30,000 users / Success stats)**: Assign ONLY to `proof` or `case_study`.
-   - **Operational Details (Real-time updates / MSOP)**: Assign ONLY to `process`.
-   - **FORBIDDEN**: Do NOT include the same fact in the `content_goal` or `mandatory_facts` of more than one section.
-
-3. **The 4 Practicality Pillars (MANDATORY)**:
+1. **The 4 Practicality Pillars (MANDATORY)**:
    - You MUST integrate these into the sections above:
      1. **Risk & Security**: Official vs. Secondary market risks (in Proof or FAQ).
-     2. **Operational Journey**: Post-purchase steps, QR delivery, entry (in Process).
-     3. **Pricing Dynamics**: Why prices change, transparency (in Features or FAQ).
-     4. **Transaction Mastery**: Installments (Taby/Tamara), refund policies (in FAQ).
+     2. **Operational Journey**: Post-purchase steps, entry methodology (in Process).
+     3. **Pricing Dynamics**: Transparency and value justification (in Features or FAQ).
+     4. **Transaction Mastery**: Installments (Tabby/Tamara), refund policies (in FAQ).
 
-3. **Tone & Style**:
-   - Tone: Confident and solution-focused. Persuasive but NOT pushy (avoid urgency overkill).
-   - Arabic Style: Conversational Modern Standard Arabic (MSA).
+2. **Tone Lock**: 
+   - Confident and solution-focused. Persuasive but NOT pushy (avoid urgency overkill).
 
-4. **Brand Portfolio (Optional Exception)**:
+3. **Brand Portfolio (Optional)**:
    - You MAY include one section (`section_type: "brand_service_portfolio"`) if the brand context provides multiple unrelated but valuable services.

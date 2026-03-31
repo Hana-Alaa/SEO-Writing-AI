@@ -136,7 +136,14 @@ class StrategyService:
         intent_normalized = intent_raw.strip().lower()
         state["intent"] = intent_normalized
 
-        # Mode-based Content Type Selection
+        # 1. Run Strategic AI Classifier (Universal Thinking)
+        detected_intent = await self.detect_intent_ai(raw_title, primary_keyword, state=state)
+        
+        # 2. Reconcile Intents (Combining Title Intent and Strategic Logic)
+        # We look into both intent_normalized (from title) and detected_intent (from classifier)
+        all_intents = f"{intent_normalized} {detected_intent}"
+        
+        # 3. Mode-based Content Type Selection (Prioritize Intelligent Logic)
         user_article_type = state.get("article_type")
         if state.get("workflow_mode") == "advanced" and user_article_type:
             if user_article_type == "commercial":
@@ -151,9 +158,17 @@ class StrategyService:
             elif any(x in intent_normalized for x in ["comparison", "comparative"]):
                 state["content_type"] = "comparison"
             else:
-                state["content_type"] = "informational"
+                # 5. Secondary Guard: If brand exists, it is Commercial
+                brand_name = state.get("brand_name")
+                if brand_name and brand_name.lower() not in ["not provided", "none", ""]:
+                    state["content_type"] = "brand_commercial"
+                else:
+                    state["content_type"] = "informational"
+        
+        logger.info(f"Strategic Decision: TitleIntent='{intent_normalized}', ClassifierIntent='{detected_intent}' -> Final='{state['content_type']}'")
 
         state["input_data"]["title"] = optimized_title
+        return state
         
         # Skip the redundant classifier step if we already deterministically mapped the type via Advanced Mode
         if not (state.get("workflow_mode") == "advanced" and user_article_type):
@@ -300,29 +315,44 @@ class StrategyService:
         return state
 
     async def detect_intent_ai(self, raw_title: str, primary_keyword: str, state: Dict[str, Any] = None) -> str:
-        """AI classifier to detect intent (informational, commercial, etc.)."""
+        """AI classifier to detect intent (informational, commercial, etc.) using strategic JSON logic."""
         from datetime import datetime
-        # StrategyService needs access to the intent template or we pass it
-        # I'll assume it's passed or loaded in __init__
+        import json
+        import re
+
         if not hasattr(self, 'intent_template'):
-            # Fallback if template wasn't loaded
-             return "informational"
+            return "informational"
              
         prompt = self.intent_template.render(
             raw_title=raw_title,
             primary_keyword=primary_keyword,
+            brand_name=state.get("brand_name", "Not provided") if state else "Not provided",
             current_year=str(datetime.now().year)
         )
 
         res = await self.ai_client.send(prompt, step="intent")
         content = res["content"]
+
+        # Extract JSON from potential Markdown blocks
+        try:
+            json_str = re.search(r'\{.*\}', content, re.DOTALL).group(0)
+            data = json.loads(json_str)
+            intent = data.get("intent", "informational").lower().strip()
+            reasoning = data.get("reasoning", "")
+            logger.info(f"[Intent_Intelligence] Classified as '{intent}' because: {reasoning}")
+        except Exception as e:
+            logger.warning(f"Failed to parse strategic intent JSON, falling back to raw: {e}")
+            intent = content.strip().lower()
+
         if state is not None:
-            state["last_step_prompt"] = res["metadata"]["prompt"]
-            state["last_step_response"] = res["metadata"]["response"]
-            state["last_step_tokens"] = res["metadata"]["tokens"]
-            state["last_step_model"] = res["metadata"].get("model", "unknown")
+             state["last_step_prompt"] = res["metadata"]["prompt"]
+             state["last_step_response"] = res["metadata"]["response"]
+             state["last_step_tokens"] = res["metadata"]["tokens"]
+             state["last_step_model"] = res["metadata"].get("model", "unknown")
+             # NEW: Store the detected intent in state for the workflow router
+             state["intent"] = intent
             
-        return content.strip()
+        return intent
 
     def _normalize_content_strategy(self, data: Dict[str, Any], primary_keyword: str, content_type: str, area: str) -> Dict[str, Any]:
         defaults = {

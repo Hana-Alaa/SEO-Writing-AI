@@ -12,14 +12,13 @@ SERP DATA:
 {{ serp_data | default('No data available.') }}
 
 STEP 1 — Search Intent Confirmation
-Infer actual search intent ONLY from SERP structure using:
-- Page types (service / blog / landing / ecommerce / directory)
-- CTA presence & positioning
-- Title framing patterns
-- URL structures
-- Pricing sections
-- Schema types
-- Content depth
+Incorporate both SERP structure AND Brand Utility:
+- **COMMERCIAL PRIORITY**: If the brand exists and solves the search query, the dominant intent should be `commercial`. Do NOT surrender to purely informational blog patterns of competitors.
+- Factors to consider:
+    - Page types (service / blog / landing / ecommerce / directory)
+    - CTA presence & positioning
+    - Pricing sections
+    - **BRAND RELEVANCE**: How directly does the brand's service solve the user's intent?
 
 Return:
 - confirmed_intent
@@ -47,26 +46,21 @@ Extract:
 - local_keyword_density (low / medium / high)
 - detected_area (Identify specific city or country if keywords/titles show a clear geographical target. Return "Global" if none found).
 
-STEP 3 — Strategic Intelligence
+STEP 3 — Strategic Intelligence (The Battle Plan)
 Extract:
 1. Content Gaps
-- Important missing subtopics competitors did not cover
-- Underserved angles
-- Questions not properly answered
-2. Structural Patterns
-- Common H2/H3 patterns across competitors
-- Structural templates they follow
+- Important missing subtopics competitors did not cover.
+- Underserved angles.
+2. Weaponized USPs
+- Cross-reference the Brand Context with Competitor Weaknesses.
+- Identify 3 specific advantages the brand has that NO competitor mentioned.
 3. Keyword Clusters
-- Group LSI and related keywords into semantic clusters
-4. Weakness Exploitation Plan
-- Areas where competitors are thin
-- Outdated content opportunities
-- Weak CTAs
-- Missing trust signals (EEAT gaps)
+- Group LSI and related keywords into semantic clusters.
+4. Battle Plan Brief (FOR THE WRITER)
+- Provide a 3-sentence "Command" for the writer.
+- Example: "The competitors are too technical; be more human. Emphasize the [Brand Feature] as the primary solution to [Competitor Weakness]."
 5. Differentiation Strategy
-- How to be more comprehensive
-- How to structure better
-- What additional value to add
+- How to be more comprehensive and structure better.
 
 
 Return STRICT JSON only in this structure:
@@ -89,27 +83,28 @@ Return STRICT JSON only in this structure:
 "cta_position_pattern": "",
 "cta_intensity_pattern": "",
 "pricing_presence_ratio": 0.0,
-    "faq_presence_ratio": 0.0,
-    "list_presence_ratio": 0.0,
-    "image_density_pattern": "",
-    "chart_presence_ratio": 0.0,
-    "trust_signal_density": "",
-    "local_keyword_density": "",
+"faq_presence_ratio": 0.0,
+"list_presence_ratio": 0.0,
+"image_density_pattern": "",
+"chart_presence_ratio": 0.0,
+"trust_signal_density": "",
+"local_keyword_density": "",
 "detected_area": ""
 },
 "strategic_intelligence": {
 "content_gaps": [],
-"structural_patterns": [],
+"weaponized_usps": [],
 "keyword_clusters": [
 {
 "cluster_name": "",
 "keywords": []
 }
 ],
-"weaknesses_to_exploit": [],
+"battle_plan_brief": "",
 "differentiation_strategy": []
 }
 }
 
 Return JSON only.
 Do not include explanations.
+- If the input SERP data is thin, use your internal expert SEO knowledge to fill the JSON with highly logical, industry-standard insights for this topic. NEVER return empty arrays.

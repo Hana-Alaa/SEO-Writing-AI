@@ -33,10 +33,10 @@ Rules:
    - Abstract Illustration (Minimalist, conceptual)
    - High-End Mockup (Real-world application)
 6. **Alt Text Strategy (STRICT SEO RULES)**:
-   - **FEATURED IMAGE (HERO)**: The Alt text MUST include the **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}) naturally.
-   - **ALL OTHER IMAGES**: The Alt text MUST use a relevant **LSI or Secondary Keyword** from the provided list ({{ (keywords | default([])) | tojson }}).
+   - **FEATURED IMAGE (HERO)**: The Alt text MUST include the **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}) naturally. This is the ONLY image allowed to have the primary keyword in its Alt text.
+   - **ALL OTHER IMAGES**: The Alt text MUST use a relevant **LSI or Secondary Keyword** from the provided list ({{ (keywords | default([])) | tojson }}). The primary keyword does NOT have to be in every ALT text.
    - **NATURAL PHRASING**: Write Alt texts as natural, descriptive phrases (e.g., "A modern office layout in Riyadh showing digital collaboration tools" instead of just "office Riyadh").
-   - **UNIQUE & NON-REPETITIVE**: Never repeat the exact same Alt text across different images. Each description must be unique and specific to the image content.
+   - **UNIQUE & NON-REPETITIVE**: Never repeat the exact same Alt text across different images. Each description must be unique and specific to the image content. Google treats repetitive ALTs as low-quality automated content.
 7. **Image Types**: Use strictly: Featured, Infographic, Illustration, Mockup.
 8. **Prompt Engineering for Clean Visuals (CRITICAL)**: 
    - Image generators produce "messy" or garbled results when given overly complex or crowded prompts. 

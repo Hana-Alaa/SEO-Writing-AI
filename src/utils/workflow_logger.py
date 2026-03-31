@@ -5,6 +5,7 @@ import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
+from src.utils.diagnostic_reporter import DiagnosticReporter
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class WorkflowLogger:
         os.makedirs(self.output_dir, exist_ok=True)
         self.log_file = os.path.join(self.output_dir, "workflow.log")
         self.csv_file = os.path.join(self.output_dir, "metrics.csv")
+        self.diagnostic_reporter = DiagnosticReporter(self.output_dir)
         
         # OpenRouter pricing per 1k tokens (simplified)
         self.PRICING_MAP = {
@@ -164,6 +166,14 @@ class WorkflowLogger:
             
         except Exception as e:
             logger.error(f"Failed to export CSV: {e}")
+
+    def export_diagnostic_report(self, state: Dict[str, Any]):
+        """Generates a detailed MD diagnostic report using the captured metrics and state."""
+        try:
+            self.diagnostic_reporter.generate_report(self.metrics, state)
+            logger.info(f"Diagnostic report generated: {self.diagnostic_reporter.report_path}")
+        except Exception as e:
+            logger.error(f"Failed to generate diagnostic report: {e}")
 
     def log_event(self, event_name: str, data: Any):
         """Helper to log non-AI events (like file saving)."""

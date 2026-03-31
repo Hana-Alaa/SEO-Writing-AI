@@ -1,0 +1,188 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 9.23 seconds
+  -- Tokens Used: 4,002
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 21.92 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 99.56 seconds
+  -- Tokens Used: 64,114
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 99.66 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.76 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.89 seconds
+  -- Tokens Used: 731
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 731
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 731
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 22.11 seconds
+  -- Tokens Used: 41,743
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.01 seconds
+  -- Tokens Used: 13,831
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_تيك إيفنت: أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 5.62 seconds
+  -- Tokens Used: 17,384
+--------------------------------------------------
+Step: SECTION_2_تيك إيفنت: أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 5.50 seconds
+  -- Tokens Used: 17,399
+--------------------------------------------------
+Step: SECTION_2_تيك إيفنت: أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 6.44 seconds
+  -- Tokens Used: 17,431
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: تيك إيفنت: أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا يفضل المشجعون تيك إيفنت؟ مزايا تتجاوز مجرد الحجز
+  -- Duration: 8.21 seconds
+  -- Tokens Used: 24,226
+--------------------------------------------------
+Step: SECTION_3_لماذا يفضل المشجعون تيك إيفنت؟ مزايا تتجاوز مجرد الحجز
+  -- Duration: 7.95 seconds
+  -- Tokens Used: 24,165
+--------------------------------------------------
+Step: SECTION_3_لماذا يفضل المشجعون تيك إيفنت؟ مزايا تتجاوز مجرد الحجز
+  -- Duration: 7.40 seconds
+  -- Tokens Used: 24,154
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يفضل المشجعون تيك إيفنت؟ مزايا تتجاوز مجرد الحجز
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_الأمان والموثوقية: كيف نضمن حق المشتري والبائع في السوق الثانوية؟
+  -- Duration: 5.58 seconds
+  -- Tokens Used: 28,370
+--------------------------------------------------
+Step: SECTION_4_الأمان والموثوقية: كيف نضمن حق المشتري والبائع في السوق الثانوية؟
+  -- Duration: 5.38 seconds
+  -- Tokens Used: 28,395
+--------------------------------------------------
+Step: SECTION_4_الأمان والموثوقية: كيف نضمن حق المشتري والبائع في السوق الثانوية؟
+  -- Duration: 6.88 seconds
+  -- Tokens Used: 28,424
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأمان والموثوقية: كيف نضمن حق المشتري والبائع في السوق الثانوية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_مقارنة تيك إيفنت مع منصات الحجز التقليدية
+  -- Duration: 7.08 seconds
+  -- Tokens Used: 33,297
+--------------------------------------------------
+Step: SECTION_5_مقارنة تيك إيفنت مع منصات الحجز التقليدية
+  -- Duration: 6.20 seconds
+  -- Tokens Used: 33,180
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة تيك إيفنت مع منصات الحجز التقليدية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_خطوات حجز تذكرتك عبر تيك إيفنت في 3 دقائق
+  -- Duration: 6.17 seconds
+  -- Tokens Used: 39,128
+--------------------------------------------------
+Step: SECTION_6_خطوات حجز تذكرتك عبر تيك إيفنت في 3 دقائق
+  -- Duration: 6.20 seconds
+  -- Tokens Used: 39,054
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات حجز تذكرتك عبر تيك إيفنت في 3 دقائق
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_الأسئلة الشائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 7.20 seconds
+  -- Tokens Used: 44,809
+--------------------------------------------------
+Step: SECTION_7_الأسئلة الشائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 7.67 seconds
+  -- Tokens Used: 44,861
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول حجز تذاكر المباريات في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_احجز مكانك في المدرج الآن مع تيك إيفنت
+  -- Duration: 5.11 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: SECTION_8_احجز مكانك في المدرج الآن مع تيك إيفنت
+  -- Duration: 6.20 seconds
+  -- Tokens Used: 54,064
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: احجز مكانك في المدرج الآن مع تيك إيفنت
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 166.53 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 16.19 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.03 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 8.31 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.20 seconds
+  -- Tokens Used: 54,089
+--------------------------------------------------

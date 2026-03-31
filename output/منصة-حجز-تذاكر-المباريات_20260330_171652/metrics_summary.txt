@@ -1,0 +1,212 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 9.54 seconds
+  -- Tokens Used: 4,010
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 32.92 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 61.05 seconds
+  -- Tokens Used: 41,841
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 61.06 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.96 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.97 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 478
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 19.97 seconds
+  -- Tokens Used: 42,087
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.08 seconds
+  -- Tokens Used: 12,525
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.14 seconds
+  -- Tokens Used: 12,521
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_ما هي تيك إيفنت كأفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 4.60 seconds
+  -- Tokens Used: 16,209
+--------------------------------------------------
+Step: SECTION_2_ما هي تيك إيفنت كأفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 5.04 seconds
+  -- Tokens Used: 16,212
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ما هي تيك إيفنت كأفضل منصة حجز تذاكر المباريات في السعودية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_أبرز مميزات وخدمات حجز التذاكر عبر تيك إيفنت
+  -- Duration: 4.94 seconds
+  -- Tokens Used: 20,828
+--------------------------------------------------
+Step: SECTION_3_أبرز مميزات وخدمات حجز التذاكر عبر تيك إيفنت
+  -- Duration: 4.38 seconds
+  -- Tokens Used: 20,840
+--------------------------------------------------
+Step: SECTION_3_أبرز مميزات وخدمات حجز التذاكر عبر تيك إيفنت
+  -- Duration: 6.41 seconds
+  -- Tokens Used: 20,925
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أبرز مميزات وخدمات حجز التذاكر عبر تيك إيفنت
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا يفضل المشجع السعودي تيك إيفنت عن غيرها؟
+  -- Duration: 5.54 seconds
+  -- Tokens Used: 25,555
+--------------------------------------------------
+Step: SECTION_4_لماذا يفضل المشجع السعودي تيك إيفنت عن غيرها؟
+  -- Duration: 7.71 seconds
+  -- Tokens Used: 26,088
+--------------------------------------------------
+Step: SECTION_4_لماذا يفضل المشجع السعودي تيك إيفنت عن غيرها؟
+  -- Duration: 9.00 seconds
+  -- Tokens Used: 26,115
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يفضل المشجع السعودي تيك إيفنت عن غيرها؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_أرقام وموثوقية المنصة في عام 2026
+  -- Duration: 10.41 seconds
+  -- Tokens Used: 30,439
+--------------------------------------------------
+Step: SECTION_5_أرقام وموثوقية المنصة في عام 2026
+  -- Duration: 8.05 seconds
+  -- Tokens Used: 30,352
+--------------------------------------------------
+Step: SECTION_5_أرقام وموثوقية المنصة في عام 2026
+  -- Duration: 6.29 seconds
+  -- Tokens Used: 29,894
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أرقام وموثوقية المنصة في عام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة بين تيك إيفنت ومنصات التذاكر التقليدية
+  -- Duration: 9.06 seconds
+  -- Tokens Used: 34,419
+--------------------------------------------------
+Step: SECTION_6_مقارنة بين تيك إيفنت ومنصات التذاكر التقليدية
+  -- Duration: 6.54 seconds
+  -- Tokens Used: 33,892
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة بين تيك إيفنت ومنصات التذاكر التقليدية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات حجز تذكرتك رقمياً في دقائق
+  -- Duration: 7.99 seconds
+  -- Tokens Used: 39,841
+--------------------------------------------------
+Step: SECTION_7_خطوات حجز تذكرتك رقمياً في دقائق
+  -- Duration: 7.79 seconds
+  -- Tokens Used: 39,807
+--------------------------------------------------
+Step: SECTION_7_خطوات حجز تذكرتك رقمياً في دقائق
+  -- Duration: 8.59 seconds
+  -- Tokens Used: 39,836
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات حجز تذكرتك رقمياً في دقائق
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 14.70 seconds
+  -- Tokens Used: 43,224
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 8.44 seconds
+  -- Tokens Used: 43,171
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 6.14 seconds
+  -- Tokens Used: 42,746
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول منصة حجز تذاكر المباريات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلتك للمدرج الآن مع تيك إيفنت
+  -- Duration: 4.99 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلتك للمدرج الآن مع تيك إيفنت
+  -- Duration: 6.71 seconds
+  -- Tokens Used: 47,250
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلتك للمدرج الآن مع تيك إيفنت
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 228.98 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 15.23 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 5.53 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.10 seconds
+  -- Tokens Used: 47,275
+--------------------------------------------------

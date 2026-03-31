@@ -368,6 +368,7 @@ class SectionWriter:
         external_sources: List[Dict[str, str]] = None,
         workflow_logger: Optional[Any] = None,
         prohibited_competitors: List[str] = None,
+        previous_section_text: str = "",
         # Advanced Customization
         tone: Optional[str] = None,
         pov: Optional[str] = None,
@@ -406,7 +407,8 @@ class SectionWriter:
         # Ensure all expected fields are present to avoid StrictUndefined errors
         safe_seo = {
             "content_gaps": strategic_intelligence.get("content_gaps", []),
-            "weaknesses_to_exploit": strategic_intelligence.get("weaknesses_to_exploit", []),
+            "weaponized_usps": strategic_intelligence.get("weaponized_usps", []),
+            "battle_plan_brief": strategic_intelligence.get("battle_plan_brief", ""),
             "differentiation_strategy": strategic_intelligence.get("differentiation_strategy", []),
             "structural_patterns": strategic_intelligence.get("structural_patterns", [])
         }
@@ -506,6 +508,7 @@ class SectionWriter:
             area=area,
             used_phrases=used_phrases or [],
             used_topics=used_topics or [],
+            previous_section_text=previous_section_text or "",
             previous_content_summary=previous_content_summary or "",
             used_internal_links=used_internal_links or [],
             used_external_links=used_external_links or [], 
