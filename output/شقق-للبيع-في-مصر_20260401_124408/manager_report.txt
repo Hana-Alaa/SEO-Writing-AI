@@ -1,0 +1,78 @@
+╔══════════════════════════════════════════════════════════╗
+║           EXECUTIVE ARTICLE GENERATION REPORT            ║
+╚══════════════════════════════════════════════════════════╝
+
+● OVERALL EXECUTION TIME: 6.2 minutes
+● TOTAL AI PROCESSING UNITS: 1,248,745
+● PROJECT STATUS: COMPLETED SUCCESSFULLY
+● GENERATION DATE: 2026-04-01 12:50
+
+PHASE BREAKDOWN
+============================================================
+
+▶ Phase 1: Project Setup
+  ────────────────────────────────────────────────────────
+  • Brand Intelligence Gathering           |    24.7s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  PROJECT SETUP               |    24.7s | AI: 0
+
+▶ Phase 2: Market Analysis
+  ────────────────────────────────────────────────────────
+  • Live Web & Competitor Search           |    73.6s | AI: Local Process
+  • Google Search Intent Analysis          |     < 1s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  MARKET ANALYSIS             |     1.2m | AI: 0
+
+▶ Phase 3: Strategy & Design
+  ────────────────────────────────────────────────────────
+  • User Intent Calibration                |     3.8s | AI: 735
+  • Persona & Tone Design                  |     < 1s | AI: 735
+  • SEO Strategic Roadmap                  |     < 1s | AI: 735
+  • Article Structure Design               |    22.2s | AI: 42,368
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  STRATEGY & DESIGN           |    26.0s | AI: 44,573
+
+▶ Phase 4: Content Production
+  ────────────────────────────────────────────────────────
+  • Writing: Introduction                  |     3.9s | AI: 12,317
+  • Writing: خارطة طريق البحث عن شقق للبيع في مصر عبر منصة عقار يا مصر |     5.7s | AI: 16,024
+  • Writing: خارطة طريق البحث عن شقق للبيع في مصر عبر منصة عقار يا مصر |     6.6s | AI: 16,153
+  • Writing: لماذا يفضل المستثمرون البحث عن شقق تمليك في مصر من خلالنا؟ |     6.2s | AI: 21,149
+  • Writing: لماذا يفضل المستثمرون البحث عن شقق تمليك في مصر من خلالنا؟ |     6.7s | AI: 21,190
+  • Writing: لماذا يفضل المستثمرون البحث عن شقق تمليك في مصر من خلالنا؟ |     6.0s | AI: 21,113
+  • Writing: كيف نتفوق على سماسرة العقارات؟ القيمة الحقيقية للمشتري |     5.5s | AI: 26,836
+  • Writing: كيف نتفوق على سماسرة العقارات؟ القيمة الحقيقية للمشتري |     5.5s | AI: 26,857
+  • Writing: كيف نتفوق على سماسرة العقارات؟ القيمة الحقيقية للمشتري |     5.1s | AI: 26,790
+  • Writing: مؤشرات السوق العقاري المصري 2026: حقائق وأرقام |     6.8s | AI: 30,839
+  • Writing: مؤشرات السوق العقاري المصري 2026: حقائق وأرقام |     7.1s | AI: 30,829
+  • Writing: أفضل المناطق للاستثمار العقاري في القاهرة حالياً |     6.4s | AI: 36,941
+  • Writing: أفضل المناطق للاستثمار العقاري في القاهرة حالياً |     6.6s | AI: 36,985
+  • Writing: أفضل المناطق للاستثمار العقاري في القاهرة حالياً |     7.0s | AI: 37,050
+  • Writing: مقارنة أنظمة السداد: الكاش مقابل التقسيط في المدن الجديدة |     7.8s | AI: 43,498
+  • Writing: مقارنة أنظمة السداد: الكاش مقابل التقسيط في المدن الجديدة |     6.4s | AI: 43,385
+  • Writing: مقارنة أنظمة السداد: الكاش مقابل التقسيط في المدن الجديدة |     6.8s | AI: 43,545
+  • Writing: خطوات حجز ومعاينة شقتك المستقبلية عبر عقار يا مصر |     6.9s | AI: 49,395
+  • Writing: خطوات حجز ومعاينة شقتك المستقبلية عبر عقار يا مصر |     6.1s | AI: 49,459
+  • Writing: خطوات حجز ومعاينة شقتك المستقبلية عبر عقار يا مصر |     6.3s | AI: 49,518
+  • Writing: أسئلة شائعة حول شراء شقق للبيع في مصر |     6.1s | AI: 56,087
+  • Writing: أسئلة شائعة حول شراء شقق للبيع في مصر |     6.1s | AI: 56,110
+  • Writing: ابدأ رحلة تملك عقارك اليوم مع عقار يا مصر |     5.5s | AI: 64,597
+  • Writing: ابدأ رحلة تملك عقارك اليوم مع عقار يا مصر |     5.4s | AI: 64,523
+  • Writing: ابدأ رحلة تملك عقارك اليوم مع عقار يا مصر |     6.1s | AI: 64,594
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  CONTENT PRODUCTION          |     3.0m | AI: 945,784
+
+▶ Phase 5: Visuals & Finalization
+  ────────────────────────────────────────────────────────
+  • Technical Content Assembly             |     < 1s | AI: 64,597
+  • Image & Visual Integration             |     < 1s | AI: 64,597
+  • SEO Metadata & Schema Markup           |     7.8s | AI: 64,597
+  • Final Web Page Generation              |     < 1s | AI: 64,597
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  VISUALS & FINALIZATION      |    47.2s | AI: 258,388
+
+============================================================
+Note: 'AI Processing Units' represent the computational effort 
+expended by the AI models. 'Local Process' indicates 
+technical assembly tasks performed without external AI costs.
+'AI Generated' indicates high-compute visual creation steps.

@@ -1,0 +1,69 @@
+╔══════════════════════════════════════════════════════════╗
+║           EXECUTIVE ARTICLE GENERATION REPORT            ║
+╚══════════════════════════════════════════════════════════╝
+
+● OVERALL EXECUTION TIME: 5.2 minutes
+● TOTAL AI PROCESSING UNITS: 684,384
+● PROJECT STATUS: COMPLETED SUCCESSFULLY
+● GENERATION DATE: 2026-04-01 11:12
+
+PHASE BREAKDOWN
+============================================================
+
+▶ Phase 1: Project Setup
+  ────────────────────────────────────────────────────────
+  • Brand Intelligence Gathering           |    23.8s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  PROJECT SETUP               |    23.8s | AI: 0
+
+▶ Phase 2: Market Analysis
+  ────────────────────────────────────────────────────────
+  • Live Web & Competitor Search           |    87.9s | AI: Local Process
+  • Google Search Intent Analysis          |     < 1s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  MARKET ANALYSIS             |     1.5m | AI: 0
+
+▶ Phase 3: Strategy & Design
+  ────────────────────────────────────────────────────────
+  • User Intent Calibration                |     4.0s | AI: 727
+  • Persona & Tone Design                  |     < 1s | AI: 727
+  • SEO Strategic Roadmap                  |     < 1s | AI: 727
+  • Article Structure Design               |    21.5s | AI: 17,373
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  STRATEGY & DESIGN           |    25.6s | AI: 19,554
+
+▶ Phase 4: Content Production
+  ────────────────────────────────────────────────────────
+  • Writing: Introduction                  |     4.3s | AI: 8,184
+  • Writing: كيف تجد أفضل شقق للبيع في مصر لعام 2026؟ |     6.0s | AI: 12,753
+  • Writing: كيف تجد أفضل شقق للبيع في مصر لعام 2026؟ |     5.1s | AI: 12,669
+  • Writing: أهم مميزات الوحدات السكنية المتاحة عبر منصتنا |     6.3s | AI: 17,698
+  • Writing: أهم مميزات الوحدات السكنية المتاحة عبر منصتنا |     5.2s | AI: 17,563
+  • Writing: لماذا يفضل المستثمرون 'عقار يا مصر' للبحث عن عقاراتهم؟ |     5.4s | AI: 20,377
+  • Writing: لماذا يفضل المستثمرون 'عقار يا مصر' للبحث عن عقاراتهم؟ |     5.4s | AI: 20,388
+  • Writing: دليل الأسعار والمساحات في أبرز المدن المصرية 2026 |     7.6s | AI: 27,442
+  • Writing: دليل الأسعار والمساحات في أبرز المدن المصرية 2026 |     7.3s | AI: 27,435
+  • Writing: خطوات حجز شقتك عبر 'عقار يا مصر': رحلة آمنة من البحث للتعاقد |     6.3s | AI: 32,210
+  • Writing: خطوات حجز شقتك عبر 'عقار يا مصر': رحلة آمنة من البحث للتعاقد |     5.7s | AI: 32,215
+  • Writing: أسئلة شائعة حول سوق الشقق في مصر |     6.7s | AI: 39,348
+  • Writing: أسئلة شائعة حول سوق الشقق في مصر |     7.0s | AI: 39,440
+  • Writing: ابدأ رحلة البحث عن عقارك المثالي اليوم |     6.2s | AI: 51,004
+  • Writing: ابدأ رحلة البحث عن عقارك المثالي اليوم |     5.5s | AI: 50,966
+  • Writing: ابدأ رحلة البحث عن عقارك المثالي اليوم |     6.6s | AI: 51,122
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  CONTENT PRODUCTION          |     1.9m | AI: 460,814
+
+▶ Phase 5: Visuals & Finalization
+  ────────────────────────────────────────────────────────
+  • Technical Content Assembly             |     < 1s | AI: 51,004
+  • Image & Visual Integration             |     < 1s | AI: 51,004
+  • SEO Metadata & Schema Markup           |     8.5s | AI: 51,004
+  • Final Web Page Generation              |     < 1s | AI: 51,004
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  VISUALS & FINALIZATION      |    42.2s | AI: 204,016
+
+============================================================
+Note: 'AI Processing Units' represent the computational effort 
+expended by the AI models. 'Local Process' indicates 
+technical assembly tasks performed without external AI costs.
+'AI Generated' indicates high-compute visual creation steps.

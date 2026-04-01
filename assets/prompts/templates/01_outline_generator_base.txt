@@ -148,6 +148,15 @@ Your task is to generate a HIGH-PERFORMANCE article outline in JSON format.
 --------------------------------------------------------------------------------
 6. ANTI-REPETITION RULES (THE SEMANTIC MEMORY)
 --------------------------------------------------------------------------------
+- **CORE OUTLINE DECISION FRAMEWORK (THE UTILITY FILTER)**:
+    * **ULTIMATE RULE**: A dynamic section is NOT triggered by keywords alone. It MUST be added ONLY if it meets the criteria of Decision Clarity, Comparison Ability, or Actionable Value.
+    * **THE TRIGGER LAYER (WHAT TO LOOK FOR)**: You MUST evaluate the following "Data Signals" from the Research and Strategic Intelligence:
+        1. **PRICING & METRICS**: If you detect specific price ranges, costs, or numeric benchmarks -> Evaluate for a "Market Reality" or "Pricing" section.
+        2. **ENTITY BREAKDOWN**: If the topic has distinct locations (neighborhoods), models, or types -> Evaluate for specific H2/H3 sub-sections.
+        3. **USER FRICTION POINTS**: If you find "Common Obstacles" or "Comparison Needs" in the SERP gaps -> Evaluate for a decision-support section.
+    * **INTEGRATION MANDATE**: If a signal is detected but is minor or low-impact, you MUST integrate it as a paragraph or list item within the "Base" sections. 
+    * **ANTI-OVER-SECTIONING**: Limit dynamic sections to only high-impact additions. Avoid creating headings for minor supporting points.
+
 - **ZERO-WASTE POLICY (UTILITY FILTER - CRITICAL)**: Every section MUST provide unique, high-impact value. 
     * **IMPACT RULE**: Discard any "noise" data or common knowledge that doesn't solve a specific reader problem or justify a Brand USP. If a fact isn't "Useful and Necessary" for the reader's decision, OMIT IT.
 - **LOGICAL FACT MAPPING**: Assign each high-utility brand fact to EXACTLY ONE section where it is most contextually relevant.

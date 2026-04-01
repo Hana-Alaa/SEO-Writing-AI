@@ -1,0 +1,74 @@
+╔══════════════════════════════════════════════════════════╗
+║           EXECUTIVE ARTICLE GENERATION REPORT            ║
+╚══════════════════════════════════════════════════════════╝
+
+● OVERALL EXECUTION TIME: 6.7 minutes
+● TOTAL AI PROCESSING UNITS: 1,061,230
+● PROJECT STATUS: COMPLETED SUCCESSFULLY
+● GENERATION DATE: 2026-04-01 10:33
+
+PHASE BREAKDOWN
+============================================================
+
+▶ Phase 1: Project Setup
+  ────────────────────────────────────────────────────────
+  • Brand Intelligence Gathering           |    25.8s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  PROJECT SETUP               |    25.8s | AI: 0
+
+▶ Phase 2: Market Analysis
+  ────────────────────────────────────────────────────────
+  • Live Web & Competitor Search           |    62.9s | AI: Local Process
+  • Google Search Intent Analysis          |     < 1s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  MARKET ANALYSIS             |     1.0m | AI: 0
+
+▶ Phase 3: Strategy & Design
+  ────────────────────────────────────────────────────────
+  • User Intent Calibration                |     3.5s | AI: 743
+  • Persona & Tone Design                  |     < 1s | AI: 743
+  • SEO Strategic Roadmap                  |     < 1s | AI: 743
+  • Article Structure Design               |    21.8s | AI: 41,312
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  STRATEGY & DESIGN           |    25.4s | AI: 43,541
+
+▶ Phase 4: Content Production
+  ────────────────────────────────────────────────────────
+  • Writing: Introduction                  |     4.0s | AI: 11,532
+  • Writing: خريطة الاستثمار العقاري: أين تجد أفضل شقق للبيع في مصر لعام 2026؟ |     6.3s | AI: 16,267
+  • Writing: خريطة الاستثمار العقاري: أين تجد أفضل شقق للبيع في مصر لعام 2026؟ |     5.6s | AI: 16,362
+  • Writing: خريطة الاستثمار العقاري: أين تجد أفضل شقق للبيع في مصر لعام 2026؟ |     6.3s | AI: 16,351
+  • Writing: مواصفات ذكية ومساحات متنوعة تناسب احتياجاتك |     6.0s | AI: 22,462
+  • Writing: مواصفات ذكية ومساحات متنوعة تناسب احتياجاتك |     5.6s | AI: 22,374
+  • Writing: لماذا يفضل آلاف الباحثين منصة عقار يا مصر للبحث عن سكنهم؟ |     5.5s | AI: 27,886
+  • Writing: لماذا يفضل آلاف الباحثين منصة عقار يا مصر للبحث عن سكنهم؟ |     6.6s | AI: 27,867
+  • Writing: كيف تشتري شقتك بأمان؟ دليلك لخطوات التعاقد القانونية |     6.0s | AI: 32,907
+  • Writing: كيف تشتري شقتك بأمان؟ دليلك لخطوات التعاقد القانونية |     6.1s | AI: 32,973
+  • Writing: مقارنة أنظمة السداد: كاش أم تقسيط في المدن الجديدة؟ |     8.4s | AI: 39,596
+  • Writing: مقارنة أنظمة السداد: كاش أم تقسيط في المدن الجديدة؟ |    64.5s | AI: 39,594
+  • Writing: مقارنة أنظمة السداد: كاش أم تقسيط في المدن الجديدة؟ |     8.1s | AI: 39,459
+  • Writing: رحلة البحث عن سكنك: 3 خطوات بسيطة عبر عقار يا مصر |     7.6s | AI: 45,578
+  • Writing: رحلة البحث عن سكنك: 3 خطوات بسيطة عبر عقار يا مصر |    10.1s | AI: 45,688
+  • Writing: رحلة البحث عن سكنك: 3 خطوات بسيطة عبر عقار يا مصر |     6.9s | AI: 45,656
+  • Writing: الأسئلة الشائعة حول شراء الشقق في مصر |     7.9s | AI: 50,679
+  • Writing: الأسئلة الشائعة حول شراء الشقق في مصر |     7.4s | AI: 50,625
+  • Writing: ابدأ رحلة تملك عقارك اليوم مع عقار يا مصر |     5.7s | AI: 61,992
+  • Writing: ابدأ رحلة تملك عقارك اليوم مع عقار يا مصر |     6.1s | AI: 61,978
+  • Writing: ابدأ رحلة تملك عقارك اليوم مع عقار يا مصر |     6.1s | AI: 61,895
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  CONTENT PRODUCTION          |     4.3m | AI: 769,721
+
+▶ Phase 5: Visuals & Finalization
+  ────────────────────────────────────────────────────────
+  • Technical Content Assembly             |     < 1s | AI: 61,992
+  • Image & Visual Integration             |     < 1s | AI: 61,992
+  • SEO Metadata & Schema Markup           |     8.4s | AI: 61,992
+  • Final Web Page Generation              |     < 1s | AI: 61,992
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  VISUALS & FINALIZATION      |     8.7s | AI: 247,968
+
+============================================================
+Note: 'AI Processing Units' represent the computational effort 
+expended by the AI models. 'Local Process' indicates 
+technical assembly tasks performed without external AI costs.
+'AI Generated' indicates high-compute visual creation steps.

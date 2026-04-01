@@ -8,62 +8,53 @@ Brand Commercial Specific Rules (MANDATORY STRUCTURE & QUALITY):
 You MUST generate the outline in this EXACT order, while adhering to the Quality Rules below:
 
 ---
-### I. THE STRUCTURE (STRICT ORDER)
+### I. THE STRUCTURE (STRICT 9-STEP BASE + DYNAMIC NUANCE)
 
-1. **Intro (The Problem)**: 
-   - Focus: Speak directly to the reader's problem or need.
-   - Constraint: EXACTLY 1-2 paragraphs only. 
-   - Requirement: Primary keyword in the first paragraph.
-   - **CTA (STRICT)**: `cta_type: "none"` or one very soft, low-commitment CTA at the absolute end.
+You MUST generate the outline starting with this EXACT base sequence. Additional sections may only be added IF they pass the **CORE OUTLINE DECISION FRAMEWORK**:
+
+1. **Introduction**: 
+   - Speak directly to the reader's problem or need.
+   - Primary keyword in first paragraph.
+   - **CTA (SOFT)**: `cta_type: "soft"`, `cta_position: "last_sentence"` (optional but acceptable).
    - section_type: "introduction"
 
-2. **What the service/product is (The Definition)**: 
-   - H2 Heading: MUST include the primary keyword.
-   - Requirement (COLD START): The first sentence MUST be a clear, objective definition (e.g., "[Brand] is a platform/service that [Verb] [Target]..."). No marketing fluff in the first two sentences.
+2. **What the service/product is**: 
+   - H2 with primary keyword. 
+   - Brief but clear. First sentence MUST be a definitive, objective description.
    - section_type: "what_is"
 
-3. **Key features or what's included (The Offering)**: 
-   - H2 Heading: MUST NOT use the exact primary keyword. Use a synonym (e.g., "Platform Features", "Key Services").
-   - Content: Use bullet points for scannability.
-   - Target: Features and specific inclusions.
+3. **Key features or what's included**: 
+   - H2: Use synonyms, not exact primary keyword.
+   - Requirement: **Use bullet points**. Scannable and clear.
    - section_type: "key_features"
 
-4. **Why choose us / differentiators (The Value)**: 
-   - H2 Heading: Focus on unique brand value. MUST NOT use the exact primary keyword.
-   - Content: Specific brand value and hyper-local/technical differentiators. 
-   - **CTA (SLOT 1 - OPTIONAL)**: `cta_type: "moderate"` (contextual).
+4. **Why choose us / differentiators**: 
+   - Focus on brand value. **Avoid generic claims**, be hyper-specific.
    - section_type: "why_choose_us"
 
 5. **Proof (The Authority)**: 
-   - H2 Heading: Use authority terms like "Client Results" or "Success Stories".
-   - Requirement: STATISTICS, CASE STUDIES, or CLIENT RESULTS.
-   - H2 Section Type: `section_type: "proof"` or `section_type: "case_study"`.
-   - Content: Use a "Challenge → Solution → Result" narrative. Include a small table if it helps visualize ROI.
-   - **CTA (SLOT 2 - OPTIONAL)**: `cta_type: "moderate"` (contextual).
+   - H2: "Client Results," "Success Stories," or "Evidence of Success".
+   - Requirement: **Stats, Case studies, or Client Results**. Evidence-based trust.
    - section_type: "proof"
 
 6. **Comparison table (The Clarity)**: 
-   - H2 Heading: Comparison of service tiers or key features.
-   - Requirement: Comparison of service tiers or key features.
-   - Format: Must be a table.
+   - Focus on **Service Tiers** or internal comparisons (Commercial Clarity).
+   - Requirement: Table format only.
    - section_type: "comparison_table"
 
-7. **How it works / Process (The Journey)**: 
-   - H2 Heading: Descriptive (e.g., "How to get started", "Booking Process").
-   - Content: Numbered steps. Reduces friction and objection.
+7. **How it works / Process**: 
+   - H2: Descriptive (e.g., "The Step-by-Step Process").
+   - Requirement: **Numbered steps**. Reduces friction and clarifies the journey.
    - section_type: "process"
 
-8. **FAQ section (The Objection Handler)**: 
-   - H2 Heading: MANDATORY FAQ heading.
-   - Focus: Pricing, process, and common objections.
-   - Requirement: Minimum 4-5 questions.
-   - **CTA PROHIBITION**: `cta_type: "none"`.
+8. **FAQ section**: 
+   - Focus on **Objections, Pricing, and Process Questions**.
+   - Requirement: 4-5 questions.
    - section_type: "faq"
 
-9. **Strong Conclusion + CTA (The Close)**: 
-   - Requirement: `cta_type: "strong"`, `cta_position: "last_sentence"`.
-   - **MANDATORY LINK**: You MUST assign the Brand URL or a Contact/Booking URL to this section. Never leave the conclusion without an internal link.
-   - **CTA (SLOT 3 - MANDATORY)**: `cta_type: "strong"`, `cta_position: "last_sentence"`.
+9. **Conclusion + Strong CTA**: 
+   - Direct, confident summary + **Strong Conversion Point**.
+   - **CTA (STRONG)**: `cta_type: "strong"`, `cta_position: "last_sentence"`.
    - section_type: "conclusion"
 
 ---

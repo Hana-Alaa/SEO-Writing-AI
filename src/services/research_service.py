@@ -317,7 +317,13 @@ Write the detailed Fact Sheet and the Validated FAQ list now:"""
         """Step 0: Perform deep web research for topic grounding."""
         primary_keyword = state["primary_keyword"]
         area = state.get("area")
-        search_query = f"{primary_keyword} in {area}" if area else primary_keyword
+        
+        # Localized 'in' connector
+        lang = state.get("article_language", "ar")
+        in_map = {"ar": "في", "en": "in", "fr": "en", "es": "en", "de": "in"}
+        in_word = in_map.get(lang, "|")
+
+        search_query = f"{primary_keyword} {in_word} {area}" if area else primary_keyword
 
         with open("assets/prompts/templates/seo_web_research.txt") as f:
             template = Template(f.read())
@@ -351,7 +357,13 @@ Write the detailed Fact Sheet and the Validated FAQ list now:"""
         """
         primary_keyword = state["primary_keyword"]
         area = state.get("area")
-        search_query = f"{primary_keyword} in {area}" if area else primary_keyword
+        
+        # Localized 'in' connector
+        lang = state.get("article_language", "ar")
+        in_map = {"ar": "في", "en": "in", "fr": "en", "es": "en", "de": "in"}
+        in_word = in_map.get(lang, "|")
+
+        search_query = f"{primary_keyword} {in_word} {area}" if area else primary_keyword
         
         logger.info(f"Running Hybrid SERP+Strategy Research for: {search_query}")
         

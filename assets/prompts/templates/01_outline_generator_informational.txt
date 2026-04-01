@@ -12,16 +12,16 @@ Your task is to generate a HIGH-PERFORMANCE informational article outline in JSO
     * NO sales-intensity used here. Focus: 100% Educational value.
 
 --------------------------------------------------------------------------------
-2. THE STRUCTURE (STRICT 8-STEP ORDER)
+2. THE STRUCTURE (STRICT 8-STEP BASE + DYNAMIC NUANCE)
 --------------------------------------------------------------------------------
-You MUST generate the outline in this EXACT order:
+You MUST generate the outline starting with this EXACT base sequence. Additional sections may only be added IF they pass the **CORE OUTLINE DECISION FRAMEWORK**:
 
 1. **Introduction**: 
-   - define topic, establish why it matters, include primary keyword naturally. 
+   - Define the topic, establish why it matters, include primary keyword naturally. 
    - **CTA**: STRICTLY NONE.
    - section_type: "introduction"
 
-2. **What is / Definition**: 
+2. **What is / Definition section**: 
    - H2 with primary keyword. Clear and concise conceptual definition. 
    - section_type: "definition"
 
@@ -29,26 +29,27 @@ You MUST generate the outline in this EXACT order:
    - Builds context and value before going into tactical detail. 
    - section_type: "key_benefits"
 
-4. **Main Body sections**: 
-   - 2-3 H2 sections covering specific sub-topics or technical components.
-   - Use LSI keywords in headings.
+4. **Main body sections**: 
+   - Each H2 covers a specific sub-topic, step, or entity (e.g., location/tool).
+   - Use LSI keywords in headings (H2, H3).
+   - **DYNAMIC RULE**: Use the *Decision Framework* here to decide if an entity (e.g., a specific neighborhood) deserves a standalone H2 or should be an H3 within a broader section.
    - section_type: "core"
 
 5. **Examples or Practical Tips**: 
-   - Makes content actionable. Use bullet points or H3s for clarity.
+   - Makes content actionable and increases dwell time. Use specific, non-generic examples.
    - section_type: "examples_or_use_cases"
 
 6. **Common Mistakes to avoid**: 
-   - High-value SEO section. Identifies user pain points and failures.
+   - Identify user pain points and failures. High-value SEO section.
    - section_type: "common_mistakes"
 
 7. **FAQ section**: 
-   - 4-6 questions targeting PAA and long-tail queries.
+   - Minimum 4–5 questions targeting long-tail queries and PAA questions.
    - section_type: "faq"
 
 8. **Conclusion**: 
-   - Summary of key takeaways. 
-   - **CTA (SLOT 1 - SOFT)**: `cta_type: "soft"`, `cta_position: "last_sentence"`.
+   - Summary of key takeaways + ONE soft CTA at most ("learn more" or "explore our services"). 
+   - **CTA (SOFT)**: `cta_type: "soft"`, `cta_position: "last_sentence"`.
    - section_type: "conclusion"
 
 --------------------------------------------------------------------------------

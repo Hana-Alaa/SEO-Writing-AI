@@ -1,0 +1,200 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 8.54 seconds
+  -- Tokens Used: 3,796
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 22.68 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 74.50 seconds
+  -- Tokens Used: 54,557
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 74.50 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 2.03 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 4.08 seconds
+  -- Tokens Used: 741
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 741
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 741
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 23.35 seconds
+  -- Tokens Used: 41,412
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 7.52 seconds
+  -- Tokens Used: 12,454
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 3.51 seconds
+  -- Tokens Used: 12,463
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_ما هي أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026؟
+  -- Duration: 9.60 seconds
+  -- Tokens Used: 16,248
+--------------------------------------------------
+Step: SECTION_2_ما هي أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026؟
+  -- Duration: 9.09 seconds
+  -- Tokens Used: 16,248
+--------------------------------------------------
+Step: SECTION_2_ما هي أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026؟
+  -- Duration: 7.54 seconds
+  -- Tokens Used: 16,148
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ما هي أفضل منصة حجز تذاكر المباريات في السعودية لعام 2026؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_خدمات استثنائية تغطي أضخم البطولات القارية والمحلية
+  -- Duration: 5.88 seconds
+  -- Tokens Used: 21,228
+--------------------------------------------------
+Step: SECTION_3_خدمات استثنائية تغطي أضخم البطولات القارية والمحلية
+  -- Duration: 6.27 seconds
+  -- Tokens Used: 21,009
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خدمات استثنائية تغطي أضخم البطولات القارية والمحلية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا يتفوق تيك إيفنت على خيارات الحجز التقليدية؟
+  -- Duration: 9.56 seconds
+  -- Tokens Used: 27,068
+--------------------------------------------------
+Step: SECTION_4_لماذا يتفوق تيك إيفنت على خيارات الحجز التقليدية؟
+  -- Duration: 7.32 seconds
+  -- Tokens Used: 26,238
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يتفوق تيك إيفنت على خيارات الحجز التقليدية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_موثوقية عالمية في قلب الملاعب السعودية
+  -- Duration: 6.86 seconds
+  -- Tokens Used: 32,576
+--------------------------------------------------
+Step: SECTION_5_موثوقية عالمية في قلب الملاعب السعودية
+  -- Duration: 8.13 seconds
+  -- Tokens Used: 32,415
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: موثوقية عالمية في قلب الملاعب السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة المزايا: تيك إيفنت مقابل المنصات التقليدية
+  -- Duration: 6.04 seconds
+  -- Tokens Used: 35,723
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة المزايا: تيك إيفنت مقابل المنصات التقليدية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_4 خطوات بسيطة لتأمين مقعدك في مدرجات 2026
+  -- Duration: 8.95 seconds
+  -- Tokens Used: 43,848
+--------------------------------------------------
+Step: SECTION_7_4 خطوات بسيطة لتأمين مقعدك في مدرجات 2026
+  -- Duration: 8.35 seconds
+  -- Tokens Used: 43,426
+--------------------------------------------------
+Step: SECTION_7_4 خطوات بسيطة لتأمين مقعدك في مدرجات 2026
+  -- Duration: 9.31 seconds
+  -- Tokens Used: 42,991
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: 4 خطوات بسيطة لتأمين مقعدك في مدرجات 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول حجز تذاكر المباريات
+  -- Duration: 9.06 seconds
+  -- Tokens Used: 48,060
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول حجز تذاكر المباريات
+  -- Duration: 8.79 seconds
+  -- Tokens Used: 47,320
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول حجز تذاكر المباريات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_احجز تذكرتك الآن وعش حماس المدرجات مع تيك إيفنت
+  -- Duration: 9.77 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: SECTION_9_احجز تذكرتك الآن وعش حماس المدرجات مع تيك إيفنت
+  -- Duration: 6.96 seconds
+  -- Tokens Used: 56,738
+--------------------------------------------------
+Step: SECTION_9_احجز تذكرتك الآن وعش حماس المدرجات مع تيك إيفنت
+  -- Duration: 6.10 seconds
+  -- Tokens Used: 56,724
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: احجز تذكرتك الآن وعش حماس المدرجات مع تيك إيفنت
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 193.39 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 15.48 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 8.43 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.20 seconds
+  -- Tokens Used: 57,149
+--------------------------------------------------

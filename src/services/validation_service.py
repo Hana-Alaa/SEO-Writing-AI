@@ -613,6 +613,46 @@ class ValidationService:
             return False
         return any(term.lower() in text_lower for term in context_terms)
 
+    def deduplicate_paragraphs_in_markdown(self, markdown: str, threshold: float = 0.85) -> str:
+        """
+        Splits markdown into paragraphs and removes any that are too similar to a previous one.
+        This is a mechanical fail-safe for AI repetition.
+        """
+        if not markdown:
+            return markdown
+
+        paragraphs = markdown.split("\n\n")
+        seen_paragraphs = []
+        unique_paragraphs = []
+
+        for p in paragraphs:
+            p_strip = p.strip()
+            if not p_strip:
+                unique_paragraphs.append("")
+                continue
+
+            # Skip very short paragraphs (headings, labels)
+            if len(p_strip) < 50:
+                unique_paragraphs.append(p_strip)
+                # Don't add to seen_paragraphs for deduplication if too short to be a 'claim'
+                continue
+
+            is_duplicate = False
+            for prev in seen_paragraphs:
+                if len(prev) < 50: continue
+                
+                similarity = self.calculate_similarity(p_strip, prev)
+                if similarity > threshold:
+                    logger.warning(f"[Deduplicator] Stripping near-duplicate paragraph (similarity {similarity:.2f})")
+                    is_duplicate = True
+                    break
+            
+            if not is_duplicate:
+                unique_paragraphs.append(p_strip)
+                seen_paragraphs.append(p_strip)
+        
+        return "\n\n".join(unique_paragraphs)
+
     def calculate_similarity(self, text1: str, text2: str) -> float:
         """Calculates Jaccard Similarity between two texts."""
         if not text1 or not text2:

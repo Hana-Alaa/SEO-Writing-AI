@@ -380,10 +380,11 @@ class SectionWriter:
         introduction_text: str = "",
         full_outline: List[Dict[str, Any]] = None,
         external_resources: List[Dict[str, Any]] = None,
-        keyword_budget_exhausted: bool = False,
+        requires_primary_keyword: bool = False,
         style_blueprint: Dict[str, Any] = None,
-        used_claims: List[str] = None,
         ctas_placed: int = 0,
+        cta_type: str = "none",
+        tables_placed: int = 0,
         serp_data: Dict[str, Any] = None
     ) -> Dict[str, Any]:
 
@@ -443,7 +444,8 @@ class SectionWriter:
             "requires_list": section.get("requires_list", False),
             "list_type": section.get("list_type", "none"),
             "cta_position": section.get("cta_position", "none"),
-            "show_cta": show_cta, # Injected flag
+            "cta_type": cta_type, # New detailed flag
+            "show_cta": show_cta, # Binary flag for backward compatibility
 
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
@@ -521,6 +523,7 @@ class SectionWriter:
             external_resources=external_resources or [],
             used_claims=used_claims or [],
             ctas_placed=ctas_placed,
+            tables_placed=tables_placed,
             is_first_section=(section_index == 0),
             is_last_section=(section_index == total_sections - 1),
             prohibited_competitors=prohibited_competitors or [],
@@ -534,7 +537,7 @@ class SectionWriter:
             brand_voice_examples=brand_voice_examples,
             custom_keyword_density=custom_keyword_density,
             bold_key_terms=bold_key_terms,
-            keyword_budget_exhausted=keyword_budget_exhausted,
+            requires_primary_keyword=requires_primary_keyword,
             introduction_text=introduction_text,
             full_outline=full_outline or [],
             style_blueprint=final_blueprint,
@@ -650,6 +653,9 @@ class Assembler:
             for pattern in cleanup_patterns:
                 content = re.sub(pattern, "", content, flags=re.IGNORECASE)
 
+            # 2) Collapse multiple spaces (fixes issues like 'الوح  حدة')
+            content = re.sub(r' +', ' ', content)
+
             # 3) Heading De-duplication (CRITICAL)
             # If the content starts with the same heading (e.g. "## FAQ"), remove that line.
             content = content.strip()
@@ -683,6 +689,57 @@ class Assembler:
             # final_parts.append(content)
 
         final_markdown = "\n\n".join([p for p in final_parts if p])
+        
+        return {
+            "final_markdown": final_markdown
+        }
+class FinalHumanizer:
+    def __init__(self, ai_client: Any, template_path: str = "assets/prompts/templates/05_final_humanizer.txt"):
+        self.ai_client = ai_client
+        with open(template_path, "r", encoding="utf-8") as f:
+            self.template = Template(f.read(), undefined=StrictUndefined)
 
-        return {"final_markdown": final_markdown}
-
+    async def humanize_section(
+        self,
+        full_article_context: str,
+        target_section_content: str,
+        target_section_heading: str,
+        article_language: str,
+        brand_name: str,
+        brand_source_text: str,
+        weaponized_usps: str,
+        is_introduction: bool = False
+    ) -> str:
+        
+        prompt = self.template.render(
+            full_article_context=full_article_context,
+            target_section_content=target_section_content,
+            target_section_heading=target_section_heading,
+            article_language=article_language or "Arabic",
+            brand_name=brand_name or "",
+            brand_source_text=brand_source_text or "",
+            weaponized_usps=weaponized_usps or "",
+            is_introduction=is_introduction
+        )
+        
+        try:
+            res = await self.ai_client.send(prompt=prompt, step="final_humanizer")
+            data = recover_json(res["content"])
+            
+            if not data:
+                # Handle non-JSON or broken JSON response
+                return target_section_content
+            
+            extracted_content = data.get("content", target_section_content)
+            
+            # Clean JSON wrapping if the AI accidentally returns raw markdown wrapping inside JSON
+            if extracted_content.startswith("```markdown"):
+                extracted_content = extracted_content.replace("```markdown\n", "").replace("\n```", "")
+            
+            # Collapse multiple spaces
+            extracted_content = re.sub(r' +', ' ', extracted_content)
+                
+            return extracted_content
+        except Exception as e:
+            logger.error(f"[FinalHumanizer] Failed to humanize section '{target_section_heading}': {e}")
+            return target_section_content # Fallback to original

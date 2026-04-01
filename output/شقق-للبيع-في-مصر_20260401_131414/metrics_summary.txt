@@ -1,0 +1,204 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 10.16 seconds
+  -- Tokens Used: 6,557
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 24.91 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: HYBRID_RESEARCH
+  -- Duration: 129.48 seconds
+  -- Tokens Used: 68,574
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 129.48 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 2.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.63 seconds
+  -- Tokens Used: 717
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 717
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 717
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 23.84 seconds
+  -- Tokens Used: 31,066
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.33 seconds
+  -- Tokens Used: 8,722
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_دليلك الشامل للعثور على أفضل شقق للبيع في مصر لعام 2026
+  -- Duration: 5.98 seconds
+  -- Tokens Used: 12,923
+--------------------------------------------------
+Step: SECTION_2_دليلك الشامل للعثور على أفضل شقق للبيع في مصر لعام 2026
+  -- Duration: 6.53 seconds
+  -- Tokens Used: 12,999
+--------------------------------------------------
+Step: SECTION_2_دليلك الشامل للعثور على أفضل شقق للبيع في مصر لعام 2026
+  -- Duration: 7.46 seconds
+  -- Tokens Used: 13,088
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: دليلك الشامل للعثور على أفضل شقق للبيع في مصر لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_خريطة الاستثمار السكني: أين تجد وحدتك المثالية؟
+  -- Duration: 7.12 seconds
+  -- Tokens Used: 21,147
+--------------------------------------------------
+Step: SECTION_3_خريطة الاستثمار السكني: أين تجد وحدتك المثالية؟
+  -- Duration: 7.94 seconds
+  -- Tokens Used: 21,272
+--------------------------------------------------
+Step: SECTION_3_خريطة الاستثمار السكني: أين تجد وحدتك المثالية؟
+  -- Duration: 6.71 seconds
+  -- Tokens Used: 21,235
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة الاستثمار السكني: أين تجد وحدتك المثالية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا يتفوق البحث عبر عقار يا مصر على السماسرة التقليديين؟
+  -- Duration: 6.08 seconds
+  -- Tokens Used: 25,658
+--------------------------------------------------
+Step: SECTION_4_لماذا يتفوق البحث عبر عقار يا مصر على السماسرة التقليديين؟
+  -- Duration: 6.26 seconds
+  -- Tokens Used: 25,692
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يتفوق البحث عبر عقار يا مصر على السماسرة التقليديين؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_مؤشرات السوق والأسعار: كيف تضمن استثماراً آمناً؟
+  -- Duration: 6.49 seconds
+  -- Tokens Used: 32,188
+--------------------------------------------------
+Step: SECTION_5_مؤشرات السوق والأسعار: كيف تضمن استثماراً آمناً؟
+  -- Duration: 5.52 seconds
+  -- Tokens Used: 32,177
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مؤشرات السوق والأسعار: كيف تضمن استثماراً آمناً؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة أنماط السداد والتشطيب في السوق المصري
+  -- Duration: 5.61 seconds
+  -- Tokens Used: 37,455
+--------------------------------------------------
+Step: SECTION_6_مقارنة أنماط السداد والتشطيب في السوق المصري
+  -- Duration: 8.03 seconds
+  -- Tokens Used: 37,628
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة أنماط السداد والتشطيب في السوق المصري
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_3 خطوات بسيطة لامتلاك شقتك عبر منصتنا
+  -- Duration: 6.91 seconds
+  -- Tokens Used: 43,047
+--------------------------------------------------
+Step: SECTION_7_3 خطوات بسيطة لامتلاك شقتك عبر منصتنا
+  -- Duration: 5.62 seconds
+  -- Tokens Used: 43,020
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: 3 خطوات بسيطة لامتلاك شقتك عبر منصتنا
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_أسئلة شائعة حول سوق الشقق في مصر
+  -- Duration: 5.66 seconds
+  -- Tokens Used: 48,038
+--------------------------------------------------
+Step: SECTION_8_أسئلة شائعة حول سوق الشقق في مصر
+  -- Duration: 7.66 seconds
+  -- Tokens Used: 48,212
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول سوق الشقق في مصر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة التملك اليوم مع عقار يا مصر
+  -- Duration: 5.10 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة التملك اليوم مع عقار يا مصر
+  -- Duration: 39.12 seconds
+  -- Tokens Used: 56,846
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة التملك اليوم مع عقار يا مصر
+  -- Duration: 5.57 seconds
+  -- Tokens Used: 56,483
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلة التملك اليوم مع عقار يا مصر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 181.71 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 19.02 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.03 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 39.44 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.05 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.09 seconds
+  -- Tokens Used: 56,841
+--------------------------------------------------

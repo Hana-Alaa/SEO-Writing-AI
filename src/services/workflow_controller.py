@@ -29,7 +29,7 @@ from src.utils.injector import DataInjector
 # from services.gemini_client import GeminiClient
 # from services.huggingface_client import HuggingFaceClient
 from src.services.title_generator import TitleGenerator
-from src.services.content_generator import OutlineGenerator, SectionWriter, Assembler, ContentGeneratorError
+from src.services.content_generator import OutlineGenerator, SectionWriter, Assembler, ContentGeneratorError, FinalHumanizer
 # from services.section_validator import SectionValidator
 from src.services.image_inserter import ImageInserter
 from src.services.meta_schema_generator import MetaSchemaGenerator
@@ -186,6 +186,7 @@ class AsyncWorkflowController:
         self.outline_gen = OutlineGenerator(self.ai_client)
         self.section_writer = SectionWriter(self.ai_client)
         self.assembler = Assembler(self.ai_client)
+        self.final_humanizer = FinalHumanizer(self.ai_client)
         # self.section_validator = SectionValidator(self.ai_client)
         self.image_inserter = ImageInserter()
         self.meta_schema = MetaSchemaGenerator(self.ai_client)
@@ -257,6 +258,7 @@ class AsyncWorkflowController:
         steps.extend([
             # ("section_validation", self._step_4_validate_sections, 0),
             ("assembly", self._step_5_assembly, 0),
+            ("final_humanizer", self._step_5_1_final_humanizer, 1),
         ])
 
         if generate_images and num_images > 0:
@@ -806,9 +808,18 @@ class AsyncWorkflowController:
 
         content_type = state.get("content_type", "informational")
 
+        # Distribute Primary Keyword Requirement (Pacing)
+        total_secs = len(outline)
+        for i, sec in enumerate(outline):
+            if total_secs <= 3:
+                sec["requires_primary_keyword"] = True
+            else:
+                sec["requires_primary_keyword"] = (i == 0) or (i == total_secs - 1) or (i == total_secs // 2)
+
         # Initialize global quality tracking
         state["used_claims"] = []
         state["ctas_placed"] = 0
+        state["tables_placed"] = 0
         state["full_content_so_far"] = ""
         state["last_section_content"] = ""
 
@@ -857,7 +868,11 @@ class AsyncWorkflowController:
                      # Track CTAs
                      if "[CTA]" in res["generated_content"] or "btn-" in res["generated_content"]:
                           state["ctas_placed"] = state.get("ctas_placed", 0) + 1
-                         
+                     
+                     # Track Tables (Max 2 rule)
+                     if "|" in res["generated_content"] and re.search(r"\|\s*---\s*\|", res["generated_content"]):
+                          state["tables_placed"] = state.get("tables_placed", 0) + 1
+                          
                 results.append(res)
 
         sections_content = {}
@@ -1010,9 +1025,27 @@ class AsyncWorkflowController:
                 break
         
         logger.info(f"Extracted {len(external_sources)} external sources for section '{section.get('heading_text')}'")
+        
+        # --- Tiered CTA Strategy Logic ---
+        cta_type = "none"
+        if section_index == 0:
+            cta_type = "soft"
+        elif section_index == total_sections - 1:
+            cta_type = "strong"
+        elif total_sections > 3 and section_index == total_sections // 2:
+            cta_type = "moderate"
+            
+        # --- Context Windowing (Token Optimization) ---
+        # Instead of sending the entire article, send the Intro + last 2 sections.
+        intro_text = state.get("introduction_text", "")
+        # Get generated content of all sections written so far in order
+        all_content = [s["generated_content"] for s in state.get("sections", {}).values() if "generated_content" in s]
+        # Keep only the last 2 sections (excluding the one being written)
+        recent_context = "\n\n".join(all_content[-2:]) if all_content else ""
+        
+        optimized_context = f"ARTICLE INTRODUCTION:\n{intro_text}\n\nRECENT CONTEXT:\n{recent_context}" if intro_text else recent_context
 
         # Try 1
-
         res_data = await self.section_writer.write(
             title=title,
             global_keywords=global_keywords,
@@ -1030,14 +1063,15 @@ class AsyncWorkflowController:
             area=state.get("area"),
             used_phrases=used_phrases,
             used_internal_links=state.get("used_internal_links", []),
-            used_external_links=state.get("used_external_links", []),
+            used_external_links=state.get("used_external_links", []), 
             section_index=section_index,
             total_sections=total_sections,
             brand_context=brand_context,
             section_source_text=section_source_text,
             workflow_logger=state.get("workflow_logger"),
             prohibited_competitors=state.get("prohibited_competitors", []),
-            # Advanced Customization
+            cta_type=cta_type, # Pass the tiered strategy
+            # Advanced CustomizationCustomization
             tone=state.get("tone"),
             pov=state.get("pov"),
             brand_voice_description=state.get("brand_voice_description"),
@@ -1045,17 +1079,18 @@ class AsyncWorkflowController:
             brand_voice_examples=state.get("brand_voice_examples"),
             custom_keyword_density=state.get("custom_keyword_density"),
             bold_key_terms=state.get("bold_key_terms", True),
-            keyword_budget_exhausted=state.get("global_keyword_count", 0) >= 4,
+            requires_primary_keyword=section.get("requires_primary_keyword", False),
             used_topics=state.get("used_topics", []),
             used_claims=state.get("used_claims", []),
             previous_section_text=state.get("last_section_content", ""),
-            previous_content_summary=state.get("full_content_so_far", ""),  # REMOVED CAP FOR MAXIMUM MEMORY
+            previous_content_summary=optimized_context, # Optimized Context!
             full_outline=state.get("outline", []),
             introduction_text=state.get("introduction_text", ""),
             external_resources=state.get("external_resources", []),
             brand_name=state.get("brand_name", ""),
             style_blueprint=state.get("style_blueprint", {}),
             ctas_placed=state.get("ctas_placed", 0),
+            tables_placed=state.get("tables_placed", 0),
             serp_data=state.get("serp_data", {})
         )
         
@@ -1072,7 +1107,7 @@ class AsyncWorkflowController:
 
         # Semantic Overlap Rejection
         if content and getattr(self, "semantic_model", None) and state.get("used_claims"):
-            is_rejected, overlap_score, overlap_sentence = await self.validator.check_semantic_overlap(content, state.get("used_claims", []), threshold=0.70)
+            is_rejected, overlap_score, overlap_sentence = await self.validator.check_semantic_overlap(content, state.get("used_claims", []), threshold=0.60)
             if is_rejected:
                 logger.warning(f"Semantic Overlap Rejected ({overlap_score:.2f}) for '{title}'. Sentence: '{overlap_sentence}'. Retrying...")
                 res_data = await self.section_writer.write(
@@ -1113,7 +1148,8 @@ class AsyncWorkflowController:
 
                     previous_section_text=state.get("last_section_content", ""),
 
-                    previous_content_summary=state.get("full_content_so_far", ""),
+                    previous_content_summary=optimized_context,
+                    cta_type=cta_type, # Pass the tiered strategy on retry too
                     ctas_placed=state.get("ctas_placed", 0),
                     serp_data=state.get("serp_data", {})
                 )
@@ -1285,8 +1321,7 @@ class AsyncWorkflowController:
 
             # update brand link flag
             if brand_url:
-                bcu = LinkManager.canon_url(brand_url)
-                if any(LinkManager.canon_url(l) == bcu for l in found_links):
+                if any(LinkManager.is_same_site(l, brand_url) for l in found_links):
                     state["brand_link_used"] = True
 
             final_content = self.validator.enforce_paragraph_structure(content)
@@ -1492,6 +1527,8 @@ class AsyncWorkflowController:
         # Final pass redundancy pruning on the whole assembled markdown
         if "final_markdown" in assembled:
             md = assembled["final_markdown"]
+            # Mechanical Paragraph Deduplication (Fail-safe)
+            md = self.validator.deduplicate_paragraphs_in_markdown(md, threshold=0.85)
             md = self.validator.prune_redundant_intros(md)
             brand_url = state.get("brand_url", "")
             brand_domain = LinkManager.domain(brand_url) if brand_url else ""
@@ -1499,6 +1536,77 @@ class AsyncWorkflowController:
 
             assembled["final_markdown"] = md
 
+        state["final_output"] = assembled
+        return state
+
+    async def _step_5_1_final_humanizer(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Post-processes the entire assembled article section by section."""
+        draft_markdown = state.get("final_output", {}).get("final_markdown", "")
+        if not draft_markdown:
+            return state
+            
+        outline = state.get("outline", [])
+        sections_dict = state.get("sections", {})
+        ordered_sections = [
+            sections_dict[s["section_id"]]
+            for s in outline
+            if s.get("section_id") in sections_dict
+        ]
+        
+        article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "ar")
+        brand_name = state.get("brand_name", "")
+        brand_source_text = state.get("input_data", {}).get("brand_source_text", "")
+        weaponized_usps = state.get("seo_intelligence", {}).get("weaponized_usps", "")
+
+        for i, section in enumerate(ordered_sections):
+            content = section.get("generated_content", "")
+            heading = section.get("heading_text", "")
+            is_intro = (i == 0)
+            
+            # --- DYNAMIC CONTEXT REBUILD ---
+            # Rebuild the draft text on each iteration so the Humanizer sees the live updates
+            live_draft_parts = []
+            for s in ordered_sections:
+                lvl = str(s.get("heading_level", "H2")).replace("H", "")
+                lvl_num = int(lvl) if lvl.isdigit() else 2
+                if s.get("section_type") != "introduction":
+                    live_draft_parts.append(f"{'#' * lvl_num} {s.get('heading_text', '')}")
+                live_draft_parts.append(s.get("generated_content", ""))
+            
+            dynamic_draft = "\n\n".join(live_draft_parts)
+
+            logger.info(f"Humanizing section: {heading}")
+            new_content = await self.final_humanizer.humanize_section(
+                full_article_context=dynamic_draft,
+                target_section_content=content,
+                target_section_heading=heading,
+                article_language=article_language,
+                brand_name=brand_name,
+                brand_source_text=brand_source_text,
+                weaponized_usps=weaponized_usps,
+                is_introduction=is_intro
+            )
+            section["generated_content"] = new_content
+            
+        # Re-assemble the article after humanization
+        title = state.get("input_data", {}).get("title", "Untitled")
+        assembled = await self.assembler.assemble(
+            title=title, 
+            sections=ordered_sections, 
+            article_language=article_language
+        )
+        
+        # Final pass redundancy pruning on the whole assembled markdown
+        if "final_markdown" in assembled:
+            md = assembled["final_markdown"]
+            # Mechanical Paragraph Deduplication (Final Safety Gate)
+            md = self.validator.deduplicate_paragraphs_in_markdown(md, threshold=0.85)
+            md = self.validator.prune_redundant_intros(md)
+            brand_url = state.get("brand_url", "")
+            brand_domain = LinkManager.domain(brand_url) if brand_url else ""
+            md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
+            assembled["final_markdown"] = md
+            
         state["final_output"] = assembled
         return state
 
@@ -1546,8 +1654,8 @@ class AsyncWorkflowController:
         # Enforce H1 Length (Strict)
         h1 = meta_json.get("h1", "")
         if h1 and not self.validator.validate_h1_length(h1):
-            logger.error(f"H1 length invalid ({len(h1)} chars).")
-            raise ValueError("H1 length invalid")
+            logger.warning(f"H1 length invalid ({len(h1)} chars). Falling back to explicit title.")
+            meta_json["h1"] = state.get("input_data", {}).get("title", h1)
             
         state["seo_meta"] = meta_json
         return state
