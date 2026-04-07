@@ -14,12 +14,18 @@ logger = logging.getLogger(__name__)
 class StrategyService:
     """Service dedicated to intent detection, brand style analysis, and content strategy."""
 
-    def __init__(self, ai_client, title_generator, strategy_templates, intent_template=None):
+    def __init__(self, ai_client, title_generator, jinja_env, intent_template=None):
         self.ai_client = ai_client
         self.title_generator = title_generator
-        self.strategy_templates = strategy_templates
+        self.env = jinja_env
         self.intent_template = intent_template
         self.style_extractor = StyleExtractor(ai_client)
+        
+        self.strategy_map = {
+            "brand_commercial": "00_content_strategy_brand_commercial.txt",
+            "informational": "00_content_strategy_informational.txt",
+            "comparison": "00_content_strategy_comparison.txt",
+        }
 
     SUPPORTED_LANGS = {"ar", "en", "de", "fr", "es", "it", "tr", "pt"}
     LANG_ALIASES = {
@@ -194,16 +200,12 @@ class StrategyService:
 
         # 2. Visual Style Analysis (from Logo Reference)
         if ref_path and isinstance(ref_path, str) and os.path.exists(ref_path):
-            if state.get("workflow_mode") == "core":
-                logger.info("Core Mode: Skipping deep visual style analysis.")
-                state["brand_visual_style"] = "Professional, modern corporate identity, clean lighting"
-            else:
-                try:
-                    style_res = await self.ai_client.describe_image_style(ref_path)
-                    state["brand_visual_style"] = style_res.get("content", "") if isinstance(style_res, dict) else str(style_res)
-                except Exception as e:
-                    logger.error(f"Failed to analyze reference image: {e}")
-                    state["brand_visual_style"] = "Professional, modern corporate identity"
+            try:
+                style_res = await self.ai_client.describe_image_style(ref_path)
+                state["brand_visual_style"] = style_res.get("content", "") if isinstance(style_res, dict) else str(style_res)
+            except Exception as e:
+                logger.error(f"Failed to analyze reference image: {e}")
+                state["brand_visual_style"] = "Professional, modern corporate identity"
 
         return state
 
@@ -218,11 +220,6 @@ class StrategyService:
         content_type = state.get("content_type")
         area = state.get("area") or "Global"
         
-        # Cost Optimization: Skip AI strategy generation for Core Mode
-        if state.get("workflow_mode") == "core":
-            logger.info("Core Mode: Using static content strategy to save tokens.")
-            state["content_strategy"] = self._get_static_core_strategy(primary_keyword, content_type, area)
-            return state
         full_intel = seo_intelligence.get("strategic_analysis", {})
 
         intent_layer = full_intel.get("intent_analysis", {})
@@ -249,10 +246,11 @@ class StrategyService:
                 "keywords": list(dict.fromkeys(safe_fallback))
             }]
 
-        template = self.strategy_templates.get(
+        template_name = self.strategy_map.get(
             content_type,
-            self.strategy_templates["informational"]
+            self.strategy_map["informational"]
         )
+        template = self.env.get_template(template_name)
 
         prompt = template.render(
             primary_keyword=primary_keyword,

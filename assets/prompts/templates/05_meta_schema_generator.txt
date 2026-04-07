@@ -76,10 +76,11 @@ TASKS:
 - Ensure all dates are in ISO 8601 format.
 
 5. FAQ SCHEMA (JSON-LD)
-- Generate ONLY if the article contains a real FAQ section
-- Extract actual Q&A from article
-- Do NOT invent questions
-- If no FAQ exists → return null
+- Generate ONLY if the article contains a real FAQ section.
+- Extract actual Q&A from article.
+- **FORMAT**: Use valid JSON-LD for `FAQPage`.
+  - Example: {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "QText", "acceptedAnswer": {"@type": "Answer", "text": "AText"}}]}
+- If no FAQ exists → return null.
 
 --------------------------------------------------------
 

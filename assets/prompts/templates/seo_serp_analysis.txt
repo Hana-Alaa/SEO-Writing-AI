@@ -11,6 +11,9 @@ Primary Keyword: {{ primary_keyword | default('Main Topic') }}
 SERP DATA:
 {{ serp_data | default('No data available.') }}
 
+{% if competitor_structures %}- **RAW COMPETITOR STRUCTURES (REAL-TIME AUDIT)**:
+{{ competitor_structures | tojson }}{% endif %}
+
 STEP 1 — Search Intent Confirmation
 Incorporate both SERP structure AND Brand Utility:
 - **COMMERCIAL PRIORITY**: If the brand exists and solves the search query, the dominant intent should be `commercial`. Do NOT surrender to purely informational blog patterns of competitors.
@@ -61,6 +64,8 @@ Extract:
 - Example: "The competitors are too technical; be more human. Emphasize the [Brand Feature] as the primary solution to [Competitor Weakness]."
 5. Differentiation Strategy
 - How to be more comprehensive and structure better.
+6. Mandatory SERP Topics (THE MIRROR)
+- Identify 3-5 specific H2 headings or thematic blocks that are present in ALL top results. These are non-negotiable.
 
 
 Return STRICT JSON only in this structure:
@@ -101,7 +106,8 @@ Return STRICT JSON only in this structure:
 }
 ],
 "battle_plan_brief": "",
-"differentiation_strategy": []
+"differentiation_strategy": [],
+"mandatory_serp_topics": []
 }
 }
 

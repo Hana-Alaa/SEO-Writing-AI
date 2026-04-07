@@ -111,11 +111,20 @@ class LinkManager:
         if max_external is None:
             max_external = state.get("max_external_links", 6)
 
-        pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        # Pattern to catch both Markdown [Text](URL) and HTML <a href="URL">Text</a>
+        # Group 1: Markdown text, Group 2: Markdown URL
+        # Group 3: HTML URL, Group 4: HTML text
+        pattern = r'\[([^\]]+)\]\(([^)]+)\)|<a\s+(?:[^>]*?\s+)?href=["\']([^"\']+)["\'][^>]*>(.*?)</a>'
 
         def repl(m):
             nonlocal section_external_count, global_used_external_count
-            text, raw_url = m.group(1), m.group(2).strip()
+            
+            if m.group(1): # Markdown Match
+                text, raw_url = m.group(1), m.group(2).strip()
+                is_html = False
+            else: # HTML Match
+                raw_url, text = m.group(3).strip(), m.group(4)
+                is_html = True
 
             if raw_url.lower() in {"none", "null", ""}:
                 return text
@@ -128,9 +137,6 @@ class LinkManager:
 
             is_internal = cu in internal_set or (brand_url and cls.is_same_site(cu, brand_url))
 
-            # Relaxed Deduplication:
-            # We ONLY strip if the EXACT URL (Canonical) was already used globally.
-            # We NO LONGER strip based on anchor text alone here.
             if cu in state["used_all_urls"]:
                 return text
 
@@ -138,7 +144,7 @@ class LinkManager:
                 state["used_all_urls"].add(cu)
                 counts = state.setdefault("internal_link_counts", {})
                 counts[cu] = counts.get(cu, 0) + 1
-                return f"[{text}]({raw_url})"
+                return f"[{text}]({raw_url})" if not is_html else f'<a href="{raw_url}">{text}</a>'
             else:
                 if dom in blocked_domains:
                     return text
@@ -150,7 +156,7 @@ class LinkManager:
                 state["used_all_urls"].add(cu)
                 section_external_count += 1
                 global_used_external_count += 1
-                return f"[{text}]({raw_url})"
+                return f"[{text}]({raw_url})" if not is_html else f'<a href="{raw_url}">{text}</a>'
 
         return re.sub(pattern, repl, content)
 

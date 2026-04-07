@@ -17,7 +17,11 @@ OPENROUTER = {
     "site_name": "SEO Writing AI",
 
     "models": {
-        "writing": "google/gemini-3-flash-preview",
+        "writing": "openai/gpt-5-mini",          #9
+        # "writing": "google/gemini-3-flash-preview",
+        # "Writing": "qwen/qwen3.6-plus:free",
+        # "Writing": "openai/gpt-5.4-nano",     #47
+        # "Writing": "google/gemini-3.1-flash-lite-preview",         #7
         "research": "openai/o4-mini:online",
         # "image": "black-forest-labs/flux.2-pro" 
         # "image": "google/gemini-3-pro-image-preview"

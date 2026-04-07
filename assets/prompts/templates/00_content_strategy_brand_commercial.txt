@@ -1,3 +1,5 @@
+{% include '00_content_strategy_base.txt' %}
+
 ### COMMERCIAL STRATEGY ARCHITECTURE (STRICT)
 - **Primary Objective**: Direct Conversion via Trust building and authority (Bottom-of-Funnel Mastery).
 - **Core Philosophy**: 70% Transactional focus / 30% Supportive Education. 
@@ -12,5 +14,5 @@
 5. **The Proof (Trust Building)**: Stats, case studies, client results, or factual evidence. This is where you earn the conversion.
 6. **The Matrix (Comparison)**: Service tiers, tiered pricing, or comparison vs market standards. Flexible but scannable format.
 7. **The Path (How it Works)**: Numbered steps defining the operational process to reduce friction and eliminate uncertainty.
-8. **The Support (FAQ)**: Specifically handle objections, pricing questions, and "How to start" logistics.
+8. **The Support (FAQ)**: Focus on objections and pricing/process questions specifically. MAXIMUM 5 questions.
 9. **The Close (Conclusion)**: Strong, direct, and confident sign-off + Final Primary CTA for conversion.

@@ -1,0 +1,24 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0000
+Total Tokens: 54,692
+
+Google (Gemini) Cost: $0.0000
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+serp_analysis             | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | openai/gpt-5-mini         | $0.000000
+STEP_TOTAL: style_analys  | openai/gpt-5-mini         | $0.000000
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | openai/gpt-5-mini         | $0.000000

@@ -27,10 +27,12 @@ Validation Checklist:
    - H2/H3 hierarchy is logical and consistent. [WARNING]
 
 2. **Keyword & Language Flow**
-   - Primary keyword appears in the first paragraph. [CRITICAL]
-   - **Density Cap**: Keyword density must be between 0.4% - 0.6% (approx 4-6 mentions per 1000 words). Density > 0.8% is a CRITICAL violation. [CRITICAL]
-   - **Narrative Cohesion**: Content must flow naturally with logical transitions. "Clunky" or "disconnected" sentences are a violation. [WARNING]
-   - **Linguistic Naturalness**: No robotic repetition of keywords in Arabic. [CRITICAL]
+   - **Opening Relevance**: The first paragraph MUST clearly reflect the primary keyword topic (Exact phrase OR strong natural variant is acceptable). [CRITICAL]
+   - **Global Exact-Form Cap**: The exact primary keyword phrase must NOT exceed 4 mentions across the full article. [CRITICAL]
+   - **Section Repetition**: The exact primary keyword phrase must NOT appear more than once in the same section. [CRITICAL]
+   - **H2 Relevance**: At least one key H2 must reflect the primary keyword clearly (Exact or strong variant). [CRITICAL]
+   - **Distribution**: Exact mentions should be distributed across different article phases, not clustered in adjacent sections. [WARNING]
+   - **Linguistic Naturalness**: No robotic repetition. Close natural variants and semantic rephrasing are encouraged and should NOT be penalized as "missing". [CRITICAL]
 
 3. **Practical Content Depth (The 4 Pillars)**
    - Article MUST include practical/actionable information regarding:
@@ -43,7 +45,7 @@ Validation Checklist:
 4. **External Link & Trust Integrity**
    - **No Decorative Links**: NO links to global standard orgs (ISO, ITU, IEEE) for practical/commercial topics. [CRITICAL]
    - **Link Relevance**: Every external link must have "Operational Utility" (help user take action or verify a specific policy). Every link MUST be cross-referenced against the "Reference Authority Links" provided above. [CRITICAL]
-   - **Minimum Quota**: At least 3 unique, high-utility external links MUST be present. [CRITICAL]
+   - **Minimum Quota**: At least 2 unique, high-utility external links SHOULD be present when reliable authority links are available in context. [WARNING]
    - **No Generic Portals**: Links to generic homepages (mosa.gov.sa, cert.gov.sa) are forbidden if they do not provide direct, specific information relevant to the section. [CRITICAL]
    - **Link Placement**: Links must follow the facts they validate. [WARNING]
 
@@ -68,9 +70,9 @@ Validation Checklist:
    - **No Competitor Mentions**: YOU ARE STRICTLY FORBIDDEN from mentioning, referencing, or comparing to any of the following competitor brands: {{ (prohibited_competitors | default([])) | join(', ') }}. Any mention is a CRITICAL violation. [CRITICAL]
 
 9. **Topic Integrity (CRITICAL)**
-    - The article MUST focus strictly on the **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}).
-    - If the article drifts into unrelated or secondary topics (supporting technologies, unrelated services, or broad industry fluff) for more than 10% of the content, it is a CRITICAL violation.
-    - The Primary Keyword must be the absolute "subject" of the expertise shown.
+    - The article MUST focus strictly on the **Primary Keyword** ({{ primary_keyword | default('Main Topic') }}) topic.
+    - If the article drifts into unrelated or secondary topics for more than 10% of the content, it is a CRITICAL violation.
+    - Topic relevance is more important than exact phrase matching.
 
 10. **Content Angle & Tone (STRICT)**
    - Primary Angle: "{{ (content_strategy.primary_angle | default('N/A')) if content_strategy is defined else 'N/A' }}"

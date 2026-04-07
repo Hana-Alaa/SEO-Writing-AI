@@ -310,6 +310,24 @@ def _wrap_tables(html: str) -> str:
         flags=re.IGNORECASE | re.DOTALL
     )
 
+def _format_ctas(html: str) -> str:
+    """
+    Finds standalone links in paragraphs (e.g., <p><a href="...">Text</a></p>)
+    and converts them into styled CTA buttons.
+    """
+    if not html:
+        return html
+        
+    def replacer(match):
+        href = match.group(1)
+        text = match.group(2)
+        # Ensure it's not a huge chunk of text (CTAs are usually short)
+        if len(text.strip()) < 100 and not "<br" in text:
+            return f'<div class="cta-container"><a href="{href}" class="cta-button" target="_blank" rel="noopener noreferrer">{text.strip()}</a></div>'
+        return match.group(0)
+
+    # Replace paragraphs that ONLY contain a single anchor tag
+    return re.sub(r'<p>\s*<a\s+href="([^"]+)">([^<]+)</a>\s*</p>', replacer, html)
 
 
 def render_html_page(final_result: dict):
@@ -336,6 +354,7 @@ def render_html_page(final_result: dict):
             output_format="html5"
         )
         html_content = _wrap_tables(html_content)
+        html_content = _format_ctas(html_content)
     except Exception as e:
         logger.error(f"Markdown conversion failed: {e}")
         html_content = f"<p>Error converting markdown: {e}</p>"

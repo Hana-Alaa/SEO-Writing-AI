@@ -1,3 +1,6 @@
+{% include '00_content_strategy_base.txt' %}
+
+### COMPARISON STRATEGY ARCHITECTURE (STRICT)
 Comparison Articles (Review/Versus/Tiered)
 The goal is to help the reader decide between options.
 STRUCTURE:

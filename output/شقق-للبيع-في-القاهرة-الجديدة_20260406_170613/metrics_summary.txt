@@ -1,0 +1,192 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 12.43 seconds
+  -- Tokens Used: 6,721
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 29.90 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 84.15 seconds
+  -- Tokens Used: 24,102
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 84.16 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 8.19 seconds
+  -- Tokens Used: 7,819
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 14.78 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 2.17 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 4.26 seconds
+  -- Tokens Used: 728
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 728
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 10.25 seconds
+  -- Tokens Used: 4,889
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 10.37 seconds
+  -- Tokens Used: 4,889
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 57.43 seconds
+  -- Tokens Used: 113,392
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.70 seconds
+  -- Tokens Used: 5,863
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 4.65 seconds
+  -- Tokens Used: 5,103
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_خارطة أسعار شقق للبيع في القاهرة الجديدة 2026: تحليل المتر في أهم الأحياء
+  -- Duration: 7.36 seconds
+  -- Tokens Used: 13,276
+--------------------------------------------------
+Step: SECTION_2_خارطة أسعار شقق للبيع في القاهرة الجديدة 2026: تحليل المتر في أهم الأحياء
+  -- Duration: 8.72 seconds
+  -- Tokens Used: 13,296
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خارطة أسعار شقق للبيع في القاهرة الجديدة 2026: تحليل المتر في أهم الأحياء
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا يعد الشراء في بيت الوطن (التجمع الخامس) الصفقة الأذكى حالياً؟
+  -- Duration: 5.64 seconds
+  -- Tokens Used: 21,659
+--------------------------------------------------
+Step: SECTION_3_لماذا يعد الشراء في بيت الوطن (التجمع الخامس) الصفقة الأذكى حالياً؟
+  -- Duration: 7.09 seconds
+  -- Tokens Used: 21,683
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا يعد الشراء في بيت الوطن (التجمع الخامس) الصفقة الأذكى حالياً؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_مخاطر تأخير قرار الشراء: كيف تحمي مدخراتك من تضخم العقارات؟
+  -- Duration: 6.11 seconds
+  -- Tokens Used: 28,245
+--------------------------------------------------
+Step: SECTION_4_مخاطر تأخير قرار الشراء: كيف تحمي مدخراتك من تضخم العقارات؟
+  -- Duration: 6.15 seconds
+  -- Tokens Used: 28,221
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مخاطر تأخير قرار الشراء: كيف تحمي مدخراتك من تضخم العقارات؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_خطوات فحص الشقة قانونياً قبل التوقيع: دليل المشتري الذكي
+  -- Duration: 5.78 seconds
+  -- Tokens Used: 34,828
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات فحص الشقة قانونياً قبل التوقيع: دليل المشتري الذكي
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_الفرق بين أنظمة الكاش والتقسيط في كمبوندات التجمع الخامس
+  -- Duration: 7.78 seconds
+  -- Tokens Used: 41,110
+--------------------------------------------------
+Step: SECTION_6_الفرق بين أنظمة الكاش والتقسيط في كمبوندات التجمع الخامس
+  -- Duration: 7.28 seconds
+  -- Tokens Used: 41,137
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الفرق بين أنظمة الكاش والتقسيط في كمبوندات التجمع الخامس
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_الأسئلة الشائعة حول شقق القاهرة الجديدة
+  -- Duration: 8.05 seconds
+  -- Tokens Used: 49,830
+--------------------------------------------------
+Step: SECTION_7_الأسئلة الشائعة حول شقق القاهرة الجديدة
+  -- Duration: 8.77 seconds
+  -- Tokens Used: 49,888
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول شقق القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_خلاصة القول: كيف تختار شقتك المثالية في القاهرة الجديدة؟
+  -- Duration: 11.60 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: SECTION_8_خلاصة القول: كيف تختار شقتك المثالية في القاهرة الجديدة؟
+  -- Duration: 11.02 seconds
+  -- Tokens Used: 60,199
+--------------------------------------------------
+Step: SECTION_8_خلاصة القول: كيف تختار شقتك المثالية في القاهرة الجديدة؟
+  -- Duration: 9.75 seconds
+  -- Tokens Used: 59,345
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خلاصة القول: كيف تختار شقتك المثالية في القاهرة الجديدة؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 139.74 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 16.00 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 78.71 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 140.68 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.68 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.14 seconds
+  -- Tokens Used: 60,154
+--------------------------------------------------

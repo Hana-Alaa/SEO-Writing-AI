@@ -19,6 +19,7 @@ class WorkflowLogger:
         os.makedirs(self.output_dir, exist_ok=True)
         self.log_file = os.path.join(self.output_dir, "workflow.log")
         self.csv_file = os.path.join(self.output_dir, "metrics.csv")
+        self.errors_file = os.path.join(self.output_dir, "errors.txt")
         self.diagnostic_reporter = DiagnosticReporter(self.output_dir)
         
         # OpenRouter pricing per 1k tokens (simplified)
@@ -213,6 +214,20 @@ class WorkflowLogger:
                 f.write(f"STEP_OUTPUT:\n{_serialize(filtered_output)}\n")
                 
             f.write(f"{'#'*80}\n")
+
+    def log_technical_error(self, step_name: str, error_msg: str, traceback_str: str = None):
+        """Records a technical system crash (exception) to the errors.txt file."""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        with open(self.errors_file, 'a', encoding='utf-8') as f:
+            f.write(f"\n{'!'*20} TECHNICAL CRASH: {step_name} {'!'*20}\n")
+            f.write(f"TIME: {timestamp}\n")
+            f.write(f"ERROR: {error_msg}\n")
+            if traceback_str:
+                f.write(f"TRACEBACK:\n{traceback_str}\n")
+            f.write(f"{'!'*60}\n")
+        
+        logger.error(f"TECHNICAL ERROR in {step_name} recorded to errors.txt: {error_msg}")
 
     def _filter_state_for_log(self, state: Any) -> Any:
         """Filters out massive binary or redundant data from state for logging."""

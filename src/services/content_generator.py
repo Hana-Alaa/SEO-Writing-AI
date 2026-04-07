@@ -4,7 +4,7 @@ import asyncio
 import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from jinja2 import Template, StrictUndefined
+from jinja2 import Environment, FileSystemLoader, Template, StrictUndefined
 from src.utils.json_utils import recover_json
 
 logger = logging.getLogger(__name__)
@@ -103,17 +103,15 @@ def _enforce_paragraph_word_limit(content: str, max_words: int = 40) -> str:
 class OutlineGenerator:
     def __init__(self, ai_client: Any):
         self.ai_client = ai_client
-        from pathlib import Path
-        
-        base_outline = Path("assets/prompts/templates/01_outline_generator_base.txt").read_text(encoding="utf-8")
-        commercial_outline = Path("assets/prompts/templates/01_outline_generator_brand_commercial.txt").read_text(encoding="utf-8")
-        informational_outline = Path("assets/prompts/templates/01_outline_generator_informational.txt").read_text(encoding="utf-8")
-        comparison_outline = Path("assets/prompts/templates/01_outline_generator_comparison.txt").read_text(encoding="utf-8")
+        self.env = Environment(
+            loader=FileSystemLoader("assets/prompts/templates"),
+            undefined=StrictUndefined
+        )
         
         self.templates = {
-            "brand_commercial": Template(base_outline + "\n\n" + commercial_outline, undefined=StrictUndefined),
-            "informational": Template(base_outline + "\n\n" + informational_outline, undefined=StrictUndefined),
-            "comparison": Template(base_outline + "\n\n" + comparison_outline, undefined=StrictUndefined),
+            "brand_commercial": "01_outline_generator_brand_commercial.txt",
+            "informational": "01_outline_generator_informational.txt",
+            "comparison": "01_outline_generator_comparison.txt",
         }
 
     def _normalize_section(self, section: Dict[str, Any], idx: int, content_type: str, content_strategy: Dict[str, Any], area: Optional[str]):
@@ -136,12 +134,14 @@ class OutlineGenerator:
             "image_type": "illustration",
             "alt_text": ""
         })
-        section.setdefault("cta_allowed", False)
+        section.setdefault("cta_eligible", False)
         section.setdefault("cta_type", "none")
+        # Legacy compatibility for older templates/tools that still expect these fields.
+        section.setdefault("cta_allowed", section.get("cta_eligible", False))
         section.setdefault("cta_rules", {
-            "placement": "none",
-            "max_sentences": 0,
-            "mandatory": False
+            "placement": section.get("cta_position", "none"),
+            "max_sentences": 1 if section.get("cta_eligible", False) else 0,
+            "mandatory": section.get("cta_type", "none") == "strong"
         })
         section.setdefault("requires_table", False)
         section.setdefault("table_columns", [])
@@ -197,17 +197,20 @@ class OutlineGenerator:
             secondary_keywords: List[str] = None,
             competitor_count: int = 5,
             external_resources: List[Dict[str, str]] = None,
-            style_blueprint: Dict[str, Any] = None
+            style_blueprint: Dict[str, Any] = None,
+            brand_name: str = "",
+            brand_url: str = ""
         ) -> Dict[str, Any]:
 
 
 
         current_year = str(datetime.now().year)
 
-        template = self.templates.get(
+        template_name = self.templates.get(
             content_type,
             self.templates["informational"]
         )
+        template = self.env.get_template(template_name)
 
         # Rich Defaults with Deep Resilience
         final_blueprint = {
@@ -233,6 +236,8 @@ class OutlineGenerator:
             content_type=content_type,
             content_strategy=content_strategy,
             brand_context=brand_context,
+            brand_name=brand_name,
+            brand_url=brand_url,
             area=area,
             area_neighborhoods=area_neighborhoods or [],
             feedback=feedback,
@@ -282,6 +287,9 @@ class OutlineGenerator:
 
         outline = data.get("outline")
         keyword_expansion = data.get("keyword_expansion", {})
+        semantic_entities = data.get("semantic_entities", [])
+        semantic_concepts = data.get("semantic_concepts", [])
+        intent_clusters = data.get("intent_clusters", [])
 
         if not outline or not isinstance(outline, list):
             raise ContentGeneratorError("Invalid outline structure returned by AI.")
@@ -320,23 +328,24 @@ class OutlineGenerator:
         return {
             "outline": outline,
             "keyword_expansion": keyword_expansion,
+            "semantic_entities": semantic_entities,
+            "semantic_concepts": semantic_concepts,
+            "intent_clusters": intent_clusters,
             "metadata": metadata
         }
 
 class SectionWriter:
     def __init__(self, ai_client: Any):
         self.ai_client = ai_client
-        from pathlib import Path
-        
-        base_writer = Path("assets/prompts/templates/02_section_writer_base.txt").read_text(encoding="utf-8")
-        commercial_writer = Path("assets/prompts/templates/02_section_writer_brand_commercial.txt").read_text(encoding="utf-8")
-        informational_writer = Path("assets/prompts/templates/02_section_writer_informational.txt").read_text(encoding="utf-8")
-        comparison_writer = Path("assets/prompts/templates/02_section_writer_comparison.txt").read_text(encoding="utf-8")
-        
+        self.env = Environment(
+            loader=FileSystemLoader("assets/prompts/templates"),
+            undefined=StrictUndefined
+        )
+
         self.templates = {
-            "brand_commercial": Template(base_writer + "\n\n" + commercial_writer, undefined=StrictUndefined),
-            "informational": Template(base_writer + "\n\n" + informational_writer, undefined=StrictUndefined),
-            "comparison": Template(base_writer + "\n\n" + comparison_writer, undefined=StrictUndefined),
+            "brand_commercial": "02_section_writer_brand_commercial.txt",
+            "informational": "02_section_writer_informational.txt",
+            "comparison": "02_section_writer_comparison.txt",
         }
 
     async def write(
@@ -361,6 +370,7 @@ class SectionWriter:
         previous_content_summary: str = "",
         used_internal_links: List[str] = None,
         used_external_links: List[str] = None,
+        used_claims: List[str] = None,
         section_index: int = 0,
         total_sections: int = 1,
         brand_context: str = "",
@@ -385,7 +395,11 @@ class SectionWriter:
         ctas_placed: int = 0,
         cta_type: str = "none",
         tables_placed: int = 0,
-        serp_data: Dict[str, Any] = None
+        serp_data: Dict[str, Any] = None,
+        area_neighborhoods: List[str] = None,
+        global_keyword_count: int = 0,
+        brand_mentions_count: int = 0,
+        draft_to_fix: str = None
     ) -> Dict[str, Any]:
 
 
@@ -399,7 +413,6 @@ class SectionWriter:
         )
 
         article_language = section.get("article_language") or "ar"
-        cta_allowed = section.get("cta_allowed", False)
         allowed_flow = section.get("allowed_flow_steps", [])
 
         # Flatten strategic intelligence for the template
@@ -414,17 +427,6 @@ class SectionWriter:
             "structural_patterns": strategic_intelligence.get("structural_patterns", [])
         }
         
-        # Target: ~3 CTAs per 1000 words (or 1 per ~333 words)
-        # Assuming avg 300-400 words per section, 1 CTA every 2-3 sections is ideal
-        show_cta = False
-        if total_sections <= 3:
-            show_cta = True # Show in all if very short article
-        else:
-            # Smart Interval Calculation (e.g. 9 sections -> 9/3 = 3 -> slots 0, 3, 6, 9)
-            interval = max(2, total_sections // 3)
-            if section_index == 0 or section_index == total_sections - 1 or section_index % interval == 0:
-                show_cta = True
-
         # Provide defaults for section fields
         safe_section = {
             "heading_level": section.get("heading_level", "H2"),
@@ -445,7 +447,7 @@ class SectionWriter:
             "list_type": section.get("list_type", "none"),
             "cta_position": section.get("cta_position", "none"),
             "cta_type": cta_type, # New detailed flag
-            "show_cta": show_cta, # Binary flag for backward compatibility
+            "cta_allowed": section.get("cta_eligible", section.get("cta_allowed", False)),
 
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
@@ -461,17 +463,21 @@ class SectionWriter:
             "requires_table": section.get("requires_table", False),
             "table_type": section.get("table_type", "none"),
             "requires_list": section.get("requires_list", False),
-            "list_type": section.get("list_type", "none")
+            "list_type": section.get("list_type", "none"),
+            "requires_primary_keyword": requires_primary_keyword,
+            "global_keyword_count": global_keyword_count,
+            "content_strategy": section.get("content_strategy", {})
         }
 
         print("Assigned links:", safe_section["assigned_links"])
 
         current_year = str(datetime.now().year)
 
-        template = self.templates.get(
+        template_name = self.templates.get(
             content_type,
             self.templates["informational"]
         )
+        template = self.env.get_template(template_name)
 
         # Rich Defaults with Deep Resilience
         final_blueprint = {
@@ -541,7 +547,11 @@ class SectionWriter:
             introduction_text=introduction_text,
             full_outline=full_outline or [],
             style_blueprint=final_blueprint,
-            serp_data=final_serp
+            serp_data=final_serp,
+            area_neighborhoods=area_neighborhoods or [],
+            global_keyword_count=global_keyword_count,
+            brand_mentions_count=brand_mentions_count,
+            draft_to_fix=draft_to_fix
         )
 
 
@@ -619,7 +629,8 @@ class Assembler:
         self,
         title: str,
         article_language: str,
-        sections: List[Dict[str, Any]]
+        sections: List[Dict[str, Any]],
+        content_type: str = "informational"
     ) -> Dict[str, str]:
 
         article_language = article_language or "ar"
@@ -653,6 +664,30 @@ class Assembler:
             for pattern in cleanup_patterns:
                 content = re.sub(pattern, "", content, flags=re.IGNORECASE)
 
+            # 1b) FAQ Structure Enforcement (The "Fluff Remover")
+            if sec.get("section_type") == "faq":
+                # Find the first H3 question (### Question)
+                h3_match = re.search(r'^###\s+', content, re.MULTILINE)
+                if h3_match:
+                    # Strip everything before the first H3
+                    content = content[h3_match.start():].strip()
+                    logger.info(f"Mechanical FAQ Cleanup: Removed intro fluff from section {heading}")
+
+            # 1c) CTA Completeness Check (Cut-off Repair)
+            # If the content ends with a partial markdown link or dangling bracket
+            if content.endswith(("[", "(", "!", "*", "_")):
+                 content = re.sub(r'\s*[\(\[!*_]$', '', content).strip()
+                 logger.warning(f"Mechanical CTA Cleanup: Trimmed dangling fragment from section {heading}")
+            
+            # Count open vs closed brackets to detect cut-off midway
+            for open_char, close_char in [("[", "]"), ("(", ")")]:
+                if content.count(open_char) > content.count(close_char):
+                     # Find the last occurrence of the open character and strip from there
+                     last_open = content.rfind(open_char)
+                     if last_open != -1:
+                        content = content[:last_open].strip()
+                        logger.warning(f"Mechanical CTA Cleanup: Pruned unclosed {open_char} from section {heading}")
+
             # 2) Collapse multiple spaces (fixes issues like 'الوح  حدة')
             content = re.sub(r' +', ' ', content)
 
@@ -667,7 +702,7 @@ class Assembler:
                 clean_heading = heading.lower()
                 
                 # Exact match or starts-with match (allowing for minor AI variations)
-                if clean_first_line == clean_heading or clean_first_line.startswith(clean_heading):
+                if clean_heading and (clean_first_line == clean_heading or clean_first_line.startswith(clean_heading)):
                     logger.info(f"[Assembler] Removing duplicate heading from content: '{first_line}'")
                     content = "\n".join(content_lines[1:]).strip()
 
@@ -675,8 +710,15 @@ class Assembler:
             # This ensures we don't have H1 and H2 stacked at the start.
             # Also skip if it's explicitly named 'Introduction'.
             is_first_sec = (sections.index(sec) == 0)
-            skip_heading = is_first_sec or heading.strip().lower() in ["introduction", "مقدمة", "مقدمه"]
             
+            is_intro_name = heading.strip().lower() in ["introduction", "مقدمة", "مقدمه"]
+            is_intro_type = sec.get("section_type") == "introduction"
+            
+            skip_heading = is_first_sec or (is_intro_name and is_intro_type)
+            
+            if not heading.strip():
+                skip_heading = True
+
             if not skip_heading:
                 final_parts.append(f"{'#' * level_num} {heading}")
 
@@ -708,7 +750,10 @@ class FinalHumanizer:
         brand_name: str,
         brand_source_text: str,
         weaponized_usps: str,
-        is_introduction: bool = False
+        section: Dict[str, Any] = None,
+        is_introduction: bool = False,
+        is_conclusion: bool = False,
+        brand_mentions_total_count: int = 0
     ) -> str:
         
         prompt = self.template.render(
@@ -719,7 +764,10 @@ class FinalHumanizer:
             brand_name=brand_name or "",
             brand_source_text=brand_source_text or "",
             weaponized_usps=weaponized_usps or "",
-            is_introduction=is_introduction
+            section=section or {},
+            is_introduction=is_introduction,
+            is_conclusion=is_conclusion,
+            brand_mentions_total_count=brand_mentions_total_count
         )
         
         try:

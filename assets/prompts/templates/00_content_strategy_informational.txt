@@ -1,3 +1,5 @@
+{% include '00_content_strategy_base.txt' %}
+
 ### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
 - **Primary Objective**: Educate, empower, and build authority (Top-of-Funnel Mastery).
 - **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
@@ -10,6 +12,6 @@
 4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
 5. **The Action (Practical Tips)**: Actionable "How-to" examples or practical advice to maximize dwell time and utility.
 6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
-7. **The Clarity (FAQ)**: Exactly 4-5 high-intent questions derived from PAA (People Also Ask).
+7. **The Clarity (FAQ)**: Minimum 4-5 questions targeting long-tail related queries in People may ask.
 8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., "Learn more" or "Explore further").
 

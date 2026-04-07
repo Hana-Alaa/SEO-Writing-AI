@@ -8,179 +8,116 @@ Your task is to generate a HIGH-PERFORMANCE article outline in JSON format.
 - Article Title: "{{ title | default('Untitled Article') }}"
 - Primary Keyword: "{{ (keywords | default(['Main Topic']))[0] if (keywords | default([])) else (title | default('Untitled')) }}"
 - Core Keywords: {{ (keywords | default([])) | tojson }}
-- Secondary Keywords (MANDATORY TO INCLUDE): {{ (secondary_keywords | default([])) | tojson }}
-- Article Language: "{{ article_language | default('Arabic') }}"
+- Secondary Keywords: {{ (secondary_keywords | default([])) | tojson }}
+- Article Language: "{{ article_language | default('ar') }}"
 - Intent: "{{ intent | default('informational') }}"
 - Content Type: "{{ content_type | default('article') }}"
 - Area (Determines Dialect): "{{ area | default('General') }}"
 - Current Year: {{ current_year | default('2026') }}
+- Brand Name: "{{ brand_name | default('The Company') }}"
 - Brand Context: "{{ brand_context | default('') }}"
-- Prohibited Competitors (NEVER MENTION THESE): {{ (prohibited_competitors | default([])) | join(', ') }}
+- Prohibited Competitors: {{ (prohibited_competitors | default([])) | join(', ') }}
 
-- **GLOBAL CUSTOMIZATION SETTINGS**:
-    {% if article_size | default(1000) == "core_dynamic_expansion" %}
-    - **Target Size**: Minimum 1000 words (Mandatory Floor).
-    - **Expansion Strategy**: Expand the article naturally up to 3000-5000 words ONLY if the provided Research Context and Brand Context contain sufficient unique, high-value data. DO NOT add fluff or redundant sections.
-    - **SECTION COUNT MANDATE**: YOU MUST generate between **15 to 25 detailed sections (H2s with H3 sub-topics)** to ensure deep coverage. DO NOT limit yourself to the standard 8-9 steps.
-    - **DATA MINING**: Mine the Research Context for niche sub-topics and turn each into a dedicated section. DO NOT add fluff; add factual depth.
-    {% else %}
-    - Target Size: {{ article_size | default(1000) }} words
-    {% endif %}
-    - Include Conclusion: {{ include_conclusion | default(True) }}
-    - Include FAQ: {{ include_faq | default(True) }}
-    - Include Tables: {{ include_tables | default(True) }}
-    - Include Lists: {{ include_bullet_lists | default(True) }}
-    - Include Comparison Blocks: {{ include_comparison_blocks | default(False) }}
-    - Competitor Analysis Count: {{ competitor_count | default(3) }}
+- **STRATEGIC INPUTS**:
+    - SEO Intelligence (Battle Plan & PAAs): {{ (seo_intelligence | default({})) | tojson }}
+    - Content Strategy: {{ (content_strategy | default({})) | tojson }}
+      *   *(Strategy Keys to use: primary_angle, strategic_positioning, emotional_trigger, tone_direction, section_role_map)*
+    - Style Blueprint (Skeleton & DNA): {{ (style_blueprint | default({})) | tojson }}
+    - Link Pool (Internal & External Resources): {{ (urls | default([])) | tojson }} / {{ (external_resources | default([])) | tojson }}
 
-- **SEO INTELLIGENCE**: {{ (seo_intelligence | default({})) | tojson }}
-    - **CRITICAL**: Read `strategic_analysis.strategic_intelligence.battle_plan_brief` and treat it as your "Commander's Intent". The entire outline must flow from this battle plan.
-    - **WEAPONIZATION**: Use the USPs in `strategic_analysis.strategic_intelligence.weaponized_usps` to differentiate the brand in core sections.
-- **CONTENT STRATEGY**: {{ (content_strategy | default({})) | tojson }}
-- **STYLE BLUEPRINT (DNA)**: {{ (style_blueprint | default({})) | tojson }}
-    - **CRITICAL**: Mirror the rhythm, sentence length, and formatting style. **NEVER** copy any names, facts, or content strings from this blueprint. Use ONLY the Research Context and Brand Context for facts.
-- **LINK POOL**: 
-    - Internal Links available: {{ (urls | default([])) | tojson }}
-    - External Manual Links: {{ (external_resources | default([])) | tojson }}
+- **GLOBAL CUSTOMIZATION (ELASTIC SCALING)**:
+    - Target Word Count: {{ article_size | default(1000) }} words.
+    - **SECTION COUNT LOGIC**: Scale the number of sections (H2/H3) based on the density of the provided Research context and Brand context data. 
+    - **MANDATORY FLOOR**: At least 8-12 sections for standard articles; 15-25 sections ONLY when data density is high. Do NOT add fluff to reach targets.
+    - Include Conclusion/FAQ/Tables: {{ include_conclusion | default(True) }} / {{ include_faq | default(True) }} / {{ include_tables | default(True) }} (MAX 2 TABLES).
 
 --------------------------------------------------------------------------------
-1. STRUCTURE RULES (THE ARCHITECTURE)
+1. THE STRUCTURAL SKELETON (FOUNDATION)
 --------------------------------------------------------------------------------
-- **STRUCTURAL ROADMAP (CRITICAL)**: 
-  - {% set skeleton = (style_blueprint | default({})).get('structural_skeleton', []) %}
-  - If {{ skeleton | length > 0 }}, YOU MUST REPLICATE THE SEQUENCE OF ELEMENTS (H2, TABLE, IMG, FAQ) EXACTLY AS DEFINED IN THE BLUEPRINT.
-  - Otherwise, follow the "Roadmap" defined in the `content_strategy`.
-- **SEMANTIC CLUSTERING**: Use the `keyword_clusters` from `strategic_analysis` to group your H3 subheadings logically. Each cluster should ideally form one cohesive thematic block.
-- **HEADING HIERARCHY (STRICT)**: 
-    - Use **H2** for all main semantic blocks/sections (Market Reality, Business Risk, etc.).
-    - Use **H3** to break down an H2 into specific sub-topics.
-    - **H4** is strictly reserved for deep-dive technical explanations or granular specifications.
-    - At least 2 non-FAQ H2 sections MUST have 1-2 internal H3 subheadings.
-- **MANDATORY SECTION TYPES**: You MUST include every required `section_type` exactly as-is. Do not rename or merge.
-- **INTRODUCTION EXCEPTION (MANDATORY)**: The very first section MUST have `"heading_text": "Introduction"`. It will have no visible H2.
-- **FAQ SECTION RULES**:
-   {% if not include_faq | default(True) %}
-   - DO NOT generate an FAQ section.
-   {% else %}
-   - Exactly ONE FAQ section (H2) with 4 to 6 FAQs.
-   - **PAA RATIO (CRITICAL)**: Use 3-4 questions from **SEO Intelligence** (`paa_questions`). These are highest priority.
-   - **CONTEXTUAL SUPPLEMENT**: Add 1-2 questions for logical next steps.
-   - At least one FAQ question MUST address a local market need/context (Area: {{ area }}).
-   {% endif %}
+- **STRATEGIC FIDELITY & ROADMAP (ABSOLUTE)**: 
+    1. If a `structural_skeleton` exists in the Style Blueprint, YOU MUST REPLICATE its sequence exactly.
+    2. Otherwise, you MUST translate the `section_role_map` from the **Content Strategy** into your JSON outline sections. Use the descriptions provided for "introduction", "core_or_benefits", "proof", "process_or_how", "faq", and "conclusion" to define the `content_goal` and `semantic_unit` for each relevant `section_id`.
+    3. **PRIMARY ANGLE**: The entire outline MUST be written through the lens of the strategy's `primary_angle`. Every heading and goal should reinforce this specific angle.
+    4. **STRATEGIC POSITIONING**: Align the outline depth (`depth_level`) and `emotional_trigger` with the strategy's definitions.
+- **HEADING HIERARCHY**: Use **H2** for main blocks, **H3** for sub-topics. H3 grouping MUST be guided by `keyword_clusters` to ensure semantic cohesion.
+- **INTRODUCTION PROTOCOL**: 
+    - First section MUST be `"heading_text": "Introduction"`. 
+    - STRUCTURE: Exactly 3 paragraphs: 1. Hook (Problem/Intent), 2. Context (Importance), 3. Roadmap (Scope).
 - **CONCLUSION ENFORCEMENT**:
-    - The VERY LAST section MUST have `section_type: "conclusion"`.
-    - **HEADING LANGUAGE (CRITICAL)**: The actual `heading` text MUST be written natively in Arabic (e.g., "الخلاصة", "خطوتك القادمة", "استنتاج"). You are STRICTLY FORBIDDEN from outputting "Conclusion" as the heading text!
-- **DECISION LAYERS (DOMAIN SEPARATION)**: 
-    - Market Reality: Landscape/Trends.
-    - Business Risk: Pain points/Failure of generic solutions.
-    - Technical Systems: "How it works" / Proprietary mechanisms.
-    - Proof Layer: Evidence, ROI, history.
-    - Implementation: Steps/Next actions.
+    - Last section MUST be `section_type: "conclusion"`.
+    - **HEADING LANGUAGE**: The heading text MUST be written natively in `{{ article_language }}`.
+- **DECISION LAYERS (NEUTRAL TAXONOMY)**: 
+    - **Market Reality**: Trends/Landscape.
+    - **Technical Systems**: How things work/Specs.
+    - **Implementation Process**: Steps and processes.
+    - **Business Risk**: Financial/Time/Success risks (Targeted by Commercial subtype).
+    - **Proof Layer**: Evidence/Authority/Case studies (Targeted by Commercial subtype).
 
 --------------------------------------------------------------------------------
-2. TONE & AUDIENCE RULES (THE HUMAN MIRROR)
+2. THE SEO ENGINE (TECHNICAL SEO)
 --------------------------------------------------------------------------------
-- **LINGUISTIC DNA (ABSOLUTE RULE)**:
-    - Informational: Use **Conversational and Friendly** tone. Avoid heavy, dry, or over-formal classical phrasing.
-    - Commercial: Use **Confident, Solution-Focused** tone. avoid "marketing hype".
-- **UNIVERSAL REGIONAL CULTURAL RESONANCE (TITLES)**: All headings MUST flow with the **Unique Spirit, Professional Dialect, and Cultural Mindset** of the {{ area }}. 
-    * **THE ABSOLUTE RULE**: You MUST use the specific regional phrasing and linguistic nuances that a native expert *living in* {{ area }} would use, in the target language ({{ article_language }}).
-    * Adapt all titles to reflect local professional standards, cultural cues, and the "Social Pulse" of {{ area }}. The "Local Persona" should be felt everywhere but remain invisible.
-- **ANTI-ROBOTIC STYLE**: STRICTLY AVOID over-corporate jargon (Synergistic, Paradigm Shifts). DO NOT create repetitive heading structures (e.g., avoid "The Importance of..."). AVOID typical AI patterns like "Navigating the complexities of...".
+- **MAGNETIC HEADING PROTOCOL**: 
+    * Titles MUST look like high-performing search results and reflect the "Social Pulse" of {{ area }}.
+    * **SEO & LSI OPTIMIZATION**: Headings must be highly descriptive and rich in search value. Instead of using abstract, poetic, or generic titles, every heading MUST weave in LSI/NLP equivalents, close variants of the primary keyword, and clear entity definitions (like locations, property types, or specific services).
+    * Conceptually: A heading must be able to stand alone in search results and still tell the reader and search engine exactly what core entity or intent is being discussed.
+    * **STRICT BANNED HEADINGS & META-DESCRIPTIONS**: You are FORBIDDEN from generating headings that simply describe the section's purpose rather than its content. BANNED: (Summary, Recommendation, Practical Points, Methodology, Conclusion, FAQ, Summary Table, Checklist, "نقاط عملية", "نص توصية") — unless they are part of a keyword-rich title (e.g., instead of "Conclusion", use "Your Next Step for Real Estate in Cairo").
+    - **SEO KEYWORD INJECTION MANDATE**: 
+        - Aim for at least 70% of all headings (H2/H3) to contain either the Primary Keyword or a highly relevant LSI/Semantic variant.
+        - **GEOGRAPHIC SILHOUETTE**: Distributed naturally, at least 60% of H2 headings should anchor the reader to a specific location—either the `area` (e.g., {{ area }}) or, even better, a specific neighborhood, landmark, or street name mentioned in the brand context. Avoid repeating the exact `area` name in every heading to prevent over-optimization.
+    * **HIGH-PERFORMANCE TITLE FORMULA**: Design every heading to look like a high-CTR search result. Formula: `[Concrete Benefit/Urgency/Stat] + [Keyword/Location/Entity]`.
+    * **HUMAN-CENTRIC SAFEGUARDS**: Avoid artificial or clichéd template phrasing that sounds like an academic essay or a robot. Use direct, semantic, and conversational phrasing that addresses the reader's real-world search intent.
+- **PRIMARY KEYWORD CONSTRAINTS**: 
+    - The Primary Keyword MUST appear in **Exactly ONE** H2 heading. 
+    - **UNIFIED AREA RULE**: If an Area exists, integrate it into the SAME H2 as the primary keyword.
+- **PAA PRIORITY (FAQ LOGIC)**: 
+    - For Commercial intent: STRICTLY MAXIMUM 5 questions.
+    - For Informational intent: Minimum 4-5 questions.
+    - Base questions on available `paa_questions`.
+- **KEYWORD EXPANSION & ASSIGNMENT**: 
+    - Autonomously expand core keywords into at least 20 highly relevant LSI/Semantic terms. Populate the `keyword_expansion` object in JSON.
+    - **DISTRIBUTION**: For every section in the `outline` array, you MUST populate the `assigned_keywords` field with 2-4 unique LSI/Semantic terms from your expansion that are most relevant to that specific section's topic. This ensures a broad, natural semantic coverage across the entire article.
 
 --------------------------------------------------------------------------------
-3. CONVERSION & BRAND RULES (THE SYNERGY)
+3. THE LINGUISTIC SOUL & FACTUAL INTEGRITY
 --------------------------------------------------------------------------------
-- **TOPIC PROTAGONIST RULE (HIGHEST PRIORITY)**: 
-    - The **Primary Keyword** must be the absolute protagonist of at least 80% of the sections.
-    - **NO TOPIC HIJACKING**: Secondary features can only be mentioned as supporting tools.
-    - **NO SERVICE HALLUCINATION**: Only create headings for the service that matches the Primary Keyword.
-- **80/20 BALANCE**: ~80% reader benefit/value, ~20% Brand pride.
-- **WHY CHOOSE US (STRATEGIC SYNTHESIS)**: 
-    - **STEP 1**: Find at least TWO unique brand facts/USPs in `Brand Context`. 
-    - **STEP 2**: Identify competitor weaknesses and the specific **Weaponized USPs** from `strategic_analysis`. 
-    - **STEP 3**: Build the section to directly answer a weakness using the brand's verified strength. This section MUST feel like a decisive victory over the market standard.
-- **SUPERLATIVE JUSTIFICATION**: If Title uses "Top/Best/#1", the Proof Layer MUST justify this claim using Years of experience, Success rates, or proprietary methodology.
-- **CASE STUDY / PORTFOLIO**: If requested, find the most relevant URL in Internal Links and dedicate a section to it using real facts from Brand Context.
+- **PERSONA**: A Trusted Local Expert. Peer-to-peer, zero jargon.
+- **SEMANTIC PARTITIONING (MUTUAL EXCLUSIVITY)**: 
+    - Every section must be assigned a unique `semantic_unit` (e.g., "Infrastructure Status", "Pricing Mechanics", "Family Lifestyle").
+    - **RULE OF ABSOLUTE SEPARATION**: Major themes (e.g., Legal Documents, Payment Plans, Neighborhood Rankings) MUST only appear in ONE section. You are FORBIDDEN from assigning even minor sub-goals related to "Legal" in a "Lifestyle" section.
+    - **BURNED TOPICS**: Once a fact, entity detail, or specific advantage is assigned to a section's `semantic_unit`, it is officially **BURNED**. No other section in the `outline` array can refer to it even as a secondary point.
+    - **ZERO OVERLAP**: No two sections can share the same `semantic_unit` or overlapping `assigned_keywords`.
+- **FACTUAL INTEGRITY (FIREWALL)**:
+    - Use `mandatory_facts[]` from `brand_context` ONLY. 
+    - **ZERO HALLUCINATION**: Prohibited from inventing numeric ranges or unverified specs.
+- **UTILITY PRINCIPLE (ZERO-WASTE)**: Discard common-knowledge "noise". Every section must be unique and solve a specific reader problem.
+- **TOPICAL EXHAUSTIVENESS & COMPETITIVE PARITY**: 
+    - **NO INFORMATION GAPS**: Analyze the research context and identify all mandatory thematic entities (e.g., specific neighborhoods, legal documents, pricing ranges, infrastructure details).
+    - **THE ONE-STOP RULE**: You MUST add supplemental sections beyond the base strategic pillars if they are necessary to achieve "Total Topical Authority". The goal is to ensure the reader finds 100% of their required info here and has NO reason to visit a competitor's page.
+    - **DYNAMIC EXPANSION**: If the research mentions specific secondary topics (e.g., "Schools nearby" or "Maintenance fees"), generate dedicated sections for them to ensure the most comprehensive coverage in the market.
+- **GLOBAL FACT POOL**: Store 5-8 high-impact, reusable data points or core stats in the `global_fact_pool` JSON array.
 
 --------------------------------------------------------------------------------
-4. SEO RULES (THE INVISIBLE SEO)
+4. LINKING & CTA ARCHITECTURE (THE RULE OF INTENT)
 --------------------------------------------------------------------------------
-- **MAGNETIC HEADING PROTOCOL (THE ATTENTION HOOK - CRITICAL)**: 
-    * **THE ABSOLUTE PROHIBITION**: You are STRICTLY FORBIDDEN from outputting "Label Headings". **NEVER** use standalone words like "Introduction", "Conclusion", "FAQ", "Summary", "Steps", or "Features" as the `heading_text`.
-    * **THE MANDATE**: Every heading MUST be a context-rich, benefit-driven, or curiosity-inducing phrase.
-    * **DYNAMIC PATTERNS (STYLE VARIETY)**: You MUST vary the pattern of your H2s/H3s across the article:
-        - **50% Pattern**: Use "The Question Hook" (e.g., "لماذا يفشل [الموضوع] التقليدي؟", "كيف توفر [المبلغ] في [المنطقة]؟").
-        - **30% Pattern**: Use "The Number/List Magnet" (e.g., "5 أسرار لا تعرفها عن...", "7 خطوات سحرية لـ...").
-        - **20% Pattern**: Use "The Authority Statement" (e.g., "دليلك الشامل لـ...", "مستقبل [الموضوع] في [المنطقة]: رؤية خبيرة").
-    * **LOCAL SPIRIT**: Use the professional dialect and "Social Pulse" of {{ area }} to make titles sound like they were written by a living expert, not a translation tool.
-- **PRIMARY KEYWORD IN HEADINGS (STRICT LIMIT)**: 
-    - The Primary Keyword MUST appear in **Exactly ONE** key H2 heading. 
-    - **UNIFIED AREA RULE**: If an Area exists, it MUST be integrated naturally into the SAME H2 that contains the primary keyword (The Definition section). This prevents keyword duplication across multiple headings.
-    - Use LSI and semantic variations for all other H2/H3 headings.
-- **EXTERNAL LINK MANDATE**: You MUST assign at least **ONE high-authority external link** (from reference_authority_links) to a core informational section (Market Reality or Technical Systems). NEVER place external links in the Intro or Conclusion.
-- **HEADING NATURALIZATION (INVISIBLE SEO)**: Headings MUST be "Search-Ready", engaging, and human-centric. Flow ALWAYS takes priority over the exact keyword spelling.
-- **KEYWORD EXPANSION**: If Secondary Keywords < 5, autonomously expand to at least 15 highly relevant LSI terms. Return these in the `keyword_expansion` object.
+- **SECTION INTENT > ARTICLE TYPE**: Even if the article is commercial, any section marked as `section_intent: "informational"` is STRICTLY forbidden from having a CTA.
+- **PERMISSION ≠ REQUIREMENT**: `cta_eligible: true` is only a permission for the writer. A CTA must be **earned** by the section's proof, USP, or differentiation value.
+- **CTA ANCHORING**: No standalone slogans. CTAs must grow naturally from the section content.
+- **LINK POOL OBLIGATIONS**: 
+    - Every URL marked as "Manual" (Internal or External) MUST be assigned to exactly one relevant section.
+    - Link Uniqueness: No URL can appear in more than one section.
+    - **CONTEXTUAL LINKING STRATEGY**: When assigning internal links, ensure the section's `content_goal` inherently justifies the link's topic. Plan a narrative bridge: if the article topic and the link topic differ, introduce a relevant sub-topic (e.g., related services, user next steps, or secondary benefits) so the link functions as a highly relevant expansion of the user's journey, rather than an isolated plug.
 
 --------------------------------------------------------------------------------
-5. CTA & LINK RULES (THE CONVERSION ENGINE)
+5. SEMANTIC TOPIC ARCHITECTURE (COMPLETENESS)
 --------------------------------------------------------------------------------
-- **CTA BUDGETING (CRITICAL)**: 
-    * **Brand Commercial**: Maximum **3 CTAs TOTAL** for the entire article.
-    * **Informational**: Maximum **1 CTA TOTAL** (Conclusion only).
-- **STRATEGIC SLOTTING**: 
-    1. **Slot 1 (Soft)**: End of Intro summary OR within why_choose_us.
-    2. **Slot 2 (Moderate)**: Within Proof OR Comparison Table sections.
-    3. **Slot 3 (Strong)**: Absolute end of the Conclusion.
-- **ZERO-CTA ZONES**: 
-    * NO CTA allowed in the first paragraph of the Intro.
-    * NO CTA immediately following an H2 or H3 heading.
-    * NO CTA in the FAQ section.
-    * ALL OTHER SECTIONS: Must have `cta_type: "none"`.
-- **ONE CTA PER SECTION MAXIMUM**.
-- **STRATEGIC LINKING (INTERNAL)**:
-    - **RULE 1: MANUAL LINKS (MANDATORY)**: Use EVERY link marked as "Manual" at least once.
-    - **RULE 2: MANDATORY BRAND IDENTITY**: You MUST assign the "Homepage" link to the Introduction section.
-    - **RULE 3: UNIQUENESS**: NO URL can appear in more than one section.
-    - **RULE 4: PRIORITIZATION**: Prioritize the first 3-5 links in the `Mandatory Internal Links` list.
-- **EXTERNAL MANUAL LINKS**: You MUST include every provided manual external link exactly once.
+- **SEMANTIC PLANNING**: Beyond keywords, the outline must define a complete semantic map of the topic.
+- **1. SEMANTIC ENTITIES**: A list of key topic entities relevant to the article (e.g., service types, locations, products, tools, audience roles, platforms). Reflect topic structure, not just synonyms.
+- **2. SEMANTIC CONCEPTS**: A list of major concepts/subtopics to be covered (e.g., pricing, process, benefits, risks, comparisons, requirements, use cases). These are labels for logic, not forced phrases.
+- **3. INTENT CLUSTERS**: Grouping of semantic needs by intent (e.g., Informational, Commercial, Comparison, Problem-Solving). Defines what knowledge must be satisfied.
+- **CONCEPT-DRIVEN MAPPING**: Each section must be concept-driven. Do NOT force exact semantic terms into visible heading clutter. Use metadata for planning, not stuffing.
 
 --------------------------------------------------------------------------------
-6. ANTI-REPETITION RULES (THE SEMANTIC MEMORY)
---------------------------------------------------------------------------------
-- **CORE OUTLINE DECISION FRAMEWORK (THE UTILITY FILTER)**:
-    * **ULTIMATE RULE**: A dynamic section is NOT triggered by keywords alone. It MUST be added ONLY if it meets the criteria of Decision Clarity, Comparison Ability, or Actionable Value.
-    * **THE TRIGGER LAYER (WHAT TO LOOK FOR)**: You MUST evaluate the following "Data Signals" from the Research and Strategic Intelligence:
-        1. **PRICING & METRICS**: If you detect specific price ranges, costs, or numeric benchmarks -> Evaluate for a "Market Reality" or "Pricing" section.
-        2. **ENTITY BREAKDOWN**: If the topic has distinct locations (neighborhoods), models, or types -> Evaluate for specific H2/H3 sub-sections.
-        3. **USER FRICTION POINTS**: If you find "Common Obstacles" or "Comparison Needs" in the SERP gaps -> Evaluate for a decision-support section.
-    * **INTEGRATION MANDATE**: If a signal is detected but is minor or low-impact, you MUST integrate it as a paragraph or list item within the "Base" sections. 
-    * **ANTI-OVER-SECTIONING**: Limit dynamic sections to only high-impact additions. Avoid creating headings for minor supporting points.
-
-- **ZERO-WASTE POLICY (UTILITY FILTER - CRITICAL)**: Every section MUST provide unique, high-impact value. 
-    * **IMPACT RULE**: Discard any "noise" data or common knowledge that doesn't solve a specific reader problem or justify a Brand USP. If a fact isn't "Useful and Necessary" for the reader's decision, OMIT IT.
-- **LOGICAL FACT MAPPING**: Assign each high-utility brand fact to EXACTLY ONE section where it is most contextually relevant.
-
---------------------------------------------------------------------------------
-7. READABILITY & FLOW (THE FLOW DNA)
---------------------------------------------------------------------------------
-- **NARRATIVE CONTINUITY**: Follow a logical journey: Problem -> Solution -> Detail -> Proof -> Action.
-- **READER ADDRESSING**: `content_goal` and `content_angle` must be second-person oriented.
-
---------------------------------------------------------------------------------
-8. STRATEGIC INTENT DISTRIBUTION (CORE SECTIONS)
---------------------------------------------------------------------------------
-Refer to the specific distribution rules from the article-type sub-templates (`brand_commercial`, `informational`, `comparison`) to maintain unique structural identity.
-
---------------------------------------------------------------------------------
-8b. NUMERIC LIMITS (THE HARD CEILING)
---------------------------------------------------------------------------------
-- **TABLES**: At least ONE non-FAQ section must have `requires_table = true`.
-- **LISTS**: At least TWO non-FAQ sections must have `requires_list = true`.
-- **FAQ COUNT**: 4-6 questions.
-
---------------------------------------------------------------------------------
-OUTPUT JSON FORMAT
+6. OUTPUT JSON FORMAT (CONTRACT)
 --------------------------------------------------------------------------------
 - RETURN JSON ONLY.
 {
@@ -189,17 +126,19 @@ OUTPUT JSON FORMAT
       "section_id": "sec_01",
       "heading_level": "H2",
       "heading_text": "",
-      "section_type": "",
-      "section_intent": "Commercial | Informational | Transactional",
-      "decision_layer": "Market Reality | Business Risk | Technical Systems | Proof Layer | Implementation Process",
+      "section_type": "introduction | standard | faq | conclusion",
+      "section_intent": "Commercial | Informational",
+      "semantic_unit": "Unique topic label (e.g., Pricing, Location, Safety)",
+      "brand_mention_eligible": false,
+      "decision_layer": "Market Reality | Technical Systems | Implementation Process | Business Risk | Proof Layer",
       "sales_intensity": "high | medium | low",
       "content_goal": "",
       "content_angle": "",
       "localized_angle": "",
       "assigned_keywords": [],
       "assigned_links": [{"url": "...", "text": "..."}],
-      "cta_type": "primary | moderate | strong | none",
-      "cta_position": "middle | last_sentence | none",
+      "cta_eligible": false,
+      "cta_type": "none | soft | moderate | strong",
       "requires_table": false,
       "table_type": "comparison | process | none",
       "requires_list": false,
@@ -208,12 +147,9 @@ OUTPUT JSON FORMAT
       "mandatory_facts": []
     }
   ],
+  "semantic_entities": [],
+  "semantic_concepts": [],
+  "intent_clusters": [],
   "global_fact_pool": [],
-  "keyword_expansion": {
-    "primary": "",
-    "core": [],
-    "lsi": [],
-    "semantic": [],
-    "paa": []
-  }
+  "keyword_expansion": { "primary": "", "core": [], "lsi": [], "semantic": [], "paa": [] }
 }

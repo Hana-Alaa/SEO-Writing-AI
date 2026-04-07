@@ -1,0 +1,220 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: BRAND_DISCOVERY
+  -- Duration: 9.99 seconds
+  -- Tokens Used: 6,772
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 29.34 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 52.31 seconds
+  -- Tokens Used: 32,180
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 52.41 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 13.37 seconds
+  -- Tokens Used: 8,372
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 24.45 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 2.77 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 4.85 seconds
+  -- Tokens Used: 722
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 722
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 7.57 seconds
+  -- Tokens Used: 4,818
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 7.59 seconds
+  -- Tokens Used: 4,818
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 79.09 seconds
+  -- Tokens Used: 99,113
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.06 seconds
+  -- Tokens Used: 6,317
+--------------------------------------------------
+Step: SECTION_1_INTRODUCTION
+  -- Duration: 5.41 seconds
+  -- Tokens Used: 5,665
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: INTRODUCTION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_خريطة أسعار شقق للبيع في القاهرة الجديدة 2026: تحليل سعر المتر
+  -- Duration: 4.70 seconds
+  -- Tokens Used: 12,967
+--------------------------------------------------
+Step: SECTION_2_خريطة أسعار شقق للبيع في القاهرة الجديدة 2026: تحليل سعر المتر
+  -- Duration: 6.24 seconds
+  -- Tokens Used: 13,029
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة أسعار شقق للبيع في القاهرة الجديدة 2026: تحليل سعر المتر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_أفضل الأحياء السكنية: أين تشتري شقتك في التجمع الخامس؟
+  -- Duration: 5.65 seconds
+  -- Tokens Used: 21,563
+--------------------------------------------------
+Step: SECTION_3_أفضل الأحياء السكنية: أين تشتري شقتك في التجمع الخامس؟
+  -- Duration: 8.03 seconds
+  -- Tokens Used: 21,937
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أفضل الأحياء السكنية: أين تشتري شقتك في التجمع الخامس؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا تختار الشراء عبر عقار يا مصر؟ (المزايا الحصرية)
+  -- Duration: 5.06 seconds
+  -- Tokens Used: 33,415
+--------------------------------------------------
+Step: SECTION_4_لماذا تختار الشراء عبر عقار يا مصر؟ (المزايا الحصرية)
+  -- Duration: 4.60 seconds
+  -- Tokens Used: 33,353
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار الشراء عبر عقار يا مصر؟ (المزايا الحصرية)
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_أنظمة السداد والدفع: كاش أم تقسيط في 2026؟
+  -- Duration: 6.29 seconds
+  -- Tokens Used: 38,033
+--------------------------------------------------
+Step: SECTION_5_أنظمة السداد والدفع: كاش أم تقسيط في 2026؟
+  -- Duration: 6.75 seconds
+  -- Tokens Used: 38,191
+--------------------------------------------------
+Step: SECTION_5_أنظمة السداد والدفع: كاش أم تقسيط في 2026؟
+  -- Duration: 6.81 seconds
+  -- Tokens Used: 37,384
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أنظمة السداد والدفع: كاش أم تقسيط في 2026؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مواصفات الوحدات: من الشقق الصغيرة إلى فيلات الكواترو
+  -- Duration: 6.23 seconds
+  -- Tokens Used: 46,404
+--------------------------------------------------
+Step: SECTION_6_مواصفات الوحدات: من الشقق الصغيرة إلى فيلات الكواترو
+  -- Duration: 8.58 seconds
+  -- Tokens Used: 46,409
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مواصفات الوحدات: من الشقق الصغيرة إلى فيلات الكواترو
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_مقارنة السكن: مدينتي مقابل التجمع الخامس
+  -- Duration: 6.85 seconds
+  -- Tokens Used: 53,570
+--------------------------------------------------
+Step: SECTION_7_مقارنة السكن: مدينتي مقابل التجمع الخامس
+  -- Duration: 6.52 seconds
+  -- Tokens Used: 53,597
+--------------------------------------------------
+Step: SECTION_7_مقارنة السكن: مدينتي مقابل التجمع الخامس
+  -- Duration: 7.66 seconds
+  -- Tokens Used: 52,626
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة السكن: مدينتي مقابل التجمع الخامس
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول عقارات القاهرة الجديدة
+  -- Duration: 7.84 seconds
+  -- Tokens Used: 60,930
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول عقارات القاهرة الجديدة
+  -- Duration: 7.92 seconds
+  -- Tokens Used: 60,852
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول عقارات القاهرة الجديدة
+  -- Duration: 10.63 seconds
+  -- Tokens Used: 60,144
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول عقارات القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_الخلاصة: ابدأ رحلة البحث عن شقتك المثالية اليوم
+  -- Duration: 8.43 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: SECTION_9_الخلاصة: ابدأ رحلة البحث عن شقتك المثالية اليوم
+  -- Duration: 8.93 seconds
+  -- Tokens Used: 71,969
+--------------------------------------------------
+Step: SECTION_9_الخلاصة: ابدأ رحلة البحث عن شقتك المثالية اليوم
+  -- Duration: 7.50 seconds
+  -- Tokens Used: 71,063
+--------------------------------------------------
+Step: SECTION_9_الخلاصة: ابدأ رحلة البحث عن شقتك المثالية اليوم
+  -- Duration: 7.70 seconds
+  -- Tokens Used: 71,103
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الخلاصة: ابدأ رحلة البحث عن شقتك المثالية اليوم
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 169.67 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 13.81 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.10 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 96.05 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 117.96 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 9.45 seconds
+  -- Tokens Used: 71,937
+--------------------------------------------------

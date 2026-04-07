@@ -11,11 +11,12 @@ import time
 import re
 import json
 import asyncio
+import traceback
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 from langdetect import detect  
-from jinja2 import Template, StrictUndefined
+from jinja2 import Environment, FileSystemLoader, Template, StrictUndefined
 import hashlib
 import requests
 from typing import Dict, Any, List, Optional, Callable, ClassVar
@@ -44,6 +45,7 @@ from src.utils.link_manager import LinkManager
 from src.services.research_service import ResearchService
 from src.services.strategy_service import StrategyService
 from src.services.validation_service import ValidationService
+from src.services.semantic_service import SemanticService
 BASE_DIR = Path(__file__).resolve().parents[2] 
 
 
@@ -121,6 +123,14 @@ class AsyncExecutor:
                 logger.error(f"Error in step '{step_name}' attempt {attempt + 1}: {e}")
                 
                 if workflow_logger:
+                    # Log to the technical errors.txt file
+                    tb_str = traceback.format_exc()
+                    workflow_logger.log_technical_error(
+                        step_name=step_name,
+                        error_msg=str(e),
+                        traceback_str=tb_str
+                    )
+                    
                     workflow_logger.log_step_details(
                         step_name=step_name,
                         duration=duration,
@@ -158,36 +168,24 @@ class AsyncWorkflowController:
             template_path=BASE_DIR / "assets/prompts/templates/06_image_planner.txt"
             
         )
+        self.env = Environment(
+            loader=FileSystemLoader("assets/prompts/templates"),
+            undefined=StrictUndefined
+        )
+
         with open("assets/prompts/templates/00_intent_classifier.txt", "r", encoding="utf-8") as f:
             self.intent_template = Template(f.read(), undefined=StrictUndefined)
         
-        base_strategy = Path("assets/prompts/templates/00_content_strategy_base.txt").read_text(encoding="utf-8")
-        commercial_strategy = Path("assets/prompts/templates/00_content_strategy_brand_commercial.txt").read_text(encoding="utf-8")
-        informational_strategy = Path("assets/prompts/templates/00_content_strategy_informational.txt").read_text(encoding="utf-8")
-        comparison_strategy = Path("assets/prompts/templates/00_content_strategy_comparison.txt").read_text(encoding="utf-8")
+        # Semantic Intelligence Layer
+        self.semantic_service = SemanticService()
+        self.semantic_model = self.semantic_service.model
         
-        self.content_strategy_templates = {
-            "brand_commercial": Template(base_strategy + "\n\n" + commercial_strategy, undefined=StrictUndefined),
-            "informational": Template(base_strategy + "\n\n" + informational_strategy, undefined=StrictUndefined),
-            "comparison": Template(base_strategy + "\n\n" + comparison_strategy, undefined=StrictUndefined),
-        }
-
-        # Semantic Memory Model
-        try:
-            from sentence_transformers import SentenceTransformer
-            self.semantic_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-            logger.info("Semantic Cross-Section Memory model loaded successfully.")
-        except ImportError:
-            self.semantic_model = None
-            logger.warning("sentence-transformers not installed. Semantic memory disabled.")
-
         # Content generation services
         self.title_generator = TitleGenerator(self.ai_client)
         self.outline_gen = OutlineGenerator(self.ai_client)
         self.section_writer = SectionWriter(self.ai_client)
         self.assembler = Assembler(self.ai_client)
         self.final_humanizer = FinalHumanizer(self.ai_client)
-        # self.section_validator = SectionValidator(self.ai_client)
         self.image_inserter = ImageInserter()
         self.meta_schema = MetaSchemaGenerator(self.ai_client)
         self.article_validator = ArticleValidator(self.ai_client)
@@ -195,10 +193,21 @@ class AsyncWorkflowController:
         self.strategy_service = StrategyService(
             ai_client=self.ai_client,
             title_generator=self.title_generator,
-            strategy_templates=self.content_strategy_templates,
+            jinja_env=self.env,
             intent_template=self.intent_template
         )
-        self.validator = ValidationService(ai_client=self.ai_client, semantic_model=self.semantic_model)
+        self.validator = ValidationService(ai_client=self.ai_client, semantic_model=self.semantic_service)
+        
+        # Hardened Error Management: Essential steps that MUST succeed
+        self.CRITICAL_STEPS = {
+            "analysis_init",
+            "brand_discovery",
+            "web_research",
+            "content_strategy",
+            "outline_generation",
+            "content_writing",
+            "assembly"
+        }
 
         # Image generator
         self.image_client = ImageGenerator(
@@ -227,6 +236,7 @@ class AsyncWorkflowController:
         state.setdefault("global_keyword_count", 0)
         state.setdefault("used_topics", [])
         state.setdefault("full_content_so_far", "")
+        state.setdefault("brand_mentions_count", 0)
 
         steps = [
             # ("semantic_layer", self._step_semantic_layer, 1),
@@ -266,7 +276,7 @@ class AsyncWorkflowController:
 
         steps.extend([
             ("meta_schema", self._step_7_meta_schema, 0),
-            # ("article_validation", self._step_8_article_validation, 0),
+            ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
         ])
         for name, func, retries in steps:
@@ -274,8 +284,14 @@ class AsyncWorkflowController:
             state = result.get("data", state)
             
             if result["status"] == "error":
-                logger.error(f"Workflow stopped at critical step: {name}")
-                break
+                if name in self.CRITICAL_STEPS:
+                    logger.error(f"Workflow stopped at critical step: {name}")
+                    # Errors are already logged to errors.txt by AsyncExecutor
+                    break
+                else:
+                    logger.warning(f"Non-critical step '{name}' failed technically. Continuing workflow to preserve output.")
+                    # We continue to the next step
+                    continue
 
         # Final Export
         if state.get("workflow_logger"):
@@ -333,6 +349,7 @@ class AsyncWorkflowController:
         state["custom_keyword_density"] = input_data.get("custom_keyword_density")
         state["secondary_keywords"] = input_data.get("secondary_keywords", [])
         state["competitor_count"] = input_data.get("competitor_count", 5)
+        state["min_external_links"] = max(0, int(input_data.get("min_external_links", 2)))
         
         state["logo_image"] = input_data.get("logo_image")
         state["reference_image"] = input_data.get("reference_image")
@@ -464,17 +481,11 @@ class AsyncWorkflowController:
         return await self.research_service.run_brand_discovery(state)
 
     async def _step_web_research_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Consolidates research in Core Mode."""
-        if state.get("workflow_mode") == "core":
-            logger.info("Core Mode: Running hybrid SERP + Web Research.")
-            return await self.research_service.run_hybrid_research(state)
+        """Consolidates research routing."""
         return await self.research_service.run_web_research(state)
 
     async def _step_serp_analysis_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Skips SERP analysis if hybrid research already handled it."""
-        if state.get("workflow_mode") == "core" and "serp_data" in state:
-                logger.info("Skipping redundant SERP analysis in Core Mode.")
-                return state
+        """Runs dedicated SERP analysis to extract intent and gaps."""
         return await self.research_service.run_serp_analysis(state)
 
     # Strategy methods migrated to StrategyService
@@ -596,7 +607,8 @@ class AsyncWorkflowController:
                 secondary_keywords=state.get("secondary_keywords", []),
                 competitor_count=state.get("competitor_count", 5),
                 external_resources=state.get("external_resources", []),
-                style_blueprint=state.get("style_blueprint", {})
+                style_blueprint=state.get("style_blueprint", {}),
+                brand_name=state.get("brand_name", "")
             )
 
 
@@ -635,7 +647,7 @@ class AsyncWorkflowController:
             errors.extend(local_errors)
 
             # 3. Quality (Thin, Duplicates, CTAs)
-            quality_errors = self.validator.validate_outline_quality(outline)
+            quality_errors = self.validator.validate_outline_quality(outline, content_type=content_type)
             errors.extend(quality_errors)
 
             if not errors:
@@ -645,14 +657,14 @@ class AsyncWorkflowController:
             feedback = "Validation failed. Please correct the following issues and regenerate the outline:\n- " + "\n- ".join(errors)
             logger.warning(f"Outline validation failed (attempt {attempt + 1}): {feedback}")
 
+        # 4. CTA Policy Enforcement (Budget & Strategic Distribution)
+        outline = self.validator.enforce_cta_policy(outline, content_type)
+
         # Post-validation enhancements (non-critical, so we don't retry)
         outline = self.validator.enforce_outline_structure(
             outline,
             content_type=content_type
         )
-        
-        # Enforce CTA Budget: Max 3 CTAs for 1000 words (prevents excessive sales repetition)
-        outline = self.validator.enforce_cta_budget(outline, str(state.get("article_size", "1000")))
 
         outline = self.validator.enforce_content_angle(
             outline,
@@ -728,6 +740,15 @@ class AsyncWorkflowController:
         state["blocked_external_domains"] = LinkManager.extract_competitor_domains(
             serp_data, brand_url
         )
+        # Authority domains are used as an allowlist for useful trust links.
+        reference_links = serp_data.get("reference_authority_links", []) if isinstance(serp_data, dict) else []
+        authority_domains = set()
+        for item in reference_links:
+            url = item.get("url") if isinstance(item, dict) else item
+            dom = LinkManager.domain(url or "")
+            if dom:
+                authority_domains.add(dom)
+        state["authority_domains"] = authority_domains
         
         # Extract brand names for the prohibited list
         prohibited_names = []
@@ -809,12 +830,38 @@ class AsyncWorkflowController:
         content_type = state.get("content_type", "informational")
 
         # Distribute Primary Keyword Requirement (Pacing)
+        # Distribute Primary Keyword Requirement (Pacing)
         total_secs = len(outline)
-        for i, sec in enumerate(outline):
-            if total_secs <= 3:
-                sec["requires_primary_keyword"] = True
-            else:
-                sec["requires_primary_keyword"] = (i == 0) or (i == total_secs - 1) or (i == total_secs // 2)
+        if total_secs <= 3:
+            # Sparse distribution for short articles: Opening for all, plus one footer for 3-section articles
+            for i, sec in enumerate(outline):
+                if i == 0:
+                    sec["requires_primary_keyword"] = True
+                elif i == 2 and total_secs == 3:
+                    sec["requires_primary_keyword"] = True
+                else:
+                    sec["requires_primary_keyword"] = False
+        else:
+            # Phase-aware distribution: Opening, one key H2, and a later section (avoiding adjacency)
+            target_indices = {0} # Always the opening
+            
+            # Find first real H2 after intro (if any)
+            first_h2_idx = next((i for i, s in enumerate(outline) if i > 0 and s.get("heading_level") == "H2"), None)
+            if first_h2_idx is not None:
+                if first_h2_idx > 1: # Avoid adjacency with intro if possible
+                    target_indices.add(first_h2_idx)
+                else:
+                    target_indices.add(min(total_secs - 1, 2)) # Push to next if 1 is adjacent to 0
+            
+            # Add one later section (Conclusion or last body)
+            last_idx = total_secs - 1
+            if last_idx not in target_indices and last_idx - 1 not in target_indices:
+                target_indices.add(last_idx)
+            elif last_idx - 1 > max(target_indices):
+                target_indices.add(last_idx - 1)
+
+            for i, sec in enumerate(outline):
+                sec["requires_primary_keyword"] = (i in target_indices)
 
         # Initialize global quality tracking
         state["used_claims"] = []
@@ -835,7 +882,9 @@ class AsyncWorkflowController:
                     link_strategy=link_strategy,
                     state=state,
                     section_index=idx,
-                    total_sections=len(outline)
+                    total_sections=len(outline),
+                    global_keyword_count=state.get("global_keyword_count", 0),
+                    brand_mentions_count=state.get("brand_mentions_count", 0)
                 )
                 for idx, section in enumerate(outline)
             ]
@@ -855,7 +904,9 @@ class AsyncWorkflowController:
                     link_strategy=link_strategy,
                     state=state,
                     section_index=idx,
-                    total_sections=len(outline)
+                    total_sections=len(outline),
+                    global_keyword_count=state.get("global_keyword_count", 0),
+                    brand_mentions_count=state.get("brand_mentions_count", 0)
                 )
                 
                 # Update quality state after each section in sequential mode
@@ -865,13 +916,19 @@ class AsyncWorkflowController:
                      # Update Last Section Content (For Logical Flow)
                      state["last_section_content"] = res["generated_content"]
                      
-                     # Track CTAs
-                     if "[CTA]" in res["generated_content"] or "btn-" in res["generated_content"]:
+                     # Track CTAs using has_cta helper
+                     def has_cta_local(text):
+                         return bool(re.search(r'<a\b|<button\b|\[.*?\]\(https?://', text))
+                     
+                     if has_cta_local(res["generated_content"]):
                           state["ctas_placed"] = state.get("ctas_placed", 0) + 1
                      
                      # Track Tables (Max 2 rule)
                      if "|" in res["generated_content"] and re.search(r"\|\s*---\s*\|", res["generated_content"]):
                           state["tables_placed"] = state.get("tables_placed", 0) + 1
+
+                     # Update global brand mention count
+                     state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
                           
                 results.append(res)
 
@@ -894,11 +951,16 @@ class AsyncWorkflowController:
             primary_keyword = global_keywords.get("primary", "")
             if primary_keyword:
                 full_text_for_search = (res.get("heading_text") or "") + "\n" + res.get("generated_content", "")
-                matches = re.findall(re.escape(primary_keyword), full_text_for_search, re.IGNORECASE)
+                pattern = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
+                matches = re.findall(pattern, full_text_for_search.lower())
                 state["global_keyword_count"] = state.get("global_keyword_count", 0) + len(matches)
 
             # Update full content summary
             state["full_content_so_far"] = state.get("full_content_so_far", "") + "\n\n" + res.get("generated_content", "")
+            
+            # For parallel results, update the brand_mentions_count if not already updated in serial loop
+            if PARALLEL_SECTIONS:
+                state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
 
 
         state["sections"] = sections_content
@@ -948,7 +1010,9 @@ class AsyncWorkflowController:
         state: Dict[str, Any],
         force_local: bool = False,
         section_index: int = 0,
-        total_sections: int = 1
+        total_sections: int = 1,
+        global_keyword_count: int = 0,
+        brand_mentions_count: int = 0
     ) -> Optional[Dict[str, Any]]:
         """Worker to write one section."""
         
@@ -1012,6 +1076,7 @@ class AsyncWorkflowController:
         external_sources = []
         serp_results = state.get("serp_data", {}).get("top_results", [])
         blocked_domains = state.get("blocked_external_domains", set())
+        allowed_domains = state.get("authority_domains", set())
         brand_domain = LinkManager.domain(state.get("brand_url", ""))
         
         for r in serp_results:
@@ -1020,20 +1085,20 @@ class AsyncWorkflowController:
             dom = LinkManager.domain(url)
             if dom == brand_domain or dom in blocked_domains:
                 continue
+            # Accept only trusted domains: allowlist from SERP authority links,
+            # or generally trusted TLDs (.gov/.edu/.org) via LinkManager.
+            if not LinkManager.is_authority_domain(dom, allowed_domains):
+                continue
             external_sources.append({"url": url, "text": r.get("title", "External Resource")})
             if len(external_sources) >= 8: # Cap to 8 sources
                 break
         
         logger.info(f"Extracted {len(external_sources)} external sources for section '{section.get('heading_text')}'")
         
-        # --- Tiered CTA Strategy Logic ---
-        cta_type = "none"
-        if section_index == 0:
-            cta_type = "soft"
-        elif section_index == total_sections - 1:
-            cta_type = "strong"
-        elif total_sections > 3 and section_index == total_sections // 2:
-            cta_type = "moderate"
+        # --- Runtime CTA Assignment ---
+        # The outline generator and ValidationService now determine the strategic cta_eligible flag.
+        # SectionWriter respects section.get('cta_eligible') and section.get('section_intent').
+        cta_type = section.get("cta_type", "none")
             
         # --- Context Windowing (Token Optimization) ---
         # Instead of sending the entire article, send the Intro + last 2 sections.
@@ -1057,7 +1122,7 @@ class AsyncWorkflowController:
             brand_url=brand_url,
             brand_link_used=state.get("brand_link_used", False),
             brand_link_allowed=execution_plan.get("brand_link_allowed", False),
-            allow_external_links=state.get("workflow_mode") != "core",
+            allow_external_links=bool(external_sources),
             workflow_mode=state.get("workflow_mode", "core"),
             execution_plan=execution_plan,
             area=state.get("area"),
@@ -1068,6 +1133,7 @@ class AsyncWorkflowController:
             total_sections=total_sections,
             brand_context=brand_context,
             section_source_text=section_source_text,
+            external_sources=external_sources,
             workflow_logger=state.get("workflow_logger"),
             prohibited_competitors=state.get("prohibited_competitors", []),
             cta_type=cta_type, # Pass the tiered strategy
@@ -1091,7 +1157,10 @@ class AsyncWorkflowController:
             style_blueprint=state.get("style_blueprint", {}),
             ctas_placed=state.get("ctas_placed", 0),
             tables_placed=state.get("tables_placed", 0),
-            serp_data=state.get("serp_data", {})
+            serp_data=state.get("serp_data", {}),
+            area_neighborhoods=state.get("area_neighborhoods", []),
+            global_keyword_count=global_keyword_count,
+            brand_mentions_count=brand_mentions_count
         )
         
         content = res_data.get("content", "")
@@ -1121,13 +1190,14 @@ class AsyncWorkflowController:
                     brand_url=brand_url,
                     brand_link_used=brand_link_used,
                     brand_link_allowed=can_use_brand_link,
-                    allow_external_links=state.get("workflow_mode") != "core",
+                    allow_external_links=bool(external_sources),
                     workflow_mode=state.get("workflow_mode", "core"),
                     execution_plan={
                         **execution_plan, 
-                        "writing_mode": "creative rephrasing",
-                        "structure_rule": "AVOID PARAPHRASING PREVIOUS CLAIMS. YOU MUST INTRODUCE A COMPLETELY NEW ANGLE OR ABORT."
+                        "writing_mode": "refinement",
+                        "structure_rule": "AVOID SEMANTIC OVERLAP. This content overlaps with previous sections. Edit it to provide a unique angle or deeper specific details that haven't been mentioned."
                     },
+                    draft_to_fix=content,
                     area=state.get("area"),
                     used_phrases=used_phrases,
                     used_internal_links=state.get("used_internal_links", []),
@@ -1151,7 +1221,9 @@ class AsyncWorkflowController:
                     previous_content_summary=optimized_context,
                     cta_type=cta_type, # Pass the tiered strategy on retry too
                     ctas_placed=state.get("ctas_placed", 0),
-                    serp_data=state.get("serp_data", {})
+                    serp_data=state.get("serp_data", {}),
+                    area_neighborhoods=state.get("area_neighborhoods", []),
+                    brand_mentions_count=brand_mentions_count
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1160,18 +1232,32 @@ class AsyncWorkflowController:
         # Multi-Layer Paragraph Structure and Strict SEO Validation
         if content:
             is_valid, validation_errors = await self.validator.validate_section_output(
-                content, 
-                section, 
-                section_index, 
-                total_sections, 
-                state.get("area"),
-                execution_plan.get("cta_type", "none"),
-                blocked_domains=state.get("blocked_external_domains", set())
+                content=content, 
+                section=section, 
+                section_index=section_index, 
+                total_sections=total_sections, 
+                area=state.get("area"),
+                blocked_domains=state.get("blocked_external_domains", set()),
+                brand_url=state.get("brand_url", ""),
+                content_type=content_type
             )
             
             if not is_valid:
                 error_msg = "; ".join(validation_errors)
-                logger.warning(f"Validation failed for '{title}': {error_msg}. Attempting strict regeneration...")
+                writing_mode = "creative rephrasing"
+                structure_rule = f"CRITICAL ERRORS TO FIX: {error_msg}. EXACTLY 3-5 PARAGRAPHS."
+                
+                # Specialized Fallback for Conclusion CTAs
+                if "MISSING_CONCLUSION_CTA" in error_msg:
+                    writing_mode = "conclusion fallback"
+                    structure_rule = (
+                        "CRITICAL: YOUR PREVIOUS CONCLUSION WAS REJECTED FOR MISSING A CTA. "
+                        "YOU MUST INCLUDE A STRONG, ACTION-ORIENTED CTA AT THE VERY END. "
+                        f"Target Brand: {state.get('brand_name', 'The Brand')}. "
+                        f"Target URL: {brand_url}. "
+                        "Format: [Action Text](URL)."
+                    )
+
                 res_data = await self.section_writer.write(
                     title=title,
                     global_keywords=global_keywords,
@@ -1183,12 +1269,13 @@ class AsyncWorkflowController:
                     brand_url=brand_url,
                     brand_link_used=brand_link_used,
                     brand_link_allowed=can_use_brand_link,
-                    allow_external_links=True,
+                    allow_external_links=bool(external_sources),
                     execution_plan={
                         **execution_plan, 
-                        "writing_mode": "creative rephrasing",
-                        "structure_rule": f"CRITICAL ERRORS TO FIX: {error_msg}. EXACTLY 3-5 PARAGRAPHS. EXACTLY 2-3 SENTENCES PER PARAGRAPH."
+                        "writing_mode": "refinement",
+                        "structure_rule": structure_rule
                     },
+                    draft_to_fix=content,
                     area=state.get("area"),
                     used_phrases=used_phrases,
                     used_internal_links=state.get("used_internal_links", []),
@@ -1211,11 +1298,15 @@ class AsyncWorkflowController:
 
                     previous_content_summary=state.get("full_content_so_far", ""),
                     ctas_placed=state.get("ctas_placed", 0),
-                    serp_data=state.get("serp_data", {})
+                    serp_data=state.get("serp_data", {}),
+                    brand_mentions_count=brand_mentions_count
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
                 brand_link_used_in_sec = res_data.get("brand_link_used", False)
+
+        # --- ENTITY LOCKDOWN CHECK (REMOVED FOR CREATIVITY) ---
+        # We now rely on the AI's natural expert knowledge and strict 'No Competitor' policy.
 
         # Repetition Guard (Retry Loop)
         if content:
@@ -1233,8 +1324,9 @@ class AsyncWorkflowController:
                     brand_url=brand_url,
                     brand_link_used=brand_link_used,
                     brand_link_allowed=can_use_brand_link,
-                    allow_external_links=True,
-                    execution_plan={**execution_plan, "writing_mode": "creative rephrasing"},
+                    allow_external_links=bool(external_sources),
+                    execution_plan={**execution_plan, "writing_mode": "refinement"},
+                    draft_to_fix=content,
                     area=state.get("area"),
                     used_phrases=used_phrases + repeated,
                     used_internal_links=state.get("used_internal_links", []),
@@ -1257,7 +1349,8 @@ class AsyncWorkflowController:
 
                     previous_content_summary=state.get("full_content_so_far", ""),
                     ctas_placed=state.get("ctas_placed", 0),
-                    serp_data=state.get("serp_data", {})
+                    serp_data=state.get("serp_data", {}),
+                    brand_mentions_count=brand_mentions_count
                 )
                 content = res_data.get("content", "")
                 used_links = res_data.get("used_links", [])
@@ -1269,26 +1362,23 @@ class AsyncWorkflowController:
             state.setdefault("used_claims", [])
             state.setdefault("used_internal_links", [])
             state.setdefault("used_external_links", [])
-            substantial_sentences = [s for s in new_sentences if len(s) > 40]
-            state["used_phrases"].extend(substantial_sentences)
-            if getattr(self, "semantic_model", None):
+            # --- SEMANTIC MEMORY & KNOWLEDGE FIREWALL (CRITICAL) ---
+            # Persist explicit AI knowledge units (High precision facts/topics)
+            knowledge_units = res_data.get("knowledge_units_established") or res_data.get("topics_covered") or []
+            if knowledge_units:
+                for unit in knowledge_units:
+                    if unit not in state["used_claims"]:
+                        state["used_claims"].append(unit)
+            
+            # Fallback/Supplemental: Extract substantial sentences if no explicit units provided
+            if not knowledge_units:
+                substantial_sentences = [s for s in new_sentences if len(s) > 60] # Increased threshold to reduce noise
                 state["used_claims"].extend(substantial_sentences)
             
-            # Persist explicit AI topics
-            if res_data.get("topics_covered"):
-                for topic in res_data["topics_covered"]:
-                    if topic not in state["used_claims"]:
-                        state["used_claims"].append(topic)
-
-            # --- SEMANTIC MEMORY PERSISTENCE (CRITICAL) ---
-            # The global article context is updated via state['used_claims'] above
-            # so the next section can avoid repetition.
-            
-            topics_covered = res_data.get("topics_covered", [])
-            if topics_covered:
-                if "used_topics" not in state:
-                    state["used_topics"] = []
-                state["used_topics"].extend(topics_covered)
+            # Also sync to used_topics for legacy monitoring
+            if knowledge_units:
+                state.setdefault("used_topics", [])
+                state["used_topics"].extend(knowledge_units)
             # ----------------------------------------------
 
             transformed_content = LinkManager.sanitize_section_links(
@@ -1326,12 +1416,25 @@ class AsyncWorkflowController:
 
             final_content = self.validator.enforce_paragraph_structure(content)
 
+            # Count brand mentions in finalized content
+            brand_name = state.get("brand_name", "")
+            mentions_in_section = 0
+            if brand_name and final_content:
+                # Use word boundaries or just count occurrences
+                pattern = r'\b{}\b'.format(re.escape(brand_name.lower()))
+                mentions_in_section = len(re.findall(pattern, final_content.lower()))
+                
+                # In Arabic, word boundaries might be tricky with prefixes. Let's do a direct count as fallback if word boundaries fail, but regex with \b works decently.
+                if mentions_in_section == 0 and brand_name.lower() in final_content.lower():
+                     mentions_in_section = final_content.lower().count(brand_name.lower())
+
             return {
                 **section,
                 "section_id": section_id,
                 "generated_content": final_content,
                 "used_links": found_links,
-                "brand_link_used": state.get("brand_link_used", False)
+                "brand_link_used": state.get("brand_link_used", False),
+                "brand_mentions_count": mentions_in_section
             }
         return None
     
@@ -1522,7 +1625,12 @@ class AsyncWorkflowController:
             section["generated_content"] = self.validator.prune_redundant_intros(content)
             final_sections.append(section)
 
-        assembled = await self.assembler.assemble(title=title, sections=final_sections, article_language=article_language)
+        assembled = await self.assembler.assemble(
+            title=title, 
+            sections=final_sections, 
+            article_language=article_language,
+            content_type=state.get("content_type", "informational")
+        )
         
         # Final pass redundancy pruning on the whole assembled markdown
         if "final_markdown" in assembled:
@@ -1562,6 +1670,7 @@ class AsyncWorkflowController:
             content = section.get("generated_content", "")
             heading = section.get("heading_text", "")
             is_intro = (i == 0)
+            is_conclusion = (section.get("section_type") == "conclusion" or i == len(ordered_sections) - 1)
             
             # --- DYNAMIC CONTEXT REBUILD ---
             # Rebuild the draft text on each iteration so the Humanizer sees the live updates
@@ -1576,24 +1685,32 @@ class AsyncWorkflowController:
             dynamic_draft = "\n\n".join(live_draft_parts)
 
             logger.info(f"Humanizing section: {heading}")
-            new_content = await self.final_humanizer.humanize_section(
-                full_article_context=dynamic_draft,
-                target_section_content=content,
-                target_section_heading=heading,
-                article_language=article_language,
-                brand_name=brand_name,
-                brand_source_text=brand_source_text,
-                weaponized_usps=weaponized_usps,
-                is_introduction=is_intro
-            )
-            section["generated_content"] = new_content
+            try:
+                new_content = await self.final_humanizer.humanize_section(
+                    full_article_context=dynamic_draft,
+                    target_section_content=content,
+                    target_section_heading=heading,
+                    article_language=article_language,
+                    brand_name=brand_name,
+                    brand_source_text=brand_source_text,
+                    weaponized_usps=weaponized_usps,
+                    section=section,
+                    is_introduction=is_intro,
+                    is_conclusion=is_conclusion,
+                    brand_mentions_total_count=state.get("brand_mentions_count", 0)
+                )
+                if new_content:
+                    section["generated_content"] = new_content
+            except Exception as e:
+                logger.error(f"Humanization failed for section '{heading}': {e}. Falling back to original.")
             
         # Re-assemble the article after humanization
         title = state.get("input_data", {}).get("title", "Untitled")
         assembled = await self.assembler.assemble(
             title=title, 
             sections=ordered_sections, 
-            article_language=article_language
+            article_language=article_language,
+            content_type=state.get("content_type", "informational")
         )
         
         # Final pass redundancy pruning on the whole assembled markdown
@@ -1606,6 +1723,18 @@ class AsyncWorkflowController:
             brand_domain = LinkManager.domain(brand_url) if brand_url else ""
             md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
             assembled["final_markdown"] = md
+            
+            # Final Article-Level CTA Budget Validation
+            word_count = len(md.split())
+            is_budget_ok, budget_error = self.validator.validate_article_cta_budget(
+                full_markdown=md,
+                word_count=word_count,
+                content_type=state.get("content_type", "informational")
+            )
+            if not is_budget_ok:
+                logger.warning(f"[cta_budget] {budget_error}")
+                # We don't fail the article here, but we log the warning for transparency.
+                # In the future, this could trigger a pruning pass.
             
         state["final_output"] = assembled
         return state
@@ -1651,6 +1780,29 @@ class AsyncWorkflowController:
 
         meta_json = enforce_meta_lengths(meta_json)
 
+        # Deterministic fallback so HTML never ships with empty schema blocks.
+        if not meta_json.get("article_schema"):
+            logger.warning("Meta schema missing article_schema. Building deterministic fallback schema.")
+            meta_json["article_schema"] = {
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": meta_json.get("meta_title") or state.get("input_data", {}).get("title", ""),
+                "description": meta_json.get("meta_description", ""),
+                "author": {"@type": "Organization", "name": state.get("brand_name") or "Editorial Team"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": state.get("brand_name") or "Editorial Team",
+                    "logo": {"@type": "ImageObject", "url": state.get("logo_path", "")}
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": state.get("final_url", "")},
+                "url": state.get("final_url", ""),
+                "datePublished": datetime.now().date().isoformat(),
+                "dateModified": datetime.now().date().isoformat(),
+                "image": [img.get("url") or img.get("local_path") for img in state.get("assets/images", []) if isinstance(img, dict)],
+                "articleSection": state.get("content_type", "article"),
+                "wordCount": len(final_md.split())
+            }
+
         # Enforce H1 Length (Strict)
         h1 = meta_json.get("h1", "")
         if h1 and not self.validator.validate_h1_length(h1):
@@ -1693,6 +1845,30 @@ class AsyncWorkflowController:
             blocked_domains=state.get("blocked_external_domains"),
             allowed_domains=state.get("authority_domains")
         )
+        critical_issues = []
+        warnings = []
+
+        # Trust-link floor: target at least N useful external links when available.
+        min_external_links = state.get("min_external_links", 2)
+        if min_external_links > 0:
+            all_links = re.findall(r'\[.*?\]\((https?://.*?)\)', final_md)
+            brand_url = state.get("brand_url", "")
+            blocked = state.get("blocked_external_domains", set()) or set()
+            external_unique = set()
+            for link in all_links:
+                dom = LinkManager.domain(link)
+                if not dom:
+                    continue
+                if brand_url and LinkManager.is_same_site(link, brand_url):
+                    continue
+                if dom in blocked:
+                    continue
+                external_unique.add(LinkManager.canon_url(link))
+            if len(external_unique) < min_external_links:
+                warnings.append(
+                    f"EXTERNAL_TRUST_LINKS_ADVISORY: Found {len(external_unique)} useful external links. "
+                    f"Target is at least {min_external_links}."
+                )
 
         state["final_output"]["final_markdown"] = final_md
 
@@ -1700,8 +1876,6 @@ class AsyncWorkflowController:
             final_md,
             primary_keyword
         )
-        critical_issues = []
-        warnings = []
 
         # Heuristic checks
         ok, issue = self.validator.validate_sales_intro(final_md, state.get("intent"))
@@ -1731,34 +1905,56 @@ class AsyncWorkflowController:
         )
         critical_issues.extend(local_issues)
 
-        # Enforce Contextual Local SEO (Strict)
+        # Enforce Contextual Local SEO (Warning only, don't waste tokens)
         area = state.get("area")
         if area:
             if not self.validator.validate_local_context(final_md, area, article_language):
-                logger.error(f"Weak local contextualization for area '{area}'")
-                raise ValueError("Weak local contextualization")
+                msg = f"Weak local contextualization for area '{area}'"
+                logger.warning(msg)
+                warnings.append(msg)
 
         ok, angle_issue = self.validator.validate_content_angle(
             final_md,
             state.get("content_strategy", {})
         )
         if not ok:
-            critical_issues.append(angle_issue)
+            warnings.append(angle_issue)
 
-        # Enforce Final CTA in Conclusion (Commercial Articles)
-        # if state.get("intent") == "Commercial":
+        # Enforce Final CTA in Conclusion (Commercial Articles) - Warning instead of crash
         if state.get("intent", "").lower() == "commercial":
             if not self.validator.validate_final_cta(final_md, article_language):
-                logger.error("Missing final CTA in conclusion for Commercial article.")
-                raise ValueError("Missing final CTA")
+                error_msg = "Missing final CTA in conclusion for Commercial article."
+                logger.warning(error_msg)
+                warnings.append(error_msg)
 
         final_md = self.validator.enforce_paragraph_structure(final_md)
         state["final_output"]["final_markdown"] = final_md
 
-        # Enforce Paragraph Length Rules
+        # Enforce Paragraph Length Rules (Warning only)
         if not self.validator.validate_paragraph_structure(final_md):
-            logger.error("Paragraph structure violation detected.")
-            raise ValueError("Paragraph structure violation")
+            msg = "Paragraph structure violation detected (too many sentences)."
+            logger.warning(msg)
+            warnings.append(msg)
+
+        # --- SEMANTIC TOPIC ARCHITECTURE (PHASE 1.5) ---
+        semantic_metadata = {
+            "semantic_entities": state.get("semantic_entities", []),
+            "semantic_concepts": state.get("semantic_concepts", []),
+            "intent_clusters": state.get("intent_clusters", [])
+        }
+        outline = state.get("outline", [])
+        
+        semantic_report = self.validator.validate_semantic_coverage(
+            final_md, 
+            semantic_metadata, 
+            outline
+        )
+        state["semantic_coverage_report"] = semantic_report
+        
+        # Add semantic warnings if coverage is low (Advisory)
+        if not semantic_report.get("semantic_coverage_ok", True):
+            missing = semantic_report.get("missing_concepts", [])
+            warnings.append(f"SEMANTIC_GAP_DETECTED: Significant topical concepts are missing: {', '.join(missing[:5])}")
 
         report_raw = await self.article_validator.validate(
             final_markdown=final_md, 
@@ -1814,27 +2010,11 @@ class AsyncWorkflowController:
         output_dir = state.get("output_dir", "")
         
         # Prepare data for renderer
-        meta = state.get("seo_meta", {})
-        title = state.get("input_data", {}).get("title", "")
-        render_data = {
-            "title": title,
-            "meta_title": meta.get("meta_title", title),
-            "meta_description": meta.get("meta_description", ""),
-            "meta_keywords": meta.get("meta_keywords", ""),
-            "final_markdown": final_output.get("final_markdown"),
-            "output_dir": output_dir,
-            "article_language": final_output.get("article_language", state.get("article_language", "en")),
-        }
+        # Ensure the renderer receives the full assembled output including schemas
+        render_data = final_output.copy()
+        render_data["output_dir"] = output_dir # Ensure output_dir is present if not in final_output
+        render_data["final_markdown"] = final_output.get("final_markdown")
 
-        # Inject CTAs for brand_commercial articles before rendering HTML
-        if state.get("content_type") == "brand_commercial" and render_data.get("final_markdown"):
-            render_data["final_markdown"] = await self.validator.inject_commercial_ctas(
-                render_data["final_markdown"], 
-                state.get("article_language", "en"),
-                brand_url=state.get("brand_url", ""),
-                brand_name=state.get("brand_name", "")
-            )
-        
         try:
             html_path = render_html_page(render_data)
             logger.info(f"HTML Page rendered successfully at: {html_path}")
@@ -1876,14 +2056,14 @@ class AsyncWorkflowController:
         # Override for specific section types
         if section_type == "introduction":
             plan["writing_mode"] = "hooks-driven"
-            plan["cta_type"] = "soft" if content_type == "brand_commercial" else "none"
-            plan["cta_position"] = "distributed"
             
         elif section_type == "conclusion":
             plan["writing_mode"] = "summary-driven"
-            if state.get("intent", "").lower() == "commercial":
+            if content_type == "brand_commercial":
+                plan["cta_eligible"] = True
                 plan["cta_type"] = "strong"
-                plan["cta_position"] = "after_content"
+                section["cta_eligible"] = True
+                section["cta_type"] = "strong"
         
         elif section_type == "faq":
             plan["writing_mode"] = "direct-answer"
@@ -1951,6 +2131,7 @@ class AsyncWorkflowController:
             # Debug / Storage
             "output_dir": state.get("output_dir", ""),
         }
+    
     async def _step_3_humanizer(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Final editorial pass to smooth transitions and remove redundancies."""
         logger.info("Starting final 'Humanizer' editorial pass...")
@@ -1977,7 +2158,9 @@ class AsyncWorkflowController:
         humanize_prompt = humanizer_template.render(
             full_content=full_content,
             tone=tone,
-            audience_level=audience_level
+            audience_level=audience_level,
+            area=state.get("area", "Global"),
+            content_type=state.get("content_type", "article")
         )
         
         try:

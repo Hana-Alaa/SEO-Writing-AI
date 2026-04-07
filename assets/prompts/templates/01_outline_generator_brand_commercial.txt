@@ -1,75 +1,56 @@
-Brand Commercial Specific Rules (MANDATORY STRUCTURE & QUALITY):
+{% include '01_outline_generator_base.txt' %}
 
-### 0. INTENT DISTRIBUTION (THE 70/30 RULE - CRITICAL)
-- **THE MANDATE**: This article MUST maintain a balance of **70% Commercial/Transactional intent** and **30% Informational intent**.
-- **EXECUTION**: Informational content (Intro, FAQ, Process) must only serve as the foundation to justify the Commercial claims (Features, Proof, Why Choose Us).
-- **EXPANSION LOGIC**: If expanding to 15-25 sections, YOU MUST ensure that 70% of the newly mined sub-topics focus on competitive advantages, ROI details, and specific brand superiorities.
+--------------------------------------------------------------------------------
+COMMERCIAL SUBTYPE (THE CONVERSION ENGINE)
+--------------------------------------------------------------------------------
+1. THE COMMERCIAL SOUL (DECISION PRESSURE)
+   - **YOUR ROLE**: You are a High-Stakes Conversion Strategist. Your goal is to move the reader from "Comparing" to "Choosing" the brand.
+   - **THE 70/30 MANDATE**: 70% of the outline MUST focus on competitive advantages, ROI, and brand superiority. Informational context must ONLY serve as the foundation for these claims.
+   - **TONE**: Confident, solution-driven, and authoritative. Persuasive without using spammy hype or empty superlatives. Follow the `tone_direction` in the strategy.
+- **STRATEGIC FIDELITY**: You MUST incorporate the `differentiation_focus` and `pain_point_focus` from the Content Strategy into the assigned sections. Every commercial section should be a direct implementation of the `conversion_strategy` and `cta_philosophy` defined in the strategy.
 
-You MUST generate the outline in this EXACT order, while adhering to the Quality Rules below:
+--------------------------------------------------------------------------------
+2. THE CONVERSION JOURNEY: 9 STRATEGIC PILLARS (FLEXIBLE)
+--------------------------------------------------------------------------------
+Your mission is to guide the user from "Pain/Need" to "Confident Decisive Action". Use the following 9 **STRATEGIC PILLARS** to structure the journey. You have the flexibility to merge or split these pillars into the most natural section arrangement for the specific topic, but ALL concepts MUST be covered.
 
----
-### I. THE STRUCTURE (STRICT 9-STEP BASE + DYNAMIC NUANCE)
+1. **THE INTRO (The 2+1 Protocol)**: 
+   - Paragraph 1: **Power Hook**. Frame the market problem as a **Business Risk** (Time/Money/Safety). NO generic questions.
+   - Paragraph 2: **Brand Authority**. Establish {{ brand_name }} as the expert/logical solution bridge.
+   - Paragraph 3: **Surgical CTA**. A single short sentence with the contextual `brand_url`.
+2. **THE DEFINITION (Trust by Clarity)**: 
+   - Define what is being offered clearly. The H2 MUST include the primary keyword.
+3. **SCANNABLE VALUE (Features & Inclusion)**: 
+   - Every feature mention MUST be immediately followed by a "So what?" (UVP-to-Benefit translation).
+4. **THE DIFFERENTIATORS (Weaponized USPs)**: 
+   - Use `weaponized_usps` to directly expose market weaknesses and position {{ brand_name }} strength as the only logical solution. Avoid generic claims.
+5. **THE PROOF LAYER (Trust Evidence)**: 
+   - Use stats, trends, or neighborhood growth (from `mandatory_facts`). Present this as expert narrative proof.
+6. **COMPARATIVE LOGIC**: 
+   - Use a comparison table or structured breakdown of options/tiers to help the user choose.
+7. **THE PROCESS (Numbered Steps)**: 
+   - Use numbered steps to explain "How it works". Reduce friction and psychological barriers.
+8. **THE OBJECTION-HANDLER (Decisional FAQ)**: 
+   - **TRANSFORMATION RULE**: You MUST rephrase PAA/Common questions to be **Decisional** (e.g., instead of "What is X?", use "Why is X the best choice for you?" or "How much does X cost?"). 
+   - Focus on Pricing, Legalities, and Trust. No filler text.
+9. **THE DECISIVE ARGUMENT (Conclusion + Strong CTA)**: 
+   - A final "Closing Argument" followed by a high-commitment command with a link.
 
-You MUST generate the outline starting with this EXACT base sequence. Additional sections may only be added IF they pass the **CORE OUTLINE DECISION FRAMEWORK**:
+4. CTA GATE LOGIC (STRATEGIC DISTRIBUTION)
+   - **PERMISSION ≠ REQUIREMENT**: `cta_eligible: true` is a permission, NOT a requirement. The writer may still omit CTA if not justified by content.
+   - **SECTION INTENT OVERRIDE**: Even in a commercial article, if a section is `section_intent: "Informational"` (e.g., Definitions, Market Reality), you MUST set `cta_eligible: false` and `cta_type: "none"`.
+   - **BODY CTAs**: Set `cta_eligible: true` and `cta_type: "moderate"` ONLY for sections using "Proof Layer" or "Business Risk" decision layers with high-value differentiation.
+   - **MAXIMUM**: Ensure at most 2-3 body sections are marked as `cta_eligible: true`. 
+   - **EARNED CTA**: Remind the writer that a CTA MUST be earned by the content strength.
 
-1. **Introduction**: 
-   - Speak directly to the reader's problem or need.
-   - Primary keyword in first paragraph.
-   - **CTA (SOFT)**: `cta_type: "soft"`, `cta_position: "last_sentence"` (optional but acceptable).
-   - section_type: "introduction"
+5. SEMANTIC SELECTION (COMMERCIAL BIAS)
+   - **PLANNING ONLY**: Use the semantic metadata as internal planning signals, not as visible heading obligations or forced terminology.
+   - **SEMANTIC ENTITIES**: Bias the metadata toward conversion entities, high-value products, service packages, and tools relevant to decision-making.
+   - **SEMANTIC CONCEPTS**: Bias the metadata toward strategic commercial concepts (Pricing Tiers, Process/Delivery, ROI, Comparative Benefits, Proof of Authority).
+   - **INTENT CLUSTERS**: Bias the metadata toward "Commercial", "Comparison", and "Decision-Making" needs.
+   - **TOPIC COMPLETENESS**: Ensure the semantic plan addresses the reader's financial and performance risks.
 
-2. **What the service/product is**: 
-   - H2 with primary keyword. 
-   - Brief but clear. First sentence MUST be a definitive, objective description.
-   - section_type: "what_is"
-
-3. **Key features or what's included**: 
-   - H2: Use synonyms, not exact primary keyword.
-   - Requirement: **Use bullet points**. Scannable and clear.
-   - section_type: "key_features"
-
-4. **Why choose us / differentiators**: 
-   - Focus on brand value. **Avoid generic claims**, be hyper-specific.
-   - section_type: "why_choose_us"
-
-5. **Proof (The Authority)**: 
-   - H2: "Client Results," "Success Stories," or "Evidence of Success".
-   - Requirement: **Stats, Case studies, or Client Results**. Evidence-based trust.
-   - section_type: "proof"
-
-6. **Comparison table (The Clarity)**: 
-   - Focus on **Service Tiers** or internal comparisons (Commercial Clarity).
-   - Requirement: Table format only.
-   - section_type: "comparison_table"
-
-7. **How it works / Process**: 
-   - H2: Descriptive (e.g., "The Step-by-Step Process").
-   - Requirement: **Numbered steps**. Reduces friction and clarifies the journey.
-   - section_type: "process"
-
-8. **FAQ section**: 
-   - Focus on **Objections, Pricing, and Process Questions**.
-   - Requirement: 4-5 questions.
-   - section_type: "faq"
-
-9. **Conclusion + Strong CTA**: 
-   - Direct, confident summary + **Strong Conversion Point**.
-   - **CTA (STRONG)**: `cta_type: "strong"`, `cta_position: "last_sentence"`.
-   - section_type: "conclusion"
-
----
----
-### II. STRATEGIC GUIDELINES (BRAND CONTEXT)
-
-1. **The 4 Practicality Pillars (MANDATORY)**:
-   - You MUST integrate these into the sections above:
-     1. **Risk & Security**: Official vs. Secondary market risks (in Proof or FAQ).
-     2. **Operational Journey**: Post-purchase steps, entry methodology (in Process).
-     3. **Pricing Dynamics**: Transparency and value justification (in Features or FAQ).
-     4. **Transaction Mastery**: Installments (Tabby/Tamara), refund policies (in FAQ).
-
-2. **Tone Lock**: 
-   - Confident and solution-focused. Persuasive but NOT pushy (avoid urgency overkill).
-
-3. **Brand Portfolio (Optional)**:
-   - You MAY include one section (`section_type: "brand_service_portfolio"`) if the brand context provides multiple unrelated but valuable services.
+6. STRUCTURAL TARGETS
+   - Intent Field: Always set `section_intent: "Commercial"`.
+   - Sales Intensity: Variable (Medium to High) based on the strength of available Brand Context.
+   - Decision Layers: Prioritize "Business Risk", "Proof Layer", and "Implementation Process".

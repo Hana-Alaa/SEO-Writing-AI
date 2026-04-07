@@ -55,20 +55,29 @@ class SEOValidator:
             report["errors"].append(f"Word count is {word_count}. Minimum required is 1000.")
             report["passed"] = False
 
-        # First Paragraph Keyword
+        # First Paragraph Relevance (Instead of Exact Keyword)
         paragraphs = [p for p in content.split("\n\n") if p.strip() and not p.strip().startswith("#")]
         if paragraphs:
-            if primary_keyword not in paragraphs[0].lower():
-                 report["errors"].append(f"Primary keyword '{primary_keyword}' not found in the first paragraph.")
-                 report["passed"] = False
+            para_lower = paragraphs[0].lower()
+            exact_pattern = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
+            has_exact = re.search(exact_pattern, para_lower)
+            
+            # Component-based relevance (Variant/Reordered)
+            kw_comp = [w.lower() for w in re.findall(r'\b\w+\b', primary_keyword) if len(w) > 2]
+            found_comp = [w for w in kw_comp if w in para_lower]
+            comp_ratio = len(found_comp) / max(len(kw_comp), 1)
+            
+            if not has_exact and comp_ratio < 0.3:
+                 report["warnings"].append(f"RELEVANCE_ADVISORY: Primary topic '{primary_keyword}' should be established more clearly in the first paragraph.")
 
-        # Density
-        if word_count > 0:
-            density = (content.lower().count(primary_keyword) / word_count) * 100
-            if density < 1.2:
-                 report["warnings"].append(f"Keyword density ({density:.2f}%) is too low. Target: 1.2% - 1.6%.")
-            elif density > 2.0:
-                 report["warnings"].append(f"Keyword density ({density:.2f}%) is high. Avoid keyword stuffing.")
+        # Global Exact-Form Cap (Replacing old density logic)
+        exact_pattern_full = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
+        exact_count = len(re.findall(exact_pattern_full, content.lower()))
+        if exact_count > 4:
+             report["errors"].append(f"STUFFING_VIOLATION: Exact primary keyword phrase '{primary_keyword}' appears {exact_count} times. Max 4 is allowed.")
+             report["passed"] = False
+        elif exact_count == 0:
+             report["warnings"].append(f"Exact primary keyword phrase '{primary_keyword}' not found. Ensure topic is clearly addressed.")
 
         # LSI Keywords
         secondary_keywords = metadata.get("secondary_keywords", [])
@@ -91,8 +100,23 @@ class SEOValidator:
             report["errors"].append(f"Found only {len(h2s)} H2 headings. Minimum 3 required.")
             report["passed"] = False
         
-        if not any(primary_keyword in h.lower() for h in h2s):
-            report["warnings"].append(f"Primary keyword '{primary_keyword}' not found in any H2 heading.")
+        # Heading Relevance (Exact or Strong Topic Presence)
+        exact_pattern = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
+        has_relevance = False
+        for h in h2s:
+            h_low = h.lower()
+            if re.search(exact_pattern, h_low):
+                has_relevance = True
+                break
+            # Component check for variant headings
+            kw_comp = [w.lower() for w in re.findall(r'\b\w+\b', primary_keyword) if len(w) > 2]
+            found_comp = [w for w in kw_comp if w in h_low]
+            if len(found_comp) / max(len(kw_comp), 1) >= 0.4:
+                has_relevance = True
+                break
+
+        if not has_relevance:
+            report["warnings"].append(f"Primary topic '{primary_keyword}' (or strong variant) not found in any H2 headings.")
 
         # H3 checks
         h3s = re.findall(r'^###\s+(.*)', content, re.MULTILINE)
