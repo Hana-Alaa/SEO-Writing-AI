@@ -1,0 +1,164 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 17.16 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 90.16 seconds
+  -- Tokens Used: 41,121
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 90.49 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 7.76 seconds
+  -- Tokens Used: 8,324
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 11.80 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.93 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 4.54 seconds
+  -- Tokens Used: 722
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 722
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 8.76 seconds
+  -- Tokens Used: 4,230
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 8.78 seconds
+  -- Tokens Used: 4,230
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 80.12 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: SECTION_1_اقتنِ فرصتك الآن في أرقى أحياء القاهرة الجديدة لعام 2026
+  -- Duration: 4.44 seconds
+  -- Tokens Used: 12,326
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: اقتنِ فرصتك الآن في أرقى أحياء القاهرة الجديدة لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس
+  -- Duration: 10.74 seconds
+  -- Tokens Used: 12,882
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026
+  -- Duration: 5.17 seconds
+  -- Tokens Used: 13,052
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا تختار الشراء من المالك مباشرة عبر منصة عقار يا مصر؟
+  -- Duration: 7.14 seconds
+  -- Tokens Used: 12,900
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار الشراء من المالك مباشرة عبر منصة عقار يا مصر؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_تحليل العائد على الاستثمار ومؤشرات الأسعار في أحياء التجمع
+  -- Duration: 29.20 seconds
+  -- Tokens Used: 12,842
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: تحليل العائد على الاستثمار ومؤشرات الأسعار في أحياء التجمع
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة أنظمة السداد واختيار العرض الأنسب لميزانيتك
+  -- Duration: 8.72 seconds
+  -- Tokens Used: 13,570
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة أنظمة السداد واختيار العرض الأنسب لميزانيتك
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات التعاقد الآمن واستلام وحدتك في القاهرة الجديدة
+  -- Duration: 8.92 seconds
+  -- Tokens Used: 12,796
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات التعاقد الآمن واستلام وحدتك في القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_أسئلة شائعة حول شراء شقق للبيع في القاهرة الجديدة
+  -- Duration: 5.57 seconds
+  -- Tokens Used: 12,894
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول شراء شقق للبيع في القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة البحث عن منزلك المثالي اليوم مع عقار يا مصر
+  -- Duration: 3.87 seconds
+  -- Tokens Used: 13,021
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلة البحث عن منزلك المثالي اليوم مع عقار يا مصر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 90.53 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 23.05 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 2.69 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 61.00 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 8.70 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.51 seconds
+  -- Tokens Used: 100,813
+--------------------------------------------------

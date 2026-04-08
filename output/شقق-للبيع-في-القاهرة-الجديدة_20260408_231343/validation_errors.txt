@@ -1,0 +1,62 @@
+
+--- SECTION: اقتنِ فرصتك الآن في أرقى أحياء القاهرة الجديدة لعام 2026 (sec_01) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'اقتنِ فرصتك الآن في أرقى أحياء القاهرة الجديدة لعام 2026' is too dense for intro/conclusion content (51 words > 50). Split it or convert enumerations into a list/table.
+--------------------------------------------------
+
+--- SECTION: خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس (sec_02) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس' is too dense for intro/conclusion content (66 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس' is too dense for intro/conclusion content (70 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'خريطة السكن الراقي وتنوع الوحدات المتاحة في التجمع الخامس' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع في القاهرة الجديدة'.
+--------------------------------------------------
+
+--- SECTION: مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026 (sec_03) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026' must not contain nested headings.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026' is too dense for intro/conclusion content (55 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 5 in 'مواصفات التشطيب والمساحات الأكثر طلباً في مشروعات 2026' is too dense for intro/conclusion content (52 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع في القاهرة الجديدة'.
+--------------------------------------------------
+
+--- SECTION: لماذا تختار الشراء من المالك مباشرة عبر منصة عقار يا مصر؟ (sec_04) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'لماذا تختار الشراء من المالك مباشرة عبر منصة عقار يا مصر؟' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'لماذا تختار الشراء من المالك مباشرة عبر منصة عقار يا مصر؟' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع في القاهرة الجديدة'.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/القاهرة/
+--------------------------------------------------
+
+--- SECTION: تحليل العائد على الاستثمار ومؤشرات الأسعار في أحياء التجمع (sec_05) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'تحليل العائد على الاستثمار ومؤشرات الأسعار في أحياء التجمع' is too dense for intro/conclusion content (55 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'تحليل العائد على الاستثمار ومؤشرات الأسعار في أحياء التجمع' is too dense for intro/conclusion content (54 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 3 in 'تحليل العائد على الاستثمار ومؤشرات الأسعار في أحياء التجمع' is too dense for intro/conclusion content (53 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'تحليل العائد على الاستثمار ومؤشرات الأسعار في أحياء التجمع' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: مقارنة أنظمة السداد واختيار العرض الأنسب لميزانيتك (sec_06) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مقارنة أنظمة السداد واختيار العرض الأنسب لميزانيتك' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مقارنة أنظمة السداد واختيار العرض الأنسب لميزانيتك' must not contain nested headings.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مقارنة أنظمة السداد واختيار العرض الأنسب لميزانيتك' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'مقارنة أنظمة السداد واختيار العرض الأنسب لميزانيتك' is too dense for intro/conclusion content (131 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع في القاهرة الجديدة'.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA-%D9%84%D9%84%D8%A8%D9%8A%D8%B9/%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9/
+--------------------------------------------------
+
+--- SECTION: خطوات التعاقد الآمن واستلام وحدتك في القاهرة الجديدة (sec_07) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خطوات التعاقد الآمن واستلام وحدتك في القاهرة الجديدة' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خطوات التعاقد الآمن واستلام وحدتك في القاهرة الجديدة' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'خطوات التعاقد الآمن واستلام وحدتك في القاهرة الجديدة' is too dense for intro/conclusion content (69 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع في القاهرة الجديدة'.
+--------------------------------------------------
+
+--- SECTION: أسئلة شائعة حول شراء شقق للبيع في القاهرة الجديدة (sec_08) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'أسئلة شائعة حول شراء شقق للبيع في القاهرة الجديدة' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'أسئلة شائعة حول شراء شقق للبيع في القاهرة الجديدة' must not contain nested headings.
+--------------------------------------------------
+
+--- SECTION: ابدأ رحلة البحث عن منزلك المثالي اليوم مع عقار يا مصر (sec_09) ---
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع في القاهرة الجديدة'.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/القاهرة-الجديدة/شقق-للبيع/
+--------------------------------------------------

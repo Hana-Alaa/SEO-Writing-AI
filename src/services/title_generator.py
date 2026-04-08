@@ -3,7 +3,7 @@ import re
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from jinja2 import Template, StrictUndefined
-from src.utils.safe_json import recover_json
+from src.utils.json_utils import recover_json
 
 logger = logging.getLogger(__name__)
 

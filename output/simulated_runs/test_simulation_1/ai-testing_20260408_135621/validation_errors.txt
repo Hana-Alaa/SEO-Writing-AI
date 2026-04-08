@@ -1,0 +1,26 @@
+
+--- SECTION: Mocked Introduction to SEO (sec_01) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'Mocked Introduction to SEO' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'AI testing'.
+- [QUALITY ISSUE]: TOPIC_RELEVANCE_VIOLATION: Priority section 'Mocked Introduction to SEO' lacks clear topic relevance to 'AI testing'.
+--------------------------------------------------
+
+--- SECTION: The Benefits of Mock Testing (sec_02) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'The Benefits of Mock Testing' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: Final Conclusion (sec_03) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'Final Conclusion' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'AI testing'.
+- [QUALITY ISSUE]: TOPIC_RELEVANCE_VIOLATION: Priority section 'Final Conclusion' lacks clear topic relevance to 'AI testing'.
+--------------------------------------------------
+
+--- SECTION: Mocked Introduction to SEO (sec_01) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'Mocked Introduction to SEO' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'AI testing'.
+- [QUALITY ISSUE]: TOPIC_RELEVANCE_VIOLATION: Priority section 'Mocked Introduction to SEO' lacks clear topic relevance to 'AI testing'.
+--------------------------------------------------

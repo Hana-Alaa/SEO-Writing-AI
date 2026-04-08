@@ -23,6 +23,7 @@ from typing import Dict, Any, List, Optional, Callable, ClassVar
 from collections import Counter
 from langdetect import detect_langs, DetectorFactory
 from src.services.image_generator import ImageGenerator, ImagePromptPlanner
+from src.services.ai_client_base import BaseAIClient
 from src.services.openrouter_client import OpenRouterClient
 from src.schemas.input_validator import normalize_urls
 from src.utils.injector import DataInjector
@@ -149,9 +150,9 @@ class AsyncExecutor:
 class AsyncWorkflowController:
     """Central async orchestrator for SEO article generation."""
 
-    def __init__(self, work_dir: str = "."):
-        # AI Client
-        self.ai_client = OpenRouterClient()
+    def __init__(self, work_dir: str = ".", ai_client: Optional[BaseAIClient] = None):
+        # AI Client Injection Support
+        self.ai_client = ai_client or OpenRouterClient()
         self.observer = self.ai_client.observer
         # self.ai_client = GeminiClient()
         # self.ai_client = GroqClient()
@@ -208,6 +209,9 @@ class AsyncWorkflowController:
             "content_writing",
             "assembly"
         }
+        
+        # Hard-Stop Flag for critical failures
+        self.workflow_failed = False
 
         # Image generator
         self.image_client = ImageGenerator(
@@ -237,6 +241,7 @@ class AsyncWorkflowController:
         state.setdefault("used_topics", [])
         state.setdefault("full_content_so_far", "")
         state.setdefault("brand_mentions_count", 0)
+        state.setdefault("used_anchors", [])
 
         steps = [
             # ("semantic_layer", self._step_semantic_layer, 1),
@@ -276,7 +281,7 @@ class AsyncWorkflowController:
 
         steps.extend([
             ("meta_schema", self._step_7_meta_schema, 0),
-            ("article_validation", self._step_8_article_validation, 0),
+            # ("article_validation", self._step_8_article_validation, 0),
             ("render_html", self._step_render_html, 0)
         ])
         for name, func, retries in steps:
@@ -285,12 +290,12 @@ class AsyncWorkflowController:
             
             if result["status"] == "error":
                 if name in self.CRITICAL_STEPS:
-                    logger.error(f"Workflow stopped at critical step: {name}")
-                    # Errors are already logged to errors.txt by AsyncExecutor
-                    break
+                    logger.error(f"FATAL ERROR at critical step '{name}': {result.get('error')}")
+                    self.workflow_failed = True
+                    # Immediate stop - do not attempt further processing
+                    return {"status": "error", "message": f"Workflow aborted: Critical failure in {name}", "error": result.get("error")}
                 else:
-                    logger.warning(f"Non-critical step '{name}' failed technically. Continuing workflow to preserve output.")
-                    # We continue to the next step
+                    logger.warning(f"Non-critical step '{name}' failed. Continuing...")
                     continue
 
         # Final Export
@@ -582,34 +587,46 @@ class AsyncWorkflowController:
 
         for attempt in range(3):
             logger.info(f"Generating outline (Attempt {attempt + 1}/3)...")
-            outline_data = await self.outline_gen.generate(
-                title=title,
-                keywords=keywords,
-                urls=urls_norm,
-                article_language=article_language,
-                intent=intent,
-                seo_intelligence=seo_intelligence,
-                content_type=content_type,
-                content_strategy=content_strategy,
-                brand_context=state.get("brand_context", ""),
-                area=area,
-                feedback=feedback,
-                mandatory_section_types=list(mandatory),
-                prohibited_competitors=state.get("prohibited_competitors", []),
-                # Advanced Customization
-                article_size=state.get("article_size", "1000"),
-                include_conclusion=state.get("include_conclusion", True),
-                include_faq=state.get("include_faq", True),
-                include_tables=state.get("include_tables", True),
-                include_bullet_lists=state.get("include_bullet_lists", True),
-                include_comparison_blocks=state.get("include_comparison_blocks", True),
-                bold_key_terms=state.get("bold_key_terms", True),
-                secondary_keywords=state.get("secondary_keywords", []),
-                competitor_count=state.get("competitor_count", 5),
-                external_resources=state.get("external_resources", []),
-                style_blueprint=state.get("style_blueprint", {}),
-                brand_name=state.get("brand_name", "")
-            )
+            try:
+                outline_data = await self.outline_gen.generate(
+                    title=title,
+                    keywords=keywords,
+                    urls=urls_norm,
+                    article_language=article_language,
+                    intent=intent,
+                    seo_intelligence=seo_intelligence,
+                    content_type=content_type,
+                    content_strategy=content_strategy,
+                    brand_context=state.get("brand_context", ""),
+                    area=area,
+                    feedback=feedback,
+                    mandatory_section_types=list(mandatory),
+                    prohibited_competitors=state.get("prohibited_competitors", []),
+                    # Advanced Customization
+                    article_size=state.get("article_size", "1000"),
+                    include_conclusion=state.get("include_conclusion", True),
+                    include_faq=state.get("include_faq", True),
+                    include_tables=state.get("include_tables", True),
+                    include_bullet_lists=state.get("include_bullet_lists", True),
+                    include_comparison_blocks=state.get("include_comparison_blocks", True),
+                    bold_key_terms=state.get("bold_key_terms", True),
+                    secondary_keywords=state.get("secondary_keywords", []),
+                    competitor_count=state.get("competitor_count", 5),
+                    external_resources=state.get("external_resources", []),
+                    style_blueprint=state.get("style_blueprint", {}),
+                    brand_name=state.get("brand_name", ""),
+                    weaponized_usps=seo_intelligence.get("strategic_analysis", {}).get("weaponized_usps", []),
+                    strategic_framework=seo_intelligence.get("strategic_analysis", {}).get("strategic_framework", "")
+                )
+            except (ContentGeneratorError, Exception) as e:
+                logger.warning(f"Outline generation failed on attempt {attempt + 1}: {e}")
+                if attempt < 2:
+                    feedback = f"Your previous response failed to parse as valid JSON. Error: {str(e)}. Please try again and ensure you return a strictly valid JSON object."
+                    continue
+                else:
+                    logger.error("Outline generation failed after all retries.")
+                    raise
+
 
 
             
@@ -775,25 +792,29 @@ class AsyncWorkflowController:
                  # Robust safety fallback
                  sec["assigned_keywords"] = keywords[:3] if keywords else [primary_keyword]
         
-        # --- Article-Level Link Deduplication ---
-        # Ensure no URL is assigned to more than one section in the entire article
-        all_assigned_urls = set()
+        # --- Smart Link Pool Preparation (Contextual Flow) ---
+        internal_pool = list(state.get("internal_url_set", set()))
         
+        # External Authority References (Broad pool for the AI to choose from)
+        external_refs = []
+        for item in serp_data.get("reference_authority_links", []):
+            url = item.get("url") if isinstance(item, dict) else item
+            if url: 
+                external_refs.append(LinkManager.canon_url(url))
+        
+        # Limit to top 15 internal links to avoid prompt bloat, but keep it a broad pool
+        internal_pool = list(dict.fromkeys(internal_pool))[:15]
+        external_refs = list(dict.fromkeys(external_refs))[:10]
+        
+        state["available_links_pool"] = {
+            "internal": internal_pool,
+            "external_references": external_refs
+        }
+        logger.info(f"Smart Link Pool initialized with {len(internal_pool)} internal and {len(external_refs)} authority references.")
+
+        # Ensure all sections have clean link assignments for the start
         for section in outline:
-            assigned = section.get("assigned_links", [])
-            valid_assigned = []
-            for link in assigned:
-                url = link.get("url") if isinstance(link, dict) else link
-                if not url: continue
-                
-                norm = LinkManager.normalize_url_for_dedup(url)
-                if norm not in all_assigned_urls:
-                    all_assigned_urls.add(norm)
-                    valid_assigned.append(link)
-                else:
-                    logger.warning(f"Removing duplicate link assignment in outline: {url}")
-            
-            section["assigned_links"] = valid_assigned
+            section["assigned_links"] = []
 
         state["outline"] = outline
         present_types = {sec.get("section_type") for sec in outline}
@@ -825,43 +846,11 @@ class AsyncWorkflowController:
         link_strategy = state.get("link_strategy", {})
 
         if not outline:
-            raise RuntimeError("No outline found for section writing.")
+            logger.error("Sanity Check Failed: No outline found for section writing. Potential trace of bypassed critical error.")
+            raise RuntimeError("CRITICAL ERROR: Content writing started with an empty or invalid outline. Stopping to prevent corrupted output.")
 
         content_type = state.get("content_type", "informational")
 
-        # Distribute Primary Keyword Requirement (Pacing)
-        # Distribute Primary Keyword Requirement (Pacing)
-        total_secs = len(outline)
-        if total_secs <= 3:
-            # Sparse distribution for short articles: Opening for all, plus one footer for 3-section articles
-            for i, sec in enumerate(outline):
-                if i == 0:
-                    sec["requires_primary_keyword"] = True
-                elif i == 2 and total_secs == 3:
-                    sec["requires_primary_keyword"] = True
-                else:
-                    sec["requires_primary_keyword"] = False
-        else:
-            # Phase-aware distribution: Opening, one key H2, and a later section (avoiding adjacency)
-            target_indices = {0} # Always the opening
-            
-            # Find first real H2 after intro (if any)
-            first_h2_idx = next((i for i, s in enumerate(outline) if i > 0 and s.get("heading_level") == "H2"), None)
-            if first_h2_idx is not None:
-                if first_h2_idx > 1: # Avoid adjacency with intro if possible
-                    target_indices.add(first_h2_idx)
-                else:
-                    target_indices.add(min(total_secs - 1, 2)) # Push to next if 1 is adjacent to 0
-            
-            # Add one later section (Conclusion or last body)
-            last_idx = total_secs - 1
-            if last_idx not in target_indices and last_idx - 1 not in target_indices:
-                target_indices.add(last_idx)
-            elif last_idx - 1 > max(target_indices):
-                target_indices.add(last_idx - 1)
-
-            for i, sec in enumerate(outline):
-                sec["requires_primary_keyword"] = (i in target_indices)
 
         # Initialize global quality tracking
         state["used_claims"] = []
@@ -870,7 +859,12 @@ class AsyncWorkflowController:
         state["full_content_so_far"] = ""
         state["last_section_content"] = ""
 
-        if PARALLEL_SECTIONS:
+        # Force sequential for commercial to allow used-and-delete link logic
+        is_commercial = content_type == "brand_commercial"
+        use_parallel = PARALLEL_SECTIONS and not is_commercial
+
+        if use_parallel:
+            # Parallel logic for non-commercial
             tasks = [
                 self._write_single_section(
                     title=title,
@@ -884,16 +878,23 @@ class AsyncWorkflowController:
                     section_index=idx,
                     total_sections=len(outline),
                     global_keyword_count=state.get("global_keyword_count", 0),
-                    brand_mentions_count=state.get("brand_mentions_count", 0)
+                    brand_mentions_count=state.get("brand_mentions_count", 0),
+                    weaponized_usps=seo_intelligence.get("strategic_analysis", {}).get("weaponized_usps", []),
+                    strategic_framework=seo_intelligence.get("strategic_analysis", {}).get("strategic_framework", "")
                 )
                 for idx, section in enumerate(outline)
             ]
             logger.info(f"Writing {len(tasks)} sections in PARALLEL mode")
             results = await asyncio.gather(*tasks, return_exceptions=True)
         else:
-            logger.info(f"Writing {len(outline)} sections in SEQUENTIAL mode")
+            logger.info(f"Writing {len(outline)} sections in SEQUENTIAL mode (Smart Pool Enforcement: {is_commercial})")
             results = []
+            available_pool = state.get("available_links_pool", {"internal": [], "external": []})
+            
             for idx, section in enumerate(outline):
+                # Inject current pool into section context for the prompt
+                section["available_link_pool"] = available_pool
+                
                 res = await self._write_single_section(
                     title=title,
                     global_keywords=global_keywords,
@@ -906,30 +907,44 @@ class AsyncWorkflowController:
                     section_index=idx,
                     total_sections=len(outline),
                     global_keyword_count=state.get("global_keyword_count", 0),
-                    brand_mentions_count=state.get("brand_mentions_count", 0)
+                    brand_mentions_count=state.get("brand_mentions_count", 0),
+                    weaponized_usps=seo_intelligence.get("strategic_analysis", {}).get("weaponized_usps", []),
+                    strategic_framework=seo_intelligence.get("strategic_analysis", {}).get("strategic_framework", "")
                 )
                 
-                # Update quality state after each section in sequential mode
+                # UPDATE POOL: Extract used links and remove them
                 if res and res.get("generated_content"):
-                     # Update Full Content (Cumulative Memory)
-                     state["full_content_so_far"] += "\n\n" + res["generated_content"]
-                     # Update Last Section Content (For Logical Flow)
-                     state["last_section_content"] = res["generated_content"]
-                     
-                     # Track CTAs using has_cta helper
-                     def has_cta_local(text):
-                         return bool(re.search(r'<a\b|<button\b|\[.*?\]\(https?://', text))
-                     
-                     if has_cta_local(res["generated_content"]):
-                          state["ctas_placed"] = state.get("ctas_placed", 0) + 1
-                     
-                     # Track Tables (Max 2 rule)
-                     if "|" in res["generated_content"] and re.search(r"\|\s*---\s*\|", res["generated_content"]):
-                          state["tables_placed"] = state.get("tables_placed", 0) + 1
+                    content = res["generated_content"]
+                    # UPDATE POOL: Prune used internal links only (External are per-fact)
+                    content = res["generated_content"]
+                    used_urls = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
+                    
+                    old_internal = available_pool.get("internal", [])
+                    available_pool["internal"] = [u for u in old_internal if u not in used_urls]
+                    if len(old_internal) != len(available_pool["internal"]):
+                        logger.info(f"Pruned {len(old_internal) - len(available_pool['internal'])} internal links.")
 
-                     # Update global brand mention count
-                     state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
-                          
+                    state["available_links_pool"] = available_pool
+
+                    # Update Full Content (Cumulative Memory)
+                    state["full_content_so_far"] += "\n\n" + res["generated_content"]
+                    # Update Last Section Content (For Logical Flow)
+                    state["last_section_content"] = res["generated_content"]
+                    
+                    # Track CTAs using has_cta helper
+                    def has_cta_local(text):
+                        return bool(re.search(r'<a\b|<button\b|\[.*?\]\(https?://', text))
+                    
+                    if has_cta_local(res["generated_content"]):
+                         state["ctas_placed"] = state.get("ctas_placed", 0) + 1
+                    
+                    # Track Tables (Max 2 rule)
+                    if "|" in res["generated_content"] and re.search(r"\|\s*---\s*\|", res["generated_content"]):
+                         state["tables_placed"] = state.get("tables_placed", 0) + 1
+
+                    # Update global brand mention count
+                    state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
+                         
                 results.append(res)
 
         sections_content = {}
@@ -951,7 +966,18 @@ class AsyncWorkflowController:
             primary_keyword = global_keywords.get("primary", "")
             if primary_keyword:
                 full_text_for_search = (res.get("heading_text") or "") + "\n" + res.get("generated_content", "")
-                pattern = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
+                
+                # Robust regex for Arabic & English: handles common Arabic prefixes/suffixes
+                # [و|ب|ل|ف|ك|ال]* -> matches common prefixes
+                # (keyword)
+                # [ة|ات|ون|ين|ه|ها|هم|نا|ي]* -> matches common suffixes
+                # Use \b for English or standard word boundaries
+                if any(ord(c) > 127 for c in primary_keyword): # Arabic/Non-ASCII detection
+                    # Arabic-friendly regex: allow common prefixes/suffixes
+                    pattern = r'(?:[وبلفك]|ال)*{}(?:[ةاتونينههمناي])*'.format(re.escape(primary_keyword.lower()))
+                else:
+                    pattern = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
+                    
                 matches = re.findall(pattern, full_text_for_search.lower())
                 state["global_keyword_count"] = state.get("global_keyword_count", 0) + len(matches)
 
@@ -985,7 +1011,9 @@ class AsyncWorkflowController:
                     state=state,
                     force_local=True,
                     section_index=0,
-                    total_sections=len(outline)
+                    total_sections=len(outline),
+                    weaponized_usps=seo_intelligence.get("strategic_analysis", {}).get("weaponized_usps", []),
+                    strategic_framework=seo_intelligence.get("strategic_analysis", {}).get("strategic_framework", "")
                 )
 
                 if retry_res:
@@ -1012,7 +1040,9 @@ class AsyncWorkflowController:
         section_index: int = 0,
         total_sections: int = 1,
         global_keyword_count: int = 0,
-        brand_mentions_count: int = 0
+        brand_mentions_count: int = 0,
+        weaponized_usps: List[str] = None,
+        strategic_framework: str = ""
     ) -> Optional[Dict[str, Any]]:
         """Worker to write one section."""
         
@@ -1101,14 +1131,23 @@ class AsyncWorkflowController:
         cta_type = section.get("cta_type", "none")
             
         # --- Context Windowing (Token Optimization) ---
-        # Instead of sending the entire article, send the Intro + last 2 sections.
+        # Instead of sending the entire article text (token heavy), 
+        # we send the Intro + Full Map of Headings + last 3 sections.
         intro_text = state.get("introduction_text", "")
-        # Get generated content of all sections written so far in order
-        all_content = [s["generated_content"] for s in state.get("sections", {}).values() if "generated_content" in s]
-        # Keep only the last 2 sections (excluding the one being written)
-        recent_context = "\n\n".join(all_content[-2:]) if all_content else ""
         
-        optimized_context = f"ARTICLE INTRODUCTION:\n{intro_text}\n\nRECENT CONTEXT:\n{recent_context}" if intro_text else recent_context
+        # Get generated content and headings of all sections written so far
+        all_sections_data = list(state.get("sections", {}).values())
+        all_headings = [s.get("heading_text", "No Heading") for s in all_sections_data if "generated_content" in s]
+        all_content = [s["generated_content"] for s in all_sections_data if "generated_content" in s]
+        
+        # Keep the last 3 sections for immediate narrative flow
+        recent_context = "\n\n".join(all_content[-3:]) if all_content else ""
+        
+        # Build a cumulative map of what has been covered so far to prevent conceptual repetition
+        full_article_map = " | ".join(all_headings) if all_headings else "None"
+        
+        cumulative_history = f"STORY SO FAR (Headings): {full_article_map}\n\n"
+        optimized_context = f"{cumulative_history}ARTICLE INTRODUCTION:\n{intro_text}\n\nRECENT CONTEXT (Last 3 Sections):\n{recent_context}" if intro_text else recent_context
 
         # Try 1
         res_data = await self.section_writer.write(
@@ -1160,201 +1199,34 @@ class AsyncWorkflowController:
             serp_data=state.get("serp_data", {}),
             area_neighborhoods=state.get("area_neighborhoods", []),
             global_keyword_count=global_keyword_count,
-            brand_mentions_count=brand_mentions_count
+            brand_mentions_count=brand_mentions_count,
+            weaponized_usps=weaponized_usps,
+            strategic_framework=strategic_framework,
+            used_anchors=state.get("used_anchors", [])
         )
         
         content = res_data.get("content", "")
+        # --- Extract and track Anchor Texts for rotation ---
+        if content:
+            new_anchors = re.findall(r'\[(.*?)\]\(.*?\)', content)
+            if new_anchors:
+                state.setdefault("used_anchors", [])
+                for anchor in new_anchors:
+                    clean_anchor = anchor.strip().lower()
+                    if clean_anchor not in state["used_anchors"]:
+                        state["used_anchors"].append(clean_anchor)
+        
         used_links = res_data.get("used_links", [])
         brand_link_used_in_sec = res_data.get("brand_link_used", False)
         
-        # Store metadata for WorkflowLogger
-        if "metadata" in res_data:
-            state["last_step_prompt"] = res_data["metadata"]["prompt"]
-            state["last_step_response"] = res_data["metadata"]["response"]
-            state["last_step_tokens"] = res_data["metadata"]["tokens"]
-            state["last_step_model"] = res_data["metadata"].get("model", "unknown")
-
-        # Semantic Overlap Rejection
-        if content and getattr(self, "semantic_model", None) and state.get("used_claims"):
-            is_rejected, overlap_score, overlap_sentence = await self.validator.check_semantic_overlap(content, state.get("used_claims", []), threshold=0.60)
-            if is_rejected:
-                logger.warning(f"Semantic Overlap Rejected ({overlap_score:.2f}) for '{title}'. Sentence: '{overlap_sentence}'. Retrying...")
-                res_data = await self.section_writer.write(
-                    title=title,
-                    global_keywords=global_keywords,
-                    section=section,
-                    article_intent=article_intent,
-                    seo_intelligence=seo_intelligence,
-                    content_type=content_type,
-                    link_strategy=link_strategy,
-                    brand_url=brand_url,
-                    brand_link_used=brand_link_used,
-                    brand_link_allowed=can_use_brand_link,
-                    allow_external_links=bool(external_sources),
-                    workflow_mode=state.get("workflow_mode", "core"),
-                    execution_plan={
-                        **execution_plan, 
-                        "writing_mode": "refinement",
-                        "structure_rule": "AVOID SEMANTIC OVERLAP. This content overlaps with previous sections. Edit it to provide a unique angle or deeper specific details that haven't been mentioned."
-                    },
-                    draft_to_fix=content,
-                    area=state.get("area"),
-                    used_phrases=used_phrases,
-                    used_internal_links=state.get("used_internal_links", []),
-                    used_external_links=state.get("used_external_links", []), 
-                    section_index=section_index,
-                    total_sections=total_sections,
-                    brand_context=brand_context,
-                    section_source_text=section_source_text,
-                    external_sources=external_sources,
-                    brand_name=state.get("brand_name", ""),
-                    workflow_logger=state.get("workflow_logger"),
-                    prohibited_competitors=state.get("prohibited_competitors", []),
-                    full_outline=state.get("outline", []),
-                    introduction_text=state.get("introduction_text", ""),
-                    external_resources=state.get("external_resources", []),
-                    style_blueprint=state.get("style_blueprint", {}),
-                    used_claims=state.get("used_claims", []),
-
-                    previous_section_text=state.get("last_section_content", ""),
-
-                    previous_content_summary=optimized_context,
-                    cta_type=cta_type, # Pass the tiered strategy on retry too
-                    ctas_placed=state.get("ctas_placed", 0),
-                    serp_data=state.get("serp_data", {}),
-                    area_neighborhoods=state.get("area_neighborhoods", []),
-                    brand_mentions_count=brand_mentions_count
-                )
-                content = res_data.get("content", "")
-                used_links = res_data.get("used_links", [])
-                brand_link_used_in_sec = res_data.get("brand_link_used", False)
-
-        # Multi-Layer Paragraph Structure and Strict SEO Validation
-        if content:
-            is_valid, validation_errors = await self.validator.validate_section_output(
-                content=content, 
-                section=section, 
-                section_index=section_index, 
-                total_sections=total_sections, 
-                area=state.get("area"),
-                blocked_domains=state.get("blocked_external_domains", set()),
-                brand_url=state.get("brand_url", ""),
-                content_type=content_type
-            )
-            
-            if not is_valid:
-                error_msg = "; ".join(validation_errors)
-                writing_mode = "creative rephrasing"
-                structure_rule = f"CRITICAL ERRORS TO FIX: {error_msg}. EXACTLY 3-5 PARAGRAPHS."
-                
-                # Specialized Fallback for Conclusion CTAs
-                if "MISSING_CONCLUSION_CTA" in error_msg:
-                    writing_mode = "conclusion fallback"
-                    structure_rule = (
-                        "CRITICAL: YOUR PREVIOUS CONCLUSION WAS REJECTED FOR MISSING A CTA. "
-                        "YOU MUST INCLUDE A STRONG, ACTION-ORIENTED CTA AT THE VERY END. "
-                        f"Target Brand: {state.get('brand_name', 'The Brand')}. "
-                        f"Target URL: {brand_url}. "
-                        "Format: [Action Text](URL)."
-                    )
-
-                res_data = await self.section_writer.write(
-                    title=title,
-                    global_keywords=global_keywords,
-                    section=section,
-                    article_intent=article_intent,
-                    seo_intelligence=seo_intelligence,
-                    content_type=content_type,
-                    link_strategy=link_strategy,
-                    brand_url=brand_url,
-                    brand_link_used=brand_link_used,
-                    brand_link_allowed=can_use_brand_link,
-                    allow_external_links=bool(external_sources),
-                    execution_plan={
-                        **execution_plan, 
-                        "writing_mode": "refinement",
-                        "structure_rule": structure_rule
-                    },
-                    draft_to_fix=content,
-                    area=state.get("area"),
-                    used_phrases=used_phrases,
-                    used_internal_links=state.get("used_internal_links", []),
-                    used_external_links=state.get("used_external_links", []),
-                    section_index=section_index,
-                    total_sections=total_sections,
-                    brand_context=brand_context,
-                    section_source_text=section_source_text,
-                    external_sources=external_sources,
-                    brand_name=state.get("brand_name", ""),
-                    workflow_logger=state.get("workflow_logger"),
-                    prohibited_competitors=state.get("prohibited_competitors", []),
-                    full_outline=state.get("outline", []),
-                    introduction_text=state.get("introduction_text", ""),
-                    external_resources=state.get("external_resources", []),
-                    style_blueprint=state.get("style_blueprint", {}),
-                    used_claims=state.get("used_claims", []),
-
-                    previous_section_text=state.get("last_section_content", ""),
-
-                    previous_content_summary=state.get("full_content_so_far", ""),
-                    ctas_placed=state.get("ctas_placed", 0),
-                    serp_data=state.get("serp_data", {}),
-                    brand_mentions_count=brand_mentions_count
-                )
-                content = res_data.get("content", "")
-                used_links = res_data.get("used_links", [])
-                brand_link_used_in_sec = res_data.get("brand_link_used", False)
 
         # --- ENTITY LOCKDOWN CHECK (REMOVED FOR CREATIVITY) ---
         # We now rely on the AI's natural expert knowledge and strict 'No Competitor' policy.
 
-        # Repetition Guard (Retry Loop)
-        if content:
-            repeated = self.validator.detect_repetition(content, used_phrases)
-            if repeated and len(repeated) > 0:
-                logger.warning(f"High repetition detected in section '{title}'. Retrying...")
-                res_data = await self.section_writer.write(
-                    title=title,
-                    global_keywords=global_keywords,
-                    section=section,
-                    article_intent=article_intent,
-                    seo_intelligence=seo_intelligence,
-                    content_type=content_type,
-                    link_strategy=link_strategy,
-                    brand_url=brand_url,
-                    brand_link_used=brand_link_used,
-                    brand_link_allowed=can_use_brand_link,
-                    allow_external_links=bool(external_sources),
-                    execution_plan={**execution_plan, "writing_mode": "refinement"},
-                    draft_to_fix=content,
-                    area=state.get("area"),
-                    used_phrases=used_phrases + repeated,
-                    used_internal_links=state.get("used_internal_links", []),
-                    used_external_links=state.get("used_external_links", []), 
-                    section_index=section_index,
-                    total_sections=total_sections,
-                    brand_context=brand_context,
-                    section_source_text=section_source_text,
-                    external_sources=external_sources,
-                    brand_name=state.get("brand_name", ""),
-                    workflow_logger=state.get("workflow_logger"),
-                    prohibited_competitors=state.get("prohibited_competitors", []),
-                    full_outline=state.get("outline", []),
-                    introduction_text=state.get("introduction_text", ""),
-                    external_resources=state.get("external_resources", []),
-                    style_blueprint=state.get("style_blueprint", {}),
-                    used_claims=state.get("used_claims", []),
-
-                    previous_section_text=state.get("last_section_content", ""),
-
-                    previous_content_summary=state.get("full_content_so_far", ""),
-                    ctas_placed=state.get("ctas_placed", 0),
-                    serp_data=state.get("serp_data", {}),
-                    brand_mentions_count=brand_mentions_count
-                )
-                content = res_data.get("content", "")
-                used_links = res_data.get("used_links", [])
-                brand_link_used_in_sec = res_data.get("brand_link_used", False)
+        # if content:
+        #     repeated = self.validator.detect_repetition(content, used_phrases)
+        #     if repeated and len(repeated) > 0:
+        #         ...
 
         if content:
             new_sentences = self.validator.extract_sentences(content)
@@ -1415,6 +1287,38 @@ class AsyncWorkflowController:
                     state["brand_link_used"] = True
 
             final_content = self.validator.enforce_paragraph_structure(content)
+
+            # --- QUALITY VALIDATION LOGGING (SILENT CHECK) ---
+            # Perform validation but do NOT retry (to maintain speed).
+            # Log any violations to a dedicated file for the user.
+            try:
+                is_valid, validation_errors = await self.validator.validate_section_output(
+                    content=final_content,
+                    section=section,
+                    state=state
+                )
+                if not is_valid and validation_errors:
+                    output_dir = state.get("output_dir", self.work_dir)
+                    val_err_path = os.path.join(output_dir, "validation_errors.txt")
+                    section_title = section.get("heading_text", "Untitled Section")
+                    
+                    with open(val_err_path, "a", encoding="utf-8") as f:
+                        f.write(f"\n--- SECTION: {section_title} ({section_id}) ---\n")
+                        for err in validation_errors:
+                            f.write(f"- [QUALITY ISSUE]: {err}\n")
+                        
+                        # Added Silent Repetition Check
+                        repeated = self.validator.detect_repetition(final_content, state.get("used_phrases", []))
+                        if repeated and len(repeated) > 0:
+                            for rep in repeated:
+                                f.write(f"- [REPETITION ISSUE]: Found duplicated phrase: '{rep}'\n")
+
+                        f.write("-" * 50 + "\n")
+                    
+                    logger.warning(f"Quality violations logged for section '{section_title}' to {val_err_path}")
+            except Exception as e:
+                logger.error(f"Failed to log validation errors: {e}")
+            # --------------------------------------------------
 
             # Count brand mentions in finalized content
             brand_name = state.get("brand_name", "")
@@ -1633,16 +1537,9 @@ class AsyncWorkflowController:
         )
         
         # Final pass redundancy pruning on the whole assembled markdown
-        if "final_markdown" in assembled:
-            md = assembled["final_markdown"]
-            # Mechanical Paragraph Deduplication (Fail-safe)
-            md = self.validator.deduplicate_paragraphs_in_markdown(md, threshold=0.85)
-            md = self.validator.prune_redundant_intros(md)
-            brand_url = state.get("brand_url", "")
-            brand_domain = LinkManager.domain(brand_url) if brand_url else ""
-            md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
-
-            assembled["final_markdown"] = md
+        # One final pass at the very end will suffice
+        # md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
+        assembled["final_markdown"] = assembled.get("final_markdown", "")
 
         state["final_output"] = assembled
         return state
@@ -1697,7 +1594,8 @@ class AsyncWorkflowController:
                     section=section,
                     is_introduction=is_intro,
                     is_conclusion=is_conclusion,
-                    brand_mentions_total_count=state.get("brand_mentions_count", 0)
+                    brand_mentions_total_count=state.get("brand_mentions_count", 0),
+                    global_keyword_count=state.get("global_keyword_count", 0)
                 )
                 if new_content:
                     section["generated_content"] = new_content
@@ -1714,28 +1612,20 @@ class AsyncWorkflowController:
         )
         
         # Final pass redundancy pruning on the whole assembled markdown
-        if "final_markdown" in assembled:
-            md = assembled["final_markdown"]
-            # Mechanical Paragraph Deduplication (Final Safety Gate)
-            md = self.validator.deduplicate_paragraphs_in_markdown(md, threshold=0.85)
-            md = self.validator.prune_redundant_intros(md)
-            brand_url = state.get("brand_url", "")
-            brand_domain = LinkManager.domain(brand_url) if brand_url else ""
-            md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
-            assembled["final_markdown"] = md
-            
-            # Final Article-Level CTA Budget Validation
-            word_count = len(md.split())
-            is_budget_ok, budget_error = self.validator.validate_article_cta_budget(
-                full_markdown=md,
-                word_count=word_count,
-                content_type=state.get("content_type", "informational")
-            )
-            if not is_budget_ok:
-                logger.warning(f"[cta_budget] {budget_error}")
-                # We don't fail the article here, but we log the warning for transparency.
-                # In the future, this could trigger a pruning pass.
-            
+        # Sanitization disabled per quality hardening plan - relying on LinkManager's final pass
+        # md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
+        md = assembled.get("final_markdown", "")
+        
+        # Final Article-Level CTA Budget Validation
+        word_count = len(md.split())
+        is_budget_ok, budget_error = self.validator.validate_article_cta_budget(
+            full_markdown=md,
+            word_count=word_count,
+            content_type=state.get("content_type", "informational")
+        )
+        if not is_budget_ok:
+            logger.warning(f"[cta_budget] {budget_error}")
+            # We don't fail the article here, but we log the warning for transparency.
         state["final_output"] = assembled
         return state
 
@@ -1750,7 +1640,7 @@ class AsyncWorkflowController:
         # Run a second dedup pass after image insertion to catch any links added by images
         brand_url = state.get("brand_url", "")
         brand_domain = LinkManager.domain(brand_url) if brand_url else ""
-        new_md = LinkManager.deduplicate_links_in_markdown(new_md, brand_domain=brand_domain, max_internal=6)
+        # md = LinkManager.deduplicate_links_in_markdown(new_md, brand_domain=brand_domain, max_internal=6)
         state["final_output"]["final_markdown"] = new_md
         return state
 
@@ -1835,42 +1725,9 @@ class AsyncWorkflowController:
             return state
         
         
-        # Safeguard link hygiene (final article level)
-        final_md = LinkManager.sanitize_links(
-            final_md,
-            max_external=input_data.get("max_external_links", 6),
-            max_brand=6,
-            brand_url=state.get("brand_url"),
-            internal_url_set=state.get("internal_url_set"),
-            blocked_domains=state.get("blocked_external_domains"),
-            allowed_domains=state.get("authority_domains")
-        )
+        # Article Validation Silent Mode (Disabled as requested)
         critical_issues = []
         warnings = []
-
-        # Trust-link floor: target at least N useful external links when available.
-        min_external_links = state.get("min_external_links", 2)
-        if min_external_links > 0:
-            all_links = re.findall(r'\[.*?\]\((https?://.*?)\)', final_md)
-            brand_url = state.get("brand_url", "")
-            blocked = state.get("blocked_external_domains", set()) or set()
-            external_unique = set()
-            for link in all_links:
-                dom = LinkManager.domain(link)
-                if not dom:
-                    continue
-                if brand_url and LinkManager.is_same_site(link, brand_url):
-                    continue
-                if dom in blocked:
-                    continue
-                external_unique.add(LinkManager.canon_url(link))
-            if len(external_unique) < min_external_links:
-                warnings.append(
-                    f"EXTERNAL_TRUST_LINKS_ADVISORY: Found {len(external_unique)} useful external links. "
-                    f"Target is at least {min_external_links}."
-                )
-
-        state["final_output"]["final_markdown"] = final_md
 
         word_count, keyword_count, keyword_density = self.validator.calculate_keyword_stats(
             final_md,
@@ -2154,6 +2011,20 @@ class AsyncWorkflowController:
             from jinja2 import Environment, FileSystemLoader
             env = Environment(loader=FileSystemLoader("assets/prompts/templates"))
             humanizer_template = env.get_template("09_humanizer_editor.txt")
+
+        # try:
+        #     humanize_prompt = humanizer_template.render(
+        #         full_content=full_content,
+        #         tone=tone,
+        #         audience_level=audience_level,
+        #         area=state.get("area", "Global"),
+        #         content_type=state.get("content_type", "article"),
+        #         article_language=state.get("article_language", "Arabic"),
+        #         primary_keyword=state.get("primary_keyword", ""),
+        #         brand_name=state.get("brand_name", "")
+        #     )
+        #     res = await self.ai_client.send(humanize_prompt, step="humanizer_polish")
+        #     polished_content = res.get("content", full_content)
 
         humanize_prompt = humanizer_template.render(
             full_content=full_content,

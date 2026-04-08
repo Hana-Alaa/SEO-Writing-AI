@@ -334,9 +334,13 @@ class StrategyService:
         # Extract JSON from potential Markdown blocks
         try:
             json_str = re.search(r'\{.*\}', content, re.DOTALL).group(0)
-            data = json.loads(json_str)
-            intent = data.get("intent", "informational").lower().strip()
-            reasoning = data.get("reasoning", "")
+            data = recover_json(json_str)
+            if not data:
+                # If extraction failed, try recovering from the full content
+                data = recover_json(content)
+            
+            intent = (data or {}).get("intent", "informational").lower().strip()
+            reasoning = (data or {}).get("reasoning", "")
             logger.info(f"[Intent_Intelligence] Classified as '{intent}' because: {reasoning}")
         except Exception as e:
             logger.warning(f"Failed to parse strategic intent JSON, falling back to raw: {e}")

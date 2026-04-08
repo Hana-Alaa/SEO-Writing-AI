@@ -1,7 +1,7 @@
 from jinja2 import Template, StrictUndefined
 import logging
 logger = logging.getLogger(__name__)
-from src.utils.safe_json import recover_json
+from src.utils.json_utils import recover_json
 from src.services.content_generator import ContentGeneratorError
 
 class SectionValidator:

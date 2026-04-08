@@ -11,7 +11,7 @@ from jinja2 import Template
 from typing import List, Dict, Optional, Any
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageStat
 from io import BytesIO
-from src.utils.safe_json import recover_json
+from src.utils.json_utils import recover_json
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class ImageGenerator:
         self.template_path = template_path
         os.makedirs(self.save_dir, exist_ok=True)
 
-    async def generate_images(self, items, primary_keyword="", image_frame_path=None, logo_path=None, workflow_logger=None):
+    async def generate_images(self, items, primary_keyword="", image_frame_path=None, logo_path=None, brand_visual_style: str = "", workflow_logger=None):
         """Orchestrates parallel image generation and processing."""
         tasks = []
         for i, item in enumerate(items):

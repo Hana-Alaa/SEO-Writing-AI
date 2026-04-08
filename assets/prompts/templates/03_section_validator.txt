@@ -43,11 +43,12 @@ Validation Checklist:
 
 3. Primary Keyword Rules
 - Must appear at least once.
-- Must appear in the first paragraph.
-- Must be bolded at least once.
+- Must appear in the first paragraph (except for FAQ).
+- Natural integration is prioritized over mechanical bolding.
 
-4. Assigned Keywords
+4. Assigned Keywords & Brand Mentions
 - Each assigned keyword must appear at least once.
+- **Brand Mention Limit**: The brand name "{{ brand_name }}" MUST NOT appear more than ONCE in this section.
 - Usage must be natural (no keyword stuffing).
 
 5. Forbidden Elements

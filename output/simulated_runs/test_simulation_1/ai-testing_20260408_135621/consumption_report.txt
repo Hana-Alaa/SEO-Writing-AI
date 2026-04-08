@@ -1,0 +1,42 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0000
+Total Tokens: 1,800
+
+Google (Gemini) Cost: $0.0000
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+serp_analysis             | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | mock-writing-model        | $0.000000
+STEP_TOTAL: style_analys  | mock-writing-model        | $0.000000
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | mock-writing-model        | $0.000000
+STEP_TOTAL: outline_gene  | mock-writing-model        | $0.000000
+section_1_Mocked Introdu  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_2_The Benefits o  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_3_Final Conclusi  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_1_Mocked Introdu  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+STEP_TOTAL: content_writ  | mock-writing-model        | $0.000000
+STEP_TOTAL: humanizer     | mock-writing-model        | $0.000000
+STEP_TOTAL: image_prompt  | mock-writing-model        | $0.000000
+STEP_TOTAL: master_frame  | mock-writing-model        | $0.000000
+STEP_TOTAL: image_genera  | mock-writing-model        | $0.000000
+STEP_TOTAL: assembly      | mock-writing-model        | $0.000000
+STEP_TOTAL: final_humani  | mock-writing-model        | $0.000000
+STEP_TOTAL: image_insert  | mock-writing-model        | $0.000000
+STEP_TOTAL: meta_schema   | mock-writing-model        | $0.000000
+STEP_TOTAL: render_html   | mock-writing-model        | $0.000000

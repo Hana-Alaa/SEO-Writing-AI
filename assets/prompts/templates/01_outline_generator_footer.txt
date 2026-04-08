@@ -1,0 +1,37 @@
+--------------------------------------------------------------------------------
+6. OUTPUT JSON FORMAT (CONTRACT)
+--------------------------------------------------------------------------------
+- RETURN JSON ONLY.
+{
+  "outline": [
+    {
+      "section_id": "sec_01",
+      "heading_level": "H2",
+      "heading_text": "",
+      "section_type": "introduction | standard | faq | conclusion",
+      "section_intent": "Commercial | Informational",
+      "semantic_unit": "Unique topic label (e.g., Pricing, Location, Safety)",
+      "brand_mention_eligible": false,
+      "decision_layer": "Market Reality | Technical Systems | Implementation Process | Business Risk | Proof Layer",
+      "sales_intensity": "high | medium | low",
+      "content_goal": "",
+      "content_angle": "",
+      "localized_angle": "",
+      "assigned_keywords": [],
+      "assigned_links": [{"url": "...", "text": "..."}],
+      "cta_eligible": false,
+      "cta_type": "none | soft | moderate | strong",
+      "requires_table": false,
+      "table_type": "comparison | process | none",
+      "requires_list": false,
+      "list_type": "bullets | numbered | none",
+      "questions": [],
+      "mandatory_facts": []
+    }
+  ],
+  "semantic_entities": [],
+  "semantic_concepts": [],
+  "intent_clusters": [],
+  "global_fact_pool": [],
+  "keyword_expansion": { "primary": "", "core": [], "lsi": [], "semantic": [], "paa": [] }
+}

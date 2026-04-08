@@ -1,0 +1,156 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 25.36 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 96.72 seconds
+  -- Tokens Used: 43,523
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 97.06 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 6.21 seconds
+  -- Tokens Used: 7,205
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 10.18 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 12.64 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 14.38 seconds
+  -- Tokens Used: 725
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 725
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 8.68 seconds
+  -- Tokens Used: 4,078
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 8.80 seconds
+  -- Tokens Used: 4,078
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 81.30 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: SECTION_1_استثمارك الآمن يبدأ باقتناص شقق للبيع في القاهرة الجديدة بأسعار 2026 الحصرية
+  -- Duration: 5.77 seconds
+  -- Tokens Used: 10,163
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: استثمارك الآمن يبدأ باقتناص شقق للبيع في القاهرة الجديدة بأسعار 2026 الحصرية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_دليل شامل حول شقق للبيع في القاهرة الجديدة: المواصفات وأنظمة السداد
+  -- Duration: 6.24 seconds
+  -- Tokens Used: 15,038
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: دليل شامل حول شقق للبيع في القاهرة الجديدة: المواصفات وأنظمة السداد
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_لماذا تتفوق منطقة بيت الوطن والحي الثامن في عروض 2026؟
+  -- Duration: 31.62 seconds
+  -- Tokens Used: 20,221
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تتفوق منطقة بيت الوطن والحي الثامن في عروض 2026؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_وفّر عمولة السمسرة مع وحدات 'اللقطة' من المالك مباشرة
+  -- Duration: 6.93 seconds
+  -- Tokens Used: 25,676
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: وفّر عمولة السمسرة مع وحدات 'اللقطة' من المالك مباشرة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_تحليل العائد الاستثماري (ROI) للسكن في كمبوندات التجمع الخامس
+  -- Duration: 7.41 seconds
+  -- Tokens Used: 30,417
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: تحليل العائد الاستثماري (ROI) للسكن في كمبوندات التجمع الخامس
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_4 خطوات قانونية لتأمين عملية شراء شقتك الجديدة
+  -- Duration: 6.44 seconds
+  -- Tokens Used: 37,866
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: 4 خطوات قانونية لتأمين عملية شراء شقتك الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_أسئلة شائعة حول حجز شقق للبيع في القاهرة الجديدة
+  -- Duration: 32.24 seconds
+  -- Tokens Used: 42,877
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول حجز شقق للبيع في القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_ابدأ رحلتك الآن نحو امتلاك شقق للبيع في القاهرة الجديدة بأفضل سعر
+  -- Duration: 7.28 seconds
+  -- Tokens Used: 49,093
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلتك الآن نحو امتلاك شقق للبيع في القاهرة الجديدة بأفضل سعر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 115.04 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 15.44 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 2.05 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 30.53 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 8.20 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.52 seconds
+  -- Tokens Used: 107,032
+--------------------------------------------------

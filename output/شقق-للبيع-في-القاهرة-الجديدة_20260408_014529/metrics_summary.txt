@@ -1,0 +1,160 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 22.36 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 73.44 seconds
+  -- Tokens Used: 40,380
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 73.85 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 7.41 seconds
+  -- Tokens Used: 8,199
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 16.25 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 2.97 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 5.00 seconds
+  -- Tokens Used: 721
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 721
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 11.55 seconds
+  -- Tokens Used: 4,572
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 11.64 seconds
+  -- Tokens Used: 4,572
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 87.59 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: SECTION_1_دليلك الشامل لامتلاك شقق للبيع في القاهرة الجديدة 2026 بأفضل الأسعار
+  -- Duration: 4.83 seconds
+  -- Tokens Used: 8,238
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: دليلك الشامل لامتلاك شقق للبيع في القاهرة الجديدة 2026 بأفضل الأسعار
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_لماذا تختار شقق للبيع في القاهرة الجديدة عبر منصة عقار يا مصر؟
+  -- Duration: 5.78 seconds
+  -- Tokens Used: 13,172
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار شقق للبيع في القاهرة الجديدة عبر منصة عقار يا مصر؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_خريطة الأسعار: متوسط سعر المتر في أحياء القاهرة الجديدة 2026
+  -- Duration: 6.46 seconds
+  -- Tokens Used: 18,694
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة الأسعار: متوسط سعر المتر في أحياء القاهرة الجديدة 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_أفضل مناطق البحث عن شقق بالتقسيط في بيت الوطن والتجمع الخامس
+  -- Duration: 6.59 seconds
+  -- Tokens Used: 25,886
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أفضل مناطق البحث عن شقق بالتقسيط في بيت الوطن والتجمع الخامس
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_المواصفات الفنية والخدمات: ما الذي يجعل عقارك في القاهرة الجديدة استثنائياً؟
+  -- Duration: 8.65 seconds
+  -- Tokens Used: 41,882
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: المواصفات الفنية والخدمات: ما الذي يجعل عقارك في القاهرة الجديدة استثنائياً؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_خطوات الشراء الآمن والتحقق القانوني عبر عقار يا مصر
+  -- Duration: 6.08 seconds
+  -- Tokens Used: 48,271
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات الشراء الآمن والتحقق القانوني عبر عقار يا مصر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_أسئلة شائعة حول شقق للبيع في القاهرة الجديدة
+  -- Duration: 6.51 seconds
+  -- Tokens Used: 53,340
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول شقق للبيع في القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_ابدأ رحلتك الآن: تملك شقتك المثالية في القاهرة الجديدة 2026
+  -- Duration: 5.98 seconds
+  -- Tokens Used: 59,939
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلتك الآن: تملك شقتك المثالية في القاهرة الجديدة 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 51.03 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 19.47 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 63.45 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 101.84 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 7.15 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: ARTICLE_VALIDATION
+  -- Duration: 4.47 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.42 seconds
+  -- Tokens Used: 113,341
+--------------------------------------------------

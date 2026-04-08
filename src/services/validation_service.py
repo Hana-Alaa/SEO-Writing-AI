@@ -262,7 +262,7 @@ class ValidationService:
                 return True
         return False
 
-    async def validate_section_output(self, content: str, section: Dict[str, Any], section_index: int, total_sections: int, area: str, blocked_domains: set = None, brand_url: str = "", content_type: str = "informational") -> Tuple[bool, List[str]]:
+    async def validate_section_output(self, content: str, section: Dict[str, Any], section_index: int = 0, total_sections: int = 0, area: str = "", blocked_domains: set = None, brand_url: str = "", content_type: str = "informational", **kwargs) -> Tuple[bool, List[str]]:
         """
         Hardens CTA validation based on the 'Earned CTA' and 'Structural Integrity' protocols.
         Rules:
@@ -457,9 +457,12 @@ class ValidationService:
             import httpx
             async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
                 response = await client.head(url)
+                if response.status_code == 403:
+                    logger.warning(f"External link {url} returned 403 (Forbidden). Likely bot block. Treating as valid but suspicious.")
+                    return True
                 if response.status_code >= 400:
                     response = await client.get(url)
-                return 200 <= response.status_code < 400
+                return 200 <= response.status_code < 400 or response.status_code == 403
         except Exception as e:
             logger.warning(f"Failed to verify external link {url}: {e}")
             return False
@@ -873,6 +876,27 @@ class ValidationService:
         faq_count = len(faq_section.get("questions") or []) if faq_section else 0
         if faq_count > 0 and faq_count < 3:
             errors.append(f"Too few FAQ questions detected ({faq_count}). Minimum required is 3.")
+
+        # --- PK 5-SLOT MAP VALIDATION ---
+        h1_title = outline[0].get("heading_text", "") # Usually H1 is in title generator, but H2/Intro is first here
+        pk_sections = [s for s in outline if s.get("requires_primary_keyword")]
+        
+        # Rule 1: Intro (Slot 1) must require PK
+        if outline and not outline[0].get("requires_primary_keyword"):
+             # We allow a slight leniency if it's the very first section even if not index-0
+             intro_sec = next((s for s in outline if (s.get("section_type") or "").lower() == "introduction"), None)
+             if intro_sec and not intro_sec.get("requires_primary_keyword"):
+                  errors.append("Strategic Map Violation: Introduction section must be marked as 'requires_primary_keyword: true'.")
+
+        # Rule 2: Exactly ONE H2 heading (Slot 2) must contain PK in its metadata requirement
+        h2_pk_sections = [s for s in h2_sections if s.get("requires_primary_keyword")]
+        if len(h2_pk_sections) != 1:
+             errors.append(f"Strategic Map Violation: Exactly ONE H2 heading must require the Primary Keyword (found {len(h2_pk_sections)}).")
+
+        # Rule 3: Total PK sections should be 4-5 (Slots 1, 2, 4, 5 + Conclusion)
+        total_pk_reqs = len(pk_sections)
+        if total_pk_reqs < 4:
+             errors.append(f"Strategic Map Violation: Total PK assignment slots should be at least 4 (found {total_pk_reqs}).")
 
         coverage = self.evaluate_outline_coverage(outline, content_type)
         if coverage.get("missing"):

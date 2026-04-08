@@ -25,27 +25,30 @@ Validation Checklist:
 1. **Headings**
    - H1 exists, matches article title, length 60–70 chars. [CRITICAL]
    - H2/H3 hierarchy is logical and consistent. [WARNING]
+   - **H2 QUALITY**: H2s must NOT be generic (e.g., "Introduction", "Conclusion"). Reward descriptive, benefit-driven titles. [CRITICAL]
 
 2. **Keyword & Language Flow**
-   - **Opening Relevance**: The first paragraph MUST clearly reflect the primary keyword topic (Exact phrase OR strong natural variant is acceptable). [CRITICAL]
-   - **Global Exact-Form Cap**: The exact primary keyword phrase must NOT exceed 4 mentions across the full article. [CRITICAL]
+   - **Opening Relevance**: The first paragraph MUST clearly reflect the primary keyword topic. [CRITICAL]
+   - **Global Exact-Form Cap**: The exact primary keyword phrase must NOT exceed **6 mentions** across the full article. [CRITICAL]
    - **Section Repetition**: The exact primary keyword phrase must NOT appear more than once in the same section. [CRITICAL]
    - **H2 Relevance**: At least one key H2 must reflect the primary keyword clearly (Exact or strong variant). [CRITICAL]
    - **Distribution**: Exact mentions should be distributed across different article phases, not clustered in adjacent sections. [WARNING]
    - **Linguistic Naturalness**: No robotic repetition. Close natural variants and semantic rephrasing are encouraged and should NOT be penalized as "missing". [CRITICAL]
 
-3. **Practical Content Depth (The 4 Pillars)**
+3. **Practical Content Depth & Intent Ratio**
+   - **Informational Articles**: 70% Informational / 30% Commercial.
+   - **Commercial Articles**: **70% Commercial / 30% Informational**. Mandate brand solutions and conversion hooks. [CRITICAL]
    - Article MUST include practical/actionable information regarding:
      - **Risk & Security**: (e.g., fraud prevention, official vs secondary). [CRITICAL]
      - **Operational Journey**: (e.g., post-purchase steps, QR, entry). [CRITICAL]
      - **Pricing Dynamics**: (e.g., why prices change). [CRITICAL]
      - **Transaction Mastery**: (e.g., installments, refunds). [CRITICAL]
-   - 70% of content must be informative/operational, not just marketing fluff. [CRITICAL]
 
-4. **External Link & Trust Integrity**
+4. **Link & Trust Integrity (The 5+2 Rule)**
+   - **Internal Count**: At least **5 internal links** distributed across sections. [CRITICAL]
+   - **External Count**: Exactly **2 unique, high-utility external links**. [CRITICAL]
    - **No Decorative Links**: NO links to global standard orgs (ISO, ITU, IEEE) for practical/commercial topics. [CRITICAL]
    - **Link Relevance**: Every external link must have "Operational Utility" (help user take action or verify a specific policy). Every link MUST be cross-referenced against the "Reference Authority Links" provided above. [CRITICAL]
-   - **Minimum Quota**: At least 2 unique, high-utility external links SHOULD be present when reliable authority links are available in context. [WARNING]
    - **No Generic Portals**: Links to generic homepages (mosa.gov.sa, cert.gov.sa) are forbidden if they do not provide direct, specific information relevant to the section. [CRITICAL]
    - **Link Placement**: Links must follow the facts they validate. [WARNING]
 

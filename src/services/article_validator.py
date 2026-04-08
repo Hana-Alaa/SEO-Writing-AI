@@ -1,6 +1,6 @@
 from jinja2 import Template, StrictUndefined
 import logging
-import json 
+from src.utils.json_utils import recover_json
 
 logger = logging.getLogger(__name__)
 
@@ -12,10 +12,7 @@ class ArticleValidator:
 
     async def validate( self, final_markdown, meta, images, title, article_language, primary_keyword, word_count, keyword_count, keyword_density, content_strategy=None, prohibited_competitors=None, reference_authority_links=None):
         if isinstance(meta, str):
-            try:
-                meta = json.loads(meta)
-            except Exception:
-                meta = {}
+            meta = recover_json(meta) or {}
 
         prompt = self.template.render(
             title=title,

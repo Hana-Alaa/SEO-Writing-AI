@@ -199,7 +199,9 @@ class OutlineGenerator:
             external_resources: List[Dict[str, str]] = None,
             style_blueprint: Dict[str, Any] = None,
             brand_name: str = "",
-            brand_url: str = ""
+            brand_url: str = "",
+            weaponized_usps: List[str] = None,
+            strategic_framework: str = ""
         ) -> Dict[str, Any]:
 
 
@@ -255,7 +257,9 @@ class OutlineGenerator:
             secondary_keywords=secondary_keywords or [],
             competitor_count=competitor_count,
             external_resources=external_resources or [],
-            style_blueprint=final_blueprint
+            style_blueprint=final_blueprint,
+            weaponized_usps=weaponized_usps or [],
+            strategic_framework=strategic_framework or ""
         )
 
 
@@ -281,9 +285,18 @@ class OutlineGenerator:
 
         data = recover_json(response)
 
-        if not data or not isinstance(data, dict):
-            logger.error(f"CRITICAL: Failed to parse AI response as JSON for outline. Step: outline. Raw response:\n{response}")
-            raise ContentGeneratorError("Invalid structure returned by AI.")
+        if not data:
+            logger.error(f"CRITICAL: Failed to parse AI response as JSON for outline. Step: outline. Raw response (first 200 chars):\n{response[:200]}")
+            raise ContentGeneratorError(f"AI returned invalid JSON structure. Starting with: {response[:50]}")
+
+        # AUTO-RECOVERY: If AI returns a list, assume it's the outline itself.
+        if isinstance(data, list):
+            logger.warning("AI returned a list instead of a dictionary. Auto-wrapping as 'outline'.")
+            data = {"outline": data}
+
+        if not isinstance(data, dict):
+            logger.error(f"CRITICAL: AI returned {type(data)} instead of dict. Raw response:\n{response}")
+            raise ContentGeneratorError("Invalid structure returned by AI (expected dictionary).")
 
         outline = data.get("outline")
         keyword_expansion = data.get("keyword_expansion", {})
@@ -292,11 +305,14 @@ class OutlineGenerator:
         intent_clusters = data.get("intent_clusters", [])
 
         if not outline or not isinstance(outline, list):
-            raise ContentGeneratorError("Invalid outline structure returned by AI.")
+            logger.error(f"Outline missing or invalid in data: {list(data.keys())}")
+            raise ContentGeneratorError("Invalid outline structure returned by AI (missing or non-list 'outline' field).")
 
 
         if not self._validate_outline_schema(outline):
-            raise ContentGeneratorError("Invalid outline schema returned by AI.")
+            logger.error("Outline schema validation failed.")
+            raise ContentGeneratorError("Invalid outline schema returned by AI (missing required section keys).")
+
 
         total_min_words = sum(
             section.get("estimated_word_count_min", 0)
@@ -367,6 +383,7 @@ class SectionWriter:
         brand_name: str = "",
         used_phrases: List[str] = None,
         used_topics: List[str] = None,
+        used_anchors: List[str] = None,
         previous_content_summary: str = "",
         used_internal_links: List[str] = None,
         used_external_links: List[str] = None,
@@ -399,7 +416,9 @@ class SectionWriter:
         area_neighborhoods: List[str] = None,
         global_keyword_count: int = 0,
         brand_mentions_count: int = 0,
-        draft_to_fix: str = None
+        draft_to_fix: str = None,
+        weaponized_usps: List[str] = None,
+        strategic_framework: str = ""
     ) -> Dict[str, Any]:
 
 
@@ -516,6 +535,7 @@ class SectionWriter:
             area=area,
             used_phrases=used_phrases or [],
             used_topics=used_topics or [],
+            used_anchors=used_anchors or [],
             previous_section_text=previous_section_text or "",
             previous_content_summary=previous_content_summary or "",
             used_internal_links=used_internal_links or [],
@@ -551,7 +571,9 @@ class SectionWriter:
             area_neighborhoods=area_neighborhoods or [],
             global_keyword_count=global_keyword_count,
             brand_mentions_count=brand_mentions_count,
-            draft_to_fix=draft_to_fix
+            draft_to_fix=draft_to_fix,
+            weaponized_usps=weaponized_usps or [],
+            strategic_framework=strategic_framework or ""
         )
 
 
@@ -637,7 +659,7 @@ class Assembler:
 
         final_parts = [f"# {title}"]
 
-        for sec in sections:
+        for idx, sec in enumerate(sections):
             level = sec.get("heading_level", "H2")
             heading = sec.get("heading_text", "").strip()
             content = sec.get("generated_content", "").strip()
@@ -697,24 +719,21 @@ class Assembler:
             content_lines = content.split("\n")
             if content_lines:
                 first_line = content_lines[0].strip()
-                # Remove markdown hashes and common prefix/suffixes for comparison
                 clean_first_line = re.sub(r"^#+\s*", "", first_line).strip().lower()
                 clean_heading = heading.lower()
                 
-                # Exact match or starts-with match (allowing for minor AI variations)
                 if clean_heading and (clean_first_line == clean_heading or clean_first_line.startswith(clean_heading)):
                     logger.info(f"[Assembler] Removing duplicate heading from content: '{first_line}'")
                     content = "\n".join(content_lines[1:]).strip()
 
-            # Skip adding the heading for the VERY FIRST section unconditionally.
-            # This ensures we don't have H1 and H2 stacked at the start.
-            # Also skip if it's explicitly named 'Introduction'.
-            is_first_sec = (sections.index(sec) == 0)
+            # Skip adding the heading ONLY for the VERY FIRST section.
+            is_first_sec = (idx == 0)
             
             is_intro_name = heading.strip().lower() in ["introduction", "مقدمة", "مقدمه"]
             is_intro_type = sec.get("section_type") == "introduction"
             
-            skip_heading = is_first_sec or (is_intro_name and is_intro_type)
+            # Primary rule: Never skip heading for anything after the first section (idx 0)
+            skip_heading = is_first_sec or (idx < 1 and is_intro_name and is_intro_type)
             
             if not heading.strip():
                 skip_heading = True
@@ -753,7 +772,8 @@ class FinalHumanizer:
         section: Dict[str, Any] = None,
         is_introduction: bool = False,
         is_conclusion: bool = False,
-        brand_mentions_total_count: int = 0
+        brand_mentions_total_count: int = 0,
+        global_keyword_count: int = 0
     ) -> str:
         
         prompt = self.template.render(
@@ -767,7 +787,8 @@ class FinalHumanizer:
             section=section or {},
             is_introduction=is_introduction,
             is_conclusion=is_conclusion,
-            brand_mentions_total_count=brand_mentions_total_count
+            brand_mentions_total_count=brand_mentions_total_count,
+            global_keyword_count=global_keyword_count
         )
         
         try:

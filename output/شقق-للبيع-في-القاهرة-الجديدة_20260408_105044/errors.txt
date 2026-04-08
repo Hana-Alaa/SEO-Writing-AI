@@ -1,0 +1,17 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-08 10:54:59
+ERROR: Invalid structure returned by AI.
+TRACEBACK:
+Traceback (most recent call last):
+  File "E:\SEO-Writing-AI\src\services\workflow_controller.py", line 88, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "E:\SEO-Writing-AI\src\services\workflow_controller.py", line 588, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\SEO-Writing-AI\src\services\content_generator.py", line 290, in generate
+    raise ContentGeneratorError("Invalid structure returned by AI.")
+src.services.content_generator.ContentGeneratorError: Invalid structure returned by AI.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -7,6 +7,8 @@ import logging
 from typing import Dict, Any, List, Optional
 from bs4 import BeautifulSoup
 
+from src.utils.json_utils import recover_json
+
 logger = logging.getLogger(__name__)
 
 class StyleExtractor:
@@ -102,7 +104,10 @@ Output STRICT JSON only:
 
         try:
             res = await self.ai_client.send(tactical_prompt, step="style_extraction")
-            blueprint = json.loads(re.search(r'\{.*\}', res["content"], re.DOTALL).group(0))
+            blueprint = recover_json(res["content"])
+            if not isinstance(blueprint, dict):
+                logger.warning("Failed to recover style blueprint JSON. Falling back to empty object.")
+                blueprint = {}
             
             # Merge automated structural detection
             blueprint["detected_elements"] = structure

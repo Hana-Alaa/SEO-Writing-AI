@@ -257,24 +257,10 @@ class LinkManager:
             if core_url in seen_urls:
                 return anchor
 
-            if is_internal(url):
-                if links_in_current_h2 >= 2:
-                    return anchor
-            
-            if is_internal(url) and not is_seo_valuable(url):
-                # SPECIAL EXCEPTION: If the link is to a contact/help/faq page AND it is at the end of the article, keep it.
-                # Since we don't have block-level context here easily, we rely on the junk_slug reduction above.
-                pass
-
-            if is_internal(url) and internal_count >= max_internal:
-                return anchor
-
-            # Relaxed Anchor Deduplication:
-            # We allow the same anchor (e.g., "احجز الآن") if the URL is different.
-            # The `seen_anchors` set is no longer used for deduplication.
+            # Skip count-based pruning here - we want to keep what the AI strategically placed 
+            # as long as they are NOT duplicates. Final distribution is controlled in workflow.
             
             seen_urls.add(core_url)
-            # seen_anchors.add(anchor_key) # DISABLED: Allow duplicate anchors for different URLs
             if is_internal(url):
                 internal_count += 1
                 links_in_current_h2 += 1

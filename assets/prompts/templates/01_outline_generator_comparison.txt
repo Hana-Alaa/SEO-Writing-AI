@@ -1,6 +1,16 @@
-{{ content_strategy_base | default('Content Strategy Base Prompt (Fallback)') }}
+{% include '01_outline_generator_base.txt' %}
 
-Comparison Specific Rules:
-- **COMPARATIVE ANALYSIS**: Focus on contrasting features, pricing, and outcomes.
-- **BENCHMARKING**: Use metrics or market standards as a baseline for the comparison.
-- **DECISION-GUIDANCE**: Every section should help the reader lean toward a specific tier or option.
+--------------------------------------------------------------------------------
+COMPARISON SUBTYPE (THE PRODUCT HUNTER BRAIN)
+--------------------------------------------------------------------------------
+1. THE COMPARISON SOUL (BENCHMARKING)
+   - **YOUR ROLE**: Objective Comparison Expert. Compare features, pricing, and outcomes.
+   - **BENCHMARKING**: Use metrics or market standards as a baseline for the comparison.
+   - **DECISION-GUIDANCE**: Every section should help the reader lean toward a specific Tier, Package, or Option.
+
+2. COMPARISON PILLARS
+- **Side-by-Side Analysis**: Use tables to compare different tiers or services.
+- **Contextual Tiers**: Explain the "Who is this for?" for each option.
+- **ROI/Value Comparison**: Contrast long-term benefits vs upfront costs.
+
+{% include '01_outline_generator_footer.txt' %}

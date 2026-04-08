@@ -1,0 +1,120 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 0.68 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 0.03 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: SECTION_1_MOCKED INTRODUCTION TO SEO
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: MOCKED INTRODUCTION TO SEO
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_THE BENEFITS OF MOCK TESTING
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: THE BENEFITS OF MOCK TESTING
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_FINAL CONCLUSION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: FINAL CONCLUSION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_MOCKED INTRODUCTION TO SEO
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: MOCKED INTRODUCTION TO SEO
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 0.04 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 150
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 0.17 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.06 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
