@@ -1,0 +1,164 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 20.61 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 75.27 seconds
+  -- Tokens Used: 50,216
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 75.73 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 5.74 seconds
+  -- Tokens Used: 7,409
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 8.03 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.26 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.23 seconds
+  -- Tokens Used: 742
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 742
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 7.67 seconds
+  -- Tokens Used: 4,438
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 7.83 seconds
+  -- Tokens Used: 4,438
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 104.21 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: SECTION_1_اقتنص فرصتك العقارية في أرقى أحياء التجمع الخامس 2026
+  -- Duration: 4.00 seconds
+  -- Tokens Used: 13,083
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: اقتنص فرصتك العقارية في أرقى أحياء التجمع الخامس 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_خريطة شقق للبيع في القاهرة الجديدة: المواقع الأكثر طلباً
+  -- Duration: 5.86 seconds
+  -- Tokens Used: 13,747
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة شقق للبيع في القاهرة الجديدة: المواقع الأكثر طلباً
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_مواصفات الوحدات السكنية والمساحات المتاحة في التجمع الخامس
+  -- Duration: 5.75 seconds
+  -- Tokens Used: 16,741
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مواصفات الوحدات السكنية والمساحات المتاحة في التجمع الخامس
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا تحجز وحدتك عبر منصة عقار يا مصر؟
+  -- Duration: 5.58 seconds
+  -- Tokens Used: 14,206
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تحجز وحدتك عبر منصة عقار يا مصر؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_تحليل أسعار المتر وعوائد الاستثمار في القاهرة الجديدة 2026
+  -- Duration: 7.18 seconds
+  -- Tokens Used: 14,310
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: تحليل أسعار المتر وعوائد الاستثمار في القاهرة الجديدة 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة أنظمة السداد: استلام فوري أم تقسيط في بيت الوطن؟
+  -- Duration: 7.46 seconds
+  -- Tokens Used: 14,483
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة أنظمة السداد: استلام فوري أم تقسيط في بيت الوطن؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات الشراء الآمن عبر عقار يا مصر في 5 مراحل
+  -- Duration: 5.93 seconds
+  -- Tokens Used: 14,323
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات الشراء الآمن عبر عقار يا مصر في 5 مراحل
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_أسئلة تهمك حول البحث عن شقق للبيع في القاهرة الجديدة
+  -- Duration: 6.30 seconds
+  -- Tokens Used: 14,279
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة تهمك حول البحث عن شقق للبيع في القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة البحث عن منزلك المثالي في القاهرة الجديدة الآن
+  -- Duration: 3.46 seconds
+  -- Tokens Used: 13,980
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلة البحث عن منزلك المثالي في القاهرة الجديدة الآن
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 57.87 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 21.00 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 3.30 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 31.41 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.38 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 5.41 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.24 seconds
+  -- Tokens Used: 89,027
+--------------------------------------------------

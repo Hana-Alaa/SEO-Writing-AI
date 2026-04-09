@@ -864,6 +864,29 @@ class ValidationService:
 
     def validate_outline_quality(self, outline: List[Dict[str, Any]], content_type: str = "") -> List[str]:
         errors = []
+
+        # --- MANDATORY SECTION BRIEF CONTRACT FIELDS ---
+        mandatory_brief_fields = [
+            "section_promise", "reader_takeaway", "must_include_details",
+            "must_not_repeat", "practical_decision_value", "evidence_expectation",
+            "value_density_target", "allowed_generality_level", "subheading_policy"
+        ]
+
+        for idx, section in enumerate(outline):
+            section_name = section.get("heading_text", f"Section {idx+1}")
+            for field in mandatory_brief_fields:
+                if field not in section:
+                    errors.append(f"MISSING_CONTRACT_FIELD: Section '{section_name}' is missing '{field}'.")
+                elif isinstance(section[field], str) and not section[field].strip():
+                    errors.append(f"EMPTY_CONTRACT_FIELD: Section '{section_name}' has an empty value for '{field}'.")
+                elif isinstance(section[field], list):
+                    if field == "must_include_details" and not section[field]:
+                        # Structural anchors can be lighter, but all value-carrying sections must provide concrete details.
+                        if (section.get("section_type") or "").lower() not in ["introduction", "conclusion", "faq"]:
+                            errors.append(f"EMPTY_DETAILS_FIELD: Section '{section_name}' must provide concrete 'must_include_details'.")
+                    elif field == "must_not_repeat" and not section[field] and idx != 0:
+                        errors.append(f"EMPTY_CONTRACT_FIELD: Section '{section_name}' must define 'must_not_repeat' for non-intro sections.")
+
         h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
         if len(h2_sections) < 3:
             errors.append(f"Outline too thin: only {len(h2_sections)} H2 sections found. Need at least 3-5.")

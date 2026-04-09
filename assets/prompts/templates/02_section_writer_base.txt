@@ -57,6 +57,39 @@ REFINEMENT MODE (SURGICAL EDITING) - MANDATORY
     - **STRICT EXCLUSION**: You are in a "Zero-Tolerance" environment. If a fact, logic pattern (e.g., "buy now prices rise"), persuasion pattern, or USP has been used in the Progress Map, YOU MUST NOT MENTION IT AGAIN unless your assigned `argument_mode` explicitly requires a new logical function. Move to a fresh angle immediately.
     - **PERSUASION UNIQUENESS**: Your section must persuade through its assigned `argument_mode` only. Do NOT reuse urgency, trust, risk-reduction, or proof framing if that same persuasion pattern has already been consumed by another section.
 - **COMPETITOR GUARDRAIL**: Never mention: {{ (prohibited_competitors | default([])) | join(', ') }}
+- **PREVIOUS SECTION TEXT**: 
+"""
+{{ previous_section_text }}
+"""
+
+--------------------------------------------------------------------------------
+0.5 THE SECTION BRIEF EXECUTION (THE MANDATORY CONTRACT)
+--------------------------------------------------------------------------------
+- **THE CONTRACT OVERHEAD**: Your assigned Heading is merely a label. The following **Writing Brief Fields** are your literal, high-priority execution instructions. You must achieve all of them.
+- **THE 9 CONTRACT FIELDS**:
+    1. **`section_promise`**: {{ (section | default({})).get('section_promise') }}. 
+       - *EXECUTION*: This promise must become clear early in the section. Do not delay your unique value.
+    2. **`reader_takeaway`**: {{ (section | default({})).get('reader_takeaway') }}.
+       - *EXECUTION*: The reader must logically reach this specific conclusion by the end of your section.
+    3. **`must_include_details`**: {{ (section | default({})).get('must_include_details') | tojson }}.
+       - *EXECUTION*: You MUST weave 100% of these concrete facts/entities/stats into your narrative flow. Use them as evidence.
+    4. **`must_not_repeat`**: {{ (section | default({})).get('must_not_repeat') | tojson }}.
+       - *EXECUTION*: Absolute "Zero-Tolerance" exclusion. Do not mention, paraphrase, or hint at these concepts. If you already established them in a previous section, MOVE ON immediately to fresh value.
+    5. **`practical_decision_value`**: {{ (section | default({})).get('practical_decision_value') }}.
+       - *EXECUTION*: Dedicate at least one paragraph to explaining how this information directly helps a real-world decision.
+    6. **`evidence_expectation`**: {{ (section | default({})).get('evidence_expectation') }}.
+       - *EXECUTION*: Use the logic and proof-style expected here (e.g., SERP stats, local distinctions).
+    7. **`value_density_target`**: {{ (section | default({})).get('value_density_target', 'high') }}.
+       - *IF HIGH*: Suppress all low-information commentary, meta-narrative, or introductory fluff.
+    8. **`allowed_generality_level`**: {{ (section | default({})).get('allowed_generality_level', 'low') }}.
+       - *IF LOW*: Strictly avoid broad summaries. Every sentence must be specific, grounded, and "meaty".
+    9. **`subheading_policy`**: {{ (section | default({})).get('subheading_policy', 'direct_body') }}.
+       - *IF direct_body*: You are FORBIDDEN from adding an H3 within this section unless it adds extreme structural clarity for massive data density.
+
+- **STRICT ANTI-FILLER MANDATE (BODY SECTIONS)**:
+    - **NO GENERIC INTROS**: If this is NOT the introduction section, you MUST NOT open with general sentences about why the topic is important or what you are about to discuss. 
+    - **DIRECT VALUE ONLY**: Open directly with concrete details, the `section_promise`, or a direct response to the previous section's transition.
+    - **CONTENT DENSITY**: Every paragraph must contribute at least one: concrete detail, logical distinction/comparison, or practical decision help. If a paragraph provides none of these, IT IS FILLER and must be deleted or refactored.
 
 --------------------------------------------------------------------------------
 1. THE LINGUISTIC ENGINE (STYLE DNA)

@@ -96,6 +96,26 @@ Your task is to generate a Highly-Readable and Helpful article outline in JSON f
 - **DECISION LAYERS (NEUTRAL TAXONOMY)**: 
 
 --------------------------------------------------------------------------------
+1.5 THE WRITING BRIEF PROTOCOL (THE CONTRACT)
+--------------------------------------------------------------------------------
+- **MANDATORY CONTRACT**: Every section in the `outline` array MUST include a "Decision-Complete Writing Brief". This context is what the writer will use to generate content.
+- **THE 9 CONTRACT FIELDS**:
+    1. `section_promise`: Exactly what this section promises to deliver to the reader.
+    2. `reader_takeaway`: The specific insight or conclusion the reader must leave with.
+    3. `must_include_details`: A list of 2-5 concrete facts, entities, or stats (leveraging research data) that MUST appear in this section.
+    4. `must_not_repeat`: A list of facts, arguments, or framing captured in EARLIER sections that are FORBIDDEN here.
+    5. `practical_decision_value`: The specific help this section provides for a real-world choice.
+    6. `evidence_expectation`: The type of support required (e.g., "SERP stats", "Brand USP", "Process Steps").
+    7. `value_density_target`: MUST be `high`. No filler allowed.
+    8. `allowed_generality_level`: MUST be `low`. Avoid broad, meta-commentary.
+    9. `subheading_policy`: `direct_body` (default) or `allow_h3_subsplit` (only if data density is extreme).
+
+- **STRICT QUALITY AUDIT**: 
+    - You are FORBIDDEN from using vague placeholder text (e.g., "explain benefits", "provide details"). 
+    - If you cannot define concrete details or a unique promise, you MUST merge the section or tighten its scope until it earns its place.
+    - **Vague briefs will result in validation failure and a mandatory retry.**
+
+--------------------------------------------------------------------------------
 2. THE SEO ENGINE (TECHNICAL SEO)
 --------------------------------------------------------------------------------
 - **SEO KEYWORD INJECTION MANDATE**: 

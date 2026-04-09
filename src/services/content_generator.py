@@ -147,6 +147,18 @@ class OutlineGenerator:
         section.setdefault("table_columns", [])
         section.setdefault("estimated_word_count_min", 300)
         section.setdefault("estimated_word_count_max", 600)
+
+        # --- New Decision-Complete Writing Brief Fields ---
+        section.setdefault("section_promise", "")
+        section.setdefault("reader_takeaway", "")
+        section.setdefault("must_include_details", [])
+        section.setdefault("must_not_repeat", [])
+        section.setdefault("practical_decision_value", "")
+        section.setdefault("evidence_expectation", "")
+        section.setdefault("value_density_target", "high")
+        section.setdefault("allowed_generality_level", "low")
+        section.setdefault("subheading_policy", "direct_body")
+
         section.setdefault("content_type", content_type)
         section.setdefault("content_strategy", content_strategy)
         section.setdefault("area", area)
@@ -161,7 +173,16 @@ class OutlineGenerator:
             "section_id",
             "heading_level",
             "heading_text",
-            "section_intent"
+            "section_intent",
+            "section_promise",
+            "reader_takeaway",
+            "must_include_details",
+            "must_not_repeat",
+            "practical_decision_value",
+            "evidence_expectation",
+            "value_density_target",
+            "allowed_generality_level",
+            "subheading_policy"
         }
 
         for section in outline:
@@ -485,8 +506,20 @@ class SectionWriter:
             "list_type": section.get("list_type", "none"),
             "requires_primary_keyword": requires_primary_keyword,
             "global_keyword_count": global_keyword_count,
-            "content_strategy": section.get("content_strategy", {})
+            "content_strategy": section.get("content_strategy", {}),
+            
+            # --- New Decision-Complete Writing Brief Fields ---
+            "section_promise": section.get("section_promise", ""),
+            "reader_takeaway": section.get("reader_takeaway", ""),
+            "must_include_details": section.get("must_include_details", []),
+            "must_not_repeat": section.get("must_not_repeat", []),
+            "practical_decision_value": section.get("practical_decision_value", ""),
+            "evidence_expectation": section.get("evidence_expectation", ""),
+            "value_density_target": section.get("value_density_target", "high"),
+            "allowed_generality_level": section.get("allowed_generality_level", "low"),
+            "subheading_policy": section.get("subheading_policy", "direct_body")
         }
+
 
         print("Assigned links:", safe_section["assigned_links"])
 
