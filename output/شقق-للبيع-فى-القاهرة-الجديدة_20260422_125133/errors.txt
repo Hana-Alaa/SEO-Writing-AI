@@ -1,0 +1,30 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-22 12:53:34
+ERROR: OutlineGenerator.generate() got an unexpected keyword argument 'market_angle'
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 89, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 591, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: OutlineGenerator.generate() got an unexpected keyword argument 'market_angle'
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-22 12:53:34
+ERROR: OutlineGenerator.generate() got an unexpected keyword argument 'market_angle'
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 89, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 591, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: OutlineGenerator.generate() got an unexpected keyword argument 'market_angle'
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

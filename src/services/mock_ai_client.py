@@ -190,10 +190,10 @@ class MockAIClient(BaseAIClient):
         content = json.dumps({
             "top_results": [{"title": "Mock Research result", "url": "http://mock.com", "snippet": "Useful fact about mocking."}],
             "intent": "informational",
-            "strategic_intelligence": {
+            "market_insights": {
                 "content_gaps": ["lack of testing"],
-                "weaponized_usps": ["Zero cost simulations"],
-                "battle_plan_brief": "Use mock clients effectively."
+                "brand_advantages": ["Zero cost simulations"],
+                "writing_guide": "Use mock clients effectively."
             }
         })
         return {"content": content, "metadata": {"tokens": {"total_tokens": 10}}}

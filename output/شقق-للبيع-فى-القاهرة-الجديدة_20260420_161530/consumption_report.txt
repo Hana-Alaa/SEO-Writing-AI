@@ -1,0 +1,58 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.1091
+Total Tokens: 1,211,258
+
+Google (Gemini) Cost: $0.1091
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+serp_analysis             | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | google/gemini-3-flash-pr  | $0.000089
+STEP_TOTAL: style_analys  | google/gemini-3-flash-pr  | $0.000089
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | google/gemini-3-flash-pr  | $0.000686
+STEP_TOTAL: outline_gene  | google/gemini-3-flash-pr  | $0.009837
+section_1_فرص الاستثمار   | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_2_خريطة شقق للبي  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_3_مواصفات الوحدا  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_4_لماذا يفضل الم  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_4_لماذا يفضل الم  | unknown                   | $0.000000
+section_5_مؤشرات أسعار ا  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_6_مقارنة أنظمة ا  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_6_مقارنة أنظمة ا  | unknown                   | $0.000000
+section_7_خطوات شراء شقة  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_7_خطوات شراء شقة  | unknown                   | $0.000000
+section_8_أسئلة شائعة حو  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_9_ابدأ رحلة تملك  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_1_فرص الاستثمار   | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+STEP_TOTAL: content_writ  | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: humanizer     | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: image_prompt  | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: master_frame  | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: image_genera  | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: assembly      | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: final_humani  | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: image_insert  | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: meta_schema   | google/gemini-3-flash-pr  | $0.009837
+STEP_TOTAL: render_html   | google/gemini-3-flash-pr  | $0.009837

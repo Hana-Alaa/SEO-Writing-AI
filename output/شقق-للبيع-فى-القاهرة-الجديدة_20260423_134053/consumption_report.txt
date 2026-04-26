@@ -1,0 +1,52 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0477
+Total Tokens: 577,350
+
+Google (Gemini) Cost: $0.0477
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+serp_analysis             | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | google/gemini-3-flash-pr  | $0.000089
+STEP_TOTAL: style_analys  | google/gemini-3-flash-pr  | $0.000089
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | google/gemini-3-flash-pr  | $0.000657
+STEP_TOTAL: outline_gene  | google/gemini-3-flash-pr  | $0.004688
+section_1_اقتنِ فرصتك ال  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_1_اقتنِ فرصتك ال  | unknown                   | $0.000000
+section_2_خريطة شقق للبي  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_3_لماذا يفضل الم  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_4_تحليل كفاءة سع  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_5_أنظمة السداد و  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_5_أنظمة السداد و  | unknown                   | $0.000000
+section_6_خطوات شراء شقت  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_7_أسئلة شائعة حو  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_8_قرارك اليوم يح  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+STEP_TOTAL: content_writ  | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: global_coher  | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: image_prompt  | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: master_frame  | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: image_genera  | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: assembly      | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: image_insert  | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: meta_schema   | google/gemini-3-flash-pr  | $0.004688
+STEP_TOTAL: render_html   | google/gemini-3-flash-pr  | $0.004688

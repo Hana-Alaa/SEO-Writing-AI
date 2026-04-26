@@ -56,6 +56,10 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
 app.mount("/output", StaticFiles(directory="output"), name="output")
 
+# Configuration Overrides
+# Set this to True to force Heading-Only Mode by default for all requests
+FORCE_HEADING_ONLY_MODE = True
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_ui():
     """Serve the Web UI."""
@@ -114,13 +118,15 @@ async def generate_article(
     secondary_keywords: str = Form("[]"),
     competitor_count: int = Form(5),
     style_reference: str = Form(None),
-    style_file: UploadFile = File(None)
+    style_file: UploadFile = File(None),
+    heading_only_mode: bool = Form(False)
 ):
     """
     Generate an SEO-optimized article based on the input parameters.
     This runs the full asynchronous workflow pipeline.
     """
-    logger.info(f"Received generation request for title: '{title}', generate_images: {generate_images}")
+    logger.info(f"Received generation request for title: '{title}', generate_images: {generate_images}, heading_only_mode: {heading_only_mode}")
+    print(f"\n[TRACER_V1] API received heading_only_mode: {heading_only_mode} (type: {type(heading_only_mode)})")
     
     import re
     if not article_language:
@@ -241,7 +247,8 @@ async def generate_article(
             "custom_keyword_density": custom_keyword_density,
             "secondary_keywords": secondary_keywords_list,
             "competitor_count": competitor_count,
-            "style_reference": style_reference
+            "style_reference": style_reference,
+            "heading_only_mode": heading_only_mode or FORCE_HEADING_ONLY_MODE
         }
     }
     
@@ -308,13 +315,16 @@ async def generate_article(
 
         return ArticleResponse(
             status="success",
-            message=f"Article generated successfully. Slug: {slug}",
+            message=final_state.get("message") or f"Article generated successfully. Slug: {slug}",
             slug=slug,
             output_dir=output_dir,
             html_content=html_content,
             markdown_content=markdown_content,
             metadata=meta_dict,
-            images=image_list
+            images=image_list,
+            heading_only_mode=final_state.get("heading_only_mode", False),
+            outline_structure=final_state.get("outline_structure", []),
+            heading_preview_markdown=final_state.get("heading_preview_markdown")
         )
         
     except Exception as e:

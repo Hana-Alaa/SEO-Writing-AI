@@ -1,0 +1,42 @@
+
+--- SECTION: استثمر في مستقبلك الآن: لماذا تعتبر القاهرة الجديدة الوجهة السكنية الأولى في 2026؟ (sec_01) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'استثمر في مستقبلك الآن: لماذا تعتبر القاهرة الجديدة الوجهة السكنية الأولى في 2026؟' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'استثمر في مستقبلك الآن: لماذا تعتبر القاهرة الجديدة الوجهة السكنية الأولى في 2026؟' is too dense for intro/conclusion content (51 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: خريطة شقق للبيع فى القاهرة الجديدة: أفضل الأحياء السكنية والفرص المتاحة (sec_02) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'خريطة شقق للبيع فى القاهرة الجديدة: أفضل الأحياء السكنية والفرص المتاحة' is too dense for body content (76 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'خريطة شقق للبيع فى القاهرة الجديدة: أفضل الأحياء السكنية والفرص المتاحة' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/city/%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9/
+--------------------------------------------------
+
+--- SECTION: مواصفات الوحدات السكنية: مساحات متنوعة تبدأ من الاستوديوهات وحتى الدوبلكس (sec_03) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 5 in 'مواصفات الوحدات السكنية: مساحات متنوعة تبدأ من الاستوديوهات وحتى الدوبلكس' is too dense for body content (102 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'مواصفات الوحدات السكنية: مساحات متنوعة تبدأ من الاستوديوهات وحتى الدوبلكس' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/city/%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D8%AF%D9%8I%D8%AF%D8%A9/
+--------------------------------------------------
+
+--- SECTION: مؤشرات الأسعار ونسب النمو: تحليل القيمة السوقية لعام 2026 (sec_05) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'مؤشرات الأسعار ونسب النمو: تحليل القيمة السوقية لعام 2026' is too dense for body content (76 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'مؤشرات الأسعار ونسب النمو: تحليل القيمة السوقية لعام 2026' is too dense for body content (70 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'مؤشرات الأسعار ونسب النمو: تحليل القيمة السوقية لعام 2026' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/القاهرة-الجديدة/التجمع-الخامس/
+--------------------------------------------------
+
+--- SECTION: مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات القاهرة الجديدة (sec_06) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات القاهرة الجديدة' is too dense for body content (75 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات القاهرة الجديدة' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: خطوات التملك الآمن: من المعاينة الميدانية وحتى توقيع العقود (sec_07) ---
+- [QUALITY ISSUE]: VISUAL_FORMAT_MISSING: Heading 'خطوات التملك الآمن: من المعاينة الميدانية وحتى توقيع العقود' implies a process or system. Use a Markdown Table or Bulleted List for clarity.
+--------------------------------------------------
+
+--- SECTION: أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة (sec_08) ---
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/city/%d8%a7%d9%84%d9%82%d8%a7%d9%87%d8%b1%d8%a9-%d8%25a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d8%a9/
+--------------------------------------------------
+
+--- SECTION: ابدأ رحلة تملكك اليوم: القاهرة الجديدة بانتظارك مع عقار يا مصر (sec_09) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'ابدأ رحلة تملكك اليوم: القاهرة الجديدة بانتظارك مع عقار يا مصر' is too dense for intro/conclusion content (63 words > 50). Split it or convert enumerations into a list/table.
+--------------------------------------------------

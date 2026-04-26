@@ -1,0 +1,186 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,model,estimated_cost,is_google,prompt_text,response_text
+2026-04-22T14:43:41.028373,STEP_TOTAL: brand_discovery,13.587,0,0,0,unknown,0.0,False,N/A,N/A
+2026-04-22T14:44:00.435023,web_research,0,0,0,0,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: شقق للبيع فى القاهرة الجديدة في القاهرة الجديدة 
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask (PAA) questions. 
+- **CRITICAL**: If no real PAA boxes are found, you MUST synthesize 10 highly logical and helpful user questions based on the content of the top ranking results.
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- If real element not found, SYNTHESIZE based on search context. NEVER return an empty array for PAA or LSI.
+- Use only live search results context
+
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.",Error: Web search failed.
+2026-04-22T14:44:19.510551,web_research,0,0,0,0,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: شقق للبيع فى القاهرة الجديدة
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask (PAA) questions. 
+- **CRITICAL**: If no real PAA boxes are found, you MUST synthesize 10 highly logical and helpful user questions based on the content of the top ranking results.
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- If real element not found, SYNTHESIZE based on search context. NEVER return an empty array for PAA or LSI.
+- Use only live search results context
+
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.",Error: Web search failed.

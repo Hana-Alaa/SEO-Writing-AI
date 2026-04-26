@@ -30,6 +30,20 @@ class ResearchService:
         self.upload_dir = os.path.join(work_dir, "uploads")
         os.makedirs(self.upload_dir, exist_ok=True)
 
+    def _compose_search_query(self, primary_keyword: str, area: Optional[str], lang: str) -> str:
+        """Build a clean search query without duplicating the area phrase."""
+        keyword = re.sub(r"\s+", " ", (primary_keyword or "")).strip()
+        area_text = re.sub(r"\s+", " ", (area or "")).strip()
+        if not area_text:
+            return keyword
+
+        if area_text.lower() in keyword.lower():
+            return keyword
+
+        in_map = {"ar": "\u0641\u064a", "en": "in", "fr": "en", "es": "en", "de": "in"}
+        in_word = in_map.get(lang, "in")
+        return f"{keyword} {in_word} {area_text}".strip()
+
     async def run_brand_discovery(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Deep brand discovery:
@@ -284,6 +298,8 @@ class ResearchService:
         in_map = {"ar": "في", "en": "in", "fr": "en", "es": "en", "de": "in"}
         in_word = in_map.get(lang, "|")
         search_query = f"{primary_keyword} {in_word} {area}" if area else primary_keyword
+        # Override the legacy builder to avoid duplicated area phrases in SERP queries.
+        search_query = self._compose_search_query(primary_keyword, area, lang)
 
         with open("assets/prompts/templates/seo_web_research.txt") as f:
             template = Template(f.read())
@@ -316,6 +332,8 @@ class ResearchService:
         in_map = {"ar": "في", "en": "in", "fr": "en", "es": "en", "de": "in"}
         in_word = in_map.get(lang, "|")
         search_query = f"{primary_keyword} {in_word} {area}" if area else primary_keyword
+        # Override the legacy builder to avoid duplicated area phrases in SERP queries.
+        search_query = self._compose_search_query(primary_keyword, area, lang)
         
         logger.info(f"Running Hybrid SERP+Strategy Research for: {search_query}")
         
@@ -340,13 +358,13 @@ class ResearchService:
              serp_data = {"top_results": [{"title": primary_keyword, "url": "", "snippet": "Manual Fallback"}], "intent": "informational"}
 
         state["serp_data"] = serp_data
-        state["seo_intelligence"] = {"serp_raw": serp_data, "strategic_analysis": serp_data}
+        state["seo_intelligence"] = {"serp_raw": serp_data, "market_analysis": serp_data}
         return state
 
     async def run_serp_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
         serp_data = state.get("serp_data", {})
         primary_keyword = state.get("primary_keyword")
-        with open("assets/prompts/templates/seo_serp_analysis.txt") as f:
+        with open("assets/prompts/templates/seo_serp_analysis_observed_v2.txt") as f:
             template = Template(f.read())
         
         light_serp = {
@@ -378,7 +396,7 @@ class ResearchService:
                 if headers:
                     competitor_headers.append({"url": url, "title": res.get("title"), "structure": headers})
         
-        state["seo_intelligence"] = {"serp_raw": serp_data, "strategic_analysis": serp_insights, "competitor_structures": competitor_headers}
+        state["seo_intelligence"] = {"serp_raw": serp_data, "market_analysis": serp_insights, "competitor_structures": competitor_headers}
         return state
 
     async def _discover_logo_and_colors(self, url: str, state: Dict[str, Any]) -> Optional[Dict[str, Any]]:

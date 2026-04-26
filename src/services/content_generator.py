@@ -112,7 +112,11 @@ class OutlineGenerator:
             "brand_commercial": "01_outline_generator_brand_commercial.txt",
             "informational": "01_outline_generator_informational.txt",
             "comparison": "01_outline_generator_comparison.txt",
+            "review_mode": "01_outline_generator_review_mode.txt",
         }
+        # Keep the legacy review-mode prompt untouched and move active
+        # heading-only iteration to a dedicated template file.
+        self.heading_only_template = "01_outline_generator_heading_only_v2.txt"
 
     def _normalize_section(self, section: Dict[str, Any], idx: int, content_type: str, content_strategy: Dict[str, Any], area: Optional[str]):
 
@@ -158,6 +162,7 @@ class OutlineGenerator:
         section.setdefault("value_density_target", "high")
         section.setdefault("allowed_generality_level", "low")
         section.setdefault("subheading_policy", "direct_body")
+        section.setdefault("subheadings", [])
 
         section.setdefault("content_type", content_type)
         section.setdefault("content_strategy", content_strategy)
@@ -167,26 +172,48 @@ class OutlineGenerator:
         section.setdefault("requires_list", False)
         section.setdefault("list_type", "none")
         section.setdefault("cta_position", "none")
-    
-    def _validate_outline_schema(self, outline: List[Dict[str, Any]]) -> bool:
-        required_keys = {
-            "section_id",
-            "heading_level",
-            "heading_text",
-            "section_intent",
-            "section_promise",
-            "reader_takeaway",
-            "must_include_details",
-            "must_not_repeat",
-            "practical_decision_value",
-            "evidence_expectation",
-            "value_density_target",
-            "allowed_generality_level",
-            "subheading_policy"
-        }
+        # --- Primary keyword enforcement for strategic sections ---
+        # If this section is explicitly an introduction (or is the first section),
+        # mark it as requiring the exact primary keyword so downstream
+        # validators and writers will enforce PK presence in the intro.
+        sec_type = (section.get("section_type") or "").lower()
+        if sec_type == "introduction" or idx == 0:
+            section.setdefault("requires_primary_keyword", True)
+        else:
+            section.setdefault("requires_primary_keyword", section.get("requires_primary_keyword", False))
+
+    def _validate_outline_schema(self, outline: List[Dict[str, Any]], heading_only_mode: bool = False) -> bool:
+        if heading_only_mode:
+            # Leaner requirements for structural review
+            required_keys = {
+                "section_id",
+                "heading_level",
+                "heading_text",
+                "section_type",
+                "section_intent"
+            }
+        else:
+            # Full writing requirements
+            required_keys = {
+                "section_id",
+                "heading_level",
+                "heading_text",
+                "section_intent",
+                "section_promise",
+                "reader_takeaway",
+                "must_include_details",
+                "must_not_repeat",
+                "practical_decision_value",
+                "evidence_expectation",
+                "value_density_target",
+                "allowed_generality_level",
+                "subheading_policy"
+            }
 
         for section in outline:
             if not required_keys.issubset(section.keys()):
+                missing = required_keys - set(section.keys())
+                logger.error(f"Section {section.get('section_id')} missing keys: {missing}")
                 return False
 
         return True
@@ -221,19 +248,27 @@ class OutlineGenerator:
             style_blueprint: Dict[str, Any] = None,
             brand_name: str = "",
             brand_url: str = "",
-            weaponized_usps: List[str] = None,
-            strategic_framework: str = ""
+            brand_advantages: List[str] = None,
+            writing_blueprint: str = "",
+            market_angle: str = "",
+            heading_only_mode: bool = False,
+            head_entity: str = ""
         ) -> Dict[str, Any]:
 
 
 
         current_year = str(datetime.now().year)
 
-        template_name = self.templates.get(
-            content_type,
-            self.templates["informational"]
-        )
+        # Heading-Only Mode Isolation: Use specialized lightweight template
+        if heading_only_mode:
+            template_name = self.heading_only_template
+        else:
+            template_name = self.templates.get(
+                content_type,
+                self.templates["informational"]
+            )
         template = self.env.get_template(template_name)
+
 
         # Rich Defaults with Deep Resilience
         final_blueprint = {
@@ -265,6 +300,7 @@ class OutlineGenerator:
             area_neighborhoods=area_neighborhoods or [],
             feedback=feedback,
             mandatory_section_types=mandatory_section_types or [],
+            market_angle=market_angle,
             current_year=current_year,
             prohibited_competitors=prohibited_competitors or [],
             # Pass advanced settings to template
@@ -279,8 +315,10 @@ class OutlineGenerator:
             competitor_count=competitor_count,
             external_resources=external_resources or [],
             style_blueprint=final_blueprint,
-            weaponized_usps=weaponized_usps or [],
-            strategic_framework=strategic_framework or ""
+            brand_advantages=brand_advantages or [],
+            writing_blueprint=writing_blueprint or "",
+            heading_only_mode=heading_only_mode,
+            head_entity=head_entity
         )
 
 
@@ -330,9 +368,13 @@ class OutlineGenerator:
             raise ContentGeneratorError("Invalid outline structure returned by AI (missing or non-list 'outline' field).")
 
 
-        if not self._validate_outline_schema(outline):
+        if not self._validate_outline_schema(outline, heading_only_mode=heading_only_mode):
             logger.error("Outline schema validation failed.")
             raise ContentGeneratorError("Invalid outline schema returned by AI (missing required section keys).")
+        
+        # AUTO-NORMALIZE: Ensure all sections have necessary fields for the orchestrator, even in review mode
+        for idx, section in enumerate(outline):
+            self._normalize_section(section, idx, content_type, content_strategy, area)
 
 
         total_min_words = sum(
@@ -345,12 +387,17 @@ class OutlineGenerator:
         #         f"Total estimated word count too low: {total_min_words}"
         #     )
 
-        if not outline or not isinstance(outline, list) or not self._validate_outline_schema(outline):
+        if not outline or not isinstance(outline, list) or not self._validate_outline_schema(outline, heading_only_mode=heading_only_mode):
             raise ContentGeneratorError("Invalid outline schema returned by AI.")
 
-        # Normalize sections
-        # for idx, section in enumerate(outline):
-        #     self._normalize_section(section, idx, content_type)
+        # Normalize sections so defaults and strategic flags (e.g. requires_primary_keyword)
+        # are applied consistently before downstream consumers use the outline.
+        for idx, section in enumerate(outline):
+            try:
+                self._normalize_section(section, idx, content_type, content_strategy, area)
+            except Exception:
+                # Be tolerant: if normalization fails for a section, continue and log.
+                logger.exception(f"Failed to normalize section at index {idx}")
 
         if not isinstance(keyword_expansion, dict):
             keyword_expansion = {}
@@ -438,8 +485,9 @@ class SectionWriter:
         global_keyword_count: int = 0,
         brand_mentions_count: int = 0,
         draft_to_fix: str = None,
-        weaponized_usps: List[str] = None,
-        strategic_framework: str = ""
+        brand_advantages: List[str] = None,
+        writing_blueprint: str = "",
+        market_angle: str = ""
     ) -> Dict[str, Any]:
 
 
@@ -456,15 +504,15 @@ class SectionWriter:
         allowed_flow = section.get("allowed_flow_steps", [])
 
         # Flatten strategic intelligence for the template
-        strategic_intelligence = seo_intelligence.get("strategic_analysis", {}).get("strategic_intelligence", {})
+        market_insights = seo_intelligence.get("market_analysis", {}).get("market_insights", {})
         
         # Ensure all expected fields are present to avoid StrictUndefined errors
         safe_seo = {
-            "content_gaps": strategic_intelligence.get("content_gaps", []),
-            "weaponized_usps": strategic_intelligence.get("weaponized_usps", []),
-            "battle_plan_brief": strategic_intelligence.get("battle_plan_brief", ""),
-            "differentiation_strategy": strategic_intelligence.get("differentiation_strategy", []),
-            "structural_patterns": strategic_intelligence.get("structural_patterns", [])
+            "content_gaps": market_insights.get("content_gaps", []),
+            "brand_advantages": market_insights.get("brand_advantages", []),
+            "writing_guide": market_insights.get("writing_guide", ""),
+            "differentiation_strategy": market_insights.get("differentiation_strategy", []),
+            "structural_patterns": market_insights.get("structural_patterns", [])
         }
         
         # Provide defaults for section fields
@@ -605,8 +653,9 @@ class SectionWriter:
             global_keyword_count=global_keyword_count,
             brand_mentions_count=brand_mentions_count,
             draft_to_fix=draft_to_fix,
-            weaponized_usps=weaponized_usps or [],
-            strategic_framework=strategic_framework or ""
+            brand_advantages=brand_advantages or [],
+            writing_blueprint=writing_blueprint or "",
+            market_angle=market_angle or "",
         )
 
 
@@ -759,19 +808,30 @@ class Assembler:
                     logger.info(f"[Assembler] Removing duplicate heading from content: '{first_line}'")
                     content = "\n".join(content_lines[1:]).strip()
 
-            # Skip adding the heading ONLY for the VERY FIRST section.
-            is_first_sec = (idx == 0)
+            # Skip heading logic (v3.2): 
+            is_intro_type = (sec.get("section_type") == "introduction")
+            is_intro_name = any(x in heading.lower() for x in ["introduction", "مقدمة", "مقدمه"])
             
-            is_intro_name = heading.strip().lower() in ["introduction", "مقدمة", "مقدمه"]
-            is_intro_type = sec.get("section_type") == "introduction"
+            skip_heading = False
             
-            # Primary rule: Never skip heading for anything after the first section (idx 0)
-            skip_heading = is_first_sec or (idx < 1 and is_intro_name and is_intro_type)
-            
-            if not heading.strip():
+            # Rule: INTRO_HEADING_FORBIDDEN
+            if is_intro_type:
+                # Introduction must never have a heading in the final output.
                 skip_heading = True
+            elif not heading.strip():
+                skip_heading = True
+            else:
+                # We skip only for pure, simple introductions to avoid duplicating H1
+                has_table = "|" in content and "---" in content
+                has_list = bool(re.search(r'^\s*[-*•]\s|^\s*\d+\.\s', content, re.MULTILINE))
+                is_specific_heading = len(heading.strip()) > 35 and not is_intro_name
+                
+                if idx == 0 and is_intro_name and not has_table and not has_list and not is_specific_heading:
+                    skip_heading = True
 
             if not skip_heading:
+                # Use Markdown heading level (default to H2)
+                level_num = int(sec.get("heading_level", "H2").replace("H", "")) if isinstance(sec.get("heading_level"), str) else 2
                 final_parts.append(f"{'#' * level_num} {heading}")
 
             if sec.get("section_id"):
@@ -801,7 +861,7 @@ class FinalHumanizer:
         article_language: str,
         brand_name: str,
         brand_source_text: str,
-        weaponized_usps: str,
+        brand_advantages: str,
         section: Dict[str, Any] = None,
         is_introduction: bool = False,
         is_conclusion: bool = False,
@@ -816,7 +876,7 @@ class FinalHumanizer:
             article_language=article_language or "Arabic",
             brand_name=brand_name or "",
             brand_source_text=brand_source_text or "",
-            weaponized_usps=weaponized_usps or "",
+            brand_advantages=brand_advantages or "",
             section=section or {},
             is_introduction=is_introduction,
             is_conclusion=is_conclusion,

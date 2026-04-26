@@ -1,0 +1,117 @@
+You are building a content strategy based on provided inputs.
+
+Inputs:
+- Primary Keyword: {{ primary_keyword | default('Main Topic') }}
+- Intent: {{ intent | default('informational') }}
+- Content Type: {{ content_type | default('article') }}
+- Target Area: {{ area | default('General') }}
+- SERP Intent Analysis: {{ serp_intent_analysis | default('{}') }}
+- SERP Structural Intelligence: {{ serp_structural_intelligence | default('{}') }}
+- SERP Market Insights: {{ serp_market_insights | default('{}') }}
+
+CRITICAL RULE:
+You must NOT introduce any concept that is not strongly supported by:
+- the primary keyword
+OR
+- high-confidence SERP observations
+
+IMPORTANT:
+- You are building a minimal, realistic strategy.
+- You are not writing an idealized or over-optimized plan.
+- Commercial intent does NOT mean generic service-page logic.
+- Keep the main entity in the primary keyword as the center of the strategy.
+
+STRICT RULES:
+1. Do NOT enforce:
+   - investment framing
+   - legal framing
+   - ROI or financial analysis
+   unless explicitly required by the keyword or strongly supported by repeated high-confidence SERP signals.
+
+2. Do NOT generalize the entity.
+   Example:
+   - apartments must remain apartments
+   - do NOT broaden them into the real estate market
+
+3. Strategy must be:
+   - intent-aligned
+   - entity-focused
+   - minimal, not inflated
+
+4. Do NOT convert weak signals into core sections.
+   - Treat `core_recurring_topics` as the strongest support.
+   - Treat `secondary_mentions` as optional support only when they still serve the main entity and intent.
+   - Treat `weak_signals` as non-core. They must not drive the structure.
+
+5. Brand presence:
+   - allowed only in differentiation and conclusion
+   - must not influence structural decisions
+   - must not redefine the article as a brand-first page
+
+6. Avoid:
+   - over-architected structures
+   - unnecessary sections
+   - forced authority signals
+   - generic market commentary
+
+7. Use only the strongest observed signals.
+   - If SERP observations are thin or mixed, keep the strategy conservative.
+   - Leave unsupported fields minimal or empty rather than inflating them.
+
+8. The strategy must support a real user journey:
+   - understand the offering
+   - evaluate relevant features
+   - review concrete proof
+   - compare realistic options
+   - understand the practical buying path
+   - resolve objections
+   - take the next step
+
+9. Keep section roles clean:
+   - `introduction`: define the keyword entity and immediate search context only
+   - `core_or_benefits`: explain the entity and buyer-facing value only
+   - `proof`: observed pricing, value, availability, or trust signals tied to the entity only
+   - `process_or_how`: practical buying path only
+   - `faq`: objections actually supported by the keyword or strong SERP observations
+   - `conclusion`: concise next-step closure
+
+10. Do NOT force these into the strategy unless strongly supported:
+   - investment return
+   - legal verification
+   - financing complexity
+   - infrastructure impact
+   - broad authority narratives
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object.
+Do NOT include any explanations, markdown formatting, or introductory text.
+Return ONLY this JSON structure:
+{
+  "primary_angle": "",
+  "market_angle": "",
+  "target_reader_state": "",
+  "pain_point_focus": [],
+  "emotional_trigger": "",
+  "depth_level": "intermediate | advanced | comprehensive",
+  "authority_strategy": [],
+  "eeat_signals_to_include": [],
+  "differentiation_focus": [],
+  "conversion_strategy": "",
+  "cta_philosophy": "",
+  "local_strategy": "",
+  "tone_direction": "",
+  "section_role_map": {
+    "introduction": "",
+    "core_or_benefits": "",
+    "proof": "",
+    "process_or_how": "",
+    "faq": "",
+    "conclusion": ""
+  }
+}
+
+OUTPUT SAFETY:
+- If a concept is unsupported, leave it out.
+- If a list is weakly supported, return an empty list.
+- Do not name competitors.
+- Do not expand one-off signals into the strategy.

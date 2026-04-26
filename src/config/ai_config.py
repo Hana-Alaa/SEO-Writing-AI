@@ -18,6 +18,7 @@ OPENROUTER = {
 
     "models": {
         # "writing": "openai/gpt-5-mini",          #9
+        # "writing": "anthropic/claude-opus-4.7",
         "writing": "google/gemini-3-flash-preview",
         # "Writing": "qwen/qwen3.6-plus:free",
         # "Writing": "openai/gpt-5.4-nano",     #47

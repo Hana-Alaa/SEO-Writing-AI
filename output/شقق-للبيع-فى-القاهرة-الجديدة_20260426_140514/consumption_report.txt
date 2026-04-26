@@ -1,0 +1,25 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0022
+Total Tokens: 69,830
+
+Google (Gemini) Cost: $0.0022
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+serp_analysis             | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | google/gemini-3-flash-pr  | $0.000089
+STEP_TOTAL: style_analys  | google/gemini-3-flash-pr  | $0.000089
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | google/gemini-3-flash-pr  | $0.000606
+STEP_TOTAL: outline_gene  | google/gemini-3-flash-pr  | $0.001436

@@ -1,16 +1,16 @@
 {% include '00_content_strategy_base.txt' %}
 
 ### COMMERCIAL STRATEGY ARCHITECTURE (STRICT)
-- **Primary Objective**: Direct Conversion via Trust building and authority (Bottom-of-Funnel Mastery).
+- **Primary Objective**: Help the reader make a clear decision via trust and helpfulness (Bottom-of-Funnel Clarity).
 - **Core Philosophy**: 70% Transactional focus / 30% Supportive Education. 
-- **Tone**: Confident, solution-focused, persuasive but NOT pushy. 
-- **Service-Page Standards**: Built for conversion speed and scannability.
+- **Tone**: Grounded, helpful, peer-to-peer, and persuasive but NOT pushy. 
+- **Service-Page Standards**: Built for decision speed and scannability.
 
 ### MANDATORY SECTION MAPPING (IN ORDER):
 1. **The Hook (Intro)**: Address the user's specific problem/need immediately. Primary Keyword in paragraph 1. Optional SOFT CTA at the end of the intro.
 2. **The Essence (What is it?)**: H2 with Primary Keyword. Clear, concise, and professional service/product description.
 3. **The Value (Key Features)**: Bullet points are preferred for high scannability. Show exactly what is included.
-4. **The Edge (Differentiators)**: Why choose us over the market? Specific USPs only. Absolute prohibition on generic "Quality/Experience" claims.
+4. **The Edge (Brand Advantages)**: Why choose this brand over the market? Specific advantages only. Avoid generic "Quality/Experience" claims.
 5. **The Proof (Trust Building)**: Stats, case studies, client results, or factual evidence. This is where you earn the conversion.
 6. **The Matrix (Comparison)**: Service tiers, tiered pricing, or comparison vs market standards. Flexible but scannable format.
 7. **The Path (How it Works)**: Numbered steps defining the operational process to reduce friction and eliminate uncertainty.

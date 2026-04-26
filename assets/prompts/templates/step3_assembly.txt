@@ -6,7 +6,6 @@ Input Sections:
 {% for section in (sections | default([])) %}
 --- SECTION: {{ section.heading_text | default('New Section') }} ---
 {{ section.generated_content | default('No content.') }}
--------------------------------------------
 {% endfor %}
 
 Your Task:

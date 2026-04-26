@@ -72,3 +72,8 @@ class ArticleResponse(BaseModel):
     markdown_content: Optional[str] = None
     metadata: Optional[ArticleMetadata] = None
     images: Optional[List[ArticleImage]] = None
+    
+    # Heading-Only Review Mode Fields
+    heading_only_mode: Optional[bool] = False
+    outline_structure: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    heading_preview_markdown: Optional[str] = None

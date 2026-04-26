@@ -1,14 +1,14 @@
 {% include '00_content_strategy_base.txt' %}
 
 ### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
-- **Primary Objective**: Educate, empower, and build authority (Top-of-Funnel Mastery).
+- **Primary Objective**: Educate, empower, and help the reader (Building Practical Authority).
 - **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
-- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and authoritative.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and advisor-like.
 
 ### MANDATORY SECTION MAPPING (IN ORDER):
 1. **The Foundation (Intro)**: Direct topic definition + context on why it matters. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed.
 2. **The Definition (What is)**: H2 with Primary Keyword. Clear, authoritative, and concise description.
-3. **The Relevance (Why it matters)**: Strategic context building + Key Benefits for the reader.
+3. **The Relevance (Why it matters)**: Practical context building + Key Benefits for the reader.
 4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
 5. **The Action (Practical Tips)**: Actionable "How-to" examples or practical advice to maximize dwell time and utility.
 6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.

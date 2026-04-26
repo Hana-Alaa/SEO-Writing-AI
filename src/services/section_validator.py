@@ -10,12 +10,13 @@ class SectionValidator:
         with open(template_path, "r", encoding="utf-8") as f:
             self.template = Template(f.read(), undefined=StrictUndefined)
 
-    async def validate(self, title, article_language, section, content):
+    async def validate(self, title, article_language, section, content, brand_name=""):
         prompt = self.template.render(
             title=title,
             article_language=article_language,
             section=section,
-            generated_section_content=content
+            generated_section_content=content,
+            brand_name=brand_name or ""
         )
 
         logger.info("\n================ FINAL PROMPT (SectionValidator) ================\n")

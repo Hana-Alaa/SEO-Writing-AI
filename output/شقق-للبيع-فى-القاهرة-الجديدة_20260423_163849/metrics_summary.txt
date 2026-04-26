@@ -1,0 +1,168 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 16.03 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 81.68 seconds
+  -- Tokens Used: 39,021
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 82.02 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 6.94 seconds
+  -- Tokens Used: 7,791
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 9.03 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.44 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.31 seconds
+  -- Tokens Used: 720
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 720
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 7.96 seconds
+  -- Tokens Used: 4,080
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 7.97 seconds
+  -- Tokens Used: 4,080
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 103.83 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: SECTION_1_استثمر في مستقبلك الآن: لماذا تعتبر القاهرة الجديدة الوجهة السكنية الأولى في 2026؟
+  -- Duration: 6.33 seconds
+  -- Tokens Used: 15,531
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: استثمر في مستقبلك الآن: لماذا تعتبر القاهرة الجديدة الوجهة السكنية الأولى في 2026؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_استثمر في مستقبلك الآن: لماذا تعتبر القاهرة الجديدة الوجهة السكنية الأولى في 2026؟
+  -- Duration: 6.36 seconds
+  -- Tokens Used: 16,667
+--------------------------------------------------
+Step: SECTION_2_خريطة شقق للبيع فى القاهرة الجديدة: أفضل الأحياء السكنية والفرص المتاحة
+  -- Duration: 7.25 seconds
+  -- Tokens Used: 16,608
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة شقق للبيع فى القاهرة الجديدة: أفضل الأحياء السكنية والفرص المتاحة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_مواصفات الوحدات السكنية: مساحات متنوعة تبدأ من الاستوديوهات وحتى الدوبلكس
+  -- Duration: 8.21 seconds
+  -- Tokens Used: 17,048
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مواصفات الوحدات السكنية: مساحات متنوعة تبدأ من الاستوديوهات وحتى الدوبلكس
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا تختار عقار يا مصر للبحث عن شقتك في القاهرة الجديدة؟
+  -- Duration: 7.87 seconds
+  -- Tokens Used: 17,212
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار عقار يا مصر للبحث عن شقتك في القاهرة الجديدة؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_مؤشرات الأسعار ونسب النمو: تحليل القيمة السوقية لعام 2026
+  -- Duration: 8.09 seconds
+  -- Tokens Used: 17,050
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مؤشرات الأسعار ونسب النمو: تحليل القيمة السوقية لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات القاهرة الجديدة
+  -- Duration: 7.55 seconds
+  -- Tokens Used: 17,332
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات التملك الآمن: من المعاينة الميدانية وحتى توقيع العقود
+  -- Duration: 4.24 seconds
+  -- Tokens Used: 17,002
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات التملك الآمن: من المعاينة الميدانية وحتى توقيع العقود
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات التملك الآمن: من المعاينة الميدانية وحتى توقيع العقود
+  -- Duration: 8.13 seconds
+  -- Tokens Used: 18,289
+--------------------------------------------------
+Step: SECTION_8_أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة
+  -- Duration: 7.73 seconds
+  -- Tokens Used: 17,379
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة تملكك اليوم: القاهرة الجديدة بانتظارك مع عقار يا مصر
+  -- Duration: 5.00 seconds
+  -- Tokens Used: 17,037
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلة تملكك اليوم: القاهرة الجديدة بانتظارك مع عقار يا مصر
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 85.61 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: GLOBAL_COHERENCE
+  -- Duration: 26.12 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 2.46 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 6.19 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.08 seconds
+  -- Tokens Used: 32,535
+--------------------------------------------------

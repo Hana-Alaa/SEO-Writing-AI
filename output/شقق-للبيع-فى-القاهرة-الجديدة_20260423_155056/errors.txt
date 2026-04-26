@@ -1,0 +1,30 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: final_humanizer !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-23 15:56:21
+ERROR: cannot access local variable 'title' where it is not associated with a value
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 90, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 1929, in _step_5_1_final_humanizer
+    title=title,
+         ^^^^^
+UnboundLocalError: cannot access local variable 'title' where it is not associated with a value
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: final_humanizer !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-23 15:56:50
+ERROR: cannot access local variable 'title' where it is not associated with a value
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 90, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 1929, in _step_5_1_final_humanizer
+    title=title,
+         ^^^^^
+UnboundLocalError: cannot access local variable 'title' where it is not associated with a value
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

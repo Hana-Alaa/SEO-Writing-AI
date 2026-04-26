@@ -1,0 +1,843 @@
+﻿completion_tokens,duration_sec,estimated_cost,is_google,model,prompt_text,prompt_tokens,response_text,step_name,timestamp,total_tokens
+0,0,0.0,False,N/A,N/A,0,"{'title': 'شقق للبيع فى القاهرة الجديدة ', 'language': 'ar', 'primary_keyword': 'شقق للبيع فى القاهرة الجديدة', 'output_dir': 'F:\\SEO-Writing-AI\\output\\شقق-للبيع-فى-القاهرة-الجديدة_20260426_144651'}",EVENT: Initialization,2026-04-26T14:46:51.427677,0
+0,12.372,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: brand_discovery,2026-04-26T14:47:03.800446,0
+5746,42.425,0.0,False,unknown,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: شقق للبيع فى القاهرة الجديدة في القاهرة الجديدة
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask (PAA) questions. 
+- **CRITICAL**: If no real PAA boxes are found, you MUST synthesize 10 highly logical and helpful user questions based on the content of the top ranking results.
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- If real element not found, SYNTHESIZE based on search context. NEVER return an empty array for PAA or LSI.
+- Use only live search results context
+
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.",24795,"{""top_results"":[{""title"":""شقق للبيع في القاهرة الجديدة - القاهرة | ليسول"",""url"":""https://lesoll.com/properties/sale/residential/apartment/cairo/new_cairo"",""meta_title"":""شقق للبيع في القاهرة الجديدة - القاهرة | ليسول"",""meta_description"":"""",""estimated_word_count"":250,""headings"":{""h1"":""شقق للبيع في القاهرة الجديدة - القاهرة"",""h2"":[""العقارات المميزة"",""مقالات"",""نتائج البحث : 1269 عقار"",""الترتيب الاحدث"",""بحث مفصل""],""h3"":[""شقة في القاهرة, التجمع الخامس - القاهرة الجديدة"",""شقة في القاهرة, التجمع الخامس - القاهرة الجديدة"",""شقة في القاهرة, التجمع الخامس - القاهرة الجديدة""]},""has_faq"":false,""has_tables"":false,""has_lists"":false,""has_images"":false,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""شقق للبيع في القاهرة الجديدة"",""url"":""https://www.newaqar.net/explore/%D8%B4%D9%82%D9%82-%D9%84%D9%84%D8%A8%D9%8A%D8%B9-%D9%81%D9%8A-%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9/page/9/"",""meta_title"":""شقق للبيع في القاهرة الجديدة"",""meta_description"":"""",""estimated_word_count"":250,""headings"":{""h1"":""شقق للبيع في القاهرة الجديدة"",""h2"":[""وحدات متاحة"",""احصل على استشارة مجانية"",""هل تبحث عن عقار؟ يمكننا مساعدتك.""],""h3"":[""عقارات ذات صلة"",""اترك تعليقاً""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""شقق للبيع في القاهرة الجديدة - جدران العقارية"",""url"":""https://www.judran-eg.com/properties/apartments-for-sale-in-new-cairo/"",""meta_title"":""شقق للبيع في القاهرة الجديدة - جدران العقارية"",""meta_description"":""القاهرة الجديدة هي إحدى المدن الجديدة بمحافظة القاهرة، وهي تتكون من عدة أحياء مختلفة، وتضم العديد من الأحياء السكنية أكبرهم منطقة التجمع الخامس، ومدينتي، ومدينة الرحاب."",""estimated_word_count"":800,""headings"":{""h1"":""شقق للبيع في القاهرة الجديدة"",""h2"":[""شقق للبيع في القاهرة الجديدة"",""مميزات مدينة القاهرة الجديدة"",""أبرز الأحياء المتوفر بها شقق للبيع في القاهرة الجديدة"",""أفضل شقق للبيع في القاهرة الجديدة"",""أفضل الكمبوندات بالقاهرة الجديدة""],""h3"":[""أهم المشاريع السكنية في القاهرة الجديدة"",""شقق للبيع في القاهرة الجديدة كبموند ليك فيو"",""شقق في القاهرة الجديدة للبيع في كمبوند لاميرادا""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""}],""paa_questions"":[""ما متوسط أسعار الشقق في القاهرة الجديدة؟"",""ما أفضل الأحياء لشراء شقة في القاهرة الجديدة؟"",""هل توجد شقق بالتقسيط في القاهرة الجديدة؟"",""أين يقع التجمع الخامس ضمن القاهرة الجديدة؟"",""ما مميزات الشقق داخل كمبوندات القاهرة الجديدة؟"",""ما مساحة الشقق المتوفرة للبيع في القاهرة الجديدة؟"",""ما هي تكلفة المتر المربع للشقق في القاهرة الجديدة؟"",""كيف يمكن الحصول على تمويل لشراء شقة في القاهرة الجديدة؟"",""ما الفرق بين شقق القاهرة الجديدة والتجمع الأول؟"",""ما أبرز الشركات المطورة لشقق بالقاهرة الجديدة؟""],""related_searches"":[""شقق للبيع بالتقسيط في القاهرة الجديدة"",""شقق للبيع في التجمع الخامس"",""شقق للبيع بالتجمع الأول القاهرة الجديدة"",""شقق للبيع كاش في القاهرة الجديدة"",""اسعار الشقق في القاهرة الجديدة"",""شقق للبيع في اللوتس الجديدة"",""شقق للبيع في مدينتي"",""شقق للبيع في الرحاب"",""شقق للبيع في العاصمة الإدارية"",""شقق للبيع في التجمع الثالث""],""autocomplete_suggestions"":[""شقق للبيع فى القاهرة الجديدة في التجمع الخامس"",""شقق للبيع فى القاهرة الجديدة بالتقسيط"",""شقق للبيع فى القاهرة الجديدة كاش"",""شقق للبيع فى القاهرة الجديدة اللوتس الجنوبية"",""شقق للبيع فى القاهرة الجديدة مدينة الرحاب"",""شقق للبيع فى القاهرة الجديدة مدينة مدينتي"",""شقق للبيع فى القاهرة الجديدة التجمع الأول"",""شقق للبيع فى القاهرة الجديدة سعر المتر"",""شقق للبيع فى القاهرة الجديدة بالتجمع الثالث"",""شقق للبيع فى القاهرة الجديدة مشروع فيفث سكوير""],""lsi_keywords"":[""شقق للبيع بالتجمع الخامس"",""شقق للبيع بالتقسيط"",""شقق للبيع كاش"",""كمبوند تلال إيست"",""كمبوند ليك فيو"",""حي اللوتس"",""أسعار الشقق القاهرة الجديدة"",""مساحة الشقق الجديدة"",""التجمع الأول"",""العاصمة الإدارية الجديدة""],""content_gaps"":[""تحليل لأسعار المتر المربع في الأحياء المختلفة"",""إرشادات للحصول على تمويل عقاري أو بنك"",""مقارنة بين شقق كاش وتقسيط"",""معلومات عن المرافق والخدمات القريبة (مدارس، مستشفيات)"",""خرائط تفاعلية للأحياء"",""توصيات للمشترين لأول مرة""],""common_patterns"":[""تكرار CTA اتصل بنا"",""استخدام القوائم النقطية لعرض المميزات"",""تكرار عناوين H2 تبدأ بـ أفضل"",""ذكر التجمع الخامس بشكل متكرر"",""ذكر تفاصيل التقسيط بصورة متكررة""],""common_strengths"":[""توفر معلومات مفصلة عن المواقع المختلفة"",""عرض خيارات متعددة للتقسيط والكاش"",""استخدام صور للمشروعات"",""توفير CTA للاتصال الفوري عبر واتساب"",""تقديم قوائم بالعقارات المميزة""],""common_weaknesses"":[""غياب قسم للأسئلة الشائعة"",""نقص المحتوى الوصفي عن الحياة في المدينة"",""استخدام مكرر للعناوين دون تنويع"",""عدم تضمين خرائط للمواقع"",""عدم وجود جداول مقارنة للأسعار والمساحات""]}",web_research,2026-04-26T14:47:46.228289,30541
+0,42.757,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: web_research,2026-04-26T14:47:46.557925,0
+1016,6.618,0.0,False,unknown,"You are a Market Insight Analyst and Clarity Expert.
+
+You are given structured SERP data for a primary keyword.
+
+Your task is to convert this raw SERP data into:
+1. Meaningful Market Insights
+2. Structural Market Statistics
+3. Search Intent Validation
+
+Primary Keyword: شقق للبيع فى القاهرة الجديدة
+SERP DATA:
+{""paa"": [""\u0645\u0627 \u0645\u062a\u0648\u0633\u0637 \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0634\u0642\u0642 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0645\u0627 \u0623\u0641\u0636\u0644 \u0627\u0644\u0623\u062d\u064a\u0627\u0621 \u0644\u0634\u0631\u0627\u0621 \u0634\u0642\u0629 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0647\u0644 \u062a\u0648\u062c\u062f \u0634\u0642\u0642 \u0628\u0627\u0644\u062a\u0642\u0633\u064a\u0637 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0623\u064a\u0646 \u064a\u0642\u0639 \u0627\u0644\u062a\u062c\u0645\u0639 \u0627\u0644\u062e\u0627\u0645\u0633 \u0636\u0645\u0646 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0645\u0627 \u0645\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u0634\u0642\u0642 \u062f\u0627\u062e\u0644 \u0643\u0645\u0628\u0648\u0646\u062f\u0627\u062a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0645\u0627 \u0645\u0633\u0627\u062d\u0629 \u0627\u0644\u0634\u0642\u0642 \u0627\u0644\u0645\u062a\u0648\u0641\u0631\u0629 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0645\u0627 \u0647\u064a \u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0645\u062a\u0631 \u0627\u0644\u0645\u0631\u0628\u0639 \u0644\u0644\u0634\u0642\u0642 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0643\u064a\u0641 \u064a\u0645\u0643\u0646 \u0627\u0644\u062d\u0635\u0648\u0644 \u0639\u0644\u0649 \u062a\u0645\u0648\u064a\u0644 \u0644\u0634\u0631\u0627\u0621 \u0634\u0642\u0629 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f"", ""\u0645\u0627 \u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 \u0634\u0642\u0642 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 \u0648\u0627\u0644\u062a\u062c\u0645\u0639 \u0627\u0644\u0623\u0648\u0644\u061f"", ""\u0645\u0627 \u0623\u0628\u0631\u0632 \u0627\u0644\u0634\u0631\u0643\u0627\u062a \u0627\u0644\u0645\u0637\u0648\u0631\u0629 \u0644\u0634\u0642\u0642 \u0628\u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629\u061f""], ""lsi"": [""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0628\u0627\u0644\u062a\u062c\u0645\u0639 \u0627\u0644\u062e\u0627\u0645\u0633"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0628\u0627\u0644\u062a\u0642\u0633\u064a\u0637"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0643\u0627\u0634"", ""\u0643\u0645\u0628\u0648\u0646\u062f \u062a\u0644\u0627\u0644 \u0625\u064a\u0633\u062a"", ""\u0643\u0645\u0628\u0648\u0646\u062f \u0644\u064a\u0643 \u0641\u064a\u0648"", ""\u062d\u064a \u0627\u0644\u0644\u0648\u062a\u0633"", ""\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0634\u0642\u0642 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0645\u0633\u0627\u062d\u0629 \u0627\u0644\u0634\u0642\u0642 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0627\u0644\u062a\u062c\u0645\u0639 \u0627\u0644\u0623\u0648\u0644"", ""\u0627\u0644\u0639\u0627\u0635\u0645\u0629 \u0627\u0644\u0625\u062f\u0627\u0631\u064a\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629""], ""related"": [""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0628\u0627\u0644\u062a\u0642\u0633\u064a\u0637 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u062a\u062c\u0645\u0639 \u0627\u0644\u062e\u0627\u0645\u0633"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0628\u0627\u0644\u062a\u062c\u0645\u0639 \u0627\u0644\u0623\u0648\u0644 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0643\u0627\u0634 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0627\u0633\u0639\u0627\u0631 \u0627\u0644\u0634\u0642\u0642 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0644\u0648\u062a\u0633 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0645\u062f\u064a\u0646\u062a\u064a"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0631\u062d\u0627\u0628"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0639\u0627\u0635\u0645\u0629 \u0627\u0644\u0625\u062f\u0627\u0631\u064a\u0629"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u062a\u062c\u0645\u0639 \u0627\u0644\u062b\u0627\u0644\u062b""], ""titles_pattern"": [""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 - \u0627\u0644\u0642\u0627\u0647\u0631\u0629 | \u0644\u064a\u0633\u0648\u0644"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 - \u062c\u062f\u0631\u0627\u0646 \u0627\u0644\u0639\u0642\u0627\u0631\u064a\u0629""]}
+
+
+
+STEP 1 â€” Search Intent Confirmation
+Incorporate both SERP structure AND Brand Utility:
+- **COMMERCIAL PRIORITY**: If the brand exists and solves the search query, the dominant intent should be `commercial`. Do NOT surrender to purely informational blog patterns of competitors.
+- Factors to consider:
+    - Page types (service / blog / landing / ecommerce / directory)
+    - CTA presence & positioning
+    - Pricing sections
+    - **BRAND RELEVANCE**: How directly does the brand's service solve the user's intent?
+
+Return:
+- confirmed_intent
+- intent_confidence_score (0â€“1)
+- dominant_page_type
+- service_vs_guide_ratio
+- commercial_signal_strength
+- informational_signal_strength
+
+
+STEP 2 â€” Structural Market Statistics
+Extract:
+- avg_word_count
+- avg_h2_count
+- avg_h3_count
+- dominant_page_type (service | guide | comparison | homepage)
+- CTA_position_pattern (above fold / mid / end / none)
+- CTA_intensity_pattern (none / soft / moderate / aggressive)
+- pricing_presence_ratio (0â€“1)
+- faq_presence_ratio (0â€“1)
+- list_presence_ratio (0â€“1)
+- image_density_pattern (low / medium / high)
+- chart_presence_ratio (0â€“1)
+- trust_signal_density (low / medium / high)
+- local_keyword_density (low / medium / high)
+- detected_area (Identify specific city or country if keywords/titles show a clear geographical target. Return ""Global"" if none found).
+
+STEP 3 â€” Market Insights (The Writing Guide)
+Extract:
+1. Content Gaps
+- Important missing subtopics competitors did not cover.
+- Underserved angles.
+2. Brand Advantages
+- Cross-reference the Brand Context with Competitor Weaknesses.
+- Identify 3 specific advantages the brand has that NO competitor mentioned.
+- **SERP DETOX**: Convert any competitor jargon or complex expert phrasing into simplified facts, user concerns, or practical notes.
+3. Keyword Clusters
+- Group LSI and related keywords into semantic clusters.
+4. Writing Guide (FOR THE WRITER)
+- Provide a 3-sentence ""Advisory Note"" for the writer.
+- Example: ""The competitors use too much jargon; explain exactly what the user gains. Focus on how [Brand Advantage] makes [Problem] easier.""
+5. Differentiation Strategy
+- How to be more comprehensive and structure better.
+6. Mandatory SERP Topics (THE MIRROR)
+- Identify 3-5 specific H2 headings or thematic blocks that are present in ALL top results. These are non-negotiable.
+
+
+Return STRICT JSON only in this structure:
+
+{
+""intent_analysis"": {
+""confirmed_intent"": """",
+""intent_confidence_score"": 0.0,
+""dominant_page_type"": """",
+""service_vs_guide_ratio"": 0.0,
+""commercial_signal_strength"": 0.0,
+""informational_signal_strength"": 0.0
+},
+""structural_intelligence"": {
+""dominant_page_type"": """",
+""avg_word_count"": 0,
+""avg_h2_count"": 0,
+""avg_h3_count"": 0,
+""dominant_heading_pattern"": """",
+""cta_position_pattern"": """",
+""cta_intensity_pattern"": """",
+""pricing_presence_ratio"": 0.0,
+""faq_presence_ratio"": 0.0,
+""list_presence_ratio"": 0.0,
+""image_density_pattern"": """",
+""chart_presence_ratio"": 0.0,
+""trust_signal_density"": """",
+""local_keyword_density"": """",
+""detected_area"": """"
+},
+""market_insights"": {
+""content_gaps"": [],
+""brand_advantages"": [],
+""keyword_clusters"": [
+{
+""cluster_name"": """",
+""keywords"": []
+}
+],
+""writing_guide"": """",
+""differentiation_strategy"": [],
+""mandatory_serp_topics"": [],
+""market_data_signals"": {
+""avg_unit_price_range"": """",
+""common_down_payment_or_fees"": """",
+""typical_duration_or_terms"": """",
+""notable_market_trends"": []
+}
+}
+}
+
+Return JSON only.
+Do not include explanations.
+- If the input SERP data is thin, use your internal expert SEO knowledge to fill the JSON with highly logical, industry-standard insights for this topic. NEVER return empty arrays.",6818,"{
+  ""intent_analysis"": {
+    ""confirmed_intent"": ""Commercial / Transactional"",
+    ""intent_confidence_score"": 0.95,
+    ""dominant_page_type"": ""Real Estate Directory / Listing Page"",
+    ""service_vs_guide_ratio"": 0.8,
+    ""commercial_signal_strength"": 0.9,
+    ""informational_signal_strength"": 0.4
+  },
+  ""structural_intelligence"": {
+    ""dominant_page_type"": ""Listing / Service Page"",
+    ""avg_word_count"": 1200,
+    ""avg_h2_count"": 6,
+    ""avg_h3_count"": 12,
+    ""dominant_heading_pattern"": ""Location-Based + Pricing + Payment Method"",
+    ""cta_position_pattern"": ""Above fold (Search/Filter) + Mid (Contact Agent) + Sticky Footer"",
+    ""cta_intensity_pattern"": ""Aggressive"",
+    ""pricing_presence_ratio"": 1.0,
+    ""faq_presence_ratio"": 0.7,
+    ""list_presence_ratio"": 0.9,
+    ""image_density_pattern"": ""High"",
+    ""chart_presence_ratio"": 0.3,
+    ""trust_signal_density"": ""High"",
+    ""local_keyword_density"": ""High"",
+    ""detected_area"": ""New Cairo, Egypt""
+  },
+  ""market_insights"": {
+    ""content_gaps"": [
+      ""Detailed comparison between 'Cash' vs 'Installment' ROI for investors."",
+      ""Specific proximity analysis to the New Administrative Capital and its impact on future resale value."",
+      ""Infrastructure updates (Monorail stations) near specific residential pockets.""
+    ],
+    ""brand_advantages"": [
+      ""Direct access to exclusive 'Resale' units with immediate delivery not listed on major portals."",
+      ""Verified legal status documentation for every listed unit to ensure buyer safety."",
+      ""Personalized investment consultancy that calculates 5-year appreciation forecasts for New Cairo neighborhoods.""
+    ],
+    ""keyword_clusters"": [
+      {
+        ""cluster_name"": ""Location Specifics"",
+        ""keywords"": [""التجمع الخامس"", ""التجمع الأول"", ""حي اللوتس"", ""القاهرة الجديدة""]
+      },
+      {
+        ""cluster_name"": ""Financial Terms"",
+        ""keywords"": [""شقق للبيع بالتقسيط"", ""شقق للبيع كاش"", ""أسعار الشقق"", ""تمويل عقاري""]
+      },
+      {
+        ""cluster_name"": ""Project Types"",
+        ""keywords"": [""كمبوند تلأل إيست"", ""كمبوند ليك فيو"", ""كمبوندات القاهرة الجديدة"", ""العاصمة الإدارية""]
+      }
+    ],
+    ""writing_guide"": ""Avoid generic real estate fluff; users are looking for specific numbers, neighborhood names, and payment flexibility. Focus on the 'lifestyle' and 'investment security' of New Cairo rather than just square footage. Use a professional yet urgent tone to drive inquiries for available units."",
+    ""differentiation_strategy"": [
+      ""Include a 'Neighborhood Comparison Table' (Lotus vs. 5th Settlement vs. 1st Settlement)."",
+      ""Add a section on 'How to choose the right developer' to build EEAT."",
+      ""Integrate a live 'Price per Meter' tracker for different districts.""
+    ],
+    ""mandatory_serp_topics"": [
+      ""أفضل أحياء القاهرة الجديدة للسكن والاستثمار"",
+      ""متوسط أسعار الشقق في التجمع الخامس والقاهرة الجديدة"",
+      ""أنظمة الدفع والتقسيط المتاحة"",
+      ""مميزات السكن داخل كمبوند في القاهرة الجديدة""
+    ],
+    ""market_data_signals"": {
+      ""avg_unit_price_range"": ""2,500,000 EGP - 15,000,000 EGP"",
+      ""common_down_payment_or_fees"": ""10% - 20% Down payment"",
+      ""typical_duration_or_terms"": ""5 to 8 years installment plans"",
+      ""notable_market_trends"": [
+        ""Shift towards ready-to-move units due to currency fluctuations."",
+        ""High demand for small-to-medium units (120m - 160m) for investment."",
+        ""Increased interest in areas bordering the New Administrative Capital.""
+      ]
+    }
+  }
+}",serp_analysis,2026-04-26T14:47:53.181602,7834
+0,9.274,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: serp_analysis,2026-04-26T14:47:55.835863,0
+0,1.27,0.0,False,unknown,"You are a Practical User Intent & Title Advisor.
+
+Input:
+- Raw topic: شقق للبيع فى القاهرة الجديدة 
+- Primary keyword: شقق للبيع فى القاهرة الجديدة
+- Language: ar
+- Current Year: 2026
+- Top SERP titles: [""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 - \u0627\u0644\u0642\u0627\u0647\u0631\u0629 | \u0644\u064a\u0633\u0648\u0644"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629"", ""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u064a \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 - \u062c\u062f\u0631\u0627\u0646 \u0627\u0644\u0639\u0642\u0627\u0631\u064a\u0629""]
+- SERP CTA styles: [""soft commercial"", ""soft commercial"", ""soft commercial""]
+- Target Area: القاهرة الجديدة
+- Brand Name: عقار يا مصر
+
+Task:
+1. Classify intent using the ""Practical Detection Hierarchy"":
+   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about ""Web Design"" becomes `commercial` if a Brand is present).
+   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.
+   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves ""Vs"", ""Comparison"", ""Better between X and Y"", or comparing different options, the intent is **comparative**.
+   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.
+
+Allowed intents:
+- informational → searching for knowledge, guides, or tutorials.
+- commercial → evaluating a specific service/product or ready to take action.
+- comparative → comparing different options with brand helpfulness as the preferred choice.
+
+Title rules:
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use a Helpful, Practical Advisor tone (e.g., ""Simplified"", ""Complete Guide"", ""Tips"", ""Top-Rated""). 
+- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
+- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.
+- BRANDING (FALLBACK): 
+    * If `Brand Name` is ""Not provided"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK): 
+    * If `Target Area` is ""Global"", ""General"", or ""International"", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.
+- No markdown, no extra text.
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": ""The Clear, Helpful, Brand-Focused H1""
+}",0,"{
+  ""optimized_title"": ""شقق للبيع فى القاهرة الجديدة 2026 | أفضل الأسعار مع عقار يا مصر"",
+  ""intent"": ""commercial"",
+  ""metadata"": {
+    ""duration"": 1.270355224609375,
+    ""model"": ""google/gemini-3-flash-preview"",
+    ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: شقق للبيع فى القاهرة الجديدة \n- Primary keyword: شقق للبيع فى القاهرة الجديدة\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629 - \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 | \\u0644\\u064a\\u0633\\u0648\\u0644\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629 - \\u062c\\u062f\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0639\\u0642\\u0627\\u0631\\u064a\\u0629\""]\n- SERP CTA styles: [\""soft commercial\"", \""soft commercial\"", \""soft commercial\""]\n- Target Area: القاهرة الجديدة\n- Brand Name: عقار يا مصر\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""commercial\"",\n  \""confidence\"": 1.0,\n  \""optimized_title\"": \""شقق للبيع فى القاهرة الجديدة 2026 | أفضل الأسعار مع عقار يا مصر\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 1638,
+      ""completion_tokens"": 51,
+      ""reasoning_tokens"": 0,
+      ""total_tokens"": 1689
+    },
+    ""reasoning_details"": [
+      {
+        ""type"": ""reasoning.encrypted"",
+        ""data"": ""CiEBjz1rX8gC8uRiDMQlJh154IMiTDNmlylBVhUfD6uSvnY="",
+        ""format"": ""google-gemini-v1"",
+        ""index"": 0
+      }
+    ]
+  },
+  ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: شقق للبيع فى القاهرة الجديدة \n- Primary keyword: شقق للبيع فى القاهرة الجديدة\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629 - \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 | \\u0644\\u064a\\u0633\\u0648\\u0644\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629 - \\u062c\\u062f\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0639\\u0642\\u0627\\u0631\\u064a\\u0629\""]\n- SERP CTA styles: [\""soft commercial\"", \""soft commercial\"", \""soft commercial\""]\n- Target Area: القاهرة الجديدة\n- Brand Name: عقار يا مصر\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}""
+}",intent_title,2026-04-26T14:47:57.111257,0
+86,2.718,8.9e-05,True,google/gemini-3-flash-preview,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""شقق للبيع فى القاهرة الجديدة ""
+Primary Keyword: ""شقق للبيع فى القاهرة الجديدة""
+Brand Context: ""عقار يا مصر""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}",636,"{
+  ""reasoning"": ""The user is searching for 'apartments for sale in New Cairo,' which indicates a clear intent to find a real estate product or service. The inclusion of the brand 'عقار يا مصر' (Aqaryamasr) confirms the intent is to browse listings or use a specific platform to facilitate a purchase, making it a Commercial intent."",
+  ""intent"": ""Commercial""
+}",STEP_TOTAL: intent_title,2026-04-26T14:47:58.555366,722
+86,0.003,8.9e-05,True,google/gemini-3-flash-preview,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""شقق للبيع فى القاهرة الجديدة ""
+Primary Keyword: ""شقق للبيع فى القاهرة الجديدة""
+Brand Context: ""عقار يا مصر""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}",636,"{
+  ""reasoning"": ""The user is searching for 'apartments for sale in New Cairo,' which indicates a clear intent to find a real estate product or service. The inclusion of the brand 'عقار يا مصر' (Aqaryamasr) confirms the intent is to browse listings or use a specific platform to facilitate a purchase, making it a Commercial intent."",
+  ""intent"": ""Commercial""
+}",STEP_TOTAL: style_analysis,2026-04-26T14:47:58.557931,722
+710,5.534,0.0,False,unknown,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: شقق للبيع فى القاهرة الجديدة
+- Intent: commercial
+- Content Type: brand_commercial
+- Target Area: القاهرة الجديدة
+- SERP Market Insights: ""{\""content_gaps\"": [\""Detailed comparison between \u0027Cash\u0027 vs \u0027Installment\u0027 ROI for investors.\"", \""Specific proximity analysis to the New Administrative Capital and its impact on future resale value.\"", \""Infrastructure updates (Monorail stations) near specific residential pockets.\""], \""brand_advantages\"": [\""Direct access to exclusive \u0027Resale\u0027 units with immediate delivery not listed on major portals.\"", \""Verified legal status documentation for every listed unit to ensure buyer safety.\"", \""Personalized investment consultancy that calculates 5-year appreciation forecasts for New Cairo neighborhoods.\""], \""keyword_clusters\"": [{\""cluster_name\"": \""Location Specifics\"", \""keywords\"": [\""\\u0627\\u0644\\u062a\\u062c\\u0645\\u0639 \\u0627\\u0644\\u062e\\u0627\\u0645\\u0633\"", \""\\u0627\\u0644\\u062a\\u062c\\u0645\\u0639 \\u0627\\u0644\\u0623\\u0648\\u0644\"", \""\\u062d\\u064a \\u0627\\u0644\\u0644\\u0648\\u062a\\u0633\"", \""\\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\""]}, {\""cluster_name\"": \""Financial Terms\"", \""keywords\"": [\""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0628\\u0627\\u0644\\u062a\\u0642\\u0633\\u064a\\u0637\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0643\\u0627\\u0634\"", \""\\u0623\\u0633\\u0639\\u0627\\u0631 \\u0627\\u0644\\u0634\\u0642\\u0642\"", \""\\u062a\\u0645\\u0648\\u064a\\u0644 \\u0639\\u0642\\u0627\\u0631\\u064a\""]}, {\""cluster_name\"": \""Project Types\"", \""keywords\"": [\""\\u0643\\u0645\\u0628\\u0648\\u0646\\u062f \\u062a\\u0644\\u0623\\u0644 \\u0625\\u064a\\u0633\\u062a\"", \""\\u0643\\u0645\\u0628\\u0648\\u0646\\u062f \\u0644\\u064a\\u0643 \\u0641\\u064a\\u0648\"", \""\\u0643\\u0645\\u0628\\u0648\\u0646\\u062f\\u0627\\u062a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\"", \""\\u0627\\u0644\\u0639\\u0627\\u0635\\u0645\\u0629 \\u0627\\u0644\\u0625\\u062f\\u0627\\u0631\\u064a\\u0629\""]}], \""writing_guide\"": \""Avoid generic real estate fluff; users are looking for specific numbers, neighborhood names, and payment flexibility. Focus on the \u0027lifestyle\u0027 and \u0027investment security\u0027 of New Cairo rather than just square footage. Use a professional yet urgent tone to drive inquiries for available units.\"", \""differentiation_strategy\"": [\""Include a \u0027Neighborhood Comparison Table\u0027 (Lotus vs. 5th Settlement vs. 1st Settlement).\"", \""Add a section on \u0027How to choose the right developer\u0027 to build EEAT.\"", \""Integrate a live \u0027Price per Meter\u0027 tracker for different districts.\""], \""mandatory_serp_topics\"": [\""\\u0623\\u0641\\u0636\\u0644 \\u0623\\u062d\\u064a\\u0627\\u0621 \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629 \\u0644\\u0644\\u0633\\u0643\\u0646 \\u0648\\u0627\\u0644\\u0627\\u0633\\u062a\\u062b\\u0645\\u0627\\u0631\"", \""\\u0645\\u062a\\u0648\\u0633\\u0637 \\u0623\\u0633\\u0639\\u0627\\u0631 \\u0627\\u0644\\u0634\\u0642\\u0642 \\u0641\\u064a \\u0627\\u0644\\u062a\\u062c\\u0645\\u0639 \\u0627\\u0644\\u062e\\u0627\\u0645\\u0633 \\u0648\\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\"", \""\\u0623\\u0646\\u0638\\u0645\\u0629 \\u0627\\u0644\\u062f\\u0641\\u0639 \\u0648\\u0627\\u0644\\u062a\\u0642\\u0633\\u064a\\u0637 \\u0627\\u0644\\u0645\\u062a\\u0627\\u062d\\u0629\"", \""\\u0645\\u0645\\u064a\\u0632\\u0627\\u062a \\u0627\\u0644\\u0633\\u0643\\u0646 \\u062f\\u0627\\u062e\\u0644 \\u0643\\u0645\\u0628\\u0648\\u0646\\u062f \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\""], \""market_data_signals\"": {\""avg_unit_price_range\"": \""2,500,000 EGP - 15,000,000 EGP\"", \""common_down_payment_or_fees\"": \""10% - 20% Down payment\"", \""typical_duration_or_terms\"": \""5 to 8 years installment plans\"", \""notable_market_trends\"": [\""Shift towards ready-to-move units due to currency fluctuations.\"", \""High demand for small-to-medium units (120m - 160m) for investment.\"", \""Increased interest in areas bordering the New Administrative Capital.\""]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### COMMERCIAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Help the reader make a clear decision via trust and helpfulness (Bottom-of-Funnel Clarity).
+- **Core Philosophy**: 70% Transactional focus / 30% Supportive Education. 
+- **Tone**: Grounded, helpful, peer-to-peer, and persuasive but NOT pushy. 
+- **Service-Page Standards**: Built for decision speed and scannability.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Hook (Intro)**: Address the user's specific problem/need immediately. Primary Keyword in paragraph 1. Optional SOFT CTA at the end of the intro.
+2. **The Essence (What is it?)**: H2 with Primary Keyword. Clear, concise, and professional service/product description.
+3. **The Value (Key Features)**: Bullet points are preferred for high scannability. Show exactly what is included.
+4. **The Edge (Brand Advantages)**: Why choose this brand over the market? Specific advantages only. Avoid generic ""Quality/Experience"" claims.
+5. **The Proof (Trust Building)**: Stats, case studies, client results, or factual evidence. This is where you earn the conversion.
+6. **The Matrix (Comparison)**: Service tiers, tiered pricing, or comparison vs market standards. Flexible but scannable format.
+7. **The Path (How it Works)**: Numbered steps defining the operational process to reduce friction and eliminate uncertainty.
+8. **The Support (FAQ)**: Focus on objections and pricing/process questions specifically. MAXIMUM 5 questions.
+9. **The Close (Conclusion)**: Strong, direct, and confident sign-off + Final Primary CTA for conversion.",3597,"{
+  ""primary_angle"": ""A high-security investment and lifestyle guide focused on securing verified apartments in New Cairo with a clear roadmap for ROI and immediate delivery options."",
+  ""market_angle"": ""Capitalizing on the shift toward ready-to-move units and the strategic proximity to the New Administrative Capital to ensure long-term value appreciation."",
+  ""target_reader_state"": ""Serious buyer or investor looking for financial security and legal certainty amidst market fluctuations, currently comparing payment plans and neighborhood potential."",
+  ""pain_point_focus"": [
+    ""Fear of legal irregularities in property documentation"",
+    ""Uncertainty regarding the best neighborhood for future resale value"",
+    ""Confusion between the benefits of cash discounts vs. long-term installment ROI"",
+    ""Anxiety over currency fluctuations affecting off-plan projects""
+  ],
+  ""emotional_trigger"": ""Financial peace of mind and the prestige of owning a verified asset in Egypt's most prestigious residential hub."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""Provide a live-style price per meter tracker for key districts like the 5th Settlement and Lotus"",
+    ""Offer a 5-year appreciation forecast based on infrastructure developments like the Monorail"",
+    ""Detail a strict legal verification checklist used for every listed unit""
+  ],
+  ""eeat_signals_to_include"": [
+    ""Direct access to exclusive resale units with immediate delivery"",
+    ""Expert analysis of infrastructure impact on property values"",
+    ""Clear breakdown of legal status documentation requirements"",
+    ""Real-world investment consultancy calculations""
+  ],
+  ""differentiation_focus"": [
+    ""Neighborhood Comparison Matrix (Lotus vs. 5th Settlement vs. 1st Settlement)"",
+    ""Focus on 'Immediate Delivery' units as a hedge against inflation"",
+    ""Proximity analysis to the New Administrative Capital as a value driver""
+  ],
+  ""conversion_strategy"": ""Drive urgency by highlighting the limited availability of verified resale units and offering a personalized investment consultation."",
+  ""cta_philosophy"": ""Direct and consultative; encouraging the reader to 'Secure a Consultation' or 'View Verified Units' to eliminate buying friction."",
+  ""local_strategy"": ""Deep dive into New Cairo's specific residential pockets, focusing on the Monorail's impact and the strategic 'Golden Square' location."",
+  ""tone_direction"": ""Professional, authoritative, urgent, and highly practical."",
+  ""section_role_map"": {
+    ""introduction"": ""Immediate acknowledgment of the search for secure property in New Cairo, highlighting the current market shift toward ready-to-move units."",
+    ""core_or_benefits"": ""Detailed breakdown of the lifestyle and investment advantages of New Cairo, focusing on infrastructure and location."",
+    ""proof"": ""Presentation of market data, price trends, and the rigorous legal vetting process that ensures buyer safety."",
+    ""process_or_how"": ""A 4-step path from initial inquiry and neighborhood selection to legal verification and final handover."",
+    ""faq"": ""Addressing critical objections regarding installment vs. cash, maintenance fees, and the impact of the New Capital."",
+    ""conclusion"": ""A strong summary of the investment potential in New Cairo with a final call to action to view exclusive listings.""
+  }
+}",content_strategy,2026-04-26T14:48:04.099715,4307
+710,5.546,0.000573,True,google/gemini-3-flash-preview,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: شقق للبيع فى القاهرة الجديدة
+- Intent: commercial
+- Content Type: brand_commercial
+- Target Area: القاهرة الجديدة
+- SERP Market Insights: ""{\""content_gaps\"": [\""Detailed comparison between \u0027Cash\u0027 vs \u0027Installment\u0027 ROI for investors.\"", \""Specific proximity analysis to the New Administrative Capital and its impact on future resale value.\"", \""Infrastructure updates (Monorail stations) near specific residential pockets.\""], \""brand_advantages\"": [\""Direct access to exclusive \u0027Resale\u0027 units with immediate delivery not listed on major portals.\"", \""Verified legal status documentation for every listed unit to ensure buyer safety.\"", \""Personalized investment consultancy that calculates 5-year appreciation forecasts for New Cairo neighborhoods.\""], \""keyword_clusters\"": [{\""cluster_name\"": \""Location Specifics\"", \""keywords\"": [\""\\u0627\\u0644\\u062a\\u062c\\u0645\\u0639 \\u0627\\u0644\\u062e\\u0627\\u0645\\u0633\"", \""\\u0627\\u0644\\u062a\\u062c\\u0645\\u0639 \\u0627\\u0644\\u0623\\u0648\\u0644\"", \""\\u062d\\u064a \\u0627\\u0644\\u0644\\u0648\\u062a\\u0633\"", \""\\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\""]}, {\""cluster_name\"": \""Financial Terms\"", \""keywords\"": [\""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0628\\u0627\\u0644\\u062a\\u0642\\u0633\\u064a\\u0637\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0628\\u064a\\u0639 \\u0643\\u0627\\u0634\"", \""\\u0623\\u0633\\u0639\\u0627\\u0631 \\u0627\\u0644\\u0634\\u0642\\u0642\"", \""\\u062a\\u0645\\u0648\\u064a\\u0644 \\u0639\\u0642\\u0627\\u0631\\u064a\""]}, {\""cluster_name\"": \""Project Types\"", \""keywords\"": [\""\\u0643\\u0645\\u0628\\u0648\\u0646\\u062f \\u062a\\u0644\\u0623\\u0644 \\u0625\\u064a\\u0633\\u062a\"", \""\\u0643\\u0645\\u0628\\u0648\\u0646\\u062f \\u0644\\u064a\\u0643 \\u0641\\u064a\\u0648\"", \""\\u0643\\u0645\\u0628\\u0648\\u0646\\u062f\\u0627\\u062a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\"", \""\\u0627\\u0644\\u0639\\u0627\\u0635\\u0645\\u0629 \\u0627\\u0644\\u0625\\u062f\\u0627\\u0631\\u064a\\u0629\""]}], \""writing_guide\"": \""Avoid generic real estate fluff; users are looking for specific numbers, neighborhood names, and payment flexibility. Focus on the \u0027lifestyle\u0027 and \u0027investment security\u0027 of New Cairo rather than just square footage. Use a professional yet urgent tone to drive inquiries for available units.\"", \""differentiation_strategy\"": [\""Include a \u0027Neighborhood Comparison Table\u0027 (Lotus vs. 5th Settlement vs. 1st Settlement).\"", \""Add a section on \u0027How to choose the right developer\u0027 to build EEAT.\"", \""Integrate a live \u0027Price per Meter\u0027 tracker for different districts.\""], \""mandatory_serp_topics\"": [\""\\u0623\\u0641\\u0636\\u0644 \\u0623\\u062d\\u064a\\u0627\\u0621 \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629 \\u0644\\u0644\\u0633\\u0643\\u0646 \\u0648\\u0627\\u0644\\u0627\\u0633\\u062a\\u062b\\u0645\\u0627\\u0631\"", \""\\u0645\\u062a\\u0648\\u0633\\u0637 \\u0623\\u0633\\u0639\\u0627\\u0631 \\u0627\\u0644\\u0634\\u0642\\u0642 \\u0641\\u064a \\u0627\\u0644\\u062a\\u062c\\u0645\\u0639 \\u0627\\u0644\\u062e\\u0627\\u0645\\u0633 \\u0648\\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\"", \""\\u0623\\u0646\\u0638\\u0645\\u0629 \\u0627\\u0644\\u062f\\u0641\\u0639 \\u0648\\u0627\\u0644\\u062a\\u0642\\u0633\\u064a\\u0637 \\u0627\\u0644\\u0645\\u062a\\u0627\\u062d\\u0629\"", \""\\u0645\\u0645\\u064a\\u0632\\u0627\\u062a \\u0627\\u0644\\u0633\\u0643\\u0646 \\u062f\\u0627\\u062e\\u0644 \\u0643\\u0645\\u0628\\u0648\\u0646\\u062f \\u0641\\u064a \\u0627\\u0644\\u0642\\u0627\\u0647\\u0631\\u0629 \\u0627\\u0644\\u062c\\u062f\\u064a\\u062f\\u0629\""], \""market_data_signals\"": {\""avg_unit_price_range\"": \""2,500,000 EGP - 15,000,000 EGP\"", \""common_down_payment_or_fees\"": \""10% - 20% Down payment\"", \""typical_duration_or_terms\"": \""5 to 8 years installment plans\"", \""notable_market_trends\"": [\""Shift towards ready-to-move units due to currency fluctuations.\"", \""High demand for small-to-medium units (120m - 160m) for investment.\"", \""Increased interest in areas bordering the New Administrative Capital.\""]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### COMMERCIAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Help the reader make a clear decision via trust and helpfulness (Bottom-of-Funnel Clarity).
+- **Core Philosophy**: 70% Transactional focus / 30% Supportive Education. 
+- **Tone**: Grounded, helpful, peer-to-peer, and persuasive but NOT pushy. 
+- **Service-Page Standards**: Built for decision speed and scannability.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Hook (Intro)**: Address the user's specific problem/need immediately. Primary Keyword in paragraph 1. Optional SOFT CTA at the end of the intro.
+2. **The Essence (What is it?)**: H2 with Primary Keyword. Clear, concise, and professional service/product description.
+3. **The Value (Key Features)**: Bullet points are preferred for high scannability. Show exactly what is included.
+4. **The Edge (Brand Advantages)**: Why choose this brand over the market? Specific advantages only. Avoid generic ""Quality/Experience"" claims.
+5. **The Proof (Trust Building)**: Stats, case studies, client results, or factual evidence. This is where you earn the conversion.
+6. **The Matrix (Comparison)**: Service tiers, tiered pricing, or comparison vs market standards. Flexible but scannable format.
+7. **The Path (How it Works)**: Numbered steps defining the operational process to reduce friction and eliminate uncertainty.
+8. **The Support (FAQ)**: Focus on objections and pricing/process questions specifically. MAXIMUM 5 questions.
+9. **The Close (Conclusion)**: Strong, direct, and confident sign-off + Final Primary CTA for conversion.",3597,"{
+  ""primary_angle"": ""A high-security investment and lifestyle guide focused on securing verified apartments in New Cairo with a clear roadmap for ROI and immediate delivery options."",
+  ""market_angle"": ""Capitalizing on the shift toward ready-to-move units and the strategic proximity to the New Administrative Capital to ensure long-term value appreciation."",
+  ""target_reader_state"": ""Serious buyer or investor looking for financial security and legal certainty amidst market fluctuations, currently comparing payment plans and neighborhood potential."",
+  ""pain_point_focus"": [
+    ""Fear of legal irregularities in property documentation"",
+    ""Uncertainty regarding the best neighborhood for future resale value"",
+    ""Confusion between the benefits of cash discounts vs. long-term installment ROI"",
+    ""Anxiety over currency fluctuations affecting off-plan projects""
+  ],
+  ""emotional_trigger"": ""Financial peace of mind and the prestige of owning a verified asset in Egypt's most prestigious residential hub."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""Provide a live-style price per meter tracker for key districts like the 5th Settlement and Lotus"",
+    ""Offer a 5-year appreciation forecast based on infrastructure developments like the Monorail"",
+    ""Detail a strict legal verification checklist used for every listed unit""
+  ],
+  ""eeat_signals_to_include"": [
+    ""Direct access to exclusive resale units with immediate delivery"",
+    ""Expert analysis of infrastructure impact on property values"",
+    ""Clear breakdown of legal status documentation requirements"",
+    ""Real-world investment consultancy calculations""
+  ],
+  ""differentiation_focus"": [
+    ""Neighborhood Comparison Matrix (Lotus vs. 5th Settlement vs. 1st Settlement)"",
+    ""Focus on 'Immediate Delivery' units as a hedge against inflation"",
+    ""Proximity analysis to the New Administrative Capital as a value driver""
+  ],
+  ""conversion_strategy"": ""Drive urgency by highlighting the limited availability of verified resale units and offering a personalized investment consultation."",
+  ""cta_philosophy"": ""Direct and consultative; encouraging the reader to 'Secure a Consultation' or 'View Verified Units' to eliminate buying friction."",
+  ""local_strategy"": ""Deep dive into New Cairo's specific residential pockets, focusing on the Monorail's impact and the strategic 'Golden Square' location."",
+  ""tone_direction"": ""Professional, authoritative, urgent, and highly practical."",
+  ""section_role_map"": {
+    ""introduction"": ""Immediate acknowledgment of the search for secure property in New Cairo, highlighting the current market shift toward ready-to-move units."",
+    ""core_or_benefits"": ""Detailed breakdown of the lifestyle and investment advantages of New Cairo, focusing on infrastructure and location."",
+    ""proof"": ""Presentation of market data, price trends, and the rigorous legal vetting process that ensures buyer safety."",
+    ""process_or_how"": ""A 4-step path from initial inquiry and neighborhood selection to legal verification and final handover."",
+    ""faq"": ""Addressing critical objections regarding installment vs. cash, maintenance fees, and the impact of the New Capital."",
+    ""conclusion"": ""A strong summary of the investment potential in New Cairo with a final call to action to view exclusive listings.""
+  }
+}",STEP_TOTAL: content_strategy,2026-04-26T14:48:04.103814,4307
+986,17.438,0.00063,True,google/gemini-3-flash-preview,"You are a Helpful, Clear Content Planner.
+Your task is to generate only the heading structure layer of an article outline in JSON format.
+
+0. CONTEXT
+- Feedback: ""Validation failed. Please correct the following issues and regenerate the outline:
+- H3_PARENT_INTENT_MISMATCH: Subheading 'تحليل العائد الاستثماري المتوقع للوحدات السكنية في المربع الذهبي' does not clearly support the parent H2 'مؤشر أسعار المتر في شقق القاهرة الجديدة وتوقعات القيمة السوقية لعام 2026'.
+- HEAD_ENTITY_SCOPE_DRIFT: Heading 'لماذا تختار منصة عقار يا مصر لحجز شقتك في القاهرة الجديدة؟' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s.
+- HEAD_ENTITY_SCOPE_DRIFT: Heading 'خطوات شراء شقة في القاهرة الجديدة وضمان سلامة الإجراءات' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s.""
+- Article Title: ""شقق للبيع فى القاهرة الجديدة 2026 | أفضل الأسعار مع عقار يا مصر""
+- Primary Keyword: ""شقق للبيع فى القاهرة الجديدة""
+- Core Keywords: [""\u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u0649 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629""]
+- Article Language: ""ar""
+- Intent: ""commercial""
+- Content Type: ""brand_commercial""
+- Area: ""القاهرة الجديدة""
+- Brand Context: ""Provide objective structural guidance. Brand differentiation should be secondary and used only in conclusion or for unique value-adds, never for pricing or FAQ headings.""
+- Content Strategy: {""authority_strategy"": [""Provide a live-style price per meter tracker for key districts like the 5th Settlement and Lotus"", ""Offer a 5-year appreciation forecast based on infrastructure developments like the Monorail""], ""conversion_strategy"": ""Drive urgency by highlighting the limited availability of verified resale units and offering a personalized investment consultation."", ""cta_philosophy"": ""Direct and consultative; encouraging the reader to \u0027Secure a Consultation\u0027 or \u0027View Verified Units\u0027 to eliminate buying friction."", ""cultural_peer_areas"": [], ""depth_level"": ""comprehensive"", ""differentiation_focus"": [""Neighborhood Comparison Matrix (Lotus vs. 5th Settlement vs. 1st Settlement)"", ""Focus on \u0027Immediate Delivery\u0027 units as a hedge against inflation"", ""Proximity analysis to the New Administrative Capital as a value driver""], ""eeat_signals_to_include"": [""Direct access to exclusive resale units with immediate delivery"", ""Expert analysis of infrastructure impact on property values"", ""Clear breakdown of legal status documentation requirements"", ""Real-world investment consultancy calculations""], ""emotional_trigger"": ""Financial peace of mind and the prestige of owning a verified asset in Egypt\u0027s most prestigious residential hub."", ""local_strategy"": ""Deep dive into New Cairo\u0027s specific residential pockets, focusing on the Monorail\u0027s impact and the strategic \u0027Golden Square\u0027 location."", ""market_angle"": ""Capitalizing on the shift toward ready-to-move units and the strategic proximity to the New Administrative Capital to ensure long-term value appreciation."", ""pain_point_focus"": [""Fear of legal irregularities in property documentation"", ""Uncertainty regarding the best neighborhood for future resale value"", ""Confusion between the benefits of cash discounts vs. long-term installment ROI"", ""Anxiety over currency fluctuations affecting off-plan projects""], ""primary_angle"": ""Help the reader compare available options for \u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u0649 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 and move toward a confident purchase decision."", ""section_role_map"": {""conclusion"": ""A strong summary of the investment potential in New Cairo with a final call to action to view exclusive listings."", ""core_or_benefits"": ""Detailed breakdown of the lifestyle and investment advantages of New Cairo, focusing on infrastructure and location."", ""faq"": ""Addressing critical objections regarding installment vs. cash, maintenance fees, and the impact of the New Capital."", ""introduction"": ""Define \u0634\u0642\u0642 \u0644\u0644\u0628\u064a\u0639 \u0641\u0649 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 and address core search intent clearly without sales urgency or industry hooks."", ""process_or_how"": ""Explain the standard practical steps simply, omitting legal or technical compliance checklists."", ""proof"": ""Show general evidence of quality or standard benefits, avoiding ROI or financial growth metrics.""}, ""target_reader_state"": ""Serious buyer or investor looking for financial security and legal certainty amidst market fluctuations, currently comparing payment plans and neighborhood potential."", ""tone_direction"": ""Professional, authoritative, urgent, and highly practical.""}
+- Style Blueprint: {""cta_strategy"": {""density"": ""Balanced"", ""total_ideal_count"": 3, ""wording_patterns"": []}, ""formatting_blueprint"": {""bolding_frequency"": ""Standard""}, ""structural_skeleton"": [], ""tonal_dna"": {""audience_level"": ""General"", ""forbidden_jargon"": [], ""persona"": ""Professional"", ""sentence_rhythm"": ""Balanced""}}
+
+1. JOB TO BE DONE
+- Generate ONLY the heading layer of the outline. Do not plan paragraphs, tables, CTAs, or body copy.
+- Build a structure that is useful for the reader, strong for SEO, and easy to expand later into the full outline.
+- Every visible heading must represent a distinct search need, evaluation angle, or decision question.
+- Use natural language in the article language. Do not sound robotic, academic, or generic.
+
+2. STRUCTURE RULES
+- H1 is the final article title. Do not include H1 inside the outline array.
+- The first outline item MUST be the introduction section:
+  - `""section_type"": ""introduction""`
+  - `""heading_level"": ""INTRO""`
+  - Treat this as an unheaded opening block, not as a visible H2 or H3.
+  - `""heading_text""` is internal-use only. It will not be shown to the user, so keep it short and functional.
+  - Do not create any intro subheadings.
+  - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
+- After the introduction, create 4 to 8 visible H2 sections for a normal article.
+- If `content_type` is `brand_commercial`, create the commercial decision journey after the introduction in this order:
+  - `offer` -> `features` -> `proof` -> `comparison` -> `process` -> `faq` -> `conclusion`
+  - If a dedicated brand section is needed, place one `differentiation` section after `proof`, and always before `comparison`.
+  - Use matching `section_type` labels for those stages when possible so the structure is easy to validate and expand later.
+- The first visible core H2 MUST contain the full primary keyword exactly, or the closest natural phrasing that preserves the same full search intent.
+- Later H2s should preserve the search intent naturally without repeating the full exact primary keyword in every heading.
+- Derive the head entity from the primary keyword and keep it as the protagonist of core H2s. Do not replace it with a broader parent category unless the heading still clearly remains about the original entity.
+- Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
+- If you create H3 subheadings, output the exact H3 strings in `subheadings`.
+- Every H3 must directly support, explain, compare, or break down a specific part of its parent H2. If an H3 introduces a new top-level topic, remove it or promote it to a separate H2.
+- If the article needs FAQs, place one FAQ-style H2 near the end using a real user-question angle, not the label ""FAQ"".
+- If the article needs a closing section, place one conclusion-style H2 last using a useful next-step or takeaway angle, not the label ""Conclusion"".
+
+3. HEADING QUALITY RULES
+- Every visible H2/H3 must be specific, scannable, and meaningful on its own.
+- Prefer this pattern: clear promise or decision angle + topic/entity/location.
+- Avoid writer labels and filler labels.
+- Forbidden generic headings include:
+  - Introduction, Overview, Summary, FAQ, FAQs, Questions, Pricing, Features, Benefits, Process, Steps, Conclusion, Final Thoughts, Why Us, Contact Us, Guide, Complete Guide
+  - Arabic equivalents used as bare generic labels for introduction, overview, FAQ, prices, features, steps, or conclusion
+- No duplicate angles. Each H2 must cover a different reader job.
+- At least one early H2 should reflect the area naturally when an area is provided.
+- In `features`, stay focused on the apartment itself: layout, size, finishing, amenities, or what the buyer gets. Do not turn the features section into a general area, financing, or investment section.
+- In `proof`, market validation or pricing angles must stay specific to apartment prices, apartment demand, or buyer-facing market proof. Do not drift into generic real estate investment framing.
+- In `comparison`, help the reader choose between real options such as ready vs under-construction apartments, area tradeoffs, or payment differences when relevant.
+- In `process`, focus on the buying journey only. Do not insert legal verification or contract-validation headings unless the keyword, SERP/PAA, or strategy clearly requires them.
+- In commercial articles, brand names may appear softly in the introduction, directly in one dedicated differentiation section, and strongly in the conclusion. Do not inject brand names or brand-service framing into informational H2s or H3s.
+- Optional sections such as legal checks, financing/payment, infrastructure, or generic investment angles should appear only when clearly justified by the keyword, SERP/PAA signals, or the strategy.
+- Keep headings concise. Usually 4 to 11 words is ideal, but clarity matters more than strict length.
+- If the article is informational, prioritize clarity, comparisons, mistakes, methods, examples, and practical questions.
+- If the article is commercial, prioritize choosing, differentiation, cost/value, proof, process, objections, and next step.
+- If the article is comparison-based, prioritize criteria, side-by-side differences, tradeoffs, and best-fit guidance.
+- Headings must sound natural and useful, not like they were forced to satisfy a checklist.
+
+4. SILENT SELF-CHECK BEFORE YOU ANSWER
+- Would a reader understand what each section gives them without reading the body?
+- Are any headings generic writer labels?
+- Do any two headings overlap too much?
+- Is the order logical: hook -> understanding -> evaluation -> objections/questions -> next step?
+- Are the H3s real subtopics rather than repeated versions of the H2?
+
+5. OUTPUT FORMAT
+Return a single JSON object with this exact structure:
+{
+  ""title"": ""Final H1 title"",
+  ""outline"": [
+    {
+      ""section_id"": ""sec_01"",
+      ""heading_text"": ""Internal opening label"",
+      ""heading_level"": ""INTRO"",
+      ""section_type"": ""introduction"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_02"",
+      ""heading_text"": ""Reader-facing H2 heading"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""offer"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [""Optional reader-facing H3"", ""Optional reader-facing H3""]
+    }
+  ]
+}
+
+6. OUTPUT CONSTRAINTS
+- Valid JSON only.
+- No markdown fences.
+- No explanation before or after the JSON.
+- Do not include body content.
+- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `subheadings`.",3345,"{
+  ""title"": ""شقق للبيع فى القاهرة الجديدة 2026 | أفضل الأسعار مع عقار يا مصر"",
+  ""outline"": [
+    {
+      ""section_id"": ""sec_01"",
+      ""heading_text"": ""مقدمة عن سوق شقق القاهرة الجديدة"",
+      ""heading_level"": ""INTRO"",
+      ""section_type"": ""introduction"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_02"",
+      ""heading_text"": ""خريطة شقق للبيع فى القاهرة الجديدة وأفضل الأحياء السكنية لعام 2026"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""offer"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": [
+        ""مميزات السكن في منطقة التجمع الخامس والمربع الذهبي"",
+        ""فرص الاستثمار في منطقة اللوتس والتجمع الثالث"",
+        ""تأثير المونوريل والقرب من العاصمة الإدارية على اختيار موقع الشقة""
+      ]
+    },
+    {
+      ""section_id"": ""sec_03"",
+      ""heading_text"": ""مواصفات الشقق المتاحة وأنماط التشطيب الأكثر طلباً"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""features"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [
+        ""شقق الاستلام الفوري كدرع آمن ضد التضخم"",
+        ""تنوع المساحات من الشقق السكنية الصغيرة إلى الدوبلكس""
+      ]
+    },
+    {
+      ""section_id"": ""sec_04"",
+      ""heading_text"": ""مؤشر أسعار المتر في شقق القاهرة الجديدة وتوقعات القيمة السوقية"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""proof"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [
+        ""تحليل العائد الاستثماري المتوقع للشقق في الأحياء الحيوية"",
+        ""تأثير البنية التحتية الجديدة على زيادة أسعار الوحدات""
+      ]
+    },
+    {
+      ""section_id"": ""sec_05"",
+      ""heading_text"": ""لماذا تعد منصة عقار يا مصر وجهتك الموثوقة لشراء شقة في القاهرة الجديدة؟"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""differentiation"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_06"",
+      ""heading_text"": ""مقارنة بين أنظمة السداد الكاش وخطط التقسيط الطويلة"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""comparison"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": [
+        ""مزايا خصومات الكاش مقابل العائد على الاستثمار في التقسيط"",
+        ""الفروق الجوهرية بين السكن في اللوتس والتجمع الخامس""
+      ]
+    },
+    {
+      ""section_id"": ""sec_07"",
+      ""heading_text"": ""خطوات تملك شقة في القاهرة الجديدة وضمان سلامة التعاقد"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""process"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_08"",
+      ""heading_text"": ""أهم التساؤلات حول شراء شقق في القاهرة الجديدة ومصاريف الصيانة"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""faq"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_09"",
+      ""heading_text"": ""ابدأ رحلة البحث عن شقتك المثالية في القاهرة الجديدة الآن"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""conclusion"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": []
+    }
+  ]
+}",STEP_TOTAL: outline_generation,2026-04-26T14:48:21.542845,4331

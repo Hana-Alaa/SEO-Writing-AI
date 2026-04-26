@@ -58,7 +58,7 @@ class OpenRouterClient(BaseAIClient):
             logger.error(f"Failed to load prompt from {path}: {e}")
             return ""
 
-    async def send(self, prompt: str, step: str = "default", max_tokens: Optional[int] = None) -> Dict[str, Any]:
+    async def send(self, prompt: str, step: str = "default", max_tokens: Optional[int] = None, reasoning: Optional[bool] = None) -> Dict[str, Any]:
         system_prompt = self.load_prompt("assets/prompts/system_persona.txt")
 
         messages = [
@@ -69,8 +69,16 @@ class OpenRouterClient(BaseAIClient):
         payload = {
             "model": self.model_writing,
             "messages": messages,
-            "temperature": 0.7
+            "temperature": 0
         }
+
+        # Handle Reasoning
+        if reasoning is True or (reasoning is None and OPENROUTER.get("reasoning", {}).get("enabled")):
+            payload["reasoning"] = {
+                "enabled": True,
+                "effort": OPENROUTER.get("reasoning", {}).get("effort", "medium")
+            }
+
         
         if max_tokens:
             payload["max_tokens"] = max_tokens
@@ -112,14 +120,19 @@ class OpenRouterClient(BaseAIClient):
         end_time = time.time()
 
         # --- Extract response text ---
-        content = data["choices"][0]["message"]["content"]
+        message = data["choices"][0]["message"]
+        content = message.get("content")
+        reasoning_details = message.get("reasoning") or message.get("reasoning_details")
+
 
         # --- Extract usage if available ---
         usage = data.get("usage", {})
         prompt_tokens = usage.get("prompt_tokens")
         completion_tokens = usage.get("completion_tokens")
+        reasoning_tokens = usage.get("reasoning_tokens", 0)
 
         if prompt_tokens is None or completion_tokens is None:
+
             # fallback rough estimation
             prompt_tokens = int(len(prompt.split()) * 1.3)
             completion_tokens = int(len(content.split()) * 1.3)
@@ -145,8 +158,10 @@ class OpenRouterClient(BaseAIClient):
                 "tokens": {
                     "prompt_tokens": prompt_tokens,
                     "completion_tokens": completion_tokens,
+                    "reasoning_tokens": reasoning_tokens,
                     "total_tokens": prompt_tokens + completion_tokens
-                }
+                },
+                "reasoning_details": reasoning_details
             }
         }
 

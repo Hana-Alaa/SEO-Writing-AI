@@ -1,6 +1,4 @@
---------------------------------------------------------------------------------
 6. OUTPUT JSON FORMAT (CONTRACT)
---------------------------------------------------------------------------------
 - RETURN JSON ONLY.
 {
   "outline": [
@@ -8,7 +6,7 @@
       "section_id": "sec_01",
       "heading_level": "H2",
       "heading_text": "",
-      "section_type": "Use the functional workflow type that best fits the section. Typical values include: introduction | core | definition | what_is | offer_overview | features | key_features | included | differentiators | why_choose_us | proof | authority | case_study | comparison | comparison_utility | pricing | process | how_it_works | implementation | faq | conclusion | standard",
+      "section_type": "MUST BE EXACTLY ONE OF: introduction | body | faq | conclusion",
       "section_intent": "Commercial | Informational | Hybrid",
       "semantic_unit": "Unique topic label (e.g., Pricing, Location, Safety)",
       "brand_mention_eligible": false,

@@ -1,0 +1,17 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: web_research !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-22 14:44:19
+ERROR: SERP returned no top results
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 90, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 499, in _step_web_research_router
+    return await self.research_service.run_web_research(state)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\research_service.py", line 306, in run_web_research
+    raise RuntimeError("SERP returned no top results")
+RuntimeError: SERP returned no top results
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

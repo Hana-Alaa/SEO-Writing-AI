@@ -1,0 +1,34 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-23 17:18:44
+ERROR: Invalid outline schema returned by AI (missing required section keys).
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 90, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 645, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\content_generator.py", line 355, in generate
+    raise ContentGeneratorError("Invalid outline schema returned by AI (missing required section keys).")
+src.services.content_generator.ContentGeneratorError: Invalid outline schema returned by AI (missing required section keys).
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-23 17:19:04
+ERROR: Invalid outline schema returned by AI (missing required section keys).
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 90, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 645, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\content_generator.py", line 355, in generate
+    raise ContentGeneratorError("Invalid outline schema returned by AI (missing required section keys).")
+src.services.content_generator.ContentGeneratorError: Invalid outline schema returned by AI (missing required section keys).
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

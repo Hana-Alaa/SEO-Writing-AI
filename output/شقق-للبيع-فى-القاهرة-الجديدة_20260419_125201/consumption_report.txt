@@ -1,0 +1,57 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0000
+Total Tokens: 1,299,325
+
+Google (Gemini) Cost: $0.0000
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+serp_analysis             | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: style_analys  | anthropic/claude-opus-4.  | $0.000000
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: outline_gene  | anthropic/claude-opus-4.  | $0.000000
+section_1_لماذا تحتار قب  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_2_خريطة سوق شقق   | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_3_مواصفات الوحدا  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_4_ما يميز عقار ي  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_5_العوامل الحقيق  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_6_مقارنة الأحياء  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_7_طرق الدفع وخيا  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_8_خطوات البحث وا  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_9_أسئلة يطرحها ك  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_10_خطوتك التالية  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_1_لماذا تحتار قب  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+STEP_TOTAL: content_writ  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: humanizer     | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: image_prompt  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: master_frame  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: image_genera  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: assembly      | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: final_humani  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: image_insert  | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: meta_schema   | anthropic/claude-opus-4.  | $0.000000
+STEP_TOTAL: render_html   | anthropic/claude-opus-4.  | $0.000000

@@ -1,0 +1,38 @@
+
+--- SECTION: فرصتك الذهبية للتملك في القاهرة الجديدة 2026 مع عقار يا مصر (sec_01) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'فرصتك الذهبية للتملك في القاهرة الجديدة 2026 مع عقار يا مصر' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'فرصتك الذهبية للتملك في القاهرة الجديدة 2026 مع عقار يا مصر' is too dense for intro/conclusion content (59 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: تحليل خارطة أسعار المتر في أحياء التجمع الخامس وبيت الوطن 2026 (sec_02) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 3 in 'تحليل خارطة أسعار المتر في أحياء التجمع الخامس وبيت الوطن 2026' is too dense for body content (64 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'تحليل خارطة أسعار المتر في أحياء التجمع الخامس وبيت الوطن 2026' is too dense for body content (174 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'تحليل خارطة أسعار المتر في أحياء التجمع الخامس وبيت الوطن 2026' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: مواصفات الوحدات السكنية المتاحة: من الاستوديوهات إلى الدوبلكس الفاخر (sec_03) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'مواصفات الوحدات السكنية المتاحة: من الاستوديوهات إلى الدوبلكس الفاخر' is too dense for body content (78 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'مواصفات الوحدات السكنية المتاحة: من الاستوديوهات إلى الدوبلكس الفاخر' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات 2026 (sec_06) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات 2026' is too dense for body content (65 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'مقارنة أنظمة السداد: الكاش مقابل التقسيط في مشروعات 2026' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/%D8%B4%D9%82%D9%82-%D9%84%D9%84%D8%25A8%D9%8A%D8%B9-%D9%81%D9%89-%D8%A7%D9%84%D9%82%D8%25A7%D9%87%D8%B1%D8%A9-%D8%25A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9/
+--------------------------------------------------
+
+--- SECTION: خطوات شراء شقتك عبر عقار يا مصر: من المعاينة حتى استلام المفتاح (sec_07) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'خطوات شراء شقتك عبر عقار يا مصر: من المعاينة حتى استلام المفتاح' is too dense for body content (61 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'خطوات شراء شقتك عبر عقار يا مصر: من المعاينة حتى استلام المفتاح' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة (sec_08) ---
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/القاهرة/القاهرة-الجديدة/
+--------------------------------------------------
+
+--- SECTION: ابدأ رحلة تملك شقتك في القاهرة الجديدة اليوم (sec_09) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'ابدأ رحلة تملك شقتك في القاهرة الجديدة اليوم' is too dense for intro/conclusion content (61 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'ابدأ رحلة تملك شقتك في القاهرة الجديدة اليوم' is too dense for intro/conclusion content (59 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'ابدأ رحلة تملك شقتك في القاهرة الجديدة اليوم' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------

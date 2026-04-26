@@ -1,0 +1,42 @@
+
+--- SECTION: اقتنِ فرصتك الآن في القاهرة الجديدة قبل طفرة أسعار 2026 (sec_01) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'اقتنِ فرصتك الآن في القاهرة الجديدة قبل طفرة أسعار 2026' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'اقتنِ فرصتك الآن في القاهرة الجديدة قبل طفرة أسعار 2026' is too dense for intro/conclusion content (69 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'اقتنِ فرصتك الآن في القاهرة الجديدة قبل طفرة أسعار 2026' is too dense for intro/conclusion content (52 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: خريطة شقق للبيع فى القاهرة الجديدة: من السكن الفوري إلى الاستثمار طويل الأمد (sec_02) ---
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'خريطة شقق للبيع فى القاهرة الجديدة: من السكن الفوري إلى الاستثمار طويل الأمد' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: لماذا يفضل المستثمرون منصة عقار يا مصر للبحث عن شقق التجمع؟ (sec_03) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'لماذا يفضل المستثمرون منصة عقار يا مصر للبحث عن شقق التجمع؟' is too dense for body content (64 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'لماذا يفضل المستثمرون منصة عقار يا مصر للبحث عن شقق التجمع؟' is too dense for body content (62 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'لماذا يفضل المستثمرون منصة عقار يا مصر للبحث عن شقق التجمع؟' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: تحليل كفاءة سعر المتر والعائد الإيجاري المتوقع في 2026 (sec_04) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'تحليل كفاءة سعر المتر والعائد الإيجاري المتوقع في 2026' is too dense for body content (88 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'تحليل كفاءة سعر المتر والعائد الإيجاري المتوقع في 2026' is too dense for body content (70 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'تحليل كفاءة سعر المتر والعائد الإيجاري المتوقع في 2026' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: أنظمة السداد وخطط التقسيط المتاحة لشقق القاهرة الجديدة (sec_05) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'أنظمة السداد وخطط التقسيط المتاحة لشقق القاهرة الجديدة' is too dense for body content (65 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'أنظمة السداد وخطط التقسيط المتاحة لشقق القاهرة الجديدة' is too dense for body content (153 words > 60). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'أنظمة السداد وخطط التقسيط المتاحة لشقق القاهرة الجديدة' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/city/%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9/
+- [QUALITY ISSUE]: VISUAL_FORMAT_MISSING: Heading 'أنظمة السداد وخطط التقسيط المتاحة لشقق القاهرة الجديدة' implies a process or system. Use a Markdown Table or Bulleted List for clarity.
+--------------------------------------------------
+
+--- SECTION: خطوات شراء شقتك في القاهرة الجديدة: من المعاينة حتى الاستلام (sec_06) ---
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'خطوات شراء شقتك في القاهرة الجديدة: من المعاينة حتى الاستلام' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: قرارك اليوم يحدد ملامح مستقبلك في القاهرة الجديدة 2026 (sec_08) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'قرارك اليوم يحدد ملامح مستقبلك في القاهرة الجديدة 2026' is too dense for intro/conclusion content (61 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'قرارك اليوم يحدد ملامح مستقبلك في القاهرة الجديدة 2026' is too dense for intro/conclusion content (64 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 3 in 'قرارك اليوم يحدد ملامح مستقبلك في القاهرة الجديدة 2026' is too dense for intro/conclusion content (51 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'قرارك اليوم يحدد ملامح مستقبلك في القاهرة الجديدة 2026' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------

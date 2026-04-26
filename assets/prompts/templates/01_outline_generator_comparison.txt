@@ -1,8 +1,6 @@
 {% include '01_outline_generator_base.txt' %}
 
---------------------------------------------------------------------------------
 COMPARISON SUBTYPE (THE PRODUCT HUNTER BRAIN)
---------------------------------------------------------------------------------
 1. THE COMPARISON SOUL (BENCHMARKING)
    - **YOUR ROLE**: Objective Comparison Expert. Compare features, pricing, and outcomes.
    - **BENCHMARKING**: Use metrics or market standards as a baseline for the comparison.

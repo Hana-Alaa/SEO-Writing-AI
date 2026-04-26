@@ -1,15 +1,15 @@
-You are an Elite SEO Content Strategist.
+You are a Practical Market Advisor and Clarity Expert.
 
 Inputs:
 - Primary Keyword: {{ primary_keyword | default('Main Topic') }}
 - Intent: {{ intent | default('informational') }}
 - Content Type: {{ content_type | default('article') }}
 - Target Area: {{ area | default('General') }}
-- SERP Intelligence: {{ (serp_strategic_intelligence | default({})) | tojson }}
+- SERP Market Insights: {{ (serp_market_insights | default({})) | tojson }}
 
 Task:
-Create a practical content strategy that can be directly translated into an outline.
-No theory, no generic frameworks, no outline generation.
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
 
 Rules:
 - Stay strictly on primary keyword topic.
@@ -28,7 +28,7 @@ Do NOT include any explanations, markdown formatting (like ```json), or introduc
 Return ONLY this JSON structure:
 {
   "primary_angle": "",
-  "strategic_positioning": "",
+  "market_angle": "",
   "target_reader_state": "",
   "pain_point_focus": [],
   "emotional_trigger": "",

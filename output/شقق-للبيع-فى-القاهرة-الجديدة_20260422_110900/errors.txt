@@ -1,0 +1,60 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: content_strategy !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-22 11:10:32
+ERROR: name 'market_insights' is not defined
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 89, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\strategy_service.py", line 229, in run_content_strategy
+    clusters = market_insights.get("keyword_clusters", [])
+               ^^^^^^^^^^^^^^^
+NameError: name 'market_insights' is not defined
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: content_strategy !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-22 11:10:32
+ERROR: name 'market_insights' is not defined
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 89, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\strategy_service.py", line 229, in run_content_strategy
+    clusters = market_insights.get("keyword_clusters", [])
+               ^^^^^^^^^^^^^^^
+NameError: name 'market_insights' is not defined
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: content_strategy !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-22 11:10:32
+ERROR: name 'market_insights' is not defined
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 89, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\strategy_service.py", line 229, in run_content_strategy
+    clusters = market_insights.get("keyword_clusters", [])
+               ^^^^^^^^^^^^^^^
+NameError: name 'market_insights' is not defined
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: content_strategy !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-22 11:10:32
+ERROR: name 'market_insights' is not defined
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 89, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\strategy_service.py", line 229, in run_content_strategy
+    clusters = market_insights.get("keyword_clusters", [])
+               ^^^^^^^^^^^^^^^
+NameError: name 'market_insights' is not defined
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

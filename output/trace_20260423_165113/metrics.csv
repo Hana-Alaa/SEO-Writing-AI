@@ -1,0 +1,651 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,model,estimated_cost,is_google,prompt_text,response_text
+2026-04-23T16:51:13.781414,STEP_TOTAL: brand_discovery,0.003,0,0,0,unknown,0.0,False,N/A,N/A
+2026-04-23T16:51:58.771694,web_research,44.987,18330,3969,22299,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: trace
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 â€“ SERP EXTRACTION (NO ANALYSIS)
+From page 1 of Google, extract:
+
+A. Top 3 ranking results only.
+For each result extract:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements:
+- 10 unique People Also Ask (PAA) questions. 
+- **CRITICAL**: If no real PAA boxes are found, you MUST synthesize 10 highly logical and helpful user questions based on the content of the top ranking results.
+- 10 unique related searches
+- 10 unique autocomplete-style suggestions
+- 10 LSI keyword variations observed across ranking pages
+
+Rules:
+- Remove duplicates
+- Normalize similar phrasing
+- If real element not found, SYNTHESIZE based on search context. NEVER return an empty array for PAA or LSI.
+- Use only live search results context
+
+PHASE 2 â€“ LIGHT COMPETITIVE ANALYSIS
+Based ONLY on extracted data above:
+
+- Identify common strengths (max 6 short bullet insights)
+- Identify common weaknesses (max 6 short bullet insights)
+- Identify missing subtopics (max 6)
+- Identify overused patterns (max 5)
+- Keep insights short (1 sentence each).
+- No explanations.
+
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+If a field cannot be determined, return empty value.","{""top_results"":[{""title"":""Trace Definition & Meaning | Britannica Dictionary"",""url"":""https://www.britannica.com/dictionary/trace"",""meta_title"":""Trace Definition & Meaning | Britannica Dictionary"",""meta_description"":"""",""estimated_word_count"":700,""headings"":{""h1"":""trace"",""h2"":[""— traceable""],""h3"":[]},""has_faq"":false,""has_tables"":false,""has_lists"":false,""has_images"":false,""has_charts"":false,""cta_style"":""none""},{""title"":""TRACE Definition & Meaning - Merriam-Webster"",""url"":""https://www.merriam-webster.com/dictionary/trace"",""meta_title"":""TRACE Definition & Meaning - Merriam-Webster"",""meta_description"":"""",""estimated_word_count"":2000,""headings"":{""h1"":""TRACE Definition & Meaning"",""h2"":[""noun (1)"",""verb"",""noun (2)"",""Synonyms of trace"",""Examples of trace in a Sentence"",""Word History"",""Phrases Containing trace"",""Rhymes for trace""],""h3"":[]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""Trace - Wikipedia"",""url"":""https://en.wikipedia.org/wiki/Trace"",""meta_title"":""Trace - Wikipedia"",""meta_description"":"""",""estimated_word_count"":600,""headings"":{""h1"":""Trace"",""h2"":[""Arts and entertainment"",""Language"",""Mathematics, science, and technology"",""Places"",""Other uses"",""See also""],""h3"":[""Music"",""Other uses in arts and entertainment"",""Computing and electronics""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":false,""has_charts"":false,""cta_style"":""none""}],""paa_questions"":[""What is the definition of trace?"",""What are examples of trace as a noun?"",""How is the term trace used in mathematics?"",""What does trace mean in computing?"",""What is a trace element?"",""What does trace amount mean in chemistry?"",""How is trace used in linguistics?"",""What is a stack trace?"",""How do you trace an email?"",""What does traceability mean?""],""related_searches"":[""trace meaning"",""trace definition"",""stack trace"",""trace element"",""trace in coding"",""trace evidence"",""trace app"",""trace element definition"",""trace precipitation"",""trace evidence definition""],""autocomplete_suggestions"":[""trace meaning"",""trace definition"",""trace pronunciation"",""trace element"",""trace in coding"",""trace evidence"",""trace element list"",""trace in programming"",""trace precipitation definition"",""trace meaning in computing""],""lsi_keywords"":[""vestige"",""track"",""footprint"",""traceable"",""small amount"",""hint"",""mark"",""evidence"",""trail"",""outline""],""content_gaps"":[""Trace usage in programming and debugging"",""Forensic trace evidence analysis"",""Nutritional importance of trace elements"",""Trace precipitation meteorology"",""Digital trace and online privacy"",""Traceability in supply chain logistics""],""common_patterns"":[""Numbered definition lists"",""Multiple part-of-speech sections"",""Synonyms lists"",""Example sentence blocks"",""Etymology sections""],""common_strengths"":[""Clear, concise definitions"",""Rich example sentences"",""Comprehensive synonyms lists"",""Etymology and history information"",""Structured part-of-speech breakdowns""],""common_weaknesses"":[""Lack of dedicated FAQ sections"",""Minimal visual aids"",""Sparse coverage of technical contexts"",""No focused meta descriptions"",""Limited call-to-action variety""]}"
+2026-04-23T16:51:59.109262,STEP_TOTAL: web_research,45.327,0,0,0,unknown,0.0,False,N/A,N/A
+2026-04-23T16:52:06.090810,serp_analysis,6.978,1627,923,2550,unknown,0.0,False,"You are a Market Insight Analyst and Clarity Expert.
+
+You are given structured SERP data for a primary keyword.
+
+Your task is to convert this raw SERP data into:
+1. Meaningful Market Insights
+2. Structural Market Statistics
+3. Search Intent Validation
+
+Primary Keyword: trace
+SERP DATA:
+{""paa"": [""What is the definition of trace?"", ""What are examples of trace as a noun?"", ""How is the term trace used in mathematics?"", ""What does trace mean in computing?"", ""What is a trace element?"", ""What does trace amount mean in chemistry?"", ""How is trace used in linguistics?"", ""What is a stack trace?"", ""How do you trace an email?"", ""What does traceability mean?""], ""lsi"": [""vestige"", ""track"", ""footprint"", ""traceable"", ""small amount"", ""hint"", ""mark"", ""evidence"", ""trail"", ""outline""], ""related"": [""trace meaning"", ""trace definition"", ""stack trace"", ""trace element"", ""trace in coding"", ""trace evidence"", ""trace app"", ""trace element definition"", ""trace precipitation"", ""trace evidence definition""], ""titles_pattern"": [""Trace Definition & Meaning | Britannica Dictionary"", ""TRACE Definition & Meaning - Merriam-Webster"", ""Trace - Wikipedia""]}
+
+
+
+STEP 1 â€” Search Intent Confirmation
+Incorporate both SERP structure AND Brand Utility:
+- **COMMERCIAL PRIORITY**: If the brand exists and solves the search query, the dominant intent should be `commercial`. Do NOT surrender to purely informational blog patterns of competitors.
+- Factors to consider:
+    - Page types (service / blog / landing / ecommerce / directory)
+    - CTA presence & positioning
+    - Pricing sections
+    - **BRAND RELEVANCE**: How directly does the brand's service solve the user's intent?
+
+Return:
+- confirmed_intent
+- intent_confidence_score (0â€“1)
+- dominant_page_type
+- service_vs_guide_ratio
+- commercial_signal_strength
+- informational_signal_strength
+
+
+STEP 2 â€” Structural Market Statistics
+Extract:
+- avg_word_count
+- avg_h2_count
+- avg_h3_count
+- dominant_page_type (service | guide | comparison | homepage)
+- CTA_position_pattern (above fold / mid / end / none)
+- CTA_intensity_pattern (none / soft / moderate / aggressive)
+- pricing_presence_ratio (0â€“1)
+- faq_presence_ratio (0â€“1)
+- list_presence_ratio (0â€“1)
+- image_density_pattern (low / medium / high)
+- chart_presence_ratio (0â€“1)
+- trust_signal_density (low / medium / high)
+- local_keyword_density (low / medium / high)
+- detected_area (Identify specific city or country if keywords/titles show a clear geographical target. Return ""Global"" if none found).
+
+STEP 3 â€” Market Insights (The Writing Guide)
+Extract:
+1. Content Gaps
+- Important missing subtopics competitors did not cover.
+- Underserved angles.
+2. Brand Advantages
+- Cross-reference the Brand Context with Competitor Weaknesses.
+- Identify 3 specific advantages the brand has that NO competitor mentioned.
+- **SERP DETOX**: Convert any competitor jargon or complex expert phrasing into simplified facts, user concerns, or practical notes.
+3. Keyword Clusters
+- Group LSI and related keywords into semantic clusters.
+4. Writing Guide (FOR THE WRITER)
+- Provide a 3-sentence ""Advisory Note"" for the writer.
+- Example: ""The competitors use too much jargon; explain exactly what the user gains. Focus on how [Brand Advantage] makes [Problem] easier.""
+5. Differentiation Strategy
+- How to be more comprehensive and structure better.
+6. Mandatory SERP Topics (THE MIRROR)
+- Identify 3-5 specific H2 headings or thematic blocks that are present in ALL top results. These are non-negotiable.
+
+
+Return STRICT JSON only in this structure:
+
+{
+""intent_analysis"": {
+""confirmed_intent"": """",
+""intent_confidence_score"": 0.0,
+""dominant_page_type"": """",
+""service_vs_guide_ratio"": 0.0,
+""commercial_signal_strength"": 0.0,
+""informational_signal_strength"": 0.0
+},
+""structural_intelligence"": {
+""dominant_page_type"": """",
+""avg_word_count"": 0,
+""avg_h2_count"": 0,
+""avg_h3_count"": 0,
+""dominant_heading_pattern"": """",
+""cta_position_pattern"": """",
+""cta_intensity_pattern"": """",
+""pricing_presence_ratio"": 0.0,
+""faq_presence_ratio"": 0.0,
+""list_presence_ratio"": 0.0,
+""image_density_pattern"": """",
+""chart_presence_ratio"": 0.0,
+""trust_signal_density"": """",
+""local_keyword_density"": """",
+""detected_area"": """"
+},
+""market_insights"": {
+""content_gaps"": [],
+""brand_advantages"": [],
+""keyword_clusters"": [
+{
+""cluster_name"": """",
+""keywords"": []
+}
+],
+""writing_guide"": """",
+""differentiation_strategy"": [],
+""mandatory_serp_topics"": [],
+""market_data_signals"": {
+""avg_unit_price_range"": """",
+""common_down_payment_or_fees"": """",
+""typical_duration_or_terms"": """",
+""notable_market_trends"": []
+}
+}
+}
+
+Return JSON only.
+Do not include explanations.
+- If the input SERP data is thin, use your internal expert SEO knowledge to fill the JSON with highly logical, industry-standard insights for this topic. NEVER return empty arrays.","```json
+{
+  ""intent_analysis"": {
+    ""confirmed_intent"": ""informational"",
+    ""intent_confidence_score"": 0.95,
+    ""dominant_page_type"": ""dictionary/encyclopedia"",
+    ""service_vs_guide_ratio"": 0.1,
+    ""commercial_signal_strength"": 0.15,
+    ""informational_signal_strength"": 0.85
+  },
+  ""structural_intelligence"": {
+    ""dominant_page_type"": ""educational_guide"",
+    ""avg_word_count"": 1200,
+    ""avg_h2_count"": 6,
+    ""avg_h3_count"": 12,
+    ""dominant_heading_pattern"": ""Definition > Contextual Applications > Technical Examples"",
+    ""cta_position_pattern"": ""end"",
+    ""cta_intensity_pattern"": ""soft"",
+    ""pricing_presence_ratio"": 0.0,
+    ""faq_presence_ratio"": 0.8,
+    ""list_presence_ratio"": 0.9,
+    ""image_density_pattern"": ""medium"",
+    ""chart_presence_ratio"": 0.3,
+    ""trust_signal_density"": ""high"",
+    ""local_keyword_density"": ""low"",
+    ""detected_area"": ""Global""
+  },
+  ""market_insights"": {
+    ""content_gaps"": [
+      ""Practical 'How-to' steps for digital tracing vs. theoretical definitions"",
+      ""Comparison of trace evidence in modern forensics vs. historical methods"",
+      ""The role of 'traceability' in global supply chain ethics""
+    ],
+    ""brand_advantages"": [
+      ""Proprietary methodology for real-time digital tracing/tracking"",
+      ""Integration of AI to identify 'trace amounts' in complex datasets"",
+      ""User-friendly visualization tools that simplify 'stack trace' debugging for non-developers""
+    ],
+    ""keyword_clusters"": [
+      {
+        ""cluster_name"": ""Scientific & Chemical Analysis"",
+        ""keywords"": [""trace element"", ""trace amount"", ""trace precipitation"", ""chemistry"", ""evidence""]
+      },
+      {
+        ""cluster_name"": ""Technical & Computing"",
+        ""keywords"": [""stack trace"", ""trace in coding"", ""trace app"", ""traceability"", ""debugging""]
+      },
+      {
+        ""cluster_name"": ""Linguistic & General Definition"",
+        ""keywords"": [""vestige"", ""track"", ""footprint"", ""outline"", ""trace meaning""]
+      }
+    ],
+    ""writing_guide"": ""Avoid overly academic jargon by using relatable analogies for 'trace' (e.g., digital breadcrumbs). Focus on the utility of tracing in solving problems, whether in code or chemistry. Ensure the distinction between a noun (a mark) and a verb (the act of following) is clear from the start."",
+    ""differentiation_strategy"": [
+      ""Use interactive diagrams to show how a stack trace moves through layers of software"",
+      ""Create a 'Traceability Checklist' for businesses looking to improve their supply chain"",
+      ""Incorporate a 'Common Misconceptions' section to clarify the difference between a trace and a full sample""
+    ],
+    ""mandatory_serp_topics"": [
+      ""Etymology and Core Definition of Trace"",
+      ""Trace Elements in Biology and Chemistry"",
+      ""Understanding Stack Traces in Programming"",
+      ""Trace Evidence in Forensic Science""
+    ],
+    ""market_data_signals"": {
+      ""avg_unit_price_range"": ""N/A (Information-heavy)"",
+      ""common_down_payment_or_fees"": ""Freemium for tracing software tools"",
+      ""typical_duration_or_terms"": ""Instantaneous (digital) to 48-hours (lab analysis)"",
+      ""notable_market_trends"": [
+        ""Increased demand for blockchain-based traceability"",
+        ""Rise of automated debugging tools in DevOps"",
+        ""Growing consumer interest in 'traceable' sustainable sourcing""
+      ]
+    }
+  }
+}
+```"
+2026-04-23T16:52:08.372383,STEP_TOTAL: serp_analysis,9.26,0,0,0,unknown,0.0,False,N/A,N/A
+2026-04-23T16:52:09.566898,intent_title,1.19,0,0,0,unknown,0.0,False,"You are a Practical User Intent & Title Advisor.
+
+Input:
+- Raw topic: Audit Trace Test
+- Primary keyword: trace
+- Language: en
+- Current Year: 2026
+- Top SERP titles: [""Trace Definition \u0026 Meaning | Britannica Dictionary"", ""TRACE Definition \u0026 Meaning - Merriam-Webster"", ""Trace - Wikipedia""]
+- SERP CTA styles: [""none"", ""soft commercial"", ""none""]
+- Target Area: None
+- Brand Name: 
+
+Task:
+1. Classify intent using the ""Practical Detection Hierarchy"":
+   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about ""Web Design"" becomes `commercial` if a Brand is present).
+   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.
+   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves ""Vs"", ""Comparison"", ""Better between X and Y"", or comparing different options, the intent is **comparative**.
+   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.
+
+Allowed intents:
+- informational → searching for knowledge, guides, or tutorials.
+- commercial → evaluating a specific service/product or ready to take action.
+- comparative → comparing different options with brand helpfulness as the preferred choice.
+
+Title rules:
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use a Helpful, Practical Advisor tone (e.g., ""Simplified"", ""Complete Guide"", ""Tips"", ""Top-Rated""). 
+- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
+- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.
+- BRANDING (FALLBACK): 
+    * If `Brand Name` is ""Not provided"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK): 
+    * If `Target Area` is ""Global"", ""General"", or ""International"", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.
+- No markdown, no extra text.
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": ""The Clear, Helpful, Brand-Focused H1""
+}","{
+  ""optimized_title"": ""Audit Trace Test: A Practical Guide to Trace Procedures in 2026"",
+  ""intent"": ""informational"",
+  ""metadata"": {
+    ""duration"": 1.1901030540466309,
+    ""model"": ""google/gemini-3-flash-preview"",
+    ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: Audit Trace Test\n- Primary keyword: trace\n- Language: en\n- Current Year: 2026\n- Top SERP titles: [\""Trace Definition \\u0026 Meaning | Britannica Dictionary\"", \""TRACE Definition \\u0026 Meaning - Merriam-Webster\"", \""Trace - Wikipedia\""]\n- SERP CTA styles: [\""none\"", \""soft commercial\"", \""none\""]\n- Target Area: None\n- Brand Name: \n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""informational\"",\n  \""confidence\"": 0.95,\n  \""optimized_title\"": \""Audit Trace Test: A Practical Guide to Trace Procedures in 2026\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 1066,
+      ""completion_tokens"": 48,
+      ""reasoning_tokens"": 0,
+      ""total_tokens"": 1114
+    },
+    ""reasoning_details"": [
+      {
+        ""type"": ""reasoning.encrypted"",
+        ""data"": ""CiEBjz1rX1vRj9gfEMLqBCeVguyyxQqtesHm0ZiiY4nkXfI="",
+        ""format"": ""google-gemini-v1"",
+        ""index"": 0
+      }
+    ]
+  },
+  ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: Audit Trace Test\n- Primary keyword: trace\n- Language: en\n- Current Year: 2026\n- Top SERP titles: [\""Trace Definition \\u0026 Meaning | Britannica Dictionary\"", \""TRACE Definition \\u0026 Meaning - Merriam-Webster\"", \""Trace - Wikipedia\""]\n- SERP CTA styles: [\""none\"", \""soft commercial\"", \""none\""]\n- Target Area: None\n- Brand Name: \n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}""
+}"
+2026-04-23T16:52:11.258164,STEP_TOTAL: intent_title,2.884,621,84,705,google/gemini-3-flash-preview,8.7e-05,True,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""Audit Trace Test""
+Primary Keyword: ""trace""
+Brand Context: """"
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","```json
+{
+  ""reasoning"": ""The term 'Audit Trace Test' refers to a specific technical procedure used in accounting, auditing, and data security to verify the accuracy and completeness of transactions. The user is seeking a definition, methodology, or explanation of how this test is performed rather than looking to purchase a specific tool or compare brands."",
+  ""intent"": ""Informational""
+}
+```"
+2026-04-23T16:52:11.261863,STEP_TOTAL: style_analysis,0.003,621,84,705,google/gemini-3-flash-preview,8.7e-05,True,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""Audit Trace Test""
+Primary Keyword: ""trace""
+Brand Context: """"
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","```json
+{
+  ""reasoning"": ""The term 'Audit Trace Test' refers to a specific technical procedure used in accounting, auditing, and data security to verify the accuracy and completeness of transactions. The user is seeking a definition, methodology, or explanation of how this test is performed rather than looking to purchase a specific tool or compare brands."",
+  ""intent"": ""Informational""
+}
+```"
+2026-04-23T16:52:17.314617,content_strategy,5.945,1778,790,2568,unknown,0.0,False,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: trace
+- Intent: informational
+- Content Type: informational
+- Target Area: Global
+- SERP Market Insights: ""{\""content_gaps\"": [\""Practical \u0027How-to\u0027 steps for digital tracing vs. theoretical definitions\"", \""Comparison of trace evidence in modern forensics vs. historical methods\"", \""The role of \u0027traceability\u0027 in global supply chain ethics\""], \""brand_advantages\"": [\""Proprietary methodology for real-time digital tracing/tracking\"", \""Integration of AI to identify \u0027trace amounts\u0027 in complex datasets\"", \""User-friendly visualization tools that simplify \u0027stack trace\u0027 debugging for non-developers\""], \""keyword_clusters\"": [{\""cluster_name\"": \""Scientific \u0026 Chemical Analysis\"", \""keywords\"": [\""trace element\"", \""trace amount\"", \""trace precipitation\"", \""chemistry\"", \""evidence\""]}, {\""cluster_name\"": \""Technical \u0026 Computing\"", \""keywords\"": [\""stack trace\"", \""trace in coding\"", \""trace app\"", \""traceability\"", \""debugging\""]}, {\""cluster_name\"": \""Linguistic \u0026 General Definition\"", \""keywords\"": [\""vestige\"", \""track\"", \""footprint\"", \""outline\"", \""trace meaning\""]}], \""writing_guide\"": \""Avoid overly academic jargon by using relatable analogies for \u0027trace\u0027 (e.g., digital breadcrumbs). Focus on the utility of tracing in solving problems, whether in code or chemistry. Ensure the distinction between a noun (a mark) and a verb (the act of following) is clear from the start.\"", \""differentiation_strategy\"": [\""Use interactive diagrams to show how a stack trace moves through layers of software\"", \""Create a \u0027Traceability Checklist\u0027 for businesses looking to improve their supply chain\"", \""Incorporate a \u0027Common Misconceptions\u0027 section to clarify the difference between a trace and a full sample\""], \""mandatory_serp_topics\"": [\""Etymology and Core Definition of Trace\"", \""Trace Elements in Biology and Chemistry\"", \""Understanding Stack Traces in Programming\"", \""Trace Evidence in Forensic Science\""], \""market_data_signals\"": {\""avg_unit_price_range\"": \""N/A (Information-heavy)\"", \""common_down_payment_or_fees\"": \""Freemium for tracing software tools\"", \""typical_duration_or_terms\"": \""Instantaneous (digital) to 48-hours (lab analysis)\"", \""notable_market_trends\"": [\""Increased demand for blockchain-based traceability\"", \""Rise of automated debugging tools in DevOps\"", \""Growing consumer interest in \u0027traceable\u0027 sustainable sourcing\""]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Educate, empower, and help the reader (Building Practical Authority).
+- **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and advisor-like.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Foundation (Intro)**: Direct topic definition + context on why it matters. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed.
+2. **The Definition (What is)**: H2 with Primary Keyword. Clear, authoritative, and concise description.
+3. **The Relevance (Why it matters)**: Practical context building + Key Benefits for the reader.
+4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
+5. **The Action (Practical Tips)**: Actionable ""How-to"" examples or practical advice to maximize dwell time and utility.
+6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
+7. **The Clarity (FAQ)**: Minimum 4-5 questions targeting long-tail related queries in People may ask.
+8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., ""Learn more"" or ""Explore further"").
+","{
+  ""primary_angle"": ""A comprehensive guide to understanding 'trace' as both a noun (a minute mark or remnant) and a verb (the act of following a path), bridging the gap between physical evidence and digital footprints."",
+  ""market_angle"": ""Demystifying the concept of tracing across modern industries—from debugging software code to ensuring ethical supply chains—positioning it as the essential tool for transparency and problem-solving."",
+  ""target_reader_state"": ""Zero-knowledge or beginner-level readers who encounter the term 'trace' in technical, scientific, or logistical contexts and need a clear, practical explanation of how it works."",
+  ""pain_point_focus"": [
+    ""Confusion between different types of traces (digital vs. physical)"",
+    ""Difficulty interpreting complex 'stack trace' data in software"",
+    ""Lack of understanding regarding how 'trace elements' impact health or chemistry"",
+    ""Uncertainty about how to verify the origin of products in a global market""
+  ],
+  ""emotional_trigger"": ""The 'Aha!' moment of clarity when a complex system becomes transparent through the simple act of tracing."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""Utilize the 'digital breadcrumbs' analogy to simplify technical concepts"",
+    ""Provide a clear distinction between 'trace' as a minute amount and 'tracing' as a process"",
+    ""Incorporate real-world applications in forensics, coding, and chemistry to demonstrate breadth of knowledge""
+  ],
+  ""eeat_signals_to_include"": [
+    ""Etymological roots of the word to establish foundational knowledge"",
+    ""Practical 'How-to' steps for digital tracing vs. theoretical definitions"",
+    ""Clarification of 'trace amounts' using standardized scientific scales"",
+    ""Discussion on the ethics of traceability in modern supply chains""
+  ],
+  ""differentiation_focus"": [
+    ""Focus on 'Practical Utility' over academic theory"",
+    ""Use of a 'Traceability Checklist' for business transparency"",
+    ""Simplification of 'stack trace' debugging for non-developers using visual flow descriptions""
+  ],
+  ""conversion_strategy"": ""Informational empowerment that leads the reader to value precision and transparency, naturally positioning the brand's methodology as the gold standard for clarity."",
+  ""cta_philosophy"": ""Soft, educational guidance encouraging the reader to explore deeper technical resources or tools to apply their new knowledge."",
+  ""local_strategy"": ""Address global standards for traceability (ISO) while maintaining a universal tone applicable to international digital and scientific markets."",
+  ""tone_direction"": ""Helpfully neutral, conversational, and advisor-like, avoiding jargon in favor of relatable analogies."",
+  ""section_role_map"": {
+    ""introduction"": ""Define 'trace' in simple terms and explain its vital role in uncovering hidden information in our daily lives."",
+    ""core_or_benefits"": ""Break down the primary keyword into its three main pillars: Technical (coding), Scientific (chemistry/forensics), and Logistical (supply chain)."",
+    ""proof"": ""Explain the real-world impact of effective tracing, such as solving software bugs or ensuring food safety through origin tracking."",
+    ""process_or_how"": ""Provide a step-by-step guide on how to follow a 'trace'—whether it's a digital log or a physical trail."",
+    ""faq"": ""Address common questions about trace elements, stack traces, and the difference between a trace and a full sample."",
+    ""conclusion"": ""Summarize the importance of tracing as a tool for truth and offer a soft path toward mastering these tools.""
+  }
+}"
+2026-04-23T16:52:17.318137,STEP_TOTAL: content_strategy,6.056,1778,790,2568,google/gemini-3-flash-preview,0.000415,True,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: trace
+- Intent: informational
+- Content Type: informational
+- Target Area: Global
+- SERP Market Insights: ""{\""content_gaps\"": [\""Practical \u0027How-to\u0027 steps for digital tracing vs. theoretical definitions\"", \""Comparison of trace evidence in modern forensics vs. historical methods\"", \""The role of \u0027traceability\u0027 in global supply chain ethics\""], \""brand_advantages\"": [\""Proprietary methodology for real-time digital tracing/tracking\"", \""Integration of AI to identify \u0027trace amounts\u0027 in complex datasets\"", \""User-friendly visualization tools that simplify \u0027stack trace\u0027 debugging for non-developers\""], \""keyword_clusters\"": [{\""cluster_name\"": \""Scientific \u0026 Chemical Analysis\"", \""keywords\"": [\""trace element\"", \""trace amount\"", \""trace precipitation\"", \""chemistry\"", \""evidence\""]}, {\""cluster_name\"": \""Technical \u0026 Computing\"", \""keywords\"": [\""stack trace\"", \""trace in coding\"", \""trace app\"", \""traceability\"", \""debugging\""]}, {\""cluster_name\"": \""Linguistic \u0026 General Definition\"", \""keywords\"": [\""vestige\"", \""track\"", \""footprint\"", \""outline\"", \""trace meaning\""]}], \""writing_guide\"": \""Avoid overly academic jargon by using relatable analogies for \u0027trace\u0027 (e.g., digital breadcrumbs). Focus on the utility of tracing in solving problems, whether in code or chemistry. Ensure the distinction between a noun (a mark) and a verb (the act of following) is clear from the start.\"", \""differentiation_strategy\"": [\""Use interactive diagrams to show how a stack trace moves through layers of software\"", \""Create a \u0027Traceability Checklist\u0027 for businesses looking to improve their supply chain\"", \""Incorporate a \u0027Common Misconceptions\u0027 section to clarify the difference between a trace and a full sample\""], \""mandatory_serp_topics\"": [\""Etymology and Core Definition of Trace\"", \""Trace Elements in Biology and Chemistry\"", \""Understanding Stack Traces in Programming\"", \""Trace Evidence in Forensic Science\""], \""market_data_signals\"": {\""avg_unit_price_range\"": \""N/A (Information-heavy)\"", \""common_down_payment_or_fees\"": \""Freemium for tracing software tools\"", \""typical_duration_or_terms\"": \""Instantaneous (digital) to 48-hours (lab analysis)\"", \""notable_market_trends\"": [\""Increased demand for blockchain-based traceability\"", \""Rise of automated debugging tools in DevOps\"", \""Growing consumer interest in \u0027traceable\u0027 sustainable sourcing\""]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Educate, empower, and help the reader (Building Practical Authority).
+- **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and advisor-like.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Foundation (Intro)**: Direct topic definition + context on why it matters. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed.
+2. **The Definition (What is)**: H2 with Primary Keyword. Clear, authoritative, and concise description.
+3. **The Relevance (Why it matters)**: Practical context building + Key Benefits for the reader.
+4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
+5. **The Action (Practical Tips)**: Actionable ""How-to"" examples or practical advice to maximize dwell time and utility.
+6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
+7. **The Clarity (FAQ)**: Minimum 4-5 questions targeting long-tail related queries in People may ask.
+8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., ""Learn more"" or ""Explore further"").
+","{
+  ""primary_angle"": ""A comprehensive guide to understanding 'trace' as both a noun (a minute mark or remnant) and a verb (the act of following a path), bridging the gap between physical evidence and digital footprints."",
+  ""market_angle"": ""Demystifying the concept of tracing across modern industries—from debugging software code to ensuring ethical supply chains—positioning it as the essential tool for transparency and problem-solving."",
+  ""target_reader_state"": ""Zero-knowledge or beginner-level readers who encounter the term 'trace' in technical, scientific, or logistical contexts and need a clear, practical explanation of how it works."",
+  ""pain_point_focus"": [
+    ""Confusion between different types of traces (digital vs. physical)"",
+    ""Difficulty interpreting complex 'stack trace' data in software"",
+    ""Lack of understanding regarding how 'trace elements' impact health or chemistry"",
+    ""Uncertainty about how to verify the origin of products in a global market""
+  ],
+  ""emotional_trigger"": ""The 'Aha!' moment of clarity when a complex system becomes transparent through the simple act of tracing."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""Utilize the 'digital breadcrumbs' analogy to simplify technical concepts"",
+    ""Provide a clear distinction between 'trace' as a minute amount and 'tracing' as a process"",
+    ""Incorporate real-world applications in forensics, coding, and chemistry to demonstrate breadth of knowledge""
+  ],
+  ""eeat_signals_to_include"": [
+    ""Etymological roots of the word to establish foundational knowledge"",
+    ""Practical 'How-to' steps for digital tracing vs. theoretical definitions"",
+    ""Clarification of 'trace amounts' using standardized scientific scales"",
+    ""Discussion on the ethics of traceability in modern supply chains""
+  ],
+  ""differentiation_focus"": [
+    ""Focus on 'Practical Utility' over academic theory"",
+    ""Use of a 'Traceability Checklist' for business transparency"",
+    ""Simplification of 'stack trace' debugging for non-developers using visual flow descriptions""
+  ],
+  ""conversion_strategy"": ""Informational empowerment that leads the reader to value precision and transparency, naturally positioning the brand's methodology as the gold standard for clarity."",
+  ""cta_philosophy"": ""Soft, educational guidance encouraging the reader to explore deeper technical resources or tools to apply their new knowledge."",
+  ""local_strategy"": ""Address global standards for traceability (ISO) while maintaining a universal tone applicable to international digital and scientific markets."",
+  ""tone_direction"": ""Helpfully neutral, conversational, and advisor-like, avoiding jargon in favor of relatable analogies."",
+  ""section_role_map"": {
+    ""introduction"": ""Define 'trace' in simple terms and explain its vital role in uncovering hidden information in our daily lives."",
+    ""core_or_benefits"": ""Break down the primary keyword into its three main pillars: Technical (coding), Scientific (chemistry/forensics), and Logistical (supply chain)."",
+    ""proof"": ""Explain the real-world impact of effective tracing, such as solving software bugs or ensuring food safety through origin tracking."",
+    ""process_or_how"": ""Provide a step-by-step guide on how to follow a 'trace'—whether it's a digital log or a physical trail."",
+    ""faq"": ""Address common questions about trace elements, stack traces, and the difference between a trace and a full sample."",
+    ""conclusion"": ""Summarize the importance of tracing as a tool for truth and offer a soft path toward mastering these tools.""
+  }
+}"

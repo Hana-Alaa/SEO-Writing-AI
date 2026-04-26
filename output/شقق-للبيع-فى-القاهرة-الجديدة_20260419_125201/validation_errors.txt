@@ -1,0 +1,66 @@
+
+--- SECTION: لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟ (sec_01) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟' is too dense for intro/conclusion content (56 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع فى القاهرة الجديدة'.
+--------------------------------------------------
+
+--- SECTION: خريطة سوق شقق القاهرة الجديدة 2026: الأحياء وأنواع الوحدات المتاحة (sec_02) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خريطة سوق شقق القاهرة الجديدة 2026: الأحياء وأنواع الوحدات المتاحة' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خريطة سوق شقق القاهرة الجديدة 2026: الأحياء وأنواع الوحدات المتاحة' must not contain nested headings.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خريطة سوق شقق القاهرة الجديدة 2026: الأحياء وأنواع الوحدات المتاحة' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 10 in 'خريطة سوق شقق القاهرة الجديدة 2026: الأحياء وأنواع الوحدات المتاحة' is too dense for intro/conclusion content (54 words > 50). Split it or convert enumerations into a list/table.
+--------------------------------------------------
+
+--- SECTION: مواصفات الوحدات المتاحة: المساحات والتشطيبات وخيارات الأرضي بحديقة (sec_03) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مواصفات الوحدات المتاحة: المساحات والتشطيبات وخيارات الأرضي بحديقة' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مواصفات الوحدات المتاحة: المساحات والتشطيبات وخيارات الأرضي بحديقة' must not contain nested headings.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مواصفات الوحدات المتاحة: المساحات والتشطيبات وخيارات الأرضي بحديقة' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع فى القاهرة الجديدة'.
+--------------------------------------------------
+
+--- SECTION: ما يميز عقار يا مصر عن مواقع إعلانات الشقق التقليدية (sec_04) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'ما يميز عقار يا مصر عن مواقع إعلانات الشقق التقليدية' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'ما يميز عقار يا مصر عن مواقع إعلانات الشقق التقليدية' must not contain nested headings.
+- [QUALITY ISSUE]: Paragraph count is 15, must be 2-8
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع فى القاهرة الجديدة'.
+--------------------------------------------------
+
+--- SECTION: العوامل الحقيقية التي تحدد سعر شقتك في القاهرة الجديدة (sec_05) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'العوامل الحقيقية التي تحدد سعر شقتك في القاهرة الجديدة' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'العوامل الحقيقية التي تحدد سعر شقتك في القاهرة الجديدة' must not contain nested headings.
+- [QUALITY ISSUE]: Paragraph count is 19, must be 2-8
+--------------------------------------------------
+
+--- SECTION: مقارنة الأحياء: التجمع الأول مقابل الخامس مقابل بيت الوطن (sec_06) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مقارنة الأحياء: التجمع الأول مقابل الخامس مقابل بيت الوطن' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مقارنة الأحياء: التجمع الأول مقابل الخامس مقابل بيت الوطن' must stay paragraph-only with no tables or lists.
+--------------------------------------------------
+
+--- SECTION: طرق الدفع وخيارات التسليم: كاش، تقسيط، أم تسليم فوري؟ (sec_07) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'طرق الدفع وخيارات التسليم: كاش، تقسيط، أم تسليم فوري؟' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 9 in 'طرق الدفع وخيارات التسليم: كاش، تقسيط، أم تسليم فوري؟' is too dense for intro/conclusion content (56 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: Paragraph count is 10, must be 2-8
+--------------------------------------------------
+
+--- SECTION: خطوات البحث والحجز عبر عقار يا مصر في 6 خطوات (sec_08) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خطوات البحث والحجز عبر عقار يا مصر في 6 خطوات' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خطوات البحث والحجز عبر عقار يا مصر في 6 خطوات' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 8 in 'خطوات البحث والحجز عبر عقار يا مصر في 6 خطوات' is too dense for intro/conclusion content (53 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع فى القاهرة الجديدة'.
+--------------------------------------------------
+
+--- SECTION: أسئلة يطرحها كل مشترٍ قبل التعاقد في القاهرة الجديدة (sec_09) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'أسئلة يطرحها كل مشترٍ قبل التعاقد في القاهرة الجديدة' must contain exactly 3 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'أسئلة يطرحها كل مشترٍ قبل التعاقد في القاهرة الجديدة' must not contain nested headings.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 6 in 'أسئلة يطرحها كل مشترٍ قبل التعاقد في القاهرة الجديدة' is too dense for intro/conclusion content (53 words > 50). Split it or convert enumerations into a list/table.
+--------------------------------------------------
+
+--- SECTION: خطوتك التالية لحجز شقتك المناسبة في 2026 (sec_10) ---
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'خطوتك التالية لحجز شقتك المناسبة في 2026' is too dense for intro/conclusion content (52 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'خطوتك التالية لحجز شقتك المناسبة في 2026' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+--------------------------------------------------
+
+--- SECTION: لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟ (sec_01) ---
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic 'شقق للبيع فى القاهرة الجديدة'.
+--------------------------------------------------

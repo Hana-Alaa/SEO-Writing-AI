@@ -9,9 +9,7 @@ Your task has THREE INTERNAL PHASES.
 Do NOT explain them.
 Return STRICT JSON only.
 
---------------------------------------------
 PHASE 1 – SERP EXTRACTION (COMPETITORS)
---------------------------------------------
 From page 1 of Google, extract:
 A. Top 3 ranking results only.
 For each result extract:
@@ -20,9 +18,7 @@ For each result extract:
 - cta_style (informational / commercial / none)
 - headings (top h2s)
 
---------------------------------------------
 PHASE 2 – AUTHORITY REFERENCE DISCOVERY (CRITICAL)
---------------------------------------------
 Scout for "Tier 1 & Tier 2" Authority Links that are NOT direct service competitors but provide high utility for users reading about "{{ primary_keyword | default('Main Topic') }}".
 Search for:
 - Official Government Portals (e.g., sports ministry, stadium authority)
@@ -36,9 +32,7 @@ For each one, provide:
 - url
 - utility_description (1 sentence on why this is useful to the reader)
 
---------------------------------------------
 PHASE 3 – SEMANTIC ASSETS
---------------------------------------------
 Extract:
 - 10 People Also Ask questions
 - 10 LSI keyword variations

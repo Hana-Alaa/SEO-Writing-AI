@@ -22,7 +22,7 @@ class StrategyService:
         self.style_extractor = StyleExtractor(ai_client)
         
         self.strategy_map = {
-            "brand_commercial": "00_content_strategy_brand_commercial.txt",
+            "brand_commercial": "00_content_strategy_brand_commercial_observed_v2.txt",
             "informational": "00_content_strategy_informational.txt",
             "comparison": "00_content_strategy_comparison.txt",
         }
@@ -125,13 +125,13 @@ class StrategyService:
         # Logic for local SEO intent refinement
         serp_confirmed = (
             state.get("seo_intelligence", {})
-                .get("strategic_analysis", {})
+                .get("market_analysis", {})
                 .get("intent_analysis", {})
                 .get("confirmed_intent")
         )
         confidence = (
             state.get("seo_intelligence", {})
-                .get("strategic_analysis", {})
+                .get("market_analysis", {})
                 .get("intent_analysis", {})
                 .get("intent_confidence_score", 0)
         )
@@ -220,13 +220,13 @@ class StrategyService:
         content_type = state.get("content_type")
         area = state.get("area") or "Global"
         
-        full_intel = seo_intelligence.get("strategic_analysis", {})
+        full_intel = seo_intelligence.get("market_analysis", {})
 
         intent_layer = full_intel.get("intent_analysis", {})
         structural_layer = full_intel.get("structural_intelligence", {})
-        strategic_layer = full_intel.get("strategic_intelligence", {})
+        market_insights = full_intel.get("market_insights", {})
 
-        clusters = strategic_layer.get("keyword_clusters", [])
+        clusters = market_insights.get("keyword_clusters", [])
         if not clusters:
             semantic = full_intel.get("semantic_assets", {})
             lsi = semantic.get("lsi_keywords", [])
@@ -257,7 +257,7 @@ class StrategyService:
             intent=intent,
             serp_intent_analysis=json.dumps(intent_layer),
             serp_structural_intelligence=json.dumps(structural_layer),
-            serp_strategic_intelligence=json.dumps(strategic_layer),
+            serp_market_insights=json.dumps(market_insights),
             keyword_clusters=json.dumps(clusters),
             content_type=content_type,
             area=area,
@@ -359,7 +359,7 @@ class StrategyService:
     def _normalize_content_strategy(self, data: Dict[str, Any], primary_keyword: str, content_type: str, area: str) -> Dict[str, Any]:
         defaults = {
             "primary_angle": f"{primary_keyword} with performance-first execution",
-            "strategic_positioning": "Practical, conversion-focused, locally adapted",
+            "market_angle": "Practical, conversion-focused, locally adapted",
             "target_reader_state": "Comparing providers and ready to shortlist",
             "pain_point_focus": [],
             "emotional_trigger": "Fear of losing leads due to weak digital presence",
@@ -400,7 +400,7 @@ class StrategyService:
 
     def _is_valid_content_strategy(self, data: Dict[str, Any]) -> bool:
         required = [
-            "primary_angle", "strategic_positioning", "target_reader_state",
+            "primary_angle", "market_angle", "target_reader_state",
             "pain_point_focus", "emotional_trigger", "depth_level",
             "authority_strategy", "eeat_signals_to_include", "differentiation_focus",
             "conversion_strategy", "cta_philosophy", "local_strategy", "cultural_peer_areas",

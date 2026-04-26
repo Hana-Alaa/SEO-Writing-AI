@@ -1,0 +1,196 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 16.07 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 55.49 seconds
+  -- Tokens Used: 37,215
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 55.93 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 7.06 seconds
+  -- Tokens Used: 7,851
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 9.57 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.14 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.30 seconds
+  -- Tokens Used: 721
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 721
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 6.89 seconds
+  -- Tokens Used: 4,219
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 6.92 seconds
+  -- Tokens Used: 4,219
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 95.70 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: SECTION_1_فرصتك الذهبية لامتلاك شقق في القاهرة الجديدة قبل طفرة 2026
+  -- Duration: 3.80 seconds
+  -- Tokens Used: 15,408
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: فرصتك الذهبية لامتلاك شقق في القاهرة الجديدة قبل طفرة 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_فرصتك الذهبية لامتلاك شقق في القاهرة الجديدة قبل طفرة 2026
+  -- Duration: 3.56 seconds
+  -- Tokens Used: 16,171
+--------------------------------------------------
+Step: SECTION_2_خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً
+  -- Duration: 6.81 seconds
+  -- Tokens Used: 16,072
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً
+  -- Duration: 5.47 seconds
+  -- Tokens Used: 17,078
+--------------------------------------------------
+Step: SECTION_3_مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة
+  -- Duration: 5.04 seconds
+  -- Tokens Used: 16,159
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة
+  -- Duration: 5.23 seconds
+  -- Tokens Used: 16,988
+--------------------------------------------------
+Step: SECTION_4_لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟
+  -- Duration: 4.92 seconds
+  -- Tokens Used: 16,063
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟
+  -- Duration: 4.94 seconds
+  -- Tokens Used: 16,826
+--------------------------------------------------
+Step: SECTION_5_مؤشرات أسعار المتر ونسب الارتفاع المتوقعة في التجمع
+  -- Duration: 5.35 seconds
+  -- Tokens Used: 16,021
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مؤشرات أسعار المتر ونسب الارتفاع المتوقعة في التجمع
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_مؤشرات أسعار المتر ونسب الارتفاع المتوقعة في التجمع
+  -- Duration: 5.04 seconds
+  -- Tokens Used: 16,788
+--------------------------------------------------
+Step: SECTION_6_أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026
+  -- Duration: 5.88 seconds
+  -- Tokens Used: 16,044
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026
+  -- Duration: 4.90 seconds
+  -- Tokens Used: 16,952
+--------------------------------------------------
+Step: SECTION_7_خطوات شراء شقة في القاهرة الجديدة وتوثيقها قانونياً
+  -- Duration: 5.88 seconds
+  -- Tokens Used: 16,384
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات شراء شقة في القاهرة الجديدة وتوثيقها قانونياً
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات شراء شقة في القاهرة الجديدة وتوثيقها قانونياً
+  -- Duration: 5.14 seconds
+  -- Tokens Used: 17,248
+--------------------------------------------------
+Step: SECTION_8_أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة
+  -- Duration: 6.90 seconds
+  -- Tokens Used: 16,114
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة البحث عن منزلك المثالي في القاهرة الجديدة اليوم
+  -- Duration: 5.19 seconds
+  -- Tokens Used: 16,031
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ رحلة البحث عن منزلك المثالي في القاهرة الجديدة اليوم
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_ابدأ رحلة البحث عن منزلك المثالي في القاهرة الجديدة اليوم
+  -- Duration: 4.29 seconds
+  -- Tokens Used: 16,859
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 91.05 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 16.07 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.10 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 2.84 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 29.14 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 5.86 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.17 seconds
+  -- Tokens Used: 79,047
+--------------------------------------------------

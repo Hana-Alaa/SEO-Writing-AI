@@ -1,0 +1,73 @@
+
+--- SECTION: فرصتك الذهبية لامتلاك شقق في القاهرة الجديدة قبل طفرة 2026 (sec_01) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'فرصتك الذهبية لامتلاك شقق في القاهرة الجديدة قبل طفرة 2026' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'فرصتك الذهبية لامتلاك شقق في القاهرة الجديدة قبل طفرة 2026' is too dense for intro/conclusion content (55 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Core Entity (Subject), Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً (sec_02) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً' must not contain nested headings.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'خريطة الأحياء الأكثر طلباً ومواصفات الوحدات المتاحة حالياً' is too dense for intro/conclusion content (111 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Core Entity (Subject), Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة (sec_03) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة' must not contain nested headings.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 5 in 'مزايا السكن والاستثمار في كمبوندات القاهرة الجديدة المتكاملة' is too dense for intro/conclusion content (53 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Core Entity (Subject), Main Location (Context).
+- [QUALITY ISSUE]: Introduction contains aggressive sales triggers: أسرع. The introduction is allowed to be commercial, but only in a soft, trust-based manner.
+--------------------------------------------------
+
+--- SECTION: لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟ (sec_04) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟' must not contain nested headings.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟' is too dense for intro/conclusion content (57 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 3 in 'لماذا عقار يا مصر هو خيارك الأول للبحث عن شقق من المالك مباشرة؟' is too dense for intro/conclusion content (60 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: مؤشرات أسعار المتر ونسب الارتفاع المتوقعة في التجمع (sec_05) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'مؤشرات أسعار المتر ونسب الارتفاع المتوقعة في التجمع' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 2 in 'مؤشرات أسعار المتر ونسب الارتفاع المتوقعة في التجمع' is too dense for intro/conclusion content (57 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Core Entity (Subject), Main Location (Context).
+- [QUALITY ISSUE]: Introduction contains aggressive sales triggers: أسرع. The introduction is allowed to be commercial, but only in a soft, trust-based manner.
+--------------------------------------------------
+
+--- SECTION: أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026 (sec_06) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 1 in 'أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026' is too dense for intro/conclusion content (51 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 4 in 'أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026' is too dense for intro/conclusion content (51 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: AUDIENCE_LANGUAGE_ADVISORY: Section 'أنظمة السداد المتاحة: مقارنة بين الكاش والتقسيط لعام 2026' contains several long or report-like sentences. Prefer simpler phrasing and explain specialized terms in plain language.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Core Entity (Subject), Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: خطوات شراء شقة في القاهرة الجديدة وتوثيقها قانونياً (sec_07) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'خطوات شراء شقة في القاهرة الجديدة وتوثيقها قانونياً' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'خطوات شراء شقة في القاهرة الجديدة وتوثيقها قانونياً' must stay paragraph-only with no tables or lists.
+- [QUALITY ISSUE]: READABILITY_VIOLATION: Paragraph 3 in 'خطوات شراء شقة في القاهرة الجديدة وتوثيقها قانونياً' is too dense for intro/conclusion content (56 words > 50). Split it or convert enumerations into a list/table.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Core Entity (Subject), Main Location (Context).
+--------------------------------------------------
+
+--- SECTION: أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة (sec_08) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Introduction 'أسئلة شائعة حول شقق للبيع فى القاهرة الجديدة' must not contain nested headings.
+--------------------------------------------------
+
+--- SECTION: ابدأ رحلة البحث عن منزلك المثالي في القاهرة الجديدة اليوم (sec_09) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction 'ابدأ رحلة البحث عن منزلك المثالي في القاهرة الجديدة اليوم' must contain 1 to 2 distinct paragraphs.
+- [QUALITY ISSUE]: INTRO_PK_MISSING: The primary keyword 'شقق للبيع فى القاهرة الجديدة' (or natural variation) must appear in the first paragraph of the introduction.
+- [QUALITY ISSUE]: INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: Core Entity (Subject), Main Location (Context).
+- [QUALITY ISSUE]: Broken external link: https://aqaryamasr.com/city/%d8%a7%d9%84%d9%82%d8%a7%d9%87%d8%b1%d9%87-%d8%a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d9%87/
+--------------------------------------------------

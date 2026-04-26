@@ -10,9 +10,727 @@ logger = logging.getLogger(__name__)
 class ValidationService:
     """Service dedicated to content validation, quality checks, and structure enforcement."""
 
+    GENERIC_VISIBLE_HEADINGS: ClassVar[set[str]] = {
+        "introduction",
+        "overview",
+        "summary",
+        "faq",
+        "faqs",
+        "questions",
+        "pricing",
+        "pricing information",
+        "features",
+        "benefits",
+        "process",
+        "steps",
+        "conclusion",
+        "final thoughts",
+        "why us",
+        "contact us",
+        "guide",
+        "complete guide",
+        "\u0645\u0642\u062f\u0645\u0629",
+        "\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629",
+        "\u0627\u0644\u0623\u0633\u0626\u0644\u0629 \u0627\u0644\u0634\u0627\u0626\u0639\u0629",
+        "\u0627\u0633\u0626\u0644\u0629 \u0634\u0627\u0626\u0639\u0629",
+        "\u0627\u0644\u0623\u0633\u0639\u0627\u0631",
+        "\u0627\u0644\u0627\u0633\u0639\u0627\u0631",
+        "\u0627\u0644\u0645\u0645\u064a\u0632\u0627\u062a",
+        "\u0627\u0644\u0645\u0632\u0627\u064a\u0627",
+        "\u0627\u0644\u062e\u0637\u0648\u0627\u062a",
+        "\u0627\u0644\u062e\u0627\u062a\u0645\u0629",
+        "\u062e\u0627\u062a\u0645\u0629",
+        "\u062f\u0644\u064a\u0644",
+        "\u062f\u0644\u064a\u0644 \u0634\u0627\u0645\u0644",
+    }
+
+    GENERIC_VISIBLE_HEADING_PATTERNS: ClassVar[tuple[str, ...]] = (
+        r"^(complete|full)\s+guide$",
+        r"^everything\s+you\s+need\s+to\s+know$",
+        r"^questions?(?:\s+and\s+answers)?$",
+        r"^(pricing|features|benefits|process|steps)(?:\s+\w+)?$",
+        r"^(final|last)\s+(thoughts|notes|words)$",
+        r"^(why|how)\s+it\s+works$",
+        r"^\u062f\u0644\u064a\u0644(?:\s+\u0634\u0627\u0645\u0644)?$",
+        r"^\u0643\u0644\s+\u0645\u0627\s+\u062a\u062d\u062a\u0627\u062c\s+\u0645\u0639\u0631\u0641\u062a\u0647$",
+    )
+
+    LIGHT_SEO_STOPWORDS: ClassVar[set[str]] = {
+        "a", "an", "the", "and", "or", "of", "to", "for", "in", "on", "at", "by", "with",
+        "your", "you", "how", "why", "what", "when", "vs", "versus",
+        "في", "فى", "من", "على", "عن", "الى", "إلى", "مع", "او", "أو", "ثم", "هذا", "هذه",
+    }
+
+    ENTITY_SKIP_TOKENS: ClassVar[set[str]] = {
+        "best", "top", "cheap", "cheapest", "affordable", "guide", "compare", "comparison",
+        "how", "why", "what", "latest", "new", "sale", "rent", "buy",
+        "افضل", "أفضل", "ارخص", "أرخص", "دليل", "مقارنة", "كيف", "ما", "متى", "اين", "أين",
+        "للبيع", "للايجار", "للاستثمار", "بيع", "شراء", "استثمار", "استثماري", "سعر", "اسعار", "أسعار",
+    }
+
+    OPTIONAL_SECTION_SIGNALS: ClassVar[Dict[str, tuple[str, ...]]] = {
+        "legal": (
+            "legal", "law", "laws", "contract", "contracts", "registration", "documents", "documentation",
+            "paperwork", "license", "licenses", "verify", "verification", "validate", "validation", "due diligence", "قانون", "قانوني", "عقد", "عقود", "تسجيل", "مستندات", "اوراق", "أوراق", "تحقق", "مراجعة", "التحقق", "قانونية",
+        ),
+        "financing_payment": (
+            "finance", "financing", "payment", "payments", "installment", "installments", "mortgage", "plan", "plans",
+            "تمويل", "تمويلي", "سداد", "دفعة", "دفعات", "مقدم", "تقسيط", "اقساط", "أقساط", "خطة سداد",
+        ),
+        "infrastructure": (
+            "infrastructure", "metro", "transport", "roads", "road", "access", "utilities", "connectivity",
+            "بنية", "تحتية", "مرافق", "طرق", "طريق", "محور", "مترو", "مواصلات",
+        ),
+        "investment": (
+            "investment", "investing", "roi", "yield", "returns", "return", "profit", "profits",
+            "استثمار", "استثماري", "عائد", "عوائد", "ربح", "ارباح", "أرباح",
+        ),
+    }
+
+    BRAND_ALLOWED_HEADING_SECTION_TYPES: ClassVar[set[str]] = {
+        "introduction", "conclusion", "differentiation", "brand_differentiation", "why_choose_us", "differentiators", "usp"
+    }
+
+    COMMERCIAL_FLOW_SECTION_ALIASES: ClassVar[Dict[str, set[str]]] = {
+        "introduction": {"introduction"},
+        "offer": {"offer", "core", "service_definition", "what_is", "definition", "offer_overview"},
+        "features": {"features", "key_features", "included", "features_benefits", "key_benefits"},
+        "differentiation": {"differentiation", "brand_differentiation", "why_choose_us", "differentiators", "usp"},
+        "proof": {"proof", "authority", "case_study", "proof_authority", "validation", "pricing"},
+        "comparison": {"comparison", "comparison_logic", "comparison_utility", "alternatives", "options", "criteria"},
+        "process": {"process", "how_it_works", "implementation", "workflow", "process_workflow", "steps"},
+        "faq": {"faq"},
+        "conclusion": {"conclusion", "final_verdict"},
+    }
+
+    COMPARISON_HEADING_SIGNALS: ClassVar[tuple[str, ...]] = (
+        "compare", "comparison", "vs", "versus", "difference", "differences", "options",
+        "ready", "under construction", "district", "districts", "area", "areas", "payment", "payments", "installment", "installments",
+        "مقارنة", "الفرق", "فروق", "جاهز", "تحت الانشاء", "تحت الإنشاء", "مناطق", "منطقة", "موقع", "مواقع", "تقسيط", "اقساط", "أقساط", "سداد",
+    )
+
+    PRICE_HEADING_SIGNALS: ClassVar[tuple[str, ...]] = (
+        "price", "prices", "pricing", "cost", "meter", "payment", "installment",
+        "سعر", "اسعار", "أسعار", "تكلفة", "متر", "تقسيط", "اقساط", "أقساط",
+    )
+
     def __init__(self, ai_client=None, semantic_model=None):
         self.ai_client = ai_client
         self.semantic_model = semantic_model
+        
+        # Bootstrap default thresholds for tone intensity
+        self.TONE_THRESHOLDS = {
+            "informational": 5.0,
+            "commercial": 8.0,
+            "hybrid": 6.0
+        }
+        
+        # Categorized Sales Markers for Tone Validation (v2.3)
+        # Category A: Aggressive (BANNED in Introduction, High weight in Body)
+        self.AGGRESSIVE_MARKERS = {
+            "فرصة ذهبية": 3, "عائد خيالي": 3, "اتصل الآن": 3, "احجز الآن": 3,
+            "سجل": 3, "لا تفوت": 3, "أسرع": 2, "exclusive": 3, "limited offer": 3,
+            "roi": 3, "عائد استثماري": 2.5, "أفضل الأسعار": 2.5
+        }
+        
+        # Category B: Soft (ALLOWED in Introduction, Low weight/Neutral)
+        self.SOFT_MARKERS = {
+            "luxury": 1.5, "prime location": 1, "strategic": 1, "investment": 1,
+            "أفضل": 0.5, "أرقى": 0.5, "أسرع": 1, "أحدث": 0.5, "مميز": 0.5,
+            "منصة": 0, "موقع": 0, "يساعدك": 0, "ثقة": 0, "خبرة": 0 # Zero weight for branding/trust help
+        }
+        
+        # Category C: Abstract Jargon & Prestige Framing (BANNED in Intro, Weighted limit in Body) (v4.0)
+        self.JARGON_MARKERS = {
+            "استثمار": 1, "استثماري": 1, "استراتيجي": 1, "حصري": 1, "إليت": 1,
+            "عائد": 1.0, "مستهدف": 1, "تحدي": 0.5, "roi": 1.0, "investment": 1,
+            "strategic": 1.5, "premium": 1.5, "lifestyle": 1.5, "asset": 1.5,
+            "competitive": 1.5, "prestige": 2, "elite": 2, "luxury": 1.5,
+            # Prestige/Framing Patterns (Detox v4.0)
+            "تموضع": 1.5, "التموضع": 1.5, "منظومه": 2, "المنظومه": 2, 
+            "رياده": 2, "الرياده": 2, "سلطنه": 3, "executive": 2.5, 
+            "positioning": 1.5, "analysis": 1.0, "framework": 2.0, "protocol": 2.0
+        }
+        
+        # Combined pool for general density calculation
+        self.SALES_MARKERS = {**self.AGGRESSIVE_MARKERS, **self.SOFT_MARKERS, **self.JARGON_MARKERS}
+
+    def _check_plain_language_compliance(self, text: str) -> Dict[str, Any]:
+        """
+        Refined v3.1: Calculates jargon intensity based on context, density, and proximity.
+        Ensures the text is accessible without distorting meaning.
+        """
+        if not text: return {"fail": False}
+        
+        # 1. Normalize and segment
+        text_norm = self._normalize_arabic(text.lower())
+        # Split into sentences using standard and Arabic delimiters
+        sentences = [s.strip() for s in re.split(r'[.!?؟\n]', text_norm) if s.strip()]
+        
+        words_overall = re.findall(r'\b\w+\b', text_norm)
+        total_word_count = max(len(words_overall), 1)
+        
+        cumulative_jargon_score = 0.0
+        found_jargon = Counter()
+        
+        # 2. Analyze sentence-level context and proximity
+        for sentence in sentences:
+            sentence_jargon_score = 0.0
+            sentence_jargon_count = 0
+            
+            # Find jargon markers in this specific sentence
+            for marker, weight in self.JARGON_MARKERS.items():
+                pattern = r'\b{}\b'.format(re.escape(self._normalize_arabic(marker)))
+                matches = len(re.findall(pattern, sentence))
+                if matches > 0:
+                    # Basic weight
+                    sentence_jargon_score += (matches * weight)
+                    sentence_jargon_count += matches
+                    found_jargon[marker] += matches
+            
+            # PROXIMITY PENALTY: If multiple jargon words share a sentence, boost the score
+            if sentence_jargon_count > 1:
+                sentence_jargon_score *= 1.5
+                
+            # SALES CONTEXT PENALTY: Check if aggressive markers share this sentence
+            found_aggressive = False
+            for agg_marker in self.AGGRESSIVE_MARKERS.keys():
+                if self._normalize_arabic(agg_marker) in sentence:
+                    found_aggressive = True
+                    break
+            
+            if found_aggressive and sentence_jargon_count > 0:
+                sentence_jargon_score *= 2.0
+                
+            cumulative_jargon_score += sentence_jargon_score
+            
+        # 3. Calculate Final Intensity (Normalized per 100 words)
+        intensity = (cumulative_jargon_score / total_word_count) * 100
+        
+        # NEW THRESHOLD: 5.0 (v4.0 allows single natural occurrences)
+        # Minimum absolute floor: 3.0
+        max_rep = max(found_jargon.values()) if found_jargon else 0
+        
+        jargon_list = list(found_jargon.keys())
+        msg = f"PLAIN_LANGUAGE_REQUIRED: Content feels too abstract, prestige-heavy, or uses expert-only framing (Intensity {intensity:.1f}, Score {cumulative_jargon_score:.1f}). Found: {', '.join(jargon_list)}. "
+        msg += "You MUST write for a zero-knowledge reader. Do NOT do shallow synonym replacement. You must fully reconstruct the sentence in simple everyday language. Preserve the meaning, but explain the practical outcome using concrete actions or results. Do not keep the original investor-style sentence structure."
+        
+        if cumulative_jargon_score >= 3.0 and (intensity > 5.0 or max_rep > 3):
+            return {
+                "fail": True,
+                "reason": "PLAIN_LANGUAGE_REQUIRED",
+                "message": msg
+            }
+        elif cumulative_jargon_score >= 2.0 and intensity > 3.0:
+            return {
+                "fail": False,
+                "warnings": [msg.replace("PLAIN_LANGUAGE_REQUIRED", "PLAIN_LANGUAGE_WARNING")]
+            }
+            
+        return {"fail": False}
+
+    def _check_intro_tone_profile(self, text: str) -> Dict[str, Any]:
+        """
+        Specialized validation for introductions. 
+        Permits soft branding/trust language but bans aggressive triggers.
+        """
+        if not text: return {"fail": False}
+        
+        text_norm = self._normalize_arabic(text.lower())
+        found_aggressive = []
+        
+        for marker in self.AGGRESSIVE_MARKERS.keys():
+            marker_norm = self._normalize_arabic(marker.lower())
+            if marker_norm in text_norm:
+                found_aggressive.append(marker)
+                
+        # Check for direct standard link patterns which could be CTAs
+        # (Though some links are allowed, direct CTA phrases in links are the problem)
+        if found_aggressive:
+            return {
+                "fail": True, 
+                "reason": "INTRO_TONE_PROFILE_MISMATCH", 
+                "message": f"Introduction contains aggressive sales triggers: {', '.join(found_aggressive)}. The introduction is allowed to be commercial, but only in a soft, trust-based manner."
+            }
+            
+        return {"fail": False}
+
+    def _check_structural_integrity(self, content: str, target_format: str, heading_text: str) -> List[str]:
+        """
+        Refined v4.0.1: Validates that the visual presentation matches the logical structure.
+        Checks for hidden subsections, decorative bullets, and format mismatches.
+        """
+        errors = []
+        if not content: return errors
+        
+        paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
+        
+        # 1. Detection of Hidden Subsections (Bold labels used as headers in paragraphs)
+        # Look for 3+ occurrences of "**Label**:" or "**Label** " at the start of paragraphs/lines
+        hidden_pattern = r'(?m)^\s*\*\*([^*:]+)\*\*[:\s]'
+        hidden_labels = re.findall(hidden_pattern, content)
+        
+        # Heuristic: If 3+ labels found and each is followed by substantial text (> 15 words)
+        if len(hidden_labels) >= 3:
+             # Verify if they are true 'Mini-Stories'
+             valid_hidden = 0
+             for label in hidden_labels:
+                 # Check the text following this specific label
+                 escaped_label = re.escape(label)
+                 pattern = r'\*\*{}\*\*[:\s](.*?)(?=\n\s*\*\*|\Z)'.format(escaped_label)
+                 follow_up = re.search(pattern, content, re.DOTALL)
+                 if follow_up and len(follow_up.group(1).split()) > 15:
+                     valid_hidden += 1
+             
+             if valid_hidden >= 3:
+                 errors.append(f"HIDDEN_SUBSECTIONS_DETECTED: Section '{heading_text}' uses bold labels for 3+ independent items with details. These MUST be converted into H3 subsections for better SEO and readability.")
+
+        # 2. Refined Decorative Bullets Detection
+        bullet_lines = [l.strip() for l in content.split("\n") if l.strip().startswith(("- ", "* ", "• "))]
+        if bullet_lines:
+            total_words = len(content.split())
+            bullet_words = sum(len(l.split()) for l in bullet_lines)
+            narrative_ratio = (total_words - bullet_words) / max(total_words, 1)
+            
+            # Condition A: Mostly narrative (>80%) with very few bullets (1-2)
+            if narrative_ratio > 0.8 and len(bullet_lines) <= 2:
+                # Condition B: Overlap Analysis (Do bullets just repeat paragraph content?)
+                # Extract nouns/entities from bullets
+                bullet_text = " ".join(bullet_lines).lower()
+                # Get the paragraph immediately preceding the first bullet
+                lines = content.split("\n")
+                first_bullet_idx = next(i for i, l in enumerate(lines) if l.strip().startswith(("-", "*", "•")))
+                preceding_text = ""
+                for i in range(first_bullet_idx - 1, -1, -1):
+                    if lines[i].strip() and not lines[i].strip().startswith(("#", "-", "*", "•")):
+                        preceding_text = lines[i].strip().lower()
+                        break
+                
+                if preceding_text:
+                    # Check for token overlap
+                    bullet_tokens = set(re.findall(r'\b\w{3,}\b', bullet_text))
+                    preceding_tokens = set(re.findall(r'\b\w{3,}\b', preceding_text))
+                    overlap = bullet_tokens.intersection(preceding_tokens)
+                    
+                    if len(overlap) / max(len(bullet_tokens), 1) > 0.6:
+                        errors.append(f"DECORATIVE_BULLETS_DETECTED: The bullets in '{heading_text}' appear to be decorative, merely repeating info already stated in the narrative. Lists must add real structural value or independent details.")
+
+        # 3. Structure Format Mismatch (Target vs Actual)
+        if target_format == "h3_subsections":
+            h3_count = len(re.findall(r'^###\s', content, re.MULTILINE))
+            if h3_count < 2:
+                errors.append(f"STRUCTURE_FORMAT_MISMATCH: Section '{heading_text}' was assigned 'h3_subsections' but contains {h3_count} H3 headers. Each independent item MUST have its own H3 header.")
+        
+        elif target_format == "direct_bullets":
+            if not bullet_lines:
+                errors.append(f"STRUCTURE_FORMAT_MISMATCH: Section '{heading_text}' was assigned 'direct_bullets' but contains no bulleted list.")
+            else:
+                # Check for narrative lead-in limit (v4.0.1)
+                # Find lines before the first bullet that aren't headings
+                lines = content.split("\n")
+                lead_in_count = 0
+                for l in lines:
+                    stripped = l.strip()
+                    if not stripped or stripped.startswith("#"): continue
+                    if stripped.startswith(("-", "*", "•")): break
+                    lead_in_count += 1
+                
+                if lead_in_count > 2:
+                    errors.append(f"STRUCTURE_FORMAT_MISMATCH: 'direct_bullets' format allows max 2 intro lines. Found {lead_in_count} lines of narrative lead-in in '{heading_text}'. Start the list immediately.")
+
+        elif target_format == "compact_narrative":
+            if bullet_lines or "###" in content:
+                # We allow it, but we warn if it's over-modularized for a compact topic
+                # For now, let's just log or add a low-priority warning
+                pass
+
+        return errors
+
+    def _normalize_arabic(self, text: str) -> str:
+        """Standardizes Arabic characters to improve matching reliability."""
+        if not text: return ""
+        replacements = {
+            "أ": "ا", "إ": "ا", "آ": "ا",
+            "ة": "ه",
+            "ى": "ي",
+            "ئ": "ء", "ؤ": "ء",
+        }
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        return text.lower()
+
+    def _normalize_heading_label(self, text: str) -> str:
+        if not text:
+            return ""
+        normalized = self._normalize_arabic(str(text).lower())
+        normalized = re.sub(r"[^\w\u0600-\u06FF\s]", " ", normalized)
+        normalized = normalized.replace("_", " ")
+        return re.sub(r"\s+", " ", normalized).strip()
+
+    def _is_generic_visible_heading(self, text: str) -> bool:
+        normalized = self._normalize_heading_label(text)
+        if not normalized:
+            return True
+
+        if normalized in self.GENERIC_VISIBLE_HEADINGS:
+            return True
+
+        return any(
+            re.match(pattern, normalized, re.IGNORECASE)
+            for pattern in self.GENERIC_VISIBLE_HEADING_PATTERNS
+        )
+
+    def _tokenize_search_phrase(self, text: str) -> List[str]:
+        normalized = self._normalize_heading_label(text)
+        if not normalized:
+            return []
+        return [
+            token for token in normalized.split()
+            if token and token not in self.LIGHT_SEO_STOPWORDS and len(token) > 1
+        ]
+
+    def _expand_token_variants(self, token: str) -> set[str]:
+        variants = {token}
+        if not token:
+            return variants
+
+        for prefix in ("وال", "بال", "كال", "فال", "لل", "ال", "و", "ب", "ل", "ف", "ك"):
+            if token.startswith(prefix) and len(token) - len(prefix) >= 2:
+                variants.add(token[len(prefix):])
+
+        if token.endswith("s") and len(token) > 3:
+            variants.add(token[:-1])
+
+        return {variant for variant in variants if variant}
+
+    def _expanded_token_set(self, text: str) -> set[str]:
+        expanded = set()
+        for token in self._tokenize_search_phrase(text):
+            expanded.update(self._expand_token_variants(token))
+        return expanded
+
+    def _derive_keyword_profile(self, primary_keyword: str, area: str = "") -> Dict[str, Any]:
+        keyword_tokens = self._tokenize_search_phrase(primary_keyword)
+        area_tokens = self._tokenize_search_phrase(area)
+
+        head_entity = ""
+        for token in keyword_tokens:
+            if token not in self.ENTITY_SKIP_TOKENS:
+                head_entity = token
+                break
+        if not head_entity and keyword_tokens:
+            head_entity = keyword_tokens[0]
+
+        location_tokens = [token for token in area_tokens if token in keyword_tokens] if area_tokens else []
+        intent_tokens = [
+            token for token in keyword_tokens
+            if token != head_entity and token not in location_tokens
+        ]
+
+        return {
+            "primary_keyword": primary_keyword or "",
+            "normalized_keyword": self._normalize_heading_label(primary_keyword),
+            "keyword_tokens": keyword_tokens,
+            "head_entity": head_entity,
+            "location_tokens": location_tokens,
+            "intent_tokens": intent_tokens,
+        }
+
+    def _heading_contains_keyword_anchor(self, heading_text: str, keyword_profile: Dict[str, Any]) -> bool:
+        normalized_heading = self._normalize_heading_label(heading_text)
+        normalized_keyword = keyword_profile.get("normalized_keyword", "")
+        if normalized_keyword and normalized_keyword in normalized_heading:
+            return True
+
+        heading_tokens = self._expanded_token_set(heading_text)
+        keyword_tokens = keyword_profile.get("keyword_tokens", [])
+        head_entity = keyword_profile.get("head_entity", "")
+        location_tokens = keyword_profile.get("location_tokens", [])
+        intent_tokens = keyword_profile.get("intent_tokens", [])
+
+        overlap = sum(1 for token in keyword_tokens if token in heading_tokens)
+        if head_entity and head_entity in heading_tokens and overlap >= max(2, len(keyword_tokens) - 1):
+            return True
+
+        if head_entity and head_entity in heading_tokens:
+            has_intent = not intent_tokens or any(token in heading_tokens for token in intent_tokens)
+            has_location = not location_tokens or all(token in heading_tokens for token in location_tokens)
+            if has_intent and has_location:
+                return True
+
+        return False
+
+    def _heading_preserves_entity_focus(self, heading_text: str, keyword_profile: Dict[str, Any]) -> bool:
+        head_entity = keyword_profile.get("head_entity", "")
+        keyword_tokens = keyword_profile.get("keyword_tokens", [])
+        if not head_entity or not keyword_tokens:
+            return True
+
+        heading_tokens = self._expanded_token_set(heading_text)
+        head_entity_variants = self._expand_token_variants(head_entity)
+        if head_entity_variants.intersection(heading_tokens):
+            return True
+
+        location_tokens = keyword_profile.get("location_tokens", [])
+        intent_tokens = keyword_profile.get("intent_tokens", [])
+        overlap = sum(1 for token in keyword_tokens if token in heading_tokens)
+        has_location = not location_tokens or all(token in heading_tokens for token in location_tokens)
+        has_intent = not intent_tokens or any(token in heading_tokens for token in intent_tokens)
+
+        return overlap >= max(2, len(keyword_tokens) - 1) and has_location and has_intent
+
+    def _brand_appears_in_heading(self, text: str, brand_name: str) -> bool:
+        normalized_brand = self._normalize_heading_label(brand_name)
+        if not normalized_brand:
+            return False
+
+        normalized_text = self._normalize_heading_label(text)
+        if normalized_brand in normalized_text:
+            return True
+
+        brand_tokens = self._tokenize_search_phrase(brand_name)
+        if not brand_tokens:
+            return False
+
+        text_tokens = self._expanded_token_set(text)
+        return all(token in text_tokens for token in brand_tokens)
+
+    def _brand_heading_allowed(self, section_type: str) -> bool:
+        return (section_type or "").lower() in self.BRAND_ALLOWED_HEADING_SECTION_TYPES
+
+    def _commercial_flow_stage(self, section: Dict[str, Any]) -> str:
+        section_type = (section.get("section_type") or "").lower().strip()
+        for stage, aliases in self.COMMERCIAL_FLOW_SECTION_ALIASES.items():
+            if section_type in aliases:
+                return stage
+        return ""
+
+    def _contains_any_signal(self, text: str, signals: tuple[str, ...]) -> bool:
+        normalized = self._normalize_heading_label(text)
+        return any(self._normalize_heading_label(signal) in normalized for signal in signals)
+
+    def _detect_optional_section_topics(self, text: str) -> set[str]:
+        normalized = self._normalize_heading_label(text)
+        hits = set()
+        for topic, signals in self.OPTIONAL_SECTION_SIGNALS.items():
+            if any(signal in normalized for signal in signals):
+                hits.add(topic)
+        return hits
+
+    def _build_outline_support_blob(
+        self,
+        primary_keyword: str = "",
+        content_strategy: Optional[Dict[str, Any]] = None,
+        seo_intelligence: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        parts = [primary_keyword or ""]
+
+        if isinstance(content_strategy, dict) and content_strategy:
+            for key in ("primary_angle", "market_angle", "target_reader_state", "local_strategy"):
+                parts.append(str(content_strategy.get(key, "") or ""))
+            parts.append(str(content_strategy.get("section_role_map", {}) or {}))
+
+        market_analysis = (seo_intelligence or {}).get("market_analysis", {}) if isinstance(seo_intelligence, dict) else {}
+        semantic_assets = market_analysis.get("semantic_assets", {}) if isinstance(market_analysis, dict) else {}
+        market_insights = market_analysis.get("market_insights", {}) if isinstance(market_analysis, dict) else {}
+
+        parts.append(str(semantic_assets.get("paa_questions", []) or []))
+        parts.append(str(semantic_assets.get("related_searches", []) or []))
+        parts.append(str(market_insights.get("keyword_clusters", []) or []))
+        parts.append(str(market_insights.get("content_gaps", []) or []))
+
+        return self._normalize_heading_label(" ".join(parts))
+
+    def _optional_topic_is_justified(
+        self,
+        topic: str,
+        support_blob: str,
+    ) -> bool:
+        signals = self.OPTIONAL_SECTION_SIGNALS.get(topic, ())
+        return any(self._normalize_heading_label(signal) in support_blob for signal in signals)
+
+    def _h3_supports_parent(
+        self,
+        parent_heading: str,
+        child_heading: str,
+        keyword_profile: Dict[str, Any],
+    ) -> bool:
+        parent_tokens = self._expanded_token_set(parent_heading)
+        child_tokens = self._expanded_token_set(child_heading)
+        
+        # 1. Semantic overlap (Intersection of non-location tokens)
+        location_tokens = set(keyword_profile.get("location_tokens", []))
+        meaningful_parent = parent_tokens - location_tokens
+        meaningful_child = child_tokens - location_tokens
+        
+        if meaningful_parent.intersection(meaningful_child):
+            return True
+
+        # 2. Bridge via head entity or shared intent
+        head_entity = keyword_profile.get("head_entity", "")
+        head_variants = self._expand_token_variants(head_entity) if head_entity else set()
+        
+        if head_variants.intersection(meaningful_parent) and head_variants.intersection(meaningful_child):
+            return True
+
+        # 3. Optional Topic alignment (Legal, Investment, etc.)
+        parent_optional_topics = self._detect_optional_section_topics(parent_heading)
+        child_optional_topics = self._detect_optional_section_topics(child_heading)
+        if child_optional_topics and child_optional_topics.intersection(parent_optional_topics):
+            return True
+
+        # If it shares only location but not theme, it fails
+        return False
+
+    def _comparison_section_has_decision_angle(self, heading_text: str, subheadings: List[str]) -> bool:
+        combined = " ".join([heading_text or ""] + [str(sub) for sub in (subheadings or [])])
+        return self._contains_any_signal(combined, self.COMPARISON_HEADING_SIGNALS)
+
+    def _validate_commercial_heading_flow(self, outline: List[Dict[str, Any]], brand_name: str = "") -> List[str]:
+        errors = []
+        expected_flow = ["introduction", "offer", "features", "proof", "comparison", "process", "faq", "conclusion"]
+
+        stage_positions: Dict[str, int] = {}
+        first_visible_core_stage = ""
+        differentiation_position: Optional[int] = None
+
+        for idx, section in enumerate(outline):
+            section_type = (section.get("section_type") or "").lower()
+            heading_level = (section.get("heading_level") or "").upper()
+
+            if section_type == "introduction":
+                stage_positions.setdefault("introduction", idx)
+                continue
+
+            if heading_level != "H2":
+                continue
+
+            stage = self._commercial_flow_stage(section)
+            if stage:
+                stage_positions.setdefault(stage, idx)
+                if stage == "differentiation":
+                    differentiation_position = idx if differentiation_position is None else differentiation_position
+                if stage not in {"faq", "conclusion", "differentiation"} and not first_visible_core_stage:
+                    first_visible_core_stage = stage
+
+        missing = [stage for stage in expected_flow if stage not in stage_positions]
+        if missing:
+            errors.append(
+                f"COMMERCIAL_FLOW_MISSING: Commercial heading flow is missing required stages: {', '.join(missing)}."
+            )
+
+        if first_visible_core_stage and first_visible_core_stage != "offer":
+            errors.append(
+                "COMMERCIAL_FLOW_START_INVALID: The first visible core H2 in a commercial outline must be the offer/definition section."
+            )
+
+        ordered_positions = [stage_positions[stage] for stage in expected_flow if stage in stage_positions]
+        if ordered_positions != sorted(ordered_positions):
+            errors.append(
+                "COMMERCIAL_FLOW_ORDER_INVALID: Commercial headings must follow the decision journey order: introduction -> offer -> features -> proof -> comparison -> process -> faq -> conclusion."
+            )
+
+        if brand_name:
+            if differentiation_position is None:
+                errors.append(
+                    "BRAND_SECTION_MISSING: Commercial brand-led outlines should include one dedicated differentiation section."
+                )
+            else:
+                features_position = stage_positions.get("features")
+                proof_position = stage_positions.get("proof")
+                comparison_position = stage_positions.get("comparison")
+                if features_position is not None and differentiation_position <= features_position:
+                    errors.append(
+                        "BRAND_SECTION_ORDER_INVALID: Place the brand differentiation section after features, not before them."
+                    )
+                if proof_position is not None and differentiation_position <= proof_position:
+                    errors.append(
+                        "BRAND_SECTION_ORDER_INVALID: Place the brand differentiation section after proof, not before it."
+                    )
+                if comparison_position is not None and differentiation_position >= comparison_position:
+                    errors.append(
+                        "BRAND_SECTION_ORDER_INVALID: Place the brand differentiation section before the comparison section."
+                    )
+
+        return errors
+
+    def _calculate_tone_intensity(self, text: str) -> float:
+        """
+        Calculates the sales pressure intensity score normalized per 100 words.
+        Formula: (weighted_sales_score / word_count) * 100
+        """
+        if not text: return 0.0
+        
+        words = re.findall(r'\b\w+\b', text.lower())
+        word_count = max(len(words), 1)
+        
+        total_score = 0.0
+        text_lower = text.lower()
+        text_normalized = self._normalize_arabic(text_lower)
+        
+        for marker, weight in self.SALES_MARKERS.items():
+            pattern = re.escape(marker.lower())
+            # For Arabic, check both raw and normalized
+            count = len(re.findall(pattern, text_lower))
+            if count == 0:
+                count = len(re.findall(self._normalize_arabic(marker), text_normalized))
+            
+            total_score += (count * weight)
+            
+        intensity = (total_score / word_count) * 100
+        return round(intensity, 2)
+
+    def _check_topic_anchoring(self, text: str, entity_variants: List[str], location_variants: List[str], intent_variants: List[str]) -> Dict[str, Any]:
+        """
+        Checks for semantic anchoring of Subject, Context, and Intent.
+        Returns a dictionary of found elements and a pass/fail status.
+        """
+        if not text: return {"pass": False, "found": []}
+        
+        text_norm = self._normalize_arabic(text)
+        
+        found_entity = any(self._normalize_arabic(v) in text_norm for v in entity_variants)
+        found_location = any(self._normalize_arabic(v) in text_norm for v in location_variants)
+        found_intent = any(self._normalize_arabic(v) in text_norm for v in intent_variants)
+        
+        # Hard fail if EITHER entity or location is missing
+        is_anchored = found_entity and found_location
+        
+        return {
+            "is_anchored": is_anchored,
+            "has_entity": found_entity,
+            "has_location": found_location,
+            "has_intent": found_intent,
+            "missing_hard": (not found_entity) or (not found_location)
+        }
+
+    def _check_geographic_drift(self, text: str, main_area: str, sub_area: str) -> Dict[str, Any]:
+        """
+        Checks for dominance of a sub-area over the main city-level area.
+        Also checks if the sub-area hijacks the first sentence.
+        """
+        if not text or not main_area or not sub_area:
+            return {"fail": False, "reason": ""}
+            
+        text_norm = self._normalize_arabic(text)
+        main_norm = self._normalize_arabic(main_area)
+        sub_norm = self._normalize_arabic(sub_area)
+        
+        # 1. First Sentence Check
+        sentences = self.extract_sentences(text)
+        if sentences:
+            first_sentence_norm = self._normalize_arabic(sentences[0])
+            if sub_norm in first_sentence_norm and main_norm not in first_sentence_norm:
+                return {"fail": True, "reason": "CHILD_CONTEXT_HIJACK", "message": f"Sub-area '{sub_area}' established in the first sentence before the main city '{main_area}' context was anchored."}
+        
+        # 2. Mention Ratio Check
+        main_count = text_norm.count(main_norm)
+        sub_count = text_norm.count(sub_norm)
+        
+        if sub_count > main_count and sub_count > 1:
+            return {"fail": True, "reason": "DOMINANCE_DRIFT", "message": f"Sub-area '{sub_area}' mentions ({sub_count}) exceed main area '{main_area}' mentions ({main_count}). The district is overshadowing the city context."}
+            
+        return {"fail": False}
 
     def validate_h1_length(self, h1: str) -> bool:
         """Enforces H1 length rules (55-75 chars) as per the framework."""
@@ -23,7 +741,7 @@ class ValidationService:
         if primary_keyword.lower() not in angle:
             return False, "Primary keyword not reflected in strategy angle"
 
-        if area and area.lower() not in strategy.get("strategic_positioning","").lower():
+        if area and area.lower() not in strategy.get("market_angle","").lower():
             return False, "Local positioning missing"
 
         return True, None
@@ -265,6 +983,10 @@ class ValidationService:
     async def validate_section_output(self, content: str, section: Dict[str, Any], section_index: int = 0, total_sections: int = 0, area: str = "", blocked_domains: set = None, brand_url: str = "", content_type: str = "informational", **kwargs) -> Tuple[bool, List[str]]:
         """
         Hardens CTA validation based on the 'Earned CTA' and 'Structural Integrity' protocols.
+        1. `commercial`: Transactional/Value terms (e.g., price, cost, ROI, fees, value, benefits).
+        2. `geographic`: Localized/Spatial terms (e.g., neighborhoods, cities, landmarks, street names, specific locations).
+        3. `entity`: Descriptive/Object terms (e.g., categories, types, versions, features, specifications, models).
+        4. `action`: Engagement/Verb terms (e.g., choosing, comparing, finding, securing, starting, analyzing).
         Rules:
         1. No CTA in informational sections (ever).
         2. Permission != Requirement (cta_eligible check).
@@ -279,9 +1001,15 @@ class ValidationService:
         heading_text = section.get('heading_text', 'Section')
         section_intent = section.get('section_intent', 'Informational').lower()
         cta_eligible = section.get('cta_eligible', False)
-        section_type = (section.get('section_type') or '').lower()
-        is_conclusion = section_type == 'conclusion' or section_index == total_sections - 1
-        is_introduction = section_type == 'introduction' or section_index == 0
+        section_type = (section.get('section_type') or '').lower().strip()
+        valid_types = ['introduction', 'body', 'faq', 'conclusion']
+        
+        if not section_type or section_type not in valid_types:
+            errors.append(f"SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('{section_type}'). It MUST be explicitly defined as exactly one of: {valid_types}. Do NOT guess based on position.")
+            return False, errors
+            
+        is_conclusion = section_type == 'conclusion'
+        is_introduction = section_type == 'introduction'
 
         # 1. Structural Analysis
         paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
@@ -329,8 +1057,14 @@ class ValidationService:
 
         # 3. Structural Constraints (Hard Rules)
         if is_introduction:
-            if len(paragraphs) != 3:
-                errors.append(f"INTRO_STRUCTURE_VIOLATION: Introduction '{heading_text}' must contain exactly 3 distinct paragraphs.")
+            # v4.0.2 Intent-Aware Paragraph Limit
+            if content_type == 'brand_commercial':
+                if not (2 <= len(paragraphs) <= 3):
+                    errors.append(f"INTRO_STRUCTURE_VIOLATION: Commercial introduction '{heading_text}' must contain 2 to 3 distinct paragraphs.")
+            else:
+                if not (1 <= len(paragraphs) <= 2):
+                    errors.append(f"INTRO_STRUCTURE_VIOLATION: Informational introduction '{heading_text}' must contain 1 to 2 distinct paragraphs.")
+            
             if any(p.lstrip().startswith(("#", "###", "####")) for p in paragraphs):
                 errors.append(f"INTRO_STRUCTURE_VIOLATION: Introduction '{heading_text}' must not contain nested headings.")
             if any("|" in p and "\n|" in p for p in paragraphs) or any(p.lstrip().startswith(("- ", "* ", "1. ")) for p in paragraphs):
@@ -395,50 +1129,210 @@ class ValidationService:
         # --- PRIMARY KEYWORD RELEVANCE & DISTRIBUTION ---
         primary_kw = section.get("primary_keyword", "")
         requires_pk = section.get("requires_primary_keyword", False)
-        
+
         if primary_kw and not is_faq_or_pricing:
             content_lower = content.lower()
             # Exact phrase count (ignoring case)
             exact_pattern = r'\b{}\b'.format(re.escape(primary_kw.lower()))
             exact_count = len(re.findall(exact_pattern, content_lower))
-            
+
             # 1. Section Repetition Rule (Hard Cap)
             if exact_count > 1:
                 errors.append(f"STUFFING_VIOLATION: Exact primary keyword '{primary_kw}' appears {exact_count} times in section '{heading_text}'. Max 1 is allowed per section.")
-            
-            # 2. First Paragraph Relevance (Only for the opening section)
-            if section_index == 0 and paragraphs:
-                first_para_lower = paragraphs[0].lower()
-                kw_comp = [w.lower() for w in re.findall(r'\b\w+\b', primary_kw) if len(w) > 2]
-                found_comp = [w for w in kw_comp if w in first_para_lower]
-                comp_ratio = len(found_comp) / max(len(kw_comp), 1)
-                
-                # Check for exact phrase OR strong component presence (variant)
-                has_exact = re.search(exact_pattern, first_para_lower)
-                if not has_exact and comp_ratio < 0.25:
-                    errors.append(f"RELEVANCE_VIOLATION: First paragraph fails to clearly reflect topic '{primary_kw}'.")
 
-            # 3. Heading Relevance (For H2 sections assigned with PK)
-            heading_lvl = (section.get("heading_level") or "").upper()
-            if heading_lvl == "H2" and requires_pk:
-                heading_lower = heading_text.lower()
-                has_pk_in_heading = re.search(exact_pattern, heading_lower)
-                if not has_pk_in_heading:
-                    # Check for strong variant presence in heading
-                    kw_comp = [w.lower() for w in re.findall(r'\b\w+\b', primary_kw) if len(w) > 2]
-                    found_comp = [w for w in kw_comp if w in heading_lower]
-                    if len(found_comp) / max(len(kw_comp), 1) < 0.5:
-                        logger.warning(f"Heading relevance low for '{heading_text}'.")
-                        # We don't block conclusion if heading is missing PK, but we warn or log.
-            
-            # 4. Phase-Aware Priority Requirement
-            if requires_pk and exact_count == 0:
-                # If section required exact-form but has none, check if it has a strong variant
+            # 2. Intro Semantic Anchoring Enforcement
+            if is_introduction and paragraphs:
+                first_para = paragraphs[0]
+                
+                # Enforce PRIMARY keyword placement with fuzzy/normalized matching (v4.0.3)
+                # 1. Normalize strings
+                pk_norm = self._normalize_arabic(primary_kw.lower())
+                para_norm = self._normalize_arabic(first_para.lower())
+                
+                # 2. Extract core tokens
+                stop_words = {"في", "من", "على", "عن", "الى", "الي", "ب", "ل", "ك", "ال"}
+                pk_tokens = [w for w in re.findall(r'\b\w+\b', pk_norm) if w not in stop_words and len(w) > 2]
+                
+                # 3. Validation Rules
+                if not pk_tokens:
+                     has_pk = primary_kw.lower() in first_para.lower()
+                else:
+                     # Tokenized fuzzy match
+                     matches = sum(1 for t in pk_tokens if t in para_norm)
+                     # Accept if at least 70% of core tokens are present (allows slight variations)
+                     has_pk = (matches / len(pk_tokens)) >= 0.7 if len(pk_tokens) > 1 else matches == 1
+                     
+                     # Detect forced/awkward insertion (e.g., placing the keyword isolated at the absolute start)
+                     forced_pattern = r'^[\s\*\#\-\:]*{}(?:\s|$)'.format(re.escape(pk_tokens[0]))
+                     if re.match(forced_pattern, para_norm):
+                          errors.append(f"INTRO_PK_FORCED: Primary keyword '{primary_kw}' seems artificially forced at the very beginning (awkward/isolated). It MUST be naturally woven into a grammatical sentence.")
+                
+                if not has_pk:
+                    errors.append(f"INTRO_PK_MISSING: The primary keyword '{primary_kw}' (or natural variation) must appear in the first paragraph of the introduction.")
+                else:
+                    # Soft warning for delayed placement
+                    sentences = self.extract_sentences(first_para)
+                    if len(sentences) > 2:
+                        first_two_norm = self._normalize_arabic(" ".join(sentences[:2]).lower())
+                        if pk_tokens and sum(1 for t in pk_tokens if t in first_two_norm) == 0:
+                            logger.warning(f"INTRO_PK_DELAYED: Primary keyword '{primary_kw}' is present but delayed in section '{heading_text}'. Soft warning.")
+                
+                # Derive semantic sets from primary_kw and area
+                entity_variants = [w for w in re.findall(r'\b\w+\b', primary_kw) if len(w) > 2][:2]
+                location_variants = [area] if area else [primary_kw.split("في")[-1].strip()] if "في" in primary_kw else []
+                intent_signals = ["بيع", "شراء", "حجز", "استكشاف", "بحث", "سعر", "اسعار", "تواصل"]
+                
+                anchor_results = self._check_topic_anchoring(
+                    first_para, 
+                    entity_variants=entity_variants, 
+                    location_variants=location_variants, 
+                    intent_variants=intent_signals
+                )
+                
+                if anchor_results["missing_hard"]:
+                    missing = []
+                    if not anchor_results["has_entity"]: missing.append("Core Entity (Subject)")
+                    if not anchor_results["has_location"]: missing.append("Main Location (Context)")
+                    errors.append(f"INTRO_TOPIC_ANCHOR_MISSING: The introduction first paragraph fails to explicitly establish the article topic early. Missing: {', '.join(missing)}.")
+                elif not anchor_results["has_intent"]:
+                    # Intent is a weighted warning
+                    errors.append(f"INTRO_INTENT_SIGNAL_WARNING: The introduction anchors the topic but lacks a clear 'Intent Signal' (e.g., buying, searching, or exploring).")
+
+                # 3. Geographic Context Sentinel
+                brief = section.get("brief", "").lower()
+                sub_area_match = re.search(r'\b(التجمع|بيت الوطن|النرجس|الياسمين)\b', brief + " " + heading_text.lower())
+                if sub_area_match and area:
+                    sub_area = sub_area_match.group(1)
+                    geo_check = self._check_geographic_drift(content, main_area=area, sub_area=sub_area)
+                    if geo_check.get("fail"):
+                        errors.append(f"INTRO_GEO_SCOPE_DRIFT: {geo_check['message']}")
+                
+                # 4. Intro Tone Profile Sentinel (v2.3)
+                tone_profile = self._check_intro_tone_profile(content)
+                if tone_profile.get("fail"):
+                    errors.append(tone_profile["message"])
+
+        # ===================================================
+        # LAYER A: GLOBAL CLARITY ENFORCEMENT (ALL sections)
+        # Applies to: introduction, body, faq, conclusion
+        # ===================================================
+        # 4. Tone Intensity Enforcement
+        effective_intent = section_intent if not is_conclusion else "commercial"
+        threshold = self.TONE_THRESHOLDS.get(effective_intent, 5.0)
+        intensity_score = self._calculate_tone_intensity(content)
+        if intensity_score > threshold:
+            errors.append(f"TONE_INFLATION_HIGH: Section tone is overly sales-driven (Intensity {intensity_score} > Threshold {threshold}). Transition to a more helpful, expert-neighbor tone.")
+
+        # 5. PLAIN_LANGUAGE_REQUIRED - Global Rule (v3.0)
+        # Audits ALL sections for jargon density, cognitive difficulty, and corporate-speak.
+        # This is NOT an intro-only rule. It applies to every section without exception.
+        plain_lang_results = self._check_plain_language_compliance(content)
+        if plain_lang_results.get("fail"):
+            errors.append(f"PLAIN_LANGUAGE_REQUIRED: {plain_lang_results['message']}")
+
+        # 3. Heading Relevance (For H2 sections assigned with PK) — independent of plain language
+        heading_lvl = (section.get("heading_level") or "").upper()
+        if heading_lvl == "H2" and requires_pk:
+            heading_lower_check = heading_text.lower()
+            has_pk_in_heading = re.search(exact_pattern, heading_lower_check)
+            if not has_pk_in_heading:
                 kw_comp = [w.lower() for w in re.findall(r'\b\w+\b', primary_kw) if len(w) > 2]
-                found_comp = [w for w in kw_comp if w in content_lower]
-                if len(found_comp) / max(len(kw_comp), 1) < 0.4:
-                    # Only error if even the topic relevance is weak 
-                    errors.append(f"TOPIC_RELEVANCE_VIOLATION: Priority section '{heading_text}' lacks clear topic relevance to '{primary_kw}'.")
+                found_comp = [w for w in kw_comp if w in heading_lower_check]
+                if len(found_comp) / max(len(kw_comp), 1) < 0.5:
+                    logger.warning(f"Heading relevance low for '{heading_text}'.")
+
+        # 4. TOPIC_RELEVANCE_VIOLATION — NARROWED (v4.0.3)
+        # Only fires when explicitly required by outline metadata OR for the introduction.
+        # Does NOT accidentally enforce PK restatement on regular body sections.
+        subtopic_alignment_required = section.get("requires_subtopic_alignment", False) or (
+            requires_pk and is_introduction
+        )
+        if subtopic_alignment_required and requires_pk and exact_count == 0:
+            kw_comp = [w.lower() for w in re.findall(r'\b\w+\b', primary_kw) if len(w) > 2]
+            found_comp = [w for w in kw_comp if w in content_lower]
+            coverage_ratio = len(found_comp) / max(len(kw_comp), 1)
+            if coverage_ratio < 0.4:
+                errors.append(
+                    f"TOPIC_RELEVANCE_VIOLATION: Section '{heading_text}' is explicitly required "
+                    f"to cover the subtopic '{primary_kw}' but lacks sufficient topic signals "
+                    f"(coverage {coverage_ratio:.0%}). Ensure the section content clearly addresses this subtopic."
+                )
+
+        # ===================================================
+        # LAYER B: INTRODUCTION-ONLY HOOK RULES
+        # Applies to: section_type == "introduction" ONLY
+        # Do NOT apply these to body, faq, or conclusion.
+        # ===================================================
+        if is_introduction and paragraphs:
+            first_para = paragraphs[0]
+            sentences = self.extract_sentences(first_para)
+            first_sentence = sentences[0] if sentences else first_para
+
+            # INTRO_HOOK_QUALITY_REQUIRED
+            # Rejects three categories of bad openers:
+            # 1. Flat/meta openers — "In this article we will..."
+            # 2. Abstract openers — vague financial/investment framing with no human anchor
+            # 3. Generic prestige openers — could apply to any article on any topic
+            FLAT_OPENER_PATTERNS = [
+                # Meta/self-referential patterns
+                r'^في هذا (المقال|المحتوى|الدليل)',
+                r'^(سنتحدث|سنتناول|سنشرح|سنستعرض) في هذا',
+                r'^(هذا المقال|هذه المقالة)',
+                r'^in this (article|guide|post|piece)',
+                r'^this article (will|is about|covers|discusses)',
+                r'^welcome to',
+                r'^أهلاً وسهلاً',
+                # Abstract prestige-heavy patterns (no real reader concern)
+                r'^(الاستثمار العقاري|الاستثمار|التموضع|الريادة|سلطنة|المنظومة) (يعد|يُعد|يمثل|هو) (الخيار|الملاذ|الدرع|القاعدة)',
+                r'^(يعد|تعد|يُعد|يمثل) (التموضع|الاستثمار|العقار|السوق|البروتوكول)',
+                r'^(في ظل|في خضم) (تقلبات|التحولات|المنظومة الاستثنائية)',
+                r'^(الأصول|الاستثمارات|البرامج) (العقارية|الآمنة|الاستراتيجية) (تظل|تبقى|هي)',
+                # Generic prestige openers that fit any article
+                r'^(يحلم|يسعى|يبحث) (الكثيرون|كثير) (عن|من) (امتلاك|الحصول)',
+                r'^(اختيار|انتقاء) (المنزل|السكن|العقار) (المثالي|الصحيح|المناسب) (قرار|يُعد)',
+            ]
+            is_bad_opener = any(re.search(p, first_sentence, re.IGNORECASE) for p in FLAT_OPENER_PATTERNS)
+            if is_bad_opener:
+                errors.append(
+                    f"INTRO_HOOK_QUALITY_REQUIRED: The opening line of '{heading_text}' is flat, generic, "
+                    f"or abstract (investment-heavy). Replace it with a hook anchored to "
+                    f"a specific, concrete reader concern or market reality."
+                )
+
+            # INTRO_HOOK_CLARITY_REQUIRED
+            # Multi-signal clarity scoring (NOT word count alone).
+            # A long but clear sentence passes. A short but abstract sentence fails.
+            first_sentence_words = len(re.findall(r'\S+', first_sentence))
+
+            # Signal 1: Sentence length (contributes to score but doesn't decide alone)
+            length_score = 1 if first_sentence_words > 40 else (0.5 if first_sentence_words > 30 else 0)
+
+            # Signal 2: Abstraction level — detect noun-heavy, process-free phrasing
+            ABSTRACT_MARKERS = [
+                r'\b(منظومة|منظومه|إطار|آلية|آليه|مسيرة|مسار|ركيزة|ركيزه|محور|منظور|توجه|استراتيجية|استراتيجيه|تموضع|ريادة|رياده|سلطنة|سلطنه)\b',
+                r'\b(framework|paradigm|ecosystem|synergy|leverage|holistic|matrix|positioning|strategic|leadership)\b',
+                r'\b(trajectory|momentum|landscape|dynamics|fundamentals|executive|elite|premium)\b',
+            ]
+            abstraction_hits = sum(1 for p in ABSTRACT_MARKERS if re.search(p, first_sentence, re.IGNORECASE))
+            abstraction_score = min(abstraction_hits, 2)  # cap at 2
+
+            # Signal 3: Directness — does the sentence directly address a reader action or situation?
+            DIRECTNESS_ANCHORS = [
+                r'\b(تبحث|تريد|تحتاج|تفكر|تخطط|هل)\b',
+                r'\b(looking for|searching for|want to|need to|thinking about|planning)\b',
+            ]
+            has_directness = any(re.search(p, first_sentence, re.IGNORECASE) for p in DIRECTNESS_ANCHORS)
+            directness_score = 0 if has_directness else 0.5  # penalty for lacking directness
+
+            # Combined clarity score: higher = more unclear
+            clarity_score = length_score + abstraction_score + directness_score
+            if clarity_score >= 2.0:
+                errors.append(
+                    f"INTRO_HOOK_CLARITY_REQUIRED: The opening sentence in '{heading_text}' is unclear "
+                    f"(clarity issue score: {clarity_score:.1f}/4). It may be too long ({first_sentence_words} words), "
+                    f"too abstract, or too indirect. Rewrite it to be immediately understandable "
+                    f"on first reading — direct, concrete, and human."
+                )
 
         # Link Verification
         found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
@@ -448,6 +1342,68 @@ class ValidationService:
             if link_domain == internal_domain: continue
             if not await self._verify_external_link(link):
                 errors.append(f"Broken external link: {link}")
+
+        # --- Price analysis and payment-systems specific checks ---
+        # --- Domain-Agnostic Metric & Formatting Checks ---
+        heading_lower = heading_text.lower()
+        
+        # 1) Numeric Metric Enforcement (Price, Cost, Specs, Stats)
+        # If the heading promises a quantifiable metric, we MUST find numbers in the content.
+        try:
+            metric_triggers = [
+                "سعر", "price", "تكلفة", "cost", "قيمة", "value", 
+                "راتب", "salary", "أجر", "wage", "رسوم", "fees",
+                "مساحة", "area", "حجم", "size", "نسبة", "percentage",
+                "عائد", "roi", "stats", "إحصائيات", "أرقام", "numbers",
+                "نتيجة", "scores", "results", "points", "standing", "ranking"
+            ]
+            if any(kw in heading_lower for kw in metric_triggers):
+                # Broad numeric check: Digit followed by some text (currency, unit, or % etc.)
+                # Supports Arabic and English numbers/punctuation
+                generic_numeric_pattern = re.compile(r"(\d[\d,\.\s]*)\s*[%/ \w\u0600-\u06FF]*", re.UNICODE)
+                if not generic_numeric_pattern.search(content):
+                    errors.append(f"METRIC_DATA_MISSING: Heading '{heading_text}' promises data/metrics, but the section contains no numeric values. Provide realistic estimates or ranges.")
+        except re.error:
+            pass
+
+        # 2) Structural/Procedural Enforcement (Plans, Steps, Systems)
+        # If the heading promises a system or a plan, it MUST use a visual format (Table or List).
+        try:
+            procedural_triggers = [
+                "سداد", "payment", "خطة", "plan", "نظام", "system", 
+                "خطوات", "steps", "طريقة", "method", "عملية", "process",
+                "أنظمة", "schedules", "installment", "تقسيط",
+                "جدول", "schedule", "ترتيب", "standing", "points"
+            ]
+            if any(k in heading_lower for k in procedural_triggers) or any(k in (section.get("section_type") or "").lower() for k in ["payment", "process", "workflow", "plans"]):
+                # Require either a table or a list for procedural clarity
+                has_table = bool(re.search(r"^\s*\|.+\n\s*\|[-: \t]+\n", content, re.MULTILINE))
+                has_list = bool(re.search(r"^\s*[-*•]\s|^\s*\d+\.\s", content, re.MULTILINE))
+                
+                if not (has_table or has_list):
+                    errors.append(f"VISUAL_FORMAT_MISSING: Heading '{heading_text}' implies a process or system. Use a Markdown Table or Bulleted List for clarity.")
+
+                # 3) Specific Entity Bias Check (Dynamic)
+                # If the article is general (not scoped to a brand), it shouldn't over-focus on one specific project/competitor.
+                # We check for proper nouns (capitalized in EN) or specific phrases that appear too frequently.
+                state_obj = kwargs.get("state") if isinstance(kwargs.get("state"), dict) else {}
+                article_brand_name = (state_obj.get("brand_name") or "").lower()
+                is_scoped = bool(state_obj.get("brand_url") or article_brand_name or str(state_obj.get("content_type", "")).lower() == "brand_commercial")
+                
+                if not is_scoped:
+                    # Look for specific keywords that might indicate a limited focus (e.g., project-specific marketing)
+                    known_bias_points = []
+                    for bias in known_bias_points:
+                        if bias in content.lower():
+                            errors.append(f"POTENTIAL_BIAS: Section mentions specific entity '{bias}'. Ensure content remains general for the entire area/city.")
+        except re.error:
+            pass
+
+        # 6. Structural Integrity Sentinel (v4.0.1)
+        # Choose the ideal target format from section metadata, defaulting to 'compact_narrative'
+        target_format = section.get("visual_format", "compact_narrative")
+        structural_errors = self._check_structural_integrity(content, target_format, heading_text)
+        errors.extend(structural_errors)
 
         return len(errors) == 0, errors
 
@@ -631,6 +1587,10 @@ class ValidationService:
             if "comparison" in cluster_lower:
                 intent_stats["comparison"] = intent_stats["comparison"] or bool(
                     re.search(r'\b(compare|vs|versus|comparison|مقارنة|مقابل)\b', content_lower)
+                )
+            if "metrics" in cluster_lower:
+                intent_stats["metrics"] = intent_stats["metrics"] or bool(
+                    re.search(r'\b(result|score|standing|stats|numbers|إحصائيات|أرقام|نتيجة)\b', content_lower)
                 )
 
         return {
@@ -861,6 +1821,284 @@ class ValidationService:
     def enforce_cta_budget(self, outline: List[Dict[str, Any]], article_size: str) -> List[Dict[str, Any]]:
         """Legacy placeholder: Article-level CTA budget is now handled by ValidationService.validate_article_cta_budget."""
         return outline
+
+    def validate_heading_outline_quality(
+        self,
+        outline: List[Dict[str, Any]],
+        content_type: str = "",
+        area: str = "",
+        primary_keyword: str = "",
+        brand_name: str = "",
+        content_strategy: Optional[Dict[str, Any]] = None,
+        seo_intelligence: Optional[Dict[str, Any]] = None,
+    ) -> List[str]:
+        errors = []
+
+        if not outline:
+            return ["HEADING_OUTLINE_EMPTY: No outline sections were returned."]
+
+        intro_positions = []
+        faq_positions = []
+        conclusion_positions = []
+        normalized_h2 = set()
+
+        visible_h2_sections = [
+            section for section in outline
+            if (section.get("heading_level") or "").upper() == "H2"
+            and (section.get("section_type") or "").lower() != "introduction"
+        ]
+        core_h2_sections = [
+            section for section in outline
+            if (section.get("heading_level") or "").upper() == "H2"
+            and (section.get("section_type") or "").lower() not in {"introduction", "faq", "conclusion"}
+        ]
+        keyword_profile = self._derive_keyword_profile(primary_keyword, area)
+        support_blob = self._build_outline_support_blob(
+            primary_keyword=primary_keyword,
+            content_strategy=content_strategy,
+            seo_intelligence=seo_intelligence,
+        )
+
+        if len(visible_h2_sections) < 4:
+            errors.append(
+                f"HEADING_OUTLINE_TOO_THIN: Only {len(visible_h2_sections)} visible H2 sections found. Generate at least 4 reader-facing H2 sections."
+            )
+
+        if primary_keyword and core_h2_sections:
+            first_core_h2 = core_h2_sections[0].get("heading_text", "")
+            if not self._heading_contains_keyword_anchor(first_core_h2, keyword_profile):
+                errors.append(
+                    f"PRIMARY_KEYWORD_ANCHOR_MISSING: The first visible core H2 '{first_core_h2}' must contain the full primary keyword or its closest natural full-intent form."
+                )
+
+            normalized_primary_keyword = keyword_profile.get("normalized_keyword", "")
+            exact_pk_repeats = sum(
+                1 for section in core_h2_sections
+                if normalized_primary_keyword and normalized_primary_keyword in self._normalize_heading_label(section.get("heading_text", ""))
+            )
+            if exact_pk_repeats > 2:
+                errors.append(
+                    f"PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in {exact_pk_repeats} core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere."
+                )
+
+        for idx, section in enumerate(outline):
+            heading_text = (section.get("heading_text") or "").strip()
+            heading_level = (section.get("heading_level") or "").upper()
+            section_type = (section.get("section_type") or "").lower()
+            subheadings = section.get("subheadings", [])
+
+            if section_type == "introduction":
+                intro_positions.append(idx)
+                if heading_level in {"H2", "H3"}:
+                    errors.append(
+                        "INTRO_HEADING_FORBIDDEN: The introduction must be an unheaded opening block, not an H2 or H3 heading."
+                    )
+                elif heading_level and heading_level not in {"INTRO", "OPENING", "NONE"}:
+                    errors.append(
+                        f"INVALID_HEADING_LEVEL: Introduction section '{heading_text or f'Section {idx + 1}'}' must use INTRO-style metadata, not '{heading_level}'."
+                    )
+            elif section_type == "faq":
+                faq_positions.append(idx)
+            elif section_type == "conclusion":
+                conclusion_positions.append(idx)
+            elif heading_level not in {"H2", "H3"}:
+                errors.append(
+                    f"INVALID_HEADING_LEVEL: Section '{heading_text or f'Section {idx + 1}'}' must use H2 or H3."
+                )
+
+            if not heading_text:
+                errors.append(f"EMPTY_HEADING_TEXT: Section {idx + 1} is missing heading_text.")
+
+            if section_type != "introduction":
+                normalized_text = self._normalize_heading_label(heading_text)
+                word_count = len(re.findall(r"\b\w+\b", heading_text, re.UNICODE))
+
+                if self._is_generic_visible_heading(heading_text):
+                    errors.append(
+                        f"GENERIC_HEADING_LABEL: '{heading_text}' is too generic. Use a specific reader-facing promise instead."
+                    )
+
+                if word_count < 2:
+                    errors.append(
+                        f"HEADING_TOO_SHORT: '{heading_text}' is too short to communicate a clear section promise."
+                    )
+
+                if word_count > 14:
+                    errors.append(
+                        f"HEADING_TOO_LONG: '{heading_text}' is too long. Tighten it into a scannable heading."
+                    )
+
+                if heading_level == "H2":
+                    if normalized_text in normalized_h2:
+                        errors.append(
+                            f"DUPLICATE_H2_HEADING: '{heading_text}' repeats an existing H2 angle."
+                        )
+                    normalized_h2.add(normalized_text)
+                    stage = self._commercial_flow_stage(section)
+
+                    if section_type not in {"introduction", "faq", "conclusion"}:
+                        if primary_keyword and not self._heading_preserves_entity_focus(heading_text, keyword_profile):
+                            errors.append(
+                                f"HEAD_ENTITY_SCOPE_DRIFT: Heading '{heading_text}' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s."
+                            )
+
+                        unsupported_optional_topics = [
+                            topic for topic in self._detect_optional_section_topics(heading_text)
+                            if not self._optional_topic_is_justified(topic, support_blob)
+                        ]
+                        if stage == "comparison":
+                            unsupported_optional_topics = [
+                                topic for topic in unsupported_optional_topics
+                                if topic != "financing_payment"
+                            ]
+                        if unsupported_optional_topics:
+                            errors.append(
+                                f"OPTIONAL_SECTION_NOT_JUSTIFIED: '{heading_text}' introduces {', '.join(unsupported_optional_topics)} without clear support from the keyword, SERP/PAA, or strategy."
+                            )
+
+                        if brand_name and self._brand_appears_in_heading(heading_text, brand_name) and not self._brand_heading_allowed(section_type):
+                            errors.append(
+                                f"BRAND_HEADING_LEAKAGE: Heading '{heading_text}' should not contain brand framing in this section."
+                            )
+
+                        detected_topics = self._detect_optional_section_topics(heading_text)
+
+                        if stage == "features" and detected_topics.intersection({"investment", "financing_payment", "legal"}):
+                            errors.append(
+                                f"FEATURES_SECTION_DRIFT: '{heading_text}' reads like financing, legal, or investment framing. Keep features focused on the apartment itself."
+                            )
+
+                        if stage == "proof" and "investment" in detected_topics:
+                            errors.append(
+                                f"PROOF_SECTION_DRIFT: '{heading_text}' shifts into investment framing. Keep proof focused on apartment prices, demand, or buyer-facing market validation."
+                            )
+
+                        if stage in {"proof", "pricing", "comparison"} and self._contains_any_signal(heading_text, self.PRICE_HEADING_SIGNALS) and not self._heading_preserves_entity_focus(heading_text, keyword_profile):
+                            errors.append(
+                                f"PRICE_SCOPE_DRIFT: '{heading_text}' mentions pricing without staying anchored to the product entity '{keyword_profile.get('head_entity')}' in the primary keyword. In this section, the entity MUST be explicit."
+                            )
+                        elif self._contains_any_signal(heading_text, self.PRICE_HEADING_SIGNALS) and not self._heading_preserves_entity_focus(heading_text, keyword_profile):
+                            # Soft warning for other sections
+                            logger.warning(f"PRICE_SCOPE_DRIFT_WARNING: '{heading_text}' lacks entity anchoring, but it's in a non-core section.")
+
+                        if stage == "process" and "legal" in detected_topics and not self._optional_topic_is_justified("legal", support_blob):
+                            errors.append(
+                                f"PROCESS_SECTION_DRIFT: '{heading_text}' introduces legal validation even though the heading flow should stay focused on the buying journey."
+                            )
+
+                        if stage == "comparison" and not self._comparison_section_has_decision_angle(heading_text, subheadings):
+                            errors.append(
+                                f"COMPARISON_SECTION_WEAK: '{heading_text}' should frame a real decision comparison such as ready vs under-construction, area differences, or payment differences."
+                            )
+
+                    if section_type == "faq" and brand_name and self._brand_appears_in_heading(heading_text, brand_name):
+                        errors.append(
+                            f"BRAND_HEADING_LEAKAGE: FAQ heading '{heading_text}' should not contain brand framing."
+                        )
+
+            if not isinstance(subheadings, list):
+                errors.append(
+                    f"INVALID_SUBHEADINGS: Section '{heading_text or f'Section {idx + 1}'}' must return subheadings as a list."
+                )
+                continue
+
+            if section_type == "introduction" and subheadings:
+                errors.append("INTRO_SUBHEADINGS_FORBIDDEN: The introduction opening block must not have H3 subheadings.")
+
+            normalized_subs = set()
+            parent_normalized = self._normalize_heading_label(heading_text)
+            for subheading in subheadings:
+                subheading_text = str(subheading).strip()
+                normalized_sub = self._normalize_heading_label(subheading_text)
+                sub_word_count = len(re.findall(r"\b\w+\b", subheading_text, re.UNICODE))
+
+                if not subheading_text:
+                    errors.append(
+                        f"EMPTY_SUBHEADING: Section '{heading_text}' contains an empty H3 string."
+                    )
+                    continue
+
+                if self._is_generic_visible_heading(subheading_text):
+                    errors.append(
+                        f"GENERIC_SUBHEADING_LABEL: '{subheading_text}' is too generic. Make the H3 specific."
+                    )
+
+                if sub_word_count < 2:
+                    errors.append(
+                        f"SUBHEADING_TOO_SHORT: '{subheading_text}' is too short to be useful."
+                    )
+
+                if normalized_sub == parent_normalized:
+                    errors.append(
+                        f"SUBHEADING_DUPLICATES_PARENT: '{subheading_text}' repeats its parent H2 '{heading_text}'."
+                    )
+
+                if normalized_sub in normalized_subs:
+                    errors.append(
+                        f"DUPLICATE_SUBHEADING: '{subheading_text}' is repeated inside '{heading_text}'."
+                    )
+                normalized_subs.add(normalized_sub)
+
+                unsupported_child_topics = [
+                    topic for topic in self._detect_optional_section_topics(subheading_text)
+                    if not self._optional_topic_is_justified(topic, support_blob)
+                ]
+                if self._commercial_flow_stage(section) == "comparison":
+                    unsupported_child_topics = [
+                        topic for topic in unsupported_child_topics
+                        if topic != "financing_payment"
+                    ]
+                if unsupported_child_topics:
+                    errors.append(
+                        f"OPTIONAL_SUBHEADING_NOT_JUSTIFIED: '{subheading_text}' introduces {', '.join(unsupported_child_topics)} without clear support from the keyword, SERP/PAA, or strategy."
+                    )
+
+                if brand_name and self._brand_appears_in_heading(subheading_text, brand_name) and not self._brand_heading_allowed(section_type):
+                    errors.append(
+                        f"BRAND_SUBHEADING_LEAKAGE: Subheading '{subheading_text}' should not contain brand framing in '{heading_text}'."
+                    )
+
+                if not self._h3_supports_parent(heading_text, subheading_text, keyword_profile):
+                    errors.append(
+                        f"H3_PARENT_INTENT_MISMATCH: Subheading '{subheading_text}' does not clearly support the parent H2 '{heading_text}'."
+                    )
+
+        if len(intro_positions) != 1:
+            errors.append(
+                f"INTRO_SECTION_COUNT_INVALID: Expected exactly 1 introduction section, found {len(intro_positions)}."
+            )
+        elif intro_positions[0] != 0:
+            errors.append("INTRO_SECTION_ORDER_INVALID: The introduction section must be the first outline item.")
+
+        if len(faq_positions) > 1:
+            errors.append(f"FAQ_SECTION_COUNT_INVALID: Expected at most 1 FAQ section, found {len(faq_positions)}.")
+        elif faq_positions and faq_positions[0] < max(1, len(outline) - 3):
+            errors.append("FAQ_SECTION_ORDER_INVALID: The FAQ section should appear near the end of the outline.")
+
+        if len(conclusion_positions) > 1:
+            errors.append(
+                f"CONCLUSION_SECTION_COUNT_INVALID: Expected at most 1 conclusion section, found {len(conclusion_positions)}."
+            )
+        elif conclusion_positions and conclusion_positions[-1] != len(outline) - 1:
+            errors.append("CONCLUSION_SECTION_ORDER_INVALID: The conclusion section must be the last outline item.")
+
+        if (content_type or "").lower() == "brand_commercial":
+            errors.extend(self._validate_commercial_heading_flow(outline, brand_name=brand_name))
+
+        if area:
+            area_norm = self._normalize_heading_label(area)
+            early_h2_sections = visible_h2_sections[: min(3, len(visible_h2_sections))]
+            if area_norm and early_h2_sections:
+                has_area_early = any(
+                    area_norm in self._normalize_heading_label(section.get("heading_text", ""))
+                    for section in early_h2_sections
+                )
+                if not has_area_early:
+                    errors.append(
+                        f"LOCAL_SEO_HEADING_MISSING: Add the area '{area}' naturally into one of the first visible H2 headings."
+                    )
+
+        return errors
 
     def validate_outline_quality(self, outline: List[Dict[str, Any]], content_type: str = "") -> List[str]:
         errors = []

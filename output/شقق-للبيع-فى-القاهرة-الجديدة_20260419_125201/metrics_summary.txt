@@ -1,0 +1,180 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 36.78 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 50.38 seconds
+  -- Tokens Used: 36,582
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 50.72 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 19.97 seconds
+  -- Tokens Used: 8,549
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 22.30 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.84 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.70 seconds
+  -- Tokens Used: 1,203
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 1,203
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 37.45 seconds
+  -- Tokens Used: 14,643
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 37.48 seconds
+  -- Tokens Used: 14,643
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 314.38 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: SECTION_1_لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟
+  -- Duration: 12.73 seconds
+  -- Tokens Used: 22,966
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_خريطة سوق شقق القاهرة الجديدة 2026: الأحياء وأنواع الوحدات المتاحة
+  -- Duration: 28.73 seconds
+  -- Tokens Used: 25,120
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خريطة سوق شقق القاهرة الجديدة 2026: الأحياء وأنواع الوحدات المتاحة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_مواصفات الوحدات المتاحة: المساحات والتشطيبات وخيارات الأرضي بحديقة
+  -- Duration: 28.88 seconds
+  -- Tokens Used: 26,080
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مواصفات الوحدات المتاحة: المساحات والتشطيبات وخيارات الأرضي بحديقة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_ما يميز عقار يا مصر عن مواقع إعلانات الشقق التقليدية
+  -- Duration: 24.94 seconds
+  -- Tokens Used: 25,735
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ما يميز عقار يا مصر عن مواقع إعلانات الشقق التقليدية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_العوامل الحقيقية التي تحدد سعر شقتك في القاهرة الجديدة
+  -- Duration: 26.43 seconds
+  -- Tokens Used: 25,365
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: العوامل الحقيقية التي تحدد سعر شقتك في القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_مقارنة الأحياء: التجمع الأول مقابل الخامس مقابل بيت الوطن
+  -- Duration: 24.77 seconds
+  -- Tokens Used: 25,377
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة الأحياء: التجمع الأول مقابل الخامس مقابل بيت الوطن
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_طرق الدفع وخيارات التسليم: كاش، تقسيط، أم تسليم فوري؟
+  -- Duration: 21.02 seconds
+  -- Tokens Used: 24,712
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: طرق الدفع وخيارات التسليم: كاش، تقسيط، أم تسليم فوري؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_8_خطوات البحث والحجز عبر عقار يا مصر في 6 خطوات
+  -- Duration: 22.16 seconds
+  -- Tokens Used: 24,692
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات البحث والحجز عبر عقار يا مصر في 6 خطوات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_أسئلة يطرحها كل مشترٍ قبل التعاقد في القاهرة الجديدة
+  -- Duration: 19.75 seconds
+  -- Tokens Used: 25,250
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة يطرحها كل مشترٍ قبل التعاقد في القاهرة الجديدة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_10_خطوتك التالية لحجز شقتك المناسبة في 2026
+  -- Duration: 18.01 seconds
+  -- Tokens Used: 23,985
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوتك التالية لحجز شقتك المناسبة في 2026
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_1_لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟
+  -- Duration: 18.82 seconds
+  -- Tokens Used: 27,011
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تحتار قبل شراء شقتك في التجمع الخامس أو الأول؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 248.11 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: HUMANIZER
+  -- Duration: 189.62 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.02 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.03 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.48 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 4.61 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: FINAL_HUMANIZER
+  -- Duration: 84.66 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 18.03 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.10 seconds
+  -- Tokens Used: 86,019
+--------------------------------------------------

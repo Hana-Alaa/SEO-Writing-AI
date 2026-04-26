@@ -13,7 +13,7 @@ Context:
 
 
 Your Task:
-Act as an AI Visual Director. Your goal is to plan the visual assets for this article.
+Act as a Visual Clarity & Perspective Advisor. Your goal is to plan the visual assets for this article for a zero-knowledge reader.
 You must generate a list of **{{ (num_images | default(0)) }} high-quality image prompts** that will be used to generate images for this article.
 
 
@@ -53,7 +53,7 @@ Rules:
      - Expressly forbid "complex calligraphy" or "long sentences" as they are most likely to fail.
      - If the text looks distorted in previous attempts or the context is abstract, fallback to visual metaphors without text.
    - **NO GARBLED TEXT**: Always include "no garbled or distorted text" in the negative prompt portion of your instructions.
-10. **Aesthetic Consistency**: All images must follow an 'Executive Modern' style - use premium materials (brushed metal, frosted glass, smooth concrete) and soft, professional color palettes derived from the brand style.
+10. **Aesthetic Consistency**: All images must follow a 'Clean Modern Helpful' style - use premium materials (brushed metal, frosted glass, smooth concrete) and soft, professional color palettes derived from the brand style.
 
 Output Format:
 Return strictly a JSON array of objects. No markdown.

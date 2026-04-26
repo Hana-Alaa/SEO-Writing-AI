@@ -1,8 +1,6 @@
 {% include '01_outline_generator_base.txt' %}
 
---------------------------------------------------------------------------------
 COMMERCIAL SUBTYPE (THE CONVERSION ENGINE)
---------------------------------------------------------------------------------
 1. THE COMMERCIAL SOUL (DECISION PRESSURE)
    - **YOUR ROLE**: High-Stakes Conversion Strategist. Move reader from "Comparing" to "Choosing".
    - **70/30 MANDATE**: 70% Commercial intent (Value/ROI/Superiority). 30% Informational (Context).
