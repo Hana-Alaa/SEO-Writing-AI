@@ -106,12 +106,21 @@ class ValidationService:
     COMPARISON_HEADING_SIGNALS: ClassVar[tuple[str, ...]] = (
         "compare", "comparison", "vs", "versus", "difference", "differences", "options",
         "ready", "under construction", "district", "districts", "area", "areas", "payment", "payments", "installment", "installments",
-        "مقارنة", "الفرق", "فروق", "جاهز", "تحت الانشاء", "تحت الإنشاء", "مناطق", "منطقة", "موقع", "مواقع", "تقسيط", "اقساط", "أقساط", "سداد",
+        "compound", "compounds", "gated community", "standalone", "standalone building", "standalone buildings", "independent building", "independent buildings",
+        "مقارنة", "الفرق", "فروق", "جاهز", "تحت الانشاء", "تحت الإنشاء", "مناطق", "منطقة", "موقع", "مواقع", "تقسيط", "اقساط", "أقساط", "سداد", "شهري", "سنوي", "يومي",
+        "كمبوند", "كمبوندات", "داخل كمبوند", "خارج كمبوند", "عمارات مستقلة", "عمارة مستقلة",
     )
 
     PRICE_HEADING_SIGNALS: ClassVar[tuple[str, ...]] = (
         "price", "prices", "pricing", "cost", "meter", "payment", "installment",
         "سعر", "اسعار", "أسعار", "تكلفة", "متر", "تقسيط", "اقساط", "أقساط",
+    )
+
+    PRICE_FACTOR_SUPPORT_SIGNALS: ClassVar[tuple[str, ...]] = (
+        "factor", "factors", "impact", "affect", "affects", "influence", "difference", "differences", "driver", "drivers",
+        "location", "proximity", "finish", "finishing", "condition", "district", "road", "roads", "axis", "axes", "meter", "size",
+        "عامل", "العوامل", "مؤثر", "مؤثرة", "تاثير", "تأثير", "فرق", "فروق", "اختلاف", "اختلافات",
+        "موقع", "الموقع", "قرب", "القرب", "تشطيب", "التشطيب", "مساحة", "مساحات", "محور", "محاور", "التسعين",
     )
 
     def __init__(self, ai_client=None, semantic_model=None):
@@ -380,6 +389,14 @@ class ValidationService:
             for pattern in self.GENERIC_VISIBLE_HEADING_PATTERNS
         )
 
+    def _is_valid_faq_question(self, text: str) -> bool:
+        normalized = self._normalize_heading_label(text)
+        if not normalized:
+            return False
+        first_word = normalized.split()[0]
+        valid_starters = {"ما", "كيف", "هل", "كم", "لماذا", "متى", "اين", "أين", "ماذا", "بكم", "لمين", "من"}
+        return first_word in valid_starters
+
     def _tokenize_search_phrase(self, text: str) -> List[str]:
         normalized = self._normalize_heading_label(text)
         if not normalized:
@@ -401,6 +418,20 @@ class ValidationService:
         if token.endswith("s") and len(token) > 3:
             variants.add(token[:-1])
 
+        arab_pairs = {
+            "شقق": "شقه", "شقه": "شقق", "شقة": "شقق",
+            "فلل": "فيلا", "فيلا": "فلل",
+            "عيادات": "عياده", "عياده": "عيادات", "عيادة": "عيادات",
+            "سيارات": "سياره", "سياره": "سيارات", "سيارة": "سيارات",
+            "مكاتب": "مكتب", "مكتب": "مكاتب",
+            "محلات": "محل", "محل": "محلات",
+        }
+        
+        bases = list(variants)
+        for base in bases:
+            if base in arab_pairs:
+                variants.add(arab_pairs[base])
+
         return {variant for variant in variants if variant}
 
     def _expanded_token_set(self, text: str) -> set[str]:
@@ -421,7 +452,26 @@ class ValidationService:
         if not head_entity and keyword_tokens:
             head_entity = keyword_tokens[0]
 
-        location_tokens = [token for token in area_tokens if token in keyword_tokens] if area_tokens else []
+        # Robust Location Extraction
+        location_tokens = []
+        if area_tokens:
+            location_tokens = [token for token in area_tokens if token in keyword_tokens]
+        
+        if not location_tokens:
+            # Fallback heuristic: Try to find location in the primary keyword
+            # Usually after 'في' or just the last token if we have 3+ tokens
+            norm_pk = self._normalize_heading_label(primary_keyword)
+            words = norm_pk.split()
+            if "في" in words:
+                idx = words.index("في")
+                if idx + 1 < len(words):
+                    location_tokens = [words[idx + 1]]
+            elif len(keyword_tokens) >= 3:
+                last_token = keyword_tokens[-1]
+                if last_token != head_entity and last_token not in self.ENTITY_SKIP_TOKENS:
+                    location_tokens = [last_token]
+        
+        # Intent is what's left after entity and location are removed
         intent_tokens = [
             token for token in keyword_tokens
             if token != head_entity and token not in location_tokens
@@ -495,6 +545,20 @@ class ValidationService:
         text_tokens = self._expanded_token_set(text)
         return all(token in text_tokens for token in brand_tokens)
 
+    def _heading_contains_exact_brand_name(self, text: str, brand_name: str) -> bool:
+        normalized_brand = self._normalize_heading_label(brand_name)
+        normalized_text = self._normalize_heading_label(text)
+        
+        if bool(normalized_brand) and normalized_brand in normalized_text:
+            return True
+            
+        if len(brand_name) > 30:
+            substitutes = ["المنصه", "المنصة", "الموقع", "الخدمه", "الخدمة", "منصة", "موقع", "خدمة"]
+            if any(sub in normalized_text.split() for sub in substitutes):
+                return True
+                
+        return False
+
     def _brand_heading_allowed(self, section_type: str) -> bool:
         return (section_type or "").lower() in self.BRAND_ALLOWED_HEADING_SECTION_TYPES
 
@@ -549,6 +613,235 @@ class ValidationService:
         signals = self.OPTIONAL_SECTION_SIGNALS.get(topic, ())
         return any(self._normalize_heading_label(signal) in support_blob for signal in signals)
 
+    def prune_unsupported_optional_subheadings(
+        self,
+        outline: List[Dict[str, Any]],
+        primary_keyword: str = "",
+        content_strategy: Optional[Dict[str, Any]] = None,
+        seo_intelligence: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Deterministically removes optional-topic H3s that are not justified by the keyword,
+        SERP/PAA, or strategy. This is intentionally narrow and should never invent or rewrite
+        headings; it only prunes unsupported child prompts before validation/retry.
+        """
+        support_blob = self._build_outline_support_blob(
+            primary_keyword=primary_keyword,
+            content_strategy=content_strategy,
+            seo_intelligence=seo_intelligence,
+        )
+
+        cleaned_outline: List[Dict[str, Any]] = []
+        for section in outline:
+            cleaned_section = dict(section)
+            subheadings = cleaned_section.get("subheadings", [])
+            stage = self._commercial_flow_stage(cleaned_section)
+
+            if isinstance(subheadings, list) and subheadings:
+                cleaned_subheadings = []
+                for subheading in subheadings:
+                    subheading_text = str(subheading).strip()
+                    unsupported_child_topics = [
+                        topic for topic in self._detect_optional_section_topics(subheading_text)
+                        if not self._optional_topic_is_justified(topic, support_blob)
+                    ]
+                    if stage == "comparison":
+                        unsupported_child_topics = [
+                            topic for topic in unsupported_child_topics
+                            if topic != "financing_payment"
+                        ]
+
+                    if unsupported_child_topics:
+                        logger.warning(
+                            "[outline_repair] Pruned unsupported subheading '%s' (topics: %s).",
+                            subheading_text,
+                            ", ".join(unsupported_child_topics),
+                        )
+                        continue
+
+                    cleaned_subheadings.append(subheading)
+
+                cleaned_section["subheadings"] = cleaned_subheadings
+
+            cleaned_outline.append(cleaned_section)
+
+        return cleaned_outline
+
+    def _faq_question_is_supported(self, question: str, keyword_profile: Dict[str, Any], support_blob: str) -> bool:
+        question_tokens = self._expanded_token_set(question)
+        
+        # 1. Overlap with keyword intent or location
+        location_tokens = set(keyword_profile.get("location_tokens", []))
+        intent_tokens = set(keyword_profile.get("intent_tokens", []))
+        if question_tokens.intersection(location_tokens) or question_tokens.intersection(intent_tokens):
+            return True
+            
+        # 2. Overlap with head entity
+        head_entity = keyword_profile.get("head_entity", "")
+        head_variants = self._expand_token_variants(head_entity) if head_entity else set()
+        if head_variants.intersection(question_tokens):
+            return True
+            
+        # 3. Found in support blob (PAA, related searches)
+        normalized_q = self._normalize_heading_label(question)
+        # We check if any significant part of the question is in the support blob
+        # (simplified: just check if the normalized question or key tokens are there)
+        meaningful_tokens = [t for t in question_tokens if len(t) > 2]
+        if meaningful_tokens and sum(1 for t in meaningful_tokens if t in support_blob) >= max(1, len(meaningful_tokens) // 2):
+            return True
+            
+        # 4. Safe buyer-facing commercial signals (Always acceptable)
+        # Normalized: سعر, اسعار, مساحه, مساحات, تشطيب, احياء, مناطق, حجز, معاينه, استلام
+        safe_buyer_signals = ("سعر", "اسعار", "مساحه", "مساحات", "تشطيب", "احياء", "مناطق", "حجز", "معاينه", "استلام")
+        if any(signal in question_tokens for signal in safe_buyer_signals):
+            return True
+            
+        return False
+
+    def _subheading_is_too_granular(self, text: str, stage: str = "") -> bool:
+        normalized = self._normalize_heading_label(text)
+        
+        # 1. Banned granular detail signals (paragraph-level details)
+        granular_signals = (
+            "تشطيب", "تقسيم", "توزيع", "تهويه", "تهوية", "تكييف", "مواصفات", "تفاصيل", "داخليه", "داخلية", "جوده", "جودة", 
+            "finishing", "layout", "ventilation", "conditioning", "specs", "details", "internal", "quality"
+        )
+        
+        # 2. Section-Specific Rules
+        if stage == "features":
+            # Features section MUST focus on Unit Types / Categories
+            # Normalized Unit Types: استوديو, عائلي, عائليه, دوبلكس, حديقه, حديقة, جاهزه, جاهزة, شقق, فيلا, فلل, بنتهاوس, تاون هاوس
+            unit_types = ("استوديو", "عائلي", "عائليه", "دوبلكس", "حديقه", "حديقة", "جاهزه", "جاهزة", "شقق", "فيلا", "فلل", "بنتهاوس", "تاون هاوس")
+            if any(ut in normalized for ut in unit_types):
+                return False # Strong standalone bucket
+            
+            # If it's in features and not a unit type but contains granular signals, it's weak
+            if any(gs in normalized for gs in granular_signals):
+                return True
+
+        # 3. Global Grain Check
+        # If the H3 is purely a small spec/attribute (usually 1-3 words)
+        words = normalized.split()
+        if len(words) <= 3 and any(gs in normalized for gs in granular_signals):
+            return True
+            
+        return False
+
+    def repair_outline_deterministic(
+        self,
+        outline: List[Dict[str, Any]],
+        primary_keyword: str = "",
+        content_strategy: Optional[Dict[str, Any]] = None,
+        seo_intelligence: Optional[Dict[str, Any]] = None,
+        brand_name: str = "",
+        area: str = "",
+    ) -> List[Dict[str, Any]]:
+        """
+        Deterministically repairs validation issues:
+        1. Proof/Pricing Intent: Ensures pricing headings keep intent + location.
+        2. Brand Differentiation: Rewrites generic differentiation headings.
+        3. Keyword Stuffing: Rewrites excess PK headings in non-protected sections.
+        4. H3 Quality: Prunes multi-topic or granular subheadings.
+        5. FAQ Cleanup: Prunes non-questions/unsupported.
+        """
+        keyword_profile = self._derive_keyword_profile(primary_keyword, area=area)
+        normalized_pk = keyword_profile.get("normalized_keyword", "")
+        head_entity = keyword_profile.get("head_entity", "")
+        entity_phrase = keyword_profile.get("entity_phrase", "") or head_entity
+        intent_tokens = keyword_profile.get("intent_tokens", [])
+        location_tokens = keyword_profile.get("location_tokens", [])
+        
+        support_blob = self._build_outline_support_blob(
+            primary_keyword=primary_keyword,
+            content_strategy=content_strategy,
+            seo_intelligence=seo_intelligence,
+        )
+
+        pk_count = 0
+        cleaned_outline = []
+        protected_sections = {"introduction", "proof", "differentiation", "faq", "conclusion"}
+
+        for section in outline:
+            cleaned_section = dict(section)
+            heading_text = str(cleaned_section.get("heading_text", "")).strip()
+            heading_level = (cleaned_section.get("heading_level") or "").upper()
+            section_type = (cleaned_section.get("section_type") or "").lower()
+            stage = self._commercial_flow_stage(cleaned_section)
+
+            # 1. Proof/Pricing Repair (High Priority)
+            is_pricing = (section_type == "proof" or self._contains_any_signal(heading_text, self.PRICE_HEADING_SIGNALS))
+            if is_pricing and heading_level == "H2":
+                normalized_h = self._normalize_heading_label(heading_text)
+                has_intent = any(tok in normalized_h for tok in intent_tokens) if intent_tokens else True
+                has_loc = all(tok in normalized_h for tok in location_tokens) if location_tokens else True
+                
+                if not has_intent or not has_loc:
+                    entity_str = entity_phrase or head_entity or "العقار"
+                    intent_str = ""
+                    if intent_tokens and not any(tok in self._normalize_heading_label(entity_str) for tok in intent_tokens):
+                        intent_str = " ".join(intent_tokens)
+                    loc_str = f"في {' '.join(location_tokens)}" if location_tokens else ""
+                    new_text = f"متوسط أسعار {entity_str} {intent_str} {loc_str} حسب المنطقة وأهم العوامل المؤثرة".replace("  ", " ").strip()
+                    logger.warning(f"[outline_repair] Rebuilt weak pricing heading: '{heading_text}' -> '{new_text}'")
+                    cleaned_section["heading_text"] = new_text
+                    heading_text = new_text # Update for subsequent checks
+
+            # 2. Brand Differentiation Repair
+            if section_type == "differentiation" and heading_level == "H2":
+                effective_brand = brand_name if brand_name and len(brand_name) <= 30 else "المنصة"
+                has_brand = self._heading_contains_exact_brand_name(heading_text, brand_name)
+                has_intent = normalized_pk and normalized_pk in self._normalize_heading_label(heading_text)
+                
+                if not has_brand or not has_intent:
+                    anchor_topic = primary_keyword or entity_phrase or head_entity or "الخدمة"
+                    new_heading = f"لماذا تختار {effective_brand} للبحث عن {anchor_topic}؟"
+                    logger.warning(f"[outline_repair] Rewrote generic differentiation: '{heading_text}' -> '{new_heading}'")
+                    cleaned_section["heading_text"] = new_heading
+                    heading_text = new_heading
+
+            # 3. Keyword Stuffing Repair (Only for non-protected sections)
+            if heading_level == "H2" and section_type not in protected_sections and not is_pricing:
+                normalized_h2 = self._normalize_heading_label(heading_text)
+                if normalized_pk and normalized_pk in normalized_h2:
+                    pk_count += 1
+                    if pk_count > 1: # Keep first as anchor
+                        replacement = entity_phrase or head_entity
+                        new_text = heading_text.replace(primary_keyword, replacement).strip()
+                        if new_text == heading_text:
+                            new_text = f"تفاصيل {replacement} في الموقع"
+                        logger.warning(f"[outline_repair] Rewrote stuffy heading: '{heading_text}' -> '{new_text}'")
+                        cleaned_section["heading_text"] = new_text
+
+            # 4. H3 Repairs
+            subheadings = cleaned_section.get("subheadings", [])
+            if isinstance(subheadings, list) and subheadings:
+                valid_subs = []
+                for sub in subheadings:
+                    sub_text = str(sub).strip()
+                    if section_type == "faq":
+                        if not self._is_valid_faq_question(sub_text):
+                            logger.warning(f"[outline_repair] Pruned non-question FAQ subheading: '{sub_text}'")
+                            continue
+                        if not self._faq_question_is_supported(sub_text, keyword_profile, support_blob):
+                            logger.warning(f"[outline_repair] Pruned unsupported FAQ subheading: '{sub_text}'")
+                            continue
+                    else:
+                        if self._foreign_entity_families(sub_text, keyword_profile):
+                            logger.warning(f"[outline_repair] Pruned cross-entity subheading: '{sub_text}'")
+                            continue
+                        if self._subheading_is_too_granular(sub_text, stage):
+                            logger.warning(f"[outline_repair] Pruned granular/weak subheading: '{sub_text}' in stage '{stage}'")
+                            continue
+                        if self._subheading_breaks_atomization(sub_text, stage):
+                            logger.warning(f"[outline_repair] Pruned atomization-violating subheading: '{sub_text}'")
+                            continue
+                    valid_subs.append(sub)
+                cleaned_section["subheadings"] = valid_subs
+
+            cleaned_outline.append(cleaned_section)
+
+        return cleaned_outline
+
     def _h3_supports_parent(
         self,
         parent_heading: str,
@@ -579,12 +872,54 @@ class ValidationService:
         if child_optional_topics and child_optional_topics.intersection(parent_optional_topics):
             return True
 
+        # 4. Price/proof bridge: allow determinant-style H3s under price headings.
+        parent_is_price_like = self._contains_any_signal(parent_heading, self.PRICE_HEADING_SIGNALS)
+        if parent_is_price_like:
+            if self._contains_any_signal(child_heading, self.PRICE_HEADING_SIGNALS):
+                return True
+            if self._contains_any_signal(child_heading, self.PRICE_FACTOR_SUPPORT_SIGNALS):
+                return True
+
         # If it shares only location but not theme, it fails
         return False
 
     def _comparison_section_has_decision_angle(self, heading_text: str, subheadings: List[str]) -> bool:
         combined = " ".join([heading_text or ""] + [str(sub) for sub in (subheadings or [])])
         return self._contains_any_signal(combined, self.COMPARISON_HEADING_SIGNALS)
+
+    def _subheading_looks_overpacked(self, subheading_text: str, parent_stage: str = "") -> bool:
+        word_count = len(re.findall(r"\b\w+\b", subheading_text, re.UNICODE))
+        if word_count < 6:
+            return False
+
+        group_markers = 0
+        group_markers += len(re.findall(r"\sو\S+", subheading_text))
+        group_markers += len(re.findall(r"\s(?:أو|او)\s", subheading_text))
+        group_markers += subheading_text.count("،")
+        group_markers += subheading_text.count(",")
+        group_markers += subheading_text.count("/")
+
+        if parent_stage == "comparison":
+            return group_markers >= 2 or (group_markers >= 1 and word_count >= 10)
+
+        return group_markers >= 2 or (group_markers >= 1 and word_count >= 9)
+
+    def _subheading_breaks_atomization(self, subheading_text: str, parent_stage: str = "") -> bool:
+        word_count = len(re.findall(r"\b\w+\b", subheading_text, re.UNICODE))
+        if word_count < 6:
+            return False
+
+        group_markers = 0
+        group_markers += len(re.findall(r"\s\u0648\S+", subheading_text))
+        group_markers += len(re.findall(r"\s(?:\u0623\u0648|\u0627\u0648)\s", subheading_text))
+        group_markers += subheading_text.count("\u060C")
+        group_markers += subheading_text.count(",")
+        group_markers += subheading_text.count("/")
+
+        if parent_stage == "comparison":
+            return group_markers >= 2 or (group_markers >= 1 and word_count >= 10)
+
+        return group_markers >= 2 or (group_markers >= 1 and word_count >= 9)
 
     def _validate_commercial_heading_flow(self, outline: List[Dict[str, Any]], brand_name: str = "") -> List[str]:
         errors = []
@@ -1874,9 +2209,13 @@ class ValidationService:
             normalized_primary_keyword = keyword_profile.get("normalized_keyword", "")
             exact_pk_repeats = sum(
                 1 for section in core_h2_sections
-                if normalized_primary_keyword and normalized_primary_keyword in self._normalize_heading_label(section.get("heading_text", ""))
+                if normalized_primary_keyword and f" {normalized_primary_keyword} " in f" {self._normalize_heading_label(section.get('heading_text', ''))} "
             )
-            if exact_pk_repeats > 2:
+            if exact_pk_repeats == 3:
+                errors.append(
+                    f"WARNING_PRIMARY_KEYWORD_STUFFING: The full primary keyword appears in {exact_pk_repeats} core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere."
+                )
+            elif exact_pk_repeats > 3:
                 errors.append(
                     f"PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in {exact_pk_repeats} core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere."
                 )
@@ -1886,6 +2225,7 @@ class ValidationService:
             heading_level = (section.get("heading_level") or "").upper()
             section_type = (section.get("section_type") or "").lower()
             subheadings = section.get("subheadings", [])
+            stage = self._commercial_flow_stage(section)
 
             if section_type == "introduction":
                 intro_positions.append(idx)
@@ -1934,12 +2274,15 @@ class ValidationService:
                             f"DUPLICATE_H2_HEADING: '{heading_text}' repeats an existing H2 angle."
                         )
                     normalized_h2.add(normalized_text)
-                    stage = self._commercial_flow_stage(section)
 
                     if section_type not in {"introduction", "faq", "conclusion"}:
                         if primary_keyword and not self._heading_preserves_entity_focus(heading_text, keyword_profile):
                             errors.append(
                                 f"HEAD_ENTITY_SCOPE_DRIFT: Heading '{heading_text}' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s."
+                            )
+                        elif primary_keyword and self._foreign_entity_families(heading_text, keyword_profile):
+                            errors.append(
+                                f"ENTITY_FAMILY_DRIFT: Heading '{heading_text}' introduces property types outside the main entity in the primary keyword. Keep the structure strictly focused on the original entity only."
                             )
 
                         unsupported_optional_topics = [
@@ -1961,6 +2304,16 @@ class ValidationService:
                                 f"BRAND_HEADING_LEAKAGE: Heading '{heading_text}' should not contain brand framing in this section."
                             )
 
+                        if stage == "differentiation" and brand_name:
+                            if not self._heading_contains_exact_brand_name(heading_text, brand_name):
+                                errors.append(
+                                    f"WARNING_BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading '{heading_text}' must use the full official brand name '{brand_name}'."
+                                )
+                            if not self._heading_contains_keyword_anchor(heading_text, keyword_profile):
+                                errors.append(
+                                    f"WARNING_BRAND_KEYWORD_INTENT_MISSING: Differentiation heading '{heading_text}' must stay directly connected to the primary keyword intent."
+                                )
+
                         detected_topics = self._detect_optional_section_topics(heading_text)
 
                         if stage == "features" and detected_topics.intersection({"investment", "financing_payment", "legal"}):
@@ -1973,7 +2326,11 @@ class ValidationService:
                                 f"PROOF_SECTION_DRIFT: '{heading_text}' shifts into investment framing. Keep proof focused on apartment prices, demand, or buyer-facing market validation."
                             )
 
-                        if stage in {"proof", "pricing", "comparison"} and self._contains_any_signal(heading_text, self.PRICE_HEADING_SIGNALS) and not self._heading_preserves_entity_focus(heading_text, keyword_profile):
+                        if stage in {"proof", "pricing"} and self._contains_any_signal(heading_text, self.PRICE_HEADING_SIGNALS) and not self._heading_contains_keyword_anchor(heading_text, keyword_profile):
+                            errors.append(
+                                f"PRICE_KEYWORD_INTENT_MISSING: '{heading_text}' is a pricing/proof heading and must preserve the product entity, sale intent, and location from the primary keyword in a natural commercial phrasing."
+                            )
+                        elif stage == "comparison" and self._contains_any_signal(heading_text, self.PRICE_HEADING_SIGNALS) and not self._heading_preserves_entity_focus(heading_text, keyword_profile):
                             errors.append(
                                 f"PRICE_SCOPE_DRIFT: '{heading_text}' mentions pricing without staying anchored to the product entity '{keyword_profile.get('head_entity')}' in the primary keyword. In this section, the entity MUST be explicit."
                             )
@@ -2058,7 +2415,31 @@ class ValidationService:
                         f"BRAND_SUBHEADING_LEAKAGE: Subheading '{subheading_text}' should not contain brand framing in '{heading_text}'."
                     )
 
-                if not self._h3_supports_parent(heading_text, subheading_text, keyword_profile):
+                if primary_keyword and self._foreign_entity_families(subheading_text, keyword_profile):
+                    errors.append(
+                        f"H3_ENTITY_FAMILY_DRIFT: Subheading '{subheading_text}' introduces a different property type than the main keyword entity. Keep H3s strictly aligned with the original entity only."
+                    )
+
+                if self._subheading_breaks_atomization(subheading_text, stage):
+                    errors.append(
+                        f"WARNING_H3_ATOMIZATION_VIOLATION: Subheading '{subheading_text}' combines multiple areas, segments, or ideas. Split it into one clear idea per H3."
+                    )
+
+                if self._subheading_is_too_granular(subheading_text, stage):
+                    errors.append(
+                        f"H3_QUALITY_GRANULARITY_VIOLATION: Subheading '{subheading_text}' describes a paragraph-level detail (finishing, layout, etc.). Use H3s only for standalone buckets like unit types, areas, or segments."
+                    )
+
+                if section_type == "faq":
+                    if not self._is_valid_faq_question(subheading_text):
+                        errors.append(
+                            f"FAQ_NON_QUESTION: FAQ subheading '{subheading_text}' must be formatted as a buyer question (e.g., starting with ما, كيف, هل, كم)."
+                        )
+                    elif not self._faq_question_is_supported(subheading_text, keyword_profile, support_blob):
+                        errors.append(
+                            f"FAQ_UNSUPPORTED: FAQ subheading '{subheading_text}' is not supported by keyword intent, SERP/PAA signals, or strong commercial logic."
+                        )
+                elif not self._h3_supports_parent(heading_text, subheading_text, keyword_profile):
                     errors.append(
                         f"H3_PARENT_INTENT_MISMATCH: Subheading '{subheading_text}' does not clearly support the parent H2 '{heading_text}'."
                     )
@@ -2438,6 +2819,428 @@ class ValidationService:
         union = len(words1.union(words2))
 
         return intersection / union
+
+    def _normalize_heading_label(self, text: str) -> str:
+        if not text:
+            return ""
+        text = self._normalize_arabic(str(text).lower())
+        text = re.sub(r"[^\w\u0600-\u06FF\s]", " ", text)
+        return " ".join(text.split())
+
+    def _expand_token_variants(self, token: str) -> set[str]:
+        if not token:
+            return set()
+        token = self._normalize_heading_label(token)
+        variants = {token}
+
+        for prefix in ("وال", "بال", "كال", "فال", "لل", "ال", "و", "ب", "ل", "ف", "ك"):
+            if token.startswith(prefix) and len(token) - len(prefix) >= 2:
+                variants.add(token[len(prefix):])
+
+        if token.endswith("ات"):
+            variants.add(token[:-2])
+        if token.endswith("ون") or token.endswith("ين"):
+            variants.add(token[:-2])
+
+        real_estate_map = {
+            "شقه": {"شقق"},
+            "شقق": {"شقه"},
+            "عقار": {"عقارات"},
+            "عقارات": {"عقار"},
+            "وحده": {"وحدات"},
+            "وحدات": {"وحده"},
+            "محل": {"محلات"},
+            "محلات": {"محل"},
+            "مكتب": {"مكاتب"},
+            "مكاتب": {"مكتب"},
+            "فيلا": {"فلل", "فيلات"},
+            "فلل": {"فيلا", "فيلات"},
+            "فيلات": {"فيلا", "فلل"},
+            "شاليه": {"شاليهات"},
+            "شاليهات": {"شاليه"},
+            "ارض": {"اراضي"},
+            "اراضي": {"ارض"},
+        }
+        variants.update(real_estate_map.get(token, set()))
+
+        return variants
+
+    def _entity_family_for_token(self, token: str) -> str:
+        normalized = self._normalize_heading_label(token)
+        families = {
+            "apartment": {
+                "شقه", "شقق", "apartment", "apartments", "flat", "flats",
+                "ستوديو", "استوديو", "studio", "دوبلكس", "duplex", "بنتهاوس", "penthouse",
+            },
+            "villa": {"فيلا", "فلل", "فيلات", "villa", "villas"},
+            "chalet": {"شاليه", "شاليهات", "chalet", "chalets"},
+            "office": {"مكتب", "مكاتب", "office", "offices"},
+            "shop": {"محل", "محلات", "shop", "shops", "store", "stores"},
+            "land": {"ارض", "اراضي", "land", "lands", "plot", "plots"},
+            "generic": {"عقار", "عقارات", "property", "properties", "unit", "units", "وحده", "وحدات"},
+        }
+        for family, signals in families.items():
+            if normalized in signals:
+                return family
+        return ""
+
+    def _detect_entity_families_in_text(self, text: str) -> set[str]:
+        normalized = self._normalize_heading_label(text)
+        tokens = self._expanded_token_set(text)
+        families = {
+            "apartment": {
+                "شقه", "شقق", "apartment", "apartments", "flat", "flats",
+                "ستوديو", "استوديو", "studio", "دوبلكس", "duplex", "بنتهاوس", "penthouse",
+            },
+            "villa": {"فيلا", "فلل", "فيلات", "villa", "villas"},
+            "chalet": {"شاليه", "شاليهات", "chalet", "chalets"},
+            "office": {"مكتب", "مكاتب", "office", "offices"},
+            "shop": {"محل", "محلات", "shop", "shops", "store", "stores"},
+            "land": {"ارض", "اراضي", "land", "lands", "plot", "plots"},
+            "generic": {"عقار", "عقارات", "property", "properties", "unit", "units", "وحده", "وحدات"},
+        }
+        detected = set()
+        for family, signals in families.items():
+            normalized_signals = {self._normalize_heading_label(signal) for signal in signals}
+            if normalized_signals.intersection(tokens) or any(signal in normalized for signal in normalized_signals):
+                detected.add(family)
+        return detected
+
+    def _foreign_entity_families(self, text: str, profile: Dict[str, Any]) -> set[str]:
+        head_family = profile.get("entity_family") or self._entity_family_for_token(profile.get("head_entity", ""))
+        if not head_family or head_family == "generic":
+            return set()
+
+        detected = self._detect_entity_families_in_text(text)
+        detected.discard("generic")
+        detected.discard(head_family)
+        return detected
+
+    def _token_matches_area_hint(self, token: str, area_tokens: List[str]) -> bool:
+        normalized = self._normalize_heading_label(token)
+        if not normalized or not area_tokens:
+            return False
+        variants = self._expand_token_variants(normalized)
+        return any(area_token in variants for area_token in area_tokens)
+
+    def _derive_keyword_profile(self, primary_keyword: str, area: str = "") -> Dict[str, Any]:
+        normalized = self._normalize_heading_label(primary_keyword)
+        tokens = normalized.split()
+
+        entities = {
+            "شقه", "شقق", "عقار", "عقارات", "وحده", "وحدات", "محل", "محلات",
+            "فيلا", "فلل", "فيلات", "شاليه", "شاليهات", "مكتب", "مكاتب", "ارض", "اراضي",
+        }
+        skip_tokens = {"افضل", "ارخص", "دليل", "مقارنه", "مقارنة", "كيف", "ما", "متى", "اين", "احدث", "اليوم", "عام"}
+        head_entity = next((token for token in tokens if token in entities), "")
+        if not head_entity:
+            head_entity = next((token for token in tokens if token not in skip_tokens), tokens[0] if tokens else "")
+
+        intents = {"بيع", "للبيع", "شراء", "ايجار", "للايجار", "حجز", "للحجز", "استثمار", "تقسيط", "استئجار"}
+        intent_tokens = [token for token in tokens if token in intents]
+
+        location_tokens = self._normalize_heading_label(area).split() if area else []
+        if not location_tokens and "في" in tokens:
+            idx = tokens.index("في")
+            location_tokens = tokens[idx + 1:]
+
+        boundary_tokens = {"في", "فى", "in", "near", "vs", "مقارنة", "مقارنه"}
+        strong_property_heads = (entities - {"مكتب", "مكاتب"}) | {"عقار", "عقارات", "وحده", "وحدات"}
+        ambiguous_property_heads = {"مكتب", "مكاتب", "office", "offices"}
+        compound_service_heads = {"شركه", "مكتب", "عياده", "مركز", "وكاله", "مؤسسه", "منصه", "خدمه", "خدمات"}
+
+        phrase_tokens = [head_entity] if head_entity else []
+        descriptor_tokens: List[str] = []
+        if head_entity:
+            try:
+                head_index = tokens.index(head_entity)
+            except ValueError:
+                head_index = -1
+
+            if head_index >= 0:
+                normalized_head = self._normalize_heading_label(head_entity)
+                entity_family = self._entity_family_for_token(head_entity)
+                is_property_like = normalized_head in strong_property_heads or (
+                    normalized_head in ambiguous_property_heads and bool(intent_tokens)
+                ) or entity_family in {"apartment", "villa", "chalet", "shop", "land", "generic"}
+                is_compound_service = normalized_head in compound_service_heads
+
+                for token in tokens[head_index + 1:]:
+                    if token in boundary_tokens or re.fullmatch(r"\d{4}", token):
+                        break
+                    if self._token_matches_area_hint(token, location_tokens):
+                        break
+                    
+                    if is_property_like:
+                        # For properties (real estate), we stop at the head noun and don't include intent/location in the phrase
+                        break
+                        
+                    phrase_tokens.append(token)
+                    if is_compound_service:
+                        descriptor_tokens.append(token)
+
+        entity_phrase = " ".join(phrase_tokens).strip() or head_entity
+        service_phrase = " ".join(descriptor_tokens).strip() if descriptor_tokens else entity_phrase
+
+        return {
+            "head_entity": head_entity,
+            "entity_phrase": entity_phrase,
+            "service_phrase": service_phrase,
+            "entity_descriptor_tokens": descriptor_tokens,
+            "entity_family": self._entity_family_for_token(head_entity),
+            "keyword_tokens": tokens,
+            "intent_tokens": intent_tokens,
+            "location_tokens": location_tokens,
+            "normalized_keyword": normalized,
+        }
+
+    def _is_valid_faq_question(self, text: str) -> bool:
+        """
+        Validates if a string is formatted as an Arabic question.
+        """
+        prefixes = {"ما", "كيف", "هل", "كم", "متى", "اين", "أين", "لماذا"}
+        text = text.strip().lower()
+        words = text.split()
+        if not words: return False
+        
+        # Must start with a question word
+        if words[0] in prefixes:
+            return True
+        # Or start with a prefix like 'ما هي'
+        if len(words) > 1 and words[0] == "ما":
+            return True
+            
+        return False
+
+    def _subheading_breaks_atomization(self, text: str, stage: str) -> bool:
+        """
+        Detects H3s that combine multiple ideas (e.g. "Area A and Area B").
+        """
+        # Arabic 'and' (و) is often attached to the next word.
+        normalized = self._normalize_heading_label(text)
+        words = normalized.split()
+        
+        if len(words) < 2: return False
+        
+        for i in range(1, len(words)):
+            word = words[i]
+            if word.startswith("و") and len(word) > 2:
+                common_w_words = {"وحده", "وحدات", "وسط", "وجهه", "واجهه", "وادي", "وزاره", "وفق", "وصول", "وضع", "وضعنا"}
+                if word not in common_w_words:
+                    if len(words) >= 3:
+                        return True
+        
+        if " مع " in f" {text} ":
+            return True
+            
+        return False
+
+    def _faq_question_is_supported(self, question: str, profile: Dict[str, Any], support_blob: Dict[str, Any]) -> bool:
+        normalized_question = self._normalize_heading_label(question)
+        q_tokens = self._expanded_token_set(question)
+        conditional_commercial = {
+            "تقسيط", "تمويل", "دفع", "دفعات", "شهري", "سنوي", "سداد", "تسديد", "تسهيلات",
+            "اقساط", "أقساط", "قانوني", "اوراق", "عقد", "ملكيه",
+        }
+        contains_conditional_topic = any(
+            self._normalize_heading_label(signal) in normalized_question for signal in conditional_commercial
+        )
+
+        supported_text = " ".join(support_blob.get("supported_terms", []))
+        if contains_conditional_topic:
+            return any(self._normalize_heading_label(signal) in supported_text for signal in conditional_commercial)
+
+        head_entity = profile.get("head_entity", "")
+        head_variants = self._expand_token_variants(head_entity)
+        if q_tokens.intersection(head_variants):
+            return True
+
+        safe_commercial = {
+            "سعر", "اسعار", "مساحه", "مساحات", "تشطيب", "احياء", "الاحياء", "مناطق", "المناطق",
+            "خدمات", "الخدمات", "مرافق", "المرافق", "حجز", "معاينه", "استلام", "مفروشه", "مفروش",
+        }
+
+        if any(self._normalize_heading_label(signal) in normalized_question for signal in safe_commercial):
+            return True
+
+        location_tokens = set(profile.get("location_tokens", []))
+        intent_tokens = set(profile.get("intent_tokens", []))
+        if q_tokens.intersection(location_tokens) and q_tokens.intersection(intent_tokens.union(head_variants)):
+            return True
+
+        return False
+
+    def _subheading_is_too_granular(self, text: str, stage: str) -> bool:
+        normalized_text = self._normalize_heading_label(text)
+        tokens = self._expanded_token_set(text)
+        words = normalized_text.split()
+        granular_signals = {
+            "تشطيب", "التشطيب", "تقسيم", "تقسيمات", "توزيع", "غرف", "الغرف", "مستوى", "مستويات",
+            "جوده", "جودة", "تكييف", "التكييف", "عزل", "العزل", "تهويه", "تهوية", "مواصفات",
+            "تفاصيل", "ديكور", "داخليه", "داخلية", "layout", "finishing", "quality",
+            "ventilation", "insulation", "conditioning", "specs", "details", "internal",
+        }
+        standalone_feature_buckets = {
+            "شقه", "شقق", "ستوديو", "استوديو", "دوبلكس", "بنتهاوس", "عائلي", "عائليه",
+            "مفروشه", "مفروش", "جاهزه", "جاهز", "حديقه", "duplex", "penthouse", "studio", "family",
+        }
+
+        has_granular_signal = any(
+            self._normalize_heading_label(signal) in normalized_text or self._normalize_heading_label(signal) in tokens
+            for signal in granular_signals
+        )
+        if not has_granular_signal:
+            return False
+
+        if stage == "features":
+            if not any(bucket in tokens or bucket in normalized_text for bucket in standalone_feature_buckets):
+                return True
+            if any(detail in normalized_text for detail in ("تشطيب", "التشطيب", "تقسيم", "تقسيمات", "تكييف", "عزل")):
+                return True
+
+        if len(words) <= 5:
+            return True
+
+        return True
+
+    def _subheading_breaks_atomization_v2(self, text: str, stage: str) -> bool:
+        """
+        Detects H3s that combine multiple ideas (e.g. "Area A and Area B").
+        """
+        conjunctions = {" و ", " مع "}
+        if any(conj in f" {text} " for conj in conjunctions):
+            if len(text.split()) > 3:
+                return True
+        return False
+
+    def _heading_contains_exact_brand_name(self, text: str, brand_name: str) -> bool:
+        normalized_brand = self._normalize_heading_label(brand_name)
+        normalized_text = self._normalize_heading_label(text)
+        
+        if bool(normalized_brand) and normalized_brand in normalized_text:
+            return True
+            
+        if len(brand_name) > 30:
+            substitutes = ["المنصه", "المنصة", "الموقع", "الخدمه", "الخدمة", "منصة", "موقع", "خدمة"]
+            if any(sub in normalized_text.split() for sub in substitutes):
+                return True
+        return False
+
+    def _heading_contains_keyword_anchor(self, text: str, profile: Dict[str, Any]) -> bool:
+        normalized_text = self._normalize_heading_label(text)
+        normalized_pk = profile.get("normalized_keyword", "")
+        if normalized_pk and normalized_pk in normalized_text:
+            return True
+
+        heading_tokens = self._expanded_token_set(text)
+        keyword_tokens = profile.get("keyword_tokens", [])
+        head_entity = profile.get("head_entity", "")
+        entity_phrase = profile.get("entity_phrase", "")
+        descriptor_tokens = profile.get("entity_descriptor_tokens", [])
+        location_tokens = profile.get("location_tokens", [])
+        intent_tokens = profile.get("intent_tokens", [])
+
+        if entity_phrase and entity_phrase in normalized_text:
+            return True
+
+        overlap = sum(1 for token in keyword_tokens if token in heading_tokens)
+        if head_entity and self._expand_token_variants(head_entity).intersection(heading_tokens):
+            has_location = not location_tokens or all(token in heading_tokens for token in location_tokens)
+            has_intent = not intent_tokens or any(token in heading_tokens for token in intent_tokens)
+            has_descriptor = not descriptor_tokens or any(token in heading_tokens for token in descriptor_tokens)
+            if has_location and has_intent and has_descriptor:
+                return True
+
+        if not keyword_tokens:
+            return True
+        return overlap >= max(2, len(keyword_tokens) - 1)
+
+    def _heading_preserves_entity_focus(self, text: str, profile: Dict[str, Any]) -> bool:
+        head_entity = profile.get("head_entity", "")
+        if not head_entity:
+            return True
+
+        normalized_text = self._normalize_heading_label(text)
+        heading_tokens = self._expanded_token_set(text)
+        head_variants = self._expand_token_variants(head_entity)
+        descriptor_tokens = profile.get("entity_descriptor_tokens", [])
+        entity_phrase = profile.get("entity_phrase", "")
+        if head_variants.intersection(heading_tokens):
+            if descriptor_tokens:
+                if entity_phrase and entity_phrase in normalized_text:
+                    return True
+                if any(token in heading_tokens for token in descriptor_tokens):
+                    return True
+                return False
+            return True
+
+        keyword_tokens = profile.get("keyword_tokens", [])
+        location_tokens = profile.get("location_tokens", [])
+        intent_tokens = profile.get("intent_tokens", [])
+        overlap = sum(1 for token in keyword_tokens if token in heading_tokens)
+        has_location = not location_tokens or all(token in heading_tokens for token in location_tokens)
+        has_intent = not intent_tokens or any(token in heading_tokens for token in intent_tokens)
+        return overlap >= max(2, len(keyword_tokens) - 1) and has_location and has_intent
+
+    def _brand_appears_in_heading(self, text: str, brand_name: str) -> bool:
+        return self._heading_contains_exact_brand_name(text, brand_name)
+
+    def _brand_heading_allowed(self, section_type: str) -> bool:
+        allowed = {"differentiation", "introduction", "conclusion"}
+        return section_type.lower() in allowed
+
+    def _commercial_flow_stage(self, section: Dict[str, Any]) -> str:
+        section_type = (section.get("section_type") or "").lower().strip()
+        for stage, aliases in self.COMMERCIAL_FLOW_SECTION_ALIASES.items():
+            if section_type in aliases:
+                return stage
+        return section_type
+
+    def _contains_any_signal(self, text: str, signals) -> bool:
+        normalized = self._normalize_heading_label(text)
+        return any(self._normalize_heading_label(str(sig)) in normalized for sig in signals)
+
+    PRICE_HEADING_SIGNALS = {"سعر", "اسعار", "تكلفه", "قيمه", "متر"}
+
+    def _build_outline_support_blob(self, primary_keyword: str, content_strategy: Optional[Dict], seo_intelligence: Optional[Dict]) -> Dict[str, Any]:
+        supported_terms = set()
+        if primary_keyword:
+            supported_terms.update(self._normalize_heading_label(primary_keyword).split())
+        if content_strategy:
+            supported_terms.update(self._normalize_heading_label(str(content_strategy)).split())
+        if seo_intelligence:
+            supported_terms.update(self._normalize_heading_label(str(seo_intelligence)).split())
+        return {"supported_terms": list(supported_terms)}
+
+    def _expanded_token_set(self, text: str) -> set[str]:
+        normalized = self._normalize_heading_label(text)
+        tokens = set(normalized.split())
+        expanded = set()
+        for t in tokens:
+            expanded.update(self._expand_token_variants(t))
+        return expanded
+
+    def _detect_optional_section_topics(self, text: str) -> set[str]:
+        topics = set()
+        mapping = {
+            "legal": {"قانوني", "عقد", "اوراق", "ملكيه", "تسجيل"},
+            "financing_payment": {"تقسيط", "تمويل", "بنك", "قرض"},
+            "investment": {"استثمار", "عائد", "ارباح", "ROI"}
+        }
+        normalized = self._normalize_heading_label(text)
+        for topic, signals in mapping.items():
+            if any(sig in normalized for sig in signals):
+                topics.add(topic)
+        return topics
+
+    def _optional_topic_is_justified(self, topic: str, support_blob: Dict[str, Any]) -> bool:
+        supported = set(support_blob.get("supported_terms", []))
+        mapping = {
+            "legal": {"قانوني", "عقد", "اوراق", "ملكيه"},
+            "financing_payment": {"تقسيط", "تمويل", "بنك"},
+            "investment": {"استثمار", "عائد"}
+        }
+        return bool(mapping.get(topic, set()).intersection(supported))
 
     def prune_redundant_intros(self, text: str) -> str:
         """

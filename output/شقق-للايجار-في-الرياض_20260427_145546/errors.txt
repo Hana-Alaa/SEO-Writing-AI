@@ -1,0 +1,50 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 14:57:14
+ERROR: 'primary_keyword' is undefined
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 676, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\content_generator.py", line 287, in generate
+    prompt = template.render(
+             ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "assets\prompts\templates\01_outline_generator_heading_only_v2.txt", line 93, in top-level template code
+    - "لماذا تختار {{ brand_name | default('المنصة') }} للبحث عن {{ primary_keyword }}؟"
+    ^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'primary_keyword' is undefined
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 14:57:14
+ERROR: 'primary_keyword' is undefined
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 676, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\content_generator.py", line 287, in generate
+    prompt = template.render(
+             ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "assets\prompts\templates\01_outline_generator_heading_only_v2.txt", line 93, in top-level template code
+    - "لماذا تختار {{ brand_name | default('المنصة') }} للبحث عن {{ primary_keyword }}؟"
+    ^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'primary_keyword' is undefined
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

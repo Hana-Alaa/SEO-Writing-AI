@@ -1,0 +1,881 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,model,estimated_cost,is_google,prompt_text,response_text
+2026-04-27T14:55:56.974289,STEP_TOTAL: brand_discovery,9.973,0,0,0,unknown,0.0,False,N/A,N/A
+2026-04-27T14:56:56.565313,web_research,59.465,31475,6255,37730,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: شقق للايجار في الرياض
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real SERP elements only if explicitly observed:
+- People Also Ask (PAA) questions
+- related searches
+- autocomplete-style suggestions
+- LSI keyword variations explicitly visible in observed ranking pages
+
+Rules:
+- Remove exact duplicates only.
+- Keep phrasing close to what was actually observed.
+- If a real element is not observed, return an empty array.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": []
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""شقق مفروشة للايجار في الرياض"",""url"":""https://www.propertyfinder.sa/ar/للإيجار/الرياض/مفروشة-شقق-للإيجار.html"",""meta_title"":""شقق مفروشة للايجار في الرياض - 269 شقق للايجار | بروبرتي فايندر السعودية"",""meta_description"":""شقة مؤثثة للإيجار - حي المعيزيلة - بأس ريزيدينس"",""estimated_word_count"":0,""headings"":{""h1"":""شقق مفروشة للايجار في الرياض"",""h2"":[""شقق مفروشة بالرياض"",""جهود وزارة الإسكان في توفير السكن الملائم""],""h3"":[]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""},{""title"":""شقق للايجار في مدينة الرياض"",""url"":""https://www.bayut.com/ar/to-rent/apartments/abu-dhabi/madinat-al-riyadh/"",""meta_title"":""شقق للايجار في مدينة الرياض | بيوت.كوم"",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""شقق للايجار في مدينة الرياض"",""h2"":[""شقة في مدينة الرياض 1 غرفة 48000 درهم - 14929374"",""شقة في مدينة الرياض 3 غرف 102500 درهم - 14548987"",""شقة في مدينة الرياض 2 غرف 80000 درهم - 14705128"",""شقة في مدينة الرياض 1 غرفة 60000 درهم - 14658315"",""شقة في مدينة الرياض 2 غرف 65000 درهم - 14831032"",""شقة في مدينة الرياض 2 غرف 70000 درهم - 14980862"",""شقة في مدينة الرياض 1 غرفة 59000 درهم - 14981294"",""عمليات البحث الشائعة عن إيجارات قصيرة الأمد""],""h3"":[""ما هو مدى تفاوت إيجارات الشقق في مدينة الرياض؟"",""كم يبلغ متوسط إيجار الشقق المعروضة في مدينة الرياض؟"",""ما هي اتجاهات إيجار الشقق في مدينة الرياض بناءً على عدد الغرف الرئيسية؟""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""شقق للإيجار في الرياض"",""url"":""https://www.aqarcity.net/properties/citycat/13/rent/3"",""meta_title"":""شقق للإيجار في الرياض | عقار ستي"",""meta_description"":""شقة للإيجار حي العزيزية جنوب الرياضشقة عوائل داخل فيلا تتميز بموقع حيوي قريب من مسار المترو الدائري الجنوبي وطريق الخرج وقريبة من المدارس المساجد والأسواق والخدمات اليومية."",""estimated_word_count"":0,""headings"":{""h1"":"""",""h2"":[],""h3"":[""استديو للإيجار بسعر 35 ألف في حي الملك فهد ( فيديو )"",""شقة للإيجار في الرياض حي العقيق"",""شقة للإيجار في الرياض حي بدر""]},""has_faq"":false,""has_tables"":false,""has_lists"":false,""has_images"":false,""has_charts"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""شقق 1 غرفة نوم مفروشة للايجار في الرياض"",""شقق 3 غرفة نوم مفروشة للايجار في الرياض"",""شقق 2 غرفة نوم مفروشة للايجار في الرياض"",""بيوت و فلل مفروشة للايجار في الرياض"",""شقق للايجار في الرياض شهري"",""شقق مفروشة للايجار في الرياض شهري"",""شقق استوديو مفروشة للايجار في الرياض""],""content_gaps"":[""No guide or informational page on rental process or neighborhood overview found in top results""],""common_patterns"":[""Repetitive listing item format with headings showing room count and price"",""Use of contact CTAs for each listing""],""common_strengths"":[""Clear display of room count and price in listing headings"",""Inclusion of images in most listings""],""common_weaknesses"":[""Lack of in-depth informational content"",""Dominance of listing pages with limited guidance""],""observed_notes"":[""Page 1 is dominated by listing/filter/search pages without dedicated informational guides""],""unsupported_data"":[""bayut.meta_description"",""propertyfinder.estimated_word_count"",""bayut.estimated_word_count"",""aqarcity.estimated_word_count"",""aqarcity.headings.h1"",""aqarcity.headings.h2""]}"
+2026-04-27T14:56:56.900973,STEP_TOTAL: web_research,59.925,0,0,0,unknown,0.0,False,N/A,N/A
+2026-04-27T14:57:03.322886,serp_analysis,6.373,3527,996,4523,unknown,0.0,False,"You are a SERP observation analyst.
+
+You are given structured SERP data for a primary keyword.
+
+Your task is to return:
+1. Structural market statistics from observed SERP data
+2. Search intent validation from observed SERP data
+3. Structured topic observations from observed SERP data
+
+Primary Keyword: شقق للايجار في الرياض
+SERP DATA:
+{""paa"": [], ""lsi"": [""\u0634\u0642\u0642 1 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 3 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 2 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0628\u064a\u0648\u062a \u0648 \u0641\u0644\u0644 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a"", ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a"", ""\u0634\u0642\u0642 \u0627\u0633\u062a\u0648\u062f\u064a\u0648 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636""], ""related"": [], ""titles_pattern"": [""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0645\u062f\u064a\u0646\u0629 \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0644\u0644\u0625\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636""]}
+
+
+
+IMPORTANT:
+You are NOT allowed to interpret the market.
+You are ONLY allowed to summarize what is explicitly observed.
+
+STRICT RULES:
+1. Use only observed SERP data provided in the input.
+2. Do NOT use internal expert knowledge to fill missing data.
+3. Do NOT create mandatory topics.
+4. Do NOT invent missing angles.
+5. Do NOT expand weak signals into strategy.
+6. Do NOT infer or invent PAA questions, LSI terms, content gaps, pricing ranges, payment terms, trends, brand advantages, or strategic recommendations.
+7. If the input is thin, listing-heavy, or missing fields, reflect that reality and return empty arrays or empty strings where needed.
+8. Investment, legal, and ROI topics must NOT be treated as core unless they are strongly repeated in observed data. Otherwise classify them as weak signals.
+9. Do NOT reframe:
+   - apartments into the real estate market
+   - buying into investment
+
+FREQUENCY AND CONFIDENCE RULES:
+- frequency = number of distinct observed sources where the topic appears.
+- confidence = high | medium | low
+- Use `high` when the topic is explicitly repeated across multiple observed sources and the wording is stable.
+- Use `medium` when the topic appears more than once but is not strongly dominant.
+- Use `low` when the topic appears once, appears indirectly, or is a weak one-off signal.
+
+STEP 1 - Search Intent Confirmation
+Determine intent from observed SERP structure only.
+Consider:
+- page types visible in the sampled results
+- CTA presence and positioning
+- pricing sections if actually observed
+- whether the sampled pages behave more like listings, guides, or service pages
+
+Return:
+- confirmed_intent
+- intent_confidence_score (0-1)
+- dominant_page_type
+- service_vs_guide_ratio
+- commercial_signal_strength
+- informational_signal_strength
+
+STEP 2 - Structural Market Statistics
+Extract only what can be supported from observed data:
+- avg_word_count
+- avg_h2_count
+- avg_h3_count
+- dominant_page_type (service | guide | comparison | homepage | listing | directory | mixed)
+- CTA_position_pattern (above fold | mid | end | none | mixed)
+- CTA_intensity_pattern (none | soft | moderate | aggressive | mixed)
+- pricing_presence_ratio (0-1)
+- faq_presence_ratio (0-1)
+- list_presence_ratio (0-1)
+- image_density_pattern (low | medium | high | mixed)
+- chart_presence_ratio (0-1)
+- trust_signal_density (low | medium | high | mixed)
+- local_keyword_density (low | medium | high)
+- detected_area
+
+STEP 3 - Structured Topic Observations
+Return structured observations only:
+- core_recurring_topics = strongly repeated topics with high frequency
+- secondary_mentions = repeated but not dominant topics
+- weak_signals = one-off or weakly supported topics
+
+For each topic object include:
+- topic
+- frequency
+- confidence
+
+Rules for topic grouping:
+- Use only topics explicitly visible in headings, PAA questions, related searches, autocomplete suggestions, or observed page phrases.
+- If a topic appears only once, it belongs in `weak_signals`.
+- If investment, legal, or ROI language appears only once or weakly, it belongs in `weak_signals`.
+- Do not create cross-topic abstractions such as ""real estate market"" unless that exact framing is repeatedly observed.
+
+STEP 4 - Compatibility Fields
+Keep compatibility fields for downstream code, but do not turn them into strategy:
+- content_gaps: leave empty unless directly supported by repeated observed absences or explicit observed evidence
+- brand_advantages: leave empty unless explicit brand advantages are directly present in the provided input
+- keyword_clusters: group only explicitly observed related phrases or LSI terms from the input
+- writing_guide: observed summary only, not strategy
+- differentiation_strategy: leave empty unless directly supported by observed page patterns
+- mandatory_serp_topics: MUST be an empty array
+- market_data_signals: leave each field empty unless directly observed in the input
+
+Return STRICT JSON only in this structure:
+
+{
+  ""intent_analysis"": {
+    ""confirmed_intent"": """",
+    ""intent_confidence_score"": 0.0,
+    ""dominant_page_type"": """",
+    ""service_vs_guide_ratio"": 0.0,
+    ""commercial_signal_strength"": 0.0,
+    ""informational_signal_strength"": 0.0
+  },
+  ""structural_intelligence"": {
+    ""dominant_page_type"": """",
+    ""avg_word_count"": 0,
+    ""avg_h2_count"": 0,
+    ""avg_h3_count"": 0,
+    ""dominant_heading_pattern"": """",
+    ""cta_position_pattern"": """",
+    ""cta_intensity_pattern"": """",
+    ""pricing_presence_ratio"": 0.0,
+    ""faq_presence_ratio"": 0.0,
+    ""list_presence_ratio"": 0.0,
+    ""image_density_pattern"": """",
+    ""chart_presence_ratio"": 0.0,
+    ""trust_signal_density"": """",
+    ""local_keyword_density"": """",
+    ""detected_area"": """"
+  },
+  ""market_insights"": {
+    ""content_gaps"": [],
+    ""brand_advantages"": [],
+    ""keyword_clusters"": [],
+    ""writing_guide"": """",
+    ""differentiation_strategy"": [],
+    ""mandatory_serp_topics"": [],
+    ""market_data_signals"": {
+      ""avg_unit_price_range"": """",
+      ""common_down_payment_or_fees"": """",
+      ""typical_duration_or_terms"": """",
+      ""notable_market_trends"": []
+    },
+    ""topic_observations"": {
+      ""core_recurring_topics"": [
+        {
+          ""topic"": """",
+          ""frequency"": 0,
+          ""confidence"": """"
+        }
+      ],
+      ""secondary_mentions"": [
+        {
+          ""topic"": """",
+          ""frequency"": 0,
+          ""confidence"": """"
+        }
+      ],
+      ""weak_signals"": [
+        {
+          ""topic"": """",
+          ""frequency"": 0,
+          ""confidence"": """"
+        }
+      ]
+    }
+  },
+  ""observed_notes"": [],
+  ""unsupported_data"": []
+}
+
+Return JSON only.
+Do not include explanations.
+If a value is unsupported, return it empty.","{
+  ""intent_analysis"": {
+    ""confirmed_intent"": ""Transactional / Commercial"",
+    ""intent_confidence_score"": 0.9,
+    ""dominant_page_type"": ""listing"",
+    ""service_vs_guide_ratio"": 0.1,
+    ""commercial_signal_strength"": 0.9,
+    ""informational_signal_strength"": 0.1
+  },
+  ""structural_intelligence"": {
+    ""dominant_page_type"": ""listing"",
+    ""avg_word_count"": 0,
+    ""avg_h2_count"": 0,
+    ""avg_h3_count"": 0,
+    ""dominant_heading_pattern"": ""شقق للايجار في الرياض"",
+    ""cta_position_pattern"": ""mixed"",
+    ""cta_intensity_pattern"": ""moderate"",
+    ""pricing_presence_ratio"": 0.0,
+    ""faq_presence_ratio"": 0.0,
+    ""list_presence_ratio"": 1.0,
+    ""image_density_pattern"": ""high"",
+    ""chart_presence_ratio"": 0.0,
+    ""trust_signal_density"": ""medium"",
+    ""local_keyword_density"": ""high"",
+    ""detected_area"": ""الرياض""
+  },
+  ""market_insights"": {
+    ""content_gaps"": [],
+    ""brand_advantages"": [],
+    ""keyword_clusters"": [
+      {
+        ""cluster_name"": ""شقق مفروشة"",
+        ""keywords"": [
+          ""شقق 1 غرفة نوم مفروشة للايجار في الرياض"",
+          ""شقق 2 غرفة نوم مفروشة للايجار في الرياض"",
+          ""شقق 3 غرفة نوم مفروشة للايجار في الرياض"",
+          ""شقق استوديو مفروشة للايجار في الرياض"",
+          ""شقق مفروشة للايجار في الرياض شهري""
+        ]
+      },
+      {
+        ""cluster_name"": ""خيارات الإيجار الزمني"",
+        ""keywords"": [
+          ""شقق للايجار في الرياض شهري"",
+          ""شقق مفروشة للايجار في الرياض شهري""
+        ]
+      }
+    ],
+    ""writing_guide"": ""التركيز على تصنيفات الشقق بناءً على عدد الغرف (1، 2، 3 غرف) وحالة التأثيث (مفروشة) ونوع الإيجار (شهري)."",
+    ""differentiation_strategy"": [],
+    ""mandatory_serp_topics"": [],
+    ""market_data_signals"": {
+      ""avg_unit_price_range"": """",
+      ""common_down_payment_or_fees"": """",
+      ""typical_duration_or_terms"": ""شهري"",
+      ""notable_market_trends"": []
+    },
+    ""topic_observations"": {
+      ""core_recurring_topics"": [
+        {
+          ""topic"": ""شقق مفروشة للايجار"",
+          ""frequency"": 5,
+          ""confidence"": ""high""
+        },
+        {
+          ""topic"": ""شقق للايجار شهري"",
+          ""frequency"": 2,
+          ""confidence"": ""medium""
+        }
+      ],
+      ""secondary_mentions"": [
+        {
+          ""topic"": ""شقق استوديو"",
+          ""frequency"": 1,
+          ""confidence"": ""medium""
+        },
+        {
+          ""topic"": ""عدد الغرف (1، 2، 3 غرف نوم)"",
+          ""frequency"": 3,
+          ""confidence"": ""high""
+        }
+      ],
+      ""weak_signals"": [
+        {
+          ""topic"": ""بيوت وفلل مفروشة للايجار"",
+          ""frequency"": 1,
+          ""confidence"": ""low""
+        }
+      ]
+    }
+  },
+  ""observed_notes"": [
+    ""النتائج تعكس تركيزاً عالياً على الشقق المفروشة والإيجار الشهري."",
+    ""تكرار تصنيف الغرف يشير إلى أهمية الفلترة حسب المساحة.""
+  ],
+  ""unsupported_data"": [
+    ""pricing_presence_ratio"",
+    ""avg_word_count"",
+    ""faq_presence_ratio"",
+    ""paa""
+  ]
+}"
+2026-04-27T14:57:05.973905,STEP_TOTAL: serp_analysis,9.072,0,0,0,unknown,0.0,False,N/A,N/A
+2026-04-27T14:57:07.127369,intent_title,1.145,0,0,0,unknown,0.0,False,"You are a Practical User Intent & Title Advisor.
+
+Input:
+- Raw topic: شقق للايجار في الرياض
+- Primary keyword: شقق للايجار في الرياض
+- Language: ar
+- Current Year: 2026
+- Top SERP titles: [""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0645\u062f\u064a\u0646\u0629 \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0644\u0644\u0625\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636""]
+- SERP CTA styles: [""aggressive"", ""soft commercial"", ""aggressive""]
+- Target Area: الرياض
+- Brand Name: احجز شقق وشاليهات وفلل خاصة في السعودية
+
+Task:
+1. Classify intent using the ""Practical Detection Hierarchy"":
+   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about ""Web Design"" becomes `commercial` if a Brand is present).
+   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.
+   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves ""Vs"", ""Comparison"", ""Better between X and Y"", or comparing different options, the intent is **comparative**.
+   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.
+
+Allowed intents:
+- informational → searching for knowledge, guides, or tutorials.
+- commercial → evaluating a specific service/product or ready to take action.
+- comparative → comparing different options with brand helpfulness as the preferred choice.
+
+Title rules:
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use a Helpful, Practical Advisor tone (e.g., ""Simplified"", ""Complete Guide"", ""Tips"", ""Top-Rated""). 
+- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
+- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.
+- BRANDING (FALLBACK): 
+    * If `Brand Name` is ""Not provided"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK): 
+    * If `Target Area` is ""Global"", ""General"", or ""International"", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.
+- No markdown, no extra text.
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": ""The Clear, Helpful, Brand-Focused H1""
+}","{
+  ""optimized_title"": ""شقق للايجار في الرياض 2026: احجز شقق وشاليهات وفلل خاصة بأفضل سعر"",
+  ""intent"": ""commercial"",
+  ""metadata"": {
+    ""duration"": 1.1452765464782715,
+    ""model"": ""google/gemini-3-flash-preview"",
+    ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: شقق للايجار في الرياض\n- Primary keyword: شقق للايجار في الرياض\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0634\\u0642\\u0642 \\u0645\\u0641\\u0631\\u0648\\u0634\\u0629 \\u0644\\u0644\\u0627\\u064a\\u062c\\u0627\\u0631 \\u0641\\u064a \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0627\\u064a\\u062c\\u0627\\u0631 \\u0641\\u064a \\u0645\\u062f\\u064a\\u0646\\u0629 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0625\\u064a\\u062c\\u0627\\u0631 \\u0641\\u064a \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\""]\n- SERP CTA styles: [\""aggressive\"", \""soft commercial\"", \""aggressive\""]\n- Target Area: الرياض\n- Brand Name: احجز شقق وشاليهات وفلل خاصة في السعودية\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""commercial\"",\n  \""confidence\"": 1.0,\n  \""optimized_title\"": \""شقق للايجار في الرياض 2026: احجز شقق وشاليهات وفلل خاصة بأفضل سعر\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 1447,
+      ""completion_tokens"": 56,
+      ""reasoning_tokens"": 0,
+      ""total_tokens"": 1503
+    },
+    ""reasoning_details"": [
+      {
+        ""type"": ""reasoning.encrypted"",
+        ""data"": ""CiEBjz1rX7KIZDatt1m/9muvmfT62ypurONMd2lYF8ZcnZY="",
+        ""format"": ""google-gemini-v1"",
+        ""index"": 0
+      }
+    ]
+  },
+  ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: شقق للايجار في الرياض\n- Primary keyword: شقق للايجار في الرياض\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0634\\u0642\\u0642 \\u0645\\u0641\\u0631\\u0648\\u0634\\u0629 \\u0644\\u0644\\u0627\\u064a\\u062c\\u0627\\u0631 \\u0641\\u064a \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0627\\u064a\\u062c\\u0627\\u0631 \\u0641\\u064a \\u0645\\u062f\\u064a\\u0646\\u0629 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0634\\u0642\\u0642 \\u0644\\u0644\\u0625\\u064a\\u062c\\u0627\\u0631 \\u0641\\u064a \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\""]\n- SERP CTA styles: [\""aggressive\"", \""soft commercial\"", \""aggressive\""]\n- Target Area: الرياض\n- Brand Name: احجز شقق وشاليهات وفلل خاصة في السعودية\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}""
+}"
+2026-04-27T14:57:08.824633,STEP_TOTAL: intent_title,2.849,644,84,728,google/gemini-3-flash-preview,9e-05,True,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""شقق للايجار في الرياض""
+Primary Keyword: ""شقق للايجار في الرياض""
+Brand Context: ""احجز شقق وشاليهات وفلل خاصة في السعودية""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","```json
+{
+  ""reasoning"": ""The user is actively searching for a specific real estate solution ('apartments for rent') in a specific location ('Riyadh'). The presence of a brand context focused on booking ('احجز') confirms a transactional/commercial intent where the user is looking for a provider or platform to facilitate a rental agreement."",
+  ""intent"": ""Commercial""
+}
+```"
+2026-04-27T14:57:08.830499,STEP_TOTAL: style_analysis,0.002,644,84,728,google/gemini-3-flash-preview,9e-05,True,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""شقق للايجار في الرياض""
+Primary Keyword: ""شقق للايجار في الرياض""
+Brand Context: ""احجز شقق وشاليهات وفلل خاصة في السعودية""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","```json
+{
+  ""reasoning"": ""The user is actively searching for a specific real estate solution ('apartments for rent') in a specific location ('Riyadh'). The presence of a brand context focused on booking ('احجز') confirms a transactional/commercial intent where the user is looking for a provider or platform to facilitate a rental agreement."",
+  ""intent"": ""Commercial""
+}
+```"
+2026-04-27T14:57:14.731072,content_strategy,5.813,4506,790,5296,unknown,0.0,False,"You are building a content strategy based on provided inputs.
+
+Inputs:
+- Primary Keyword: شقق للايجار في الرياض
+- Intent: commercial
+- Content Type: brand_commercial
+- Target Area: الرياض
+- SERP Intent Analysis: {""confirmed_intent"": ""Transactional / Commercial"", ""intent_confidence_score"": 0.9, ""dominant_page_type"": ""listing"", ""service_vs_guide_ratio"": 0.1, ""commercial_signal_strength"": 0.9, ""informational_signal_strength"": 0.1}
+- SERP Structural Intelligence: {""dominant_page_type"": ""listing"", ""avg_word_count"": 0, ""avg_h2_count"": 0, ""avg_h3_count"": 0, ""dominant_heading_pattern"": ""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""cta_position_pattern"": ""mixed"", ""cta_intensity_pattern"": ""moderate"", ""pricing_presence_ratio"": 0.0, ""faq_presence_ratio"": 0.0, ""list_presence_ratio"": 1.0, ""image_density_pattern"": ""high"", ""chart_presence_ratio"": 0.0, ""trust_signal_density"": ""medium"", ""local_keyword_density"": ""high"", ""detected_area"": ""\u0627\u0644\u0631\u064a\u0627\u0636""}
+- SERP Market Insights: {""content_gaps"": [], ""brand_advantages"": [], ""keyword_clusters"": [{""cluster_name"": ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629"", ""keywords"": [""\u0634\u0642\u0642 1 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 2 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 3 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0627\u0633\u062a\u0648\u062f\u064a\u0648 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a""]}, {""cluster_name"": ""\u062e\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0625\u064a\u062c\u0627\u0631 \u0627\u0644\u0632\u0645\u0646\u064a"", ""keywords"": [""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a"", ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a""]}], ""writing_guide"": ""\u0627\u0644\u062a\u0631\u0643\u064a\u0632 \u0639\u0644\u0649 \u062a\u0635\u0646\u064a\u0641\u0627\u062a \u0627\u0644\u0634\u0642\u0642 \u0628\u0646\u0627\u0621\u064b \u0639\u0644\u0649 \u0639\u062f\u062f \u0627\u0644\u063a\u0631\u0641 (1\u060c 2\u060c 3 \u063a\u0631\u0641) \u0648\u062d\u0627\u0644\u0629 \u0627\u0644\u062a\u0623\u062b\u064a\u062b (\u0645\u0641\u0631\u0648\u0634\u0629) \u0648\u0646\u0648\u0639 \u0627\u0644\u0625\u064a\u062c\u0627\u0631 (\u0634\u0647\u0631\u064a)."", ""differentiation_strategy"": [], ""mandatory_serp_topics"": [], ""market_data_signals"": {""avg_unit_price_range"": """", ""common_down_payment_or_fees"": """", ""typical_duration_or_terms"": ""\u0634\u0647\u0631\u064a"", ""notable_market_trends"": []}, ""topic_observations"": {""core_recurring_topics"": [{""topic"": ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631"", ""frequency"": 5, ""confidence"": ""high""}, {""topic"": ""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0634\u0647\u0631\u064a"", ""frequency"": 2, ""confidence"": ""medium""}], ""secondary_mentions"": [{""topic"": ""\u0634\u0642\u0642 \u0627\u0633\u062a\u0648\u062f\u064a\u0648"", ""frequency"": 1, ""confidence"": ""medium""}, {""topic"": ""\u0639\u062f\u062f \u0627\u0644\u063a\u0631\u0641 (1\u060c 2\u060c 3 \u063a\u0631\u0641 \u0646\u0648\u0645)"", ""frequency"": 3, ""confidence"": ""high""}], ""weak_signals"": [{""topic"": ""\u0628\u064a\u0648\u062a \u0648\u0641\u0644\u0644 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631"", ""frequency"": 1, ""confidence"": ""low""}]}}
+
+CRITICAL RULE:
+You must NOT introduce any concept that is not strongly supported by:
+- the primary keyword
+OR
+- high-confidence SERP observations
+
+IMPORTANT:
+- You are building a minimal, realistic strategy.
+- You are not writing an idealized or over-optimized plan.
+- Commercial intent does NOT mean generic service-page logic.
+- Keep the main entity in the primary keyword as the center of the strategy.
+- Assume the reader is a buyer with little or no prior market knowledge.
+- Use simple, practical, buyer-facing language.
+- Keep the strategy helpful for a real buyer decision, not a business-growth or provider-selection pitch.
+
+STRICT RULES:
+1. Do NOT enforce:
+   - investment framing
+   - legal framing
+   - ROI or financial analysis
+   unless explicitly required by the keyword or strongly supported by repeated high-confidence SERP signals.
+
+2. Do NOT generalize the entity.
+   Example:
+   - apartments must remain apartments
+   - do NOT broaden them into the real estate market
+   - all strategic fields must preserve the main entity of the primary keyword as the core subject
+   - do NOT drift into broader categories such as real estate, projects, developments, or market unless still clearly centered on the original entity
+
+3. Strategy must be:
+   - intent-aligned
+   - entity-focused
+   - minimal, not inflated
+   - beginner-friendly
+   - decision-oriented
+
+4. Do NOT convert weak signals into core sections.
+   - Treat `core_recurring_topics` as the strongest support.
+   - Treat `secondary_mentions` as optional support only when they still serve the main entity and intent.
+   - Treat `weak_signals` as non-core. They must not drive the structure.
+
+5. Brand presence:
+   - allowed only in differentiation and conclusion
+   - must not influence structural decisions
+   - must not redefine the article as a brand-first page
+
+6. Avoid:
+   - over-architected structures
+   - unnecessary sections
+   - forced authority signals
+   - generic market commentary
+
+7. Use only the strongest observed signals.
+   - If SERP observations are thin or mixed, keep the strategy conservative.
+   - Leave unsupported fields minimal or empty rather than inflating them.
+
+8. The strategy must support a real user journey:
+   - understand the offering
+   - evaluate relevant features
+   - review concrete proof
+   - compare realistic options
+   - understand the practical buying path
+   - resolve objections
+   - take the next step
+
+9. Keep section roles clean:
+   - `introduction`: start with a light, relevant hook, introduce the primary keyword naturally, explain what the reader will understand or decide, and keep any brand mention soft
+   - `core_or_benefits`: combine offer clarity with buyer-facing features
+   - `proof`: observed pricing, value, availability, delivery status, or trust signals tied to the entity only and kept at the product/unit/listing level
+   - `process_or_how`: practical buying path only, not legal-heavy process language
+   - `faq`: objections actually supported by the keyword or strong SERP observations
+   - `conclusion`: concise next-step closure
+
+10. Do NOT force these into the strategy unless strongly supported:
+   - investment return
+   - legal verification
+   - financing complexity
+   - infrastructure impact
+   - broad authority narratives
+
+11. `primary_angle` must describe:
+   - what the reader is trying to decide
+   - using the main entity + location
+   - in buyer-facing language
+   - without business, provider, performance, legal, or investment outcomes
+
+12. `market_angle` must be compact and practical.
+   - It should describe the decision lens for comparing the main entity in the target area.
+   - Do NOT turn it into broad market commentary.
+
+13. `conversion_strategy` must stay within this bounded journey:
+   - clarify the offer
+   - show buyer-facing features
+   - provide practical proof
+   - help compare real options
+   - reduce friction in the buying path
+   - answer objections
+   - close with a confident final CTA
+   - Do NOT use funnel language, urgency pressure, or agency/service sales logic.
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object.
+Do NOT include any explanations, markdown formatting, or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+OUTPUT SAFETY:
+- If a concept is unsupported, leave it out.
+- If a list is weakly supported, return an empty list.
+- Do not name competitors.
+- Do not expand one-off signals into the strategy.","{
+  ""primary_angle"": ""مساعدة الباحثين عن سكن في الرياض على اتخاذ قرار استئجار شقة مناسبة بناءً على عدد الغرف، حالة التأثيث، ومدة الإيجار المطلوبة."",
+  ""market_angle"": ""توفير رؤية واضحة حول تنوع خيارات الشقق في الرياض، مع التركيز على الشقق المفروشة ونظام الإيجار الشهري كحلول مرنة."",
+  ""target_reader_state"": ""باحث جاد عن سكن يحتاج للمقارنة بين الخيارات المتاحة (استوديو، غرفتين، ثلاث غرف) ويفضل المرونة في الدفع."",
+  ""pain_point_focus"": [
+    ""صعوبة العثور على شقق مفروشة جاهزة للسكن الفوري"",
+    ""الحاجة لخيارات إيجار شهري بدلاً من السنوي"",
+    ""التشتت بين أحجام الشقق المختلفة ومدى ملاءمتها للاحتياج""
+  ],
+  ""emotional_trigger"": ""الراحة والاستقرار الفوري في مدينة حيوية مثل الرياض."",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""تصنيف الشقق بناءً على معايير واقعية (عدد الغرف، نوع التأثيث)"",
+    ""استخدام مصطلحات السوق العقاري المحلي في الرياض""
+  ],
+  ""eeat_signals_to_include"": [
+    ""توضيح تفاصيل الوحدات (استوديو، 1 غرفة، 2 غرفة، 3 غرف)"",
+    ""التركيز على خيارات الإيجار الشهري كدليل على فهم احتياج السوق الحالي""
+  ],
+  ""differentiation_focus"": [
+    ""تنوع المحفظة العقارية لتشمل الشقق المفروشة وغير المفروشة"",
+    ""تسهيل عملية البحث من خلال تصنيفات واضحة ومباشرة""
+  ],
+  ""conversion_strategy"": ""توجيه المستخدم لاستكشاف القوائم المتاحة بناءً على احتياجه الفعلي (عدد الغرف) وتسهيل التواصل المباشر للمعاينة."",
+  ""cta_philosophy"": ""دعوة مباشرة وهادئة لاستعراض الشقق المتاحة أو التواصل للاستفسار عن التوافر الحالي."",
+  ""local_strategy"": ""التركيز الكامل على مدينة الرياض كمنطقة جغرافية مستهدفة مع ذكر أنماط السكن الشائعة فيها."",
+  ""tone_direction"": ""عملي، مباشر، ومساعد."",
+  ""section_role_map"": {
+    ""introduction"": ""الترحيب بالباحث عن سكن في الرياض وتقديم لمحة سريعة عن تنوع خيارات الشقق المتاحة للايجار."",
+    ""core_or_benefits"": ""استعراض أنواع الشقق (استوديو، شقق عائلية) ومميزات السكن في شقق مفروشة أو بنظام الإيجار الشهري."",
+    ""proof"": ""تقديم تفاصيل حول توفر أحجام مختلفة (1، 2، 3 غرف نوم) لتلبية كافة الاحتياجات."",
+    ""process_how"": ""خطوات بسيطة تبدأ من تحديد الاحتياج، المعاينة، ثم إتمام التعاقد."",
+    ""faq"": ""الإجابة على تساؤلات حول الإيجار الشهري، وتوفر الشقق المفروشة، وأحجام الوحدات."",
+    ""conclusion"": ""ملخص سريع يحفز القارئ على اتخاذ خطوة المعاينة أو الحجز.""
+  }
+}"
+2026-04-27T14:57:14.737311,STEP_TOTAL: content_strategy,5.906,4506,790,5296,google/gemini-3-flash-preview,0.000688,True,"You are building a content strategy based on provided inputs.
+
+Inputs:
+- Primary Keyword: شقق للايجار في الرياض
+- Intent: commercial
+- Content Type: brand_commercial
+- Target Area: الرياض
+- SERP Intent Analysis: {""confirmed_intent"": ""Transactional / Commercial"", ""intent_confidence_score"": 0.9, ""dominant_page_type"": ""listing"", ""service_vs_guide_ratio"": 0.1, ""commercial_signal_strength"": 0.9, ""informational_signal_strength"": 0.1}
+- SERP Structural Intelligence: {""dominant_page_type"": ""listing"", ""avg_word_count"": 0, ""avg_h2_count"": 0, ""avg_h3_count"": 0, ""dominant_heading_pattern"": ""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""cta_position_pattern"": ""mixed"", ""cta_intensity_pattern"": ""moderate"", ""pricing_presence_ratio"": 0.0, ""faq_presence_ratio"": 0.0, ""list_presence_ratio"": 1.0, ""image_density_pattern"": ""high"", ""chart_presence_ratio"": 0.0, ""trust_signal_density"": ""medium"", ""local_keyword_density"": ""high"", ""detected_area"": ""\u0627\u0644\u0631\u064a\u0627\u0636""}
+- SERP Market Insights: {""content_gaps"": [], ""brand_advantages"": [], ""keyword_clusters"": [{""cluster_name"": ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629"", ""keywords"": [""\u0634\u0642\u0642 1 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 2 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 3 \u063a\u0631\u0641\u0629 \u0646\u0648\u0645 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0627\u0633\u062a\u0648\u062f\u064a\u0648 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a""]}, {""cluster_name"": ""\u062e\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0625\u064a\u062c\u0627\u0631 \u0627\u0644\u0632\u0645\u0646\u064a"", ""keywords"": [""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a"", ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0641\u064a \u0627\u0644\u0631\u064a\u0627\u0636 \u0634\u0647\u0631\u064a""]}], ""writing_guide"": ""\u0627\u0644\u062a\u0631\u0643\u064a\u0632 \u0639\u0644\u0649 \u062a\u0635\u0646\u064a\u0641\u0627\u062a \u0627\u0644\u0634\u0642\u0642 \u0628\u0646\u0627\u0621\u064b \u0639\u0644\u0649 \u0639\u062f\u062f \u0627\u0644\u063a\u0631\u0641 (1\u060c 2\u060c 3 \u063a\u0631\u0641) \u0648\u062d\u0627\u0644\u0629 \u0627\u0644\u062a\u0623\u062b\u064a\u062b (\u0645\u0641\u0631\u0648\u0634\u0629) \u0648\u0646\u0648\u0639 \u0627\u0644\u0625\u064a\u062c\u0627\u0631 (\u0634\u0647\u0631\u064a)."", ""differentiation_strategy"": [], ""mandatory_serp_topics"": [], ""market_data_signals"": {""avg_unit_price_range"": """", ""common_down_payment_or_fees"": """", ""typical_duration_or_terms"": ""\u0634\u0647\u0631\u064a"", ""notable_market_trends"": []}, ""topic_observations"": {""core_recurring_topics"": [{""topic"": ""\u0634\u0642\u0642 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631"", ""frequency"": 5, ""confidence"": ""high""}, {""topic"": ""\u0634\u0642\u0642 \u0644\u0644\u0627\u064a\u062c\u0627\u0631 \u0634\u0647\u0631\u064a"", ""frequency"": 2, ""confidence"": ""medium""}], ""secondary_mentions"": [{""topic"": ""\u0634\u0642\u0642 \u0627\u0633\u062a\u0648\u062f\u064a\u0648"", ""frequency"": 1, ""confidence"": ""medium""}, {""topic"": ""\u0639\u062f\u062f \u0627\u0644\u063a\u0631\u0641 (1\u060c 2\u060c 3 \u063a\u0631\u0641 \u0646\u0648\u0645)"", ""frequency"": 3, ""confidence"": ""high""}], ""weak_signals"": [{""topic"": ""\u0628\u064a\u0648\u062a \u0648\u0641\u0644\u0644 \u0645\u0641\u0631\u0648\u0634\u0629 \u0644\u0644\u0627\u064a\u062c\u0627\u0631"", ""frequency"": 1, ""confidence"": ""low""}]}}
+
+CRITICAL RULE:
+You must NOT introduce any concept that is not strongly supported by:
+- the primary keyword
+OR
+- high-confidence SERP observations
+
+IMPORTANT:
+- You are building a minimal, realistic strategy.
+- You are not writing an idealized or over-optimized plan.
+- Commercial intent does NOT mean generic service-page logic.
+- Keep the main entity in the primary keyword as the center of the strategy.
+- Assume the reader is a buyer with little or no prior market knowledge.
+- Use simple, practical, buyer-facing language.
+- Keep the strategy helpful for a real buyer decision, not a business-growth or provider-selection pitch.
+
+STRICT RULES:
+1. Do NOT enforce:
+   - investment framing
+   - legal framing
+   - ROI or financial analysis
+   unless explicitly required by the keyword or strongly supported by repeated high-confidence SERP signals.
+
+2. Do NOT generalize the entity.
+   Example:
+   - apartments must remain apartments
+   - do NOT broaden them into the real estate market
+   - all strategic fields must preserve the main entity of the primary keyword as the core subject
+   - do NOT drift into broader categories such as real estate, projects, developments, or market unless still clearly centered on the original entity
+
+3. Strategy must be:
+   - intent-aligned
+   - entity-focused
+   - minimal, not inflated
+   - beginner-friendly
+   - decision-oriented
+
+4. Do NOT convert weak signals into core sections.
+   - Treat `core_recurring_topics` as the strongest support.
+   - Treat `secondary_mentions` as optional support only when they still serve the main entity and intent.
+   - Treat `weak_signals` as non-core. They must not drive the structure.
+
+5. Brand presence:
+   - allowed only in differentiation and conclusion
+   - must not influence structural decisions
+   - must not redefine the article as a brand-first page
+
+6. Avoid:
+   - over-architected structures
+   - unnecessary sections
+   - forced authority signals
+   - generic market commentary
+
+7. Use only the strongest observed signals.
+   - If SERP observations are thin or mixed, keep the strategy conservative.
+   - Leave unsupported fields minimal or empty rather than inflating them.
+
+8. The strategy must support a real user journey:
+   - understand the offering
+   - evaluate relevant features
+   - review concrete proof
+   - compare realistic options
+   - understand the practical buying path
+   - resolve objections
+   - take the next step
+
+9. Keep section roles clean:
+   - `introduction`: start with a light, relevant hook, introduce the primary keyword naturally, explain what the reader will understand or decide, and keep any brand mention soft
+   - `core_or_benefits`: combine offer clarity with buyer-facing features
+   - `proof`: observed pricing, value, availability, delivery status, or trust signals tied to the entity only and kept at the product/unit/listing level
+   - `process_or_how`: practical buying path only, not legal-heavy process language
+   - `faq`: objections actually supported by the keyword or strong SERP observations
+   - `conclusion`: concise next-step closure
+
+10. Do NOT force these into the strategy unless strongly supported:
+   - investment return
+   - legal verification
+   - financing complexity
+   - infrastructure impact
+   - broad authority narratives
+
+11. `primary_angle` must describe:
+   - what the reader is trying to decide
+   - using the main entity + location
+   - in buyer-facing language
+   - without business, provider, performance, legal, or investment outcomes
+
+12. `market_angle` must be compact and practical.
+   - It should describe the decision lens for comparing the main entity in the target area.
+   - Do NOT turn it into broad market commentary.
+
+13. `conversion_strategy` must stay within this bounded journey:
+   - clarify the offer
+   - show buyer-facing features
+   - provide practical proof
+   - help compare real options
+   - reduce friction in the buying path
+   - answer objections
+   - close with a confident final CTA
+   - Do NOT use funnel language, urgency pressure, or agency/service sales logic.
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object.
+Do NOT include any explanations, markdown formatting, or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+OUTPUT SAFETY:
+- If a concept is unsupported, leave it out.
+- If a list is weakly supported, return an empty list.
+- Do not name competitors.
+- Do not expand one-off signals into the strategy.","{
+  ""primary_angle"": ""مساعدة الباحثين عن سكن في الرياض على اتخاذ قرار استئجار شقة مناسبة بناءً على عدد الغرف، حالة التأثيث، ومدة الإيجار المطلوبة."",
+  ""market_angle"": ""توفير رؤية واضحة حول تنوع خيارات الشقق في الرياض، مع التركيز على الشقق المفروشة ونظام الإيجار الشهري كحلول مرنة."",
+  ""target_reader_state"": ""باحث جاد عن سكن يحتاج للمقارنة بين الخيارات المتاحة (استوديو، غرفتين، ثلاث غرف) ويفضل المرونة في الدفع."",
+  ""pain_point_focus"": [
+    ""صعوبة العثور على شقق مفروشة جاهزة للسكن الفوري"",
+    ""الحاجة لخيارات إيجار شهري بدلاً من السنوي"",
+    ""التشتت بين أحجام الشقق المختلفة ومدى ملاءمتها للاحتياج""
+  ],
+  ""emotional_trigger"": ""الراحة والاستقرار الفوري في مدينة حيوية مثل الرياض."",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""تصنيف الشقق بناءً على معايير واقعية (عدد الغرف، نوع التأثيث)"",
+    ""استخدام مصطلحات السوق العقاري المحلي في الرياض""
+  ],
+  ""eeat_signals_to_include"": [
+    ""توضيح تفاصيل الوحدات (استوديو، 1 غرفة، 2 غرفة، 3 غرف)"",
+    ""التركيز على خيارات الإيجار الشهري كدليل على فهم احتياج السوق الحالي""
+  ],
+  ""differentiation_focus"": [
+    ""تنوع المحفظة العقارية لتشمل الشقق المفروشة وغير المفروشة"",
+    ""تسهيل عملية البحث من خلال تصنيفات واضحة ومباشرة""
+  ],
+  ""conversion_strategy"": ""توجيه المستخدم لاستكشاف القوائم المتاحة بناءً على احتياجه الفعلي (عدد الغرف) وتسهيل التواصل المباشر للمعاينة."",
+  ""cta_philosophy"": ""دعوة مباشرة وهادئة لاستعراض الشقق المتاحة أو التواصل للاستفسار عن التوافر الحالي."",
+  ""local_strategy"": ""التركيز الكامل على مدينة الرياض كمنطقة جغرافية مستهدفة مع ذكر أنماط السكن الشائعة فيها."",
+  ""tone_direction"": ""عملي، مباشر، ومساعد."",
+  ""section_role_map"": {
+    ""introduction"": ""الترحيب بالباحث عن سكن في الرياض وتقديم لمحة سريعة عن تنوع خيارات الشقق المتاحة للايجار."",
+    ""core_or_benefits"": ""استعراض أنواع الشقق (استوديو، شقق عائلية) ومميزات السكن في شقق مفروشة أو بنظام الإيجار الشهري."",
+    ""proof"": ""تقديم تفاصيل حول توفر أحجام مختلفة (1، 2، 3 غرف نوم) لتلبية كافة الاحتياجات."",
+    ""process_how"": ""خطوات بسيطة تبدأ من تحديد الاحتياج، المعاينة، ثم إتمام التعاقد."",
+    ""faq"": ""الإجابة على تساؤلات حول الإيجار الشهري، وتوفر الشقق المفروشة، وأحجام الوحدات."",
+    ""conclusion"": ""ملخص سريع يحفز القارئ على اتخاذ خطوة المعاينة أو الحجز.""
+  }
+}"

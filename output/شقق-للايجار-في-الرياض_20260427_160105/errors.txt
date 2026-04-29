@@ -1,0 +1,32 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 16:03:10
+ERROR: Outline validation failed after all retries. Last issues were:
+- BRAND_HEADING_LEAKAGE: Heading 'خطوات حجز شقق عبر منصة Golden Host' should not contain brand framing in this section.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 807, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- BRAND_HEADING_LEAKAGE: Heading 'خطوات حجز شقق عبر منصة Golden Host' should not contain brand framing in this section.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 16:03:31
+ERROR: Outline validation failed after all retries. Last issues were:
+- BRAND_HEADING_LEAKAGE: Heading 'خطوات حجز شقق عبر منصة Golden Host' should not contain brand framing in this section.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 807, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- BRAND_HEADING_LEAKAGE: Heading 'خطوات حجز شقق عبر منصة Golden Host' should not contain brand framing in this section.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

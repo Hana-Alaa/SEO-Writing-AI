@@ -1,0 +1,32 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 13:52:25
+ERROR: Outline validation failed after all retries. Last issues were:
+- PRICE_KEYWORD_INTENT_MISSING: 'متوسط أسعار شقق 2026 وأكثر الأحياء طلباً' is a pricing/proof heading and must preserve the product entity, sale intent, and location from the primary keyword in a natural commercial phrasing.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 802, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- PRICE_KEYWORD_INTENT_MISSING: 'متوسط أسعار شقق 2026 وأكثر الأحياء طلباً' is a pricing/proof heading and must preserve the product entity, sale intent, and location from the primary keyword in a natural commercial phrasing.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 13:52:44
+ERROR: Outline validation failed after all retries. Last issues were:
+- PRICE_KEYWORD_INTENT_MISSING: 'متوسط أسعار شقق 2026 وأكثر الأحياء طلباً' is a pricing/proof heading and must preserve the product entity, sale intent, and location from the primary keyword in a natural commercial phrasing.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 802, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- PRICE_KEYWORD_INTENT_MISSING: 'متوسط أسعار شقق 2026 وأكثر الأحياء طلباً' is a pricing/proof heading and must preserve the product entity, sale intent, and location from the primary keyword in a natural commercial phrasing.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

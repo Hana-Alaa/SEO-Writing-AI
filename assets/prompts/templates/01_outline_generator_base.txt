@@ -17,6 +17,11 @@ Your task is to generate a Highly-Readable and Helpful article outline in JSON f
 - **BRAND ADVANTAGES**: {{ (brand_advantages | default([])) | tojson }}
 - **WRITING BLUEPRINT**: "{{ writing_blueprint | default('') }}"
 - Prohibited Competitors: {{ (prohibited_competitors | default([])) | join(', ') }}
+- **ENTITY CONTEXT**:
+    - Head Entity (Root Noun): "{{ head_entity | default('') }}"
+    - Entity Phrase (Full Service/Product): "{{ entity_phrase | default('') }}"
+    - Service/Object Phrase: "{{ service_phrase | default(entity_phrase | default('')) }}"
+
 
 - **CONTENT ANCHORING**:
     - Market Insights: {{ (market_insights | default({})) | tojson }}
@@ -57,12 +62,55 @@ Your task is to generate a Highly-Readable and Helpful article outline in JSON f
     - **FORBIDDEN**: Never use the word "Introduction" or "مقدمة" as a heading.
 - **CONCLUSION ENFORCEMENT**:
     - Last section MUST be `section_type: "conclusion"`.
-    - **HEADING LANGUAGE**: Written natively in `{{ article_language }}`. Avoid generic words like "Conclusion" or "الخاتمة". Use "Your Next Steps", "Final Verdict", etc.
+    - **HEADING LANGUAGE & GRAMMAR**: 
+        - Written natively in `{{ article_language }}`. 
+        - Avoid generic words like "Conclusion" or "الخاتمة". Use "Your Next Steps", "Final Verdict", etc.
+        - **ARABIC QUALITY RULE**: In Arabic process headings, avoid broken noun coordination (e.g., Avoid: "اختيار وتعاقد مع"). 
+        - Use natural phrasing: "خطوات اختيار [الكيان] والتعاقد معه" or "كيف تختار [الكيان] وتتعاقد معه".
+        - All headings must be grammatically natural and professional.
 - **MAGNETIC HEADING PROTOCOL (DECISION-USEFUL & READER-FACING)**: 
-    * **MANDATORY FORMULA**: Every H2/H3 MUST follow: `[Specific Benefit/Decision/Data] + [Keyword/Location/Entity]`.
-    * **PRIMARY KEYWORD ANCHOR**: The first visible core H2 MUST contain the full Primary Keyword exactly, or the closest natural phrasing that preserves the same full search intent. Later H2s should preserve the same intent naturally without repeating the full exact keyword in every heading.
-    * **ENTITY CONSISTENCY**: Derive the head entity from the Primary Keyword and keep it as the protagonist of core H2s. Do NOT replace it with a broader parent category unless the heading still clearly remains about the original entity.
+    * **MANDATORY FORMULA**: Every H2/H3 MUST follow: `[Specific Benefit/Decision/Data] + [Keyword/Location/Semantic Entity Variant]`.
+    * **PRIMARY KEYWORD ANCHOR**: The first visible core H2 MUST contain the full Primary Keyword exactly, or the closest natural phrasing that preserves the same full search intent.
+        - **PRIMARY KEYWORD ANCHOR RULE**:
+            - The exact full Primary Keyword may appear only in the designated anchor H2.
+            - Later H2s MUST preserve intent through semantic variants, specific decision angles, or object/action wording.
+            - Vary headings by unique decision angles: criteria, pricing, service type, process, comparison, FAQ, or user next-steps.
+            - **UNIQUE ANGLE MANDATE**: Each H2 MUST introduce a NEW decision angle or data point. Avoid H2s that are just rephrased versions of each other.
+            - **EXPAND, DON'T CHANGE (ANTI-DRIFT)**: Semantic variations must expand the core topic within its entity boundary, NOT change the topic (e.g., Avoid drifting from "Web Design" to generic "Tech Consulting").
+            - **REPETITION FAILURE**: Repeating the same phrase pattern (e.g., "Best [entity] in [area]") across 3+ H2s is a structural failure.
+    * **ENTITY CONSISTENCY RULES**: 
+        - Treat **Entity Phrase** ("{{ entity_phrase }}") and **Service/Object Phrase** ("{{ service_phrase }}") as the main semantic topics, NOT phrases that must be copied into every heading.
+        - The entity does NOT have to appear explicitly in every heading. It may be implied through semantic context, object-level wording, or user-outcome phrasing.
+        - Semantic variation is allowed ONLY when the heading remains clearly anchored to the core entity domain.
+        - Do NOT drift into broad abstract themes that lose connection to entity_phrase (e.g., Avoid: "How to improve results"; Prefer: "How [service/product] improves results").
+        - Outcome-focused headings must still mention or imply the concrete service/product/entity, not just a vague benefit.
+        - H2 headings may use:
+            - Natural variations
+            - Action-oriented phrasing
+            - Outcome-oriented phrasing
+            - Object-level phrasing (the product/service itself)
+        - Allow variation between:
+            - Provider-level wording (who offers it, e.g., "{{ entity_phrase }}")
+            - Service/product-level wording (what is delivered, e.g., "{{ service_phrase }}")
+            - User-outcome wording (what the user gets, e.g., "[outcome-oriented entity variant]")
+        - Headings must remain clearly interpretable as part of the same entity domain.
+        - **PRICING/PROOF GUIDANCE (CRITICAL)**:
+            - Pricing/Cost headings MUST focus on the **Service/Object Phrase** ("{{ service_phrase }}") rather than the Provider Phrase ("{{ entity_phrase }}").
+            - Bad: "Average prices of [best provider phrase]" or "Cost of best [provider]"
+            - Good: "Cost of [service/product object] by scope, type, or location", "Average price of [service/product object] based on package, specs, or location", or "What affects the cost of [service/product object]?"
+            - Use direct pricing words natively in {{ article_language }} (e.g. أسعار, تكلفة, متوسط سعر).
+            - Avoid abstract wording like "عوامل تحديد التكلفة" unless paired with direct pricing wording.
+            - Pricing headings must name the concrete service/product/entity object, or a clear semantic variant of it.
+            - Do NOT use generic terms like "services", "solutions", or "offerings" alone unless they are qualified by the entity.
+            - Avoid mechanical repetition. If most H2 headings reuse the exact entity phrase, it is a structural failure.
     * **H3 SUPPORT RULE**: Every H3 must directly break down, compare, or explain a specific part of its parent H2. If it introduces a new top-level topic, remove it or promote it to its own H2.
+        - **SERVICE DELIVERABLE FRAMING**: For service-based keywords, H3s MUST name standalone service categories, deliverables, or solution types, NOT provider categories.
+            - **DELIVERABLE RULE**: H3 = what the user is buying, not who is selling it.
+            - **CRITICAL**: Do NOT generate H3s for atomic tasks, execution steps, or low-level actions (e.g., Avoid: "Cleaning floors"; Prefer: "Deep Cleaning Services").
+            - Do NOT classify providers (e.g., Avoid: "Companies that offer X") unless the parent H2 is explicitly about comparing provider types.
+            - If no strong, standalone deliverable buckets exist, return an empty `subheadings` array.
+            - Bad: "شركات متخصصة في X", "[Provider type] by budget", "Cleaning floors"
+            - Good: "[Service type]", "[Deliverable category]", "[Solution variant]", "Deep cleaning services"
     * **HEADING UTILITY AUDIT (STRICT)**: Before finalizing any heading, you MUST ask:
         1. Can the reader understand exactly what is in this section without reading the body?
         2. Does the heading reflect a real-world decision, benefit, or specific data point (price, area, timeline)?
@@ -102,7 +150,8 @@ Your task is to generate a Highly-Readable and Helpful article outline in JSON f
         - Detailed Pricing analysis or Market Insights.
         - Practical Decision Framing or Detailed Comparisons.
         - Lists or Bullet Points of any kind.
-    - If research contains any of these "Hard Facts", create a separate H2 immediately following the introduction (e.g., "Impact of Modern Infrastructure on New Cairo Pricing").
+    - If research contains any of these "Hard Facts", create a separate H2 immediately following the introduction (e.g., "Impact of [Market Event] on [Location] [Entity] Pricing").
+
 
 - **THE 9-STEP CORE GOALS (INTENT BALANCE)**:
     1. `introduction`: **section_intent: "commercial"** | **section_goal: "Awareness & Hook"** | **argument_mode: "problem_exposure"**. (COMMERCIAL: 2-3 PARAGRAPHS, INFORMATIONAL: 1-2. NO DATA/LISTS).

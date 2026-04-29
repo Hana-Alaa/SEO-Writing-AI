@@ -1,0 +1,60 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 11:57:54
+ERROR: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 3 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'جودة أنظمة التكييف والعزل الحراري' does not clearly support the parent H2 'أهم المواصفات الداخلية التي يجب توفرها في شقق الرياض الحديثة'.
+- HEADING_TOO_LONG: 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' is too long. Tighten it into a scannable heading.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- HEAD_ENTITY_SCOPE_DRIFT: Heading 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'مزايا السكن داخل المجمعات السكنية المغلقة' does not clearly support the parent H2 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'ما هي أفضل الأحياء للسكن بالقرب من مترو الرياض؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'كيف يمكنني التأكد من جاهزية مرافق الشقة قبل الحجز؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 788, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 3 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'جودة أنظمة التكييف والعزل الحراري' does not clearly support the parent H2 'أهم المواصفات الداخلية التي يجب توفرها في شقق الرياض الحديثة'.
+- HEADING_TOO_LONG: 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' is too long. Tighten it into a scannable heading.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- HEAD_ENTITY_SCOPE_DRIFT: Heading 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'مزايا السكن داخل المجمعات السكنية المغلقة' does not clearly support the parent H2 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'ما هي أفضل الأحياء للسكن بالقرب من مترو الرياض؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'كيف يمكنني التأكد من جاهزية مرافق الشقة قبل الحجز؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 11:58:15
+ERROR: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 3 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'جودة أنظمة التكييف والعزل الحراري' does not clearly support the parent H2 'أهم المواصفات الداخلية التي يجب توفرها في شقق الرياض الحديثة'.
+- HEADING_TOO_LONG: 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' is too long. Tighten it into a scannable heading.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- HEAD_ENTITY_SCOPE_DRIFT: Heading 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'مزايا السكن داخل المجمعات السكنية المغلقة' does not clearly support the parent H2 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'ما هي أفضل الأحياء للسكن بالقرب من مترو الرياض؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'كيف يمكنني التأكد من جاهزية مرافق الشقة قبل الحجز؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 788, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 3 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'جودة أنظمة التكييف والعزل الحراري' does not clearly support the parent H2 'أهم المواصفات الداخلية التي يجب توفرها في شقق الرياض الحديثة'.
+- HEADING_TOO_LONG: 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' is too long. Tighten it into a scannable heading.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تعد منصة احجز شقق وشاليهات وفلل خاصة وجهتك المثالية للبحث عن شقق للايجار في الرياض؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- HEAD_ENTITY_SCOPE_DRIFT: Heading 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟' drifts away from the main entity in the primary keyword. Keep the original subject explicit in core H2s.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'مزايا السكن داخل المجمعات السكنية المغلقة' does not clearly support the parent H2 'هل الأفضل استئجار شقة في مجمع سكني أم في عمارة مستقلة بالرياض؟'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'ما هي أفضل الأحياء للسكن بالقرب من مترو الرياض؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+- H3_PARENT_INTENT_MISMATCH: Subheading 'كيف يمكنني التأكد من جاهزية مرافق الشقة قبل الحجز؟' does not clearly support the parent H2 'أسئلة شائعة يطرحها المستأجرون حول شقق الرياض'.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

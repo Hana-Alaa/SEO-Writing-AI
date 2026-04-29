@@ -1,0 +1,52 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 15.01 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 53.92 seconds
+  -- Tokens Used: 44,836
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 54.24 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SERP_ANALYSIS
+  -- Duration: 4.71 seconds
+  -- Tokens Used: 3,131
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 6.94 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.19 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.79 seconds
+  -- Tokens Used: 722
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 722
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 4.89 seconds
+  -- Tokens Used: 2,960
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 4.89 seconds
+  -- Tokens Used: 2,960
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 11.95 seconds
+  -- Tokens Used: 9,911
+--------------------------------------------------

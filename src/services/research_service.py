@@ -9,6 +9,7 @@ import hashlib
 import requests
 import httpx
 from typing import Dict, Any, List, Optional
+from collections import Counter
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from PIL import Image
@@ -40,243 +41,314 @@ class ResearchService:
         if area_text.lower() in keyword.lower():
             return keyword
 
-        in_map = {"ar": "\u0641\u064a", "en": "in", "fr": "en", "es": "en", "de": "in"}
+        in_map = {"ar": "في", "en": "in", "fr": "en", "es": "en", "de": "in"}
         in_word = in_map.get(lang, "in")
         return f"{keyword} {in_word} {area_text}".strip()
 
-    async def run_brand_discovery(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Deep brand discovery:
-        1. Crawls the homepage to discover all internal links.
-        2. Scores each link by relevance to the primary keyword.
-        3. Fetches the top relevant subpages in parallel.
-        4. Uses AI to extract a factual brand context.
-        """
-        # --- MOCK BYPASS ---
-        if type(self.ai_client).__name__ == "MockAIClient":
-            logger.info("MockAIClient detected: Skipping real brand discovery.")
-            state.setdefault("brand_name", "MockBrand")
-            state.setdefault("brand_context", "This is a mocked brand context extracted from simulation data.")
-            state.setdefault("internal_resources", [
-                {"link": "https://mock.com/services", "text": "Our Services", "score": 100},
-                {"link": "https://mock.com/about", "text": "About Us", "score": 90}
-            ])
-            return state
-        # -------------------
-        brand_url = state.get("brand_url")
-        if not brand_url:
-            urls = state.get("input_data", {}).get("urls", [])
-            if urls:
-                brand_url = urls[0].get("link")
+    def _humanize_domain_brand(self, url: str) -> str:
+        root = (LinkManager.domain(url) or "").split(".")[0].strip().lower()
+        if not root:
+            return "The Brand"
+
+        root = re.sub(r"[_\-]+", " ", root)
+        for suffix in ("host", "stay", "rent", "home", "booking", "travel", "group"):
+            if root.endswith(suffix) and len(root) > len(suffix) + 2 and " " not in root:
+                root = f"{root[:-len(suffix)]} {suffix}"
+                break
+
+        return " ".join(part.capitalize() for part in root.split())
+
+    def _brand_candidate_score(self, candidate: str, brand_url: str, primary_keyword: str = "") -> int:
+        normalized = re.sub(r"\s+", " ", (candidate or "")).strip()
+        if not normalized:
+            return -999
+
+        lowered = normalized.lower()
+        domain_root = (LinkManager.domain(brand_url) or "").split(".")[0].lower()
+        collapsed = re.sub(r"[\s_\-]+", "", lowered)
+        pk_lower = (primary_keyword or "").strip().lower()
+
+        marketing_verbs = {"احجز", "book", "reserve", "rent", "find", "search", "browse", "discover"}
+        generic_labels = {"home", "homepage", "الرئيسية", "home page"}
+        property_terms = {
+            "شقق", "شاليهات", "فلل", "عقارات", "وحدات", "apartments", "villas", "chalets",
+            "properties", "units", "rent", "sale", "للإيجار", "للايجار", "للبيع",
+        }
+
+        words = normalized.split()
+        score = 0
+
+        if domain_root and domain_root in collapsed:
+            score += 30
+        if 1 <= len(words) <= 4:
+            score += 20
+        if len(normalized) <= 28:
+            score += 10
+        if lowered in generic_labels:
+            score -= 40
+        if pk_lower and pk_lower in lowered:
+            score -= 35
+        if words and words[0].lower() in marketing_verbs:
+            score -= 30
+
+        property_hits = sum(1 for term in property_terms if term.lower() in lowered)
+        if property_hits >= 2:
+            score -= 35
+        elif property_hits == 1:
+            score -= 10
+
+        if len(words) >= 6 or len(normalized) > 40:
+            score -= 30
+
+        return score
+
+    def _aggregate_serp_structural_stats(self, serp_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Computes deterministic stats from observed headings in top_results."""
+        top_results = serp_data.get("top_results", [])
+        total_h2 = 0
+        total_h3 = 0
+        valid_results_count = 0
         
-        if not brand_url or not brand_url.startswith("http"):
-            logger.info("Skipping brand discovery: No valid brand_url found. Implementing Pseudo-Brand fallback.")
-            primary_kw = state.get("primary_keyword", "المزود")
-            article_lang = state.get("article_language", "ar")
-            if article_lang == "ar":
-                state["brand_name"] = f"منصة {primary_kw}"
-                state["brand_context"] = f"منصة رائدة متخصصة في {primary_kw} وتقديم أفضل الخدمات الاحترافية في هذا المجال."
-            else:
-                state["brand_name"] = f"{primary_kw} Platform"
-                state["brand_context"] = f"A leading platform specializing in {primary_kw} and providing professional services in the industry."
-            return state
-
-        primary_keyword = state.get("primary_keyword", "").lower()
-        kw_tokens = [t for t in primary_keyword.split() if len(t) > 2]
-        logger.info(f"Starting deep brand discovery for: {brand_url}")
-        domain = LinkManager.domain(brand_url)
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-
-        # try:
-        #     # Discover Logo, Colors, and Brand Name (Only if images are enabled)
-        #     # We always try to get the brand name as it helps the AI context
-        #     brand_assets = await self._discover_logo_and_colors(brand_url, state)
-        #     if brand_assets:
-        #         # Only store image assets if requested
-        #         if state.get("generate_images", True):
-        #             state["logo_path"] = brand_assets.get("logo_path")
-        #             state["brand_colors"] = brand_assets.get("brand_colors", [])
-        #             logger.info(f"Brand image assets added to state: Logo={state.get('logo_path')} | Colors={state.get('brand_colors')}")
-                
-        #         if brand_assets.get("brand_name"):
-        #             state["brand_name"] = brand_assets.get("brand_name")
-        #         logger.info(f"Brand identity identified: {state.get('brand_name')}")
-        #     else:
-        #         # Fallback brand name if discovery fails
-        #         state["brand_name"] = LinkManager.domain(brand_url).split('.')[0].capitalize()
-
-        #     # Internal helper for fetching clean text
-        #     async def fetch_text(url: str) -> str:
-        #         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-
-
-        async def fetch_text_resilient(url: str) -> str:
-            """Robust async text scraper with timeout resilience and structure preservation."""
-            try:
-                # Handle Non-ASCII URLs (like Arabic anchors) safely
-                from urllib.parse import quote, urlparse
-                parsed = urlparse(url)
-                if any(ord(c) > 127 for c in url):
-                    safe_path = quote(parsed.path)
-                    url = f"{parsed.scheme}://{parsed.netloc}{safe_path}"
-                    if parsed.query: url += f"?{quote(parsed.query)}"
-                
-                async with httpx.AsyncClient(timeout=25.0, follow_redirects=True, verify=False) as client:
-                    r = await client.get(url, headers=headers)
-                    if r.status_code != 200: return ""
-                    soup = BeautifulSoup(r.text, "html.parser")
-                    for tag in soup(["nav", "footer", "script", "style", "header", "aside", "form", "button", "iframe", "svg", "noscript"]):
-                        tag.decompose()
-                    main = soup.find("main") or soup.find(id="main") or soup.find(class_="content") or soup
-                    blocks = []
-                    current_heading = ""
-                    current_paras = []
-                    for tag in main.find_all(["h1", "h2", "h3", "p", "li"]):
-                        text = tag.get_text(separator=" ", strip=True)
-                        if len(text) < 40: continue
-                        if tag.name in ("h1", "h2", "h3"):
-                            if current_paras:
-                                blocks.append((f"## {current_heading}\n" if current_heading else "") + "\n".join(current_paras))
-                            current_heading = text
-                            current_paras = []
-                        else:
-                            current_paras.append(text)
-                    if current_paras:
-                        blocks.append((f"## {current_heading}\n" if current_heading else "") + "\n".join(current_paras))
-                    return "\n\n".join(blocks)[:4000]
-            except Exception as e:
-                logger.warning(f"Resilient fetch failed for {url}: {e}")
-                return ""
-
-        def relevance_score(url: str, anchor: str) -> int:
-            text = (url + " " + anchor).lower()
-            score = 0
-            if primary_keyword.lower() in text: score += 20
-            score += sum(3 for t in kw_tokens if t in text and len(t) > 2)
-            service_patterns = ["service", "solution", "product", "pillar", "offer", "خدمات", "حلول", "منتج"]
-            if any(p in text for p in service_patterns): score += 15
-            area = state.get("area", "").lower()
-            neighborhoods = state.get("area_neighborhoods", [])
-            if area and area in text: score += 30
-            elif neighborhoods and any(nb.lower() in text for nb in neighborhoods): score += 15
-            faq_patterns = ["faq", "frequently-asked", "help", "support", "أسئلة", "شائعة", "مساعدة"]
-            if any(p in text for p in faq_patterns): score += 40
-            return score
-
-        try:
-            # 1. Discover Identity (Logo/Colors/Name)
-            brand_assets = await self._discover_logo_and_colors(brand_url, state)
-            if brand_assets:
-                if state.get("generate_images", True):
-                    state["logo_path"] = brand_assets.get("logo_path")
-                    state["brand_colors"] = brand_assets.get("brand_colors", [])
-                if brand_assets.get("brand_name"):
-                    state["brand_name"] = brand_assets.get("brand_name")
-            else:
-                state["brand_name"] = LinkManager.domain(brand_url).split('.')[0].capitalize()
-
-            # 2. Discover Links (Crawl Homepage)
-            discovered_links = {}
-            async with httpx.AsyncClient(timeout=25.0, follow_redirects=True, verify=False) as client:
-                r = await client.get(brand_url, headers=headers)
-                if r.status_code == 200:
-                    homepage_soup = BeautifulSoup(r.text, "html.parser")
-                    for a in homepage_soup.find_all("a", href=True):
-                        href = a["href"]
-                        anchor = re.sub(r' \b\d{2}/\d{2}/\d{4}\b|\b(19|20)\d{2}\b', '', a.get_text(strip=True))
-                        anchor = re.sub(r'\s+', ' ', anchor).strip()
-                        full_url = urljoin(brand_url, href)
-                        if LinkManager.domain(full_url) != domain: continue
-                        canon = LinkManager.canon_url(full_url)
-                        if canon == LinkManager.canon_url(brand_url): continue
-                        if not anchor or len(anchor) < 3 or len(anchor) > 80: continue
-                        if anchor.lower() in {"click here", "read more", "learn more", "lets talk", "let's talk", "contact us", "see all", "اقرأ أكثر", "انقر هنا"}: continue
-                        score = relevance_score(canon, anchor)
-                        if canon not in discovered_links or score > discovered_links[canon][1]:
-                            discovered_links[canon] = (anchor, score)
-
-            sorted_links = sorted(discovered_links.items(), key=lambda x: x[1][1], reverse=True)
-            top_links = sorted_links[:8] # Best 8 links for parallel processing
-
-            # 3. Parallel Content Fetching
-            logger.info(f"Targeting {len(top_links)} relevant pages for parallel harvesting...")
-            fetch_tasks = [fetch_text_resilient(brand_url)] + [fetch_text_resilient(canon) for canon, _ in top_links]
-            fetch_results = await asyncio.gather(*fetch_tasks)
+        for res in top_results:
+            h2_count = 0
+            h3_count = 0
             
-            brand_pages_index = {brand_url: fetch_results[0]}
-            for i, (canon, _) in enumerate(top_links):
-                if fetch_results[i+1]:
-                    brand_pages_index[canon] = fetch_results[i+1]
+            if isinstance(res, dict):
+                if "headings" in res and isinstance(res["headings"], dict):
+                    h2_count = len(res["headings"].get("h2", []))
+                    h3_count = len(res["headings"].get("h3", []))
+                elif "structure" in res and isinstance(res["structure"], list):
+                    h2_count = sum(1 for h in res["structure"] if h.get("tag") == "H2")
+                    h3_count = sum(1 for h in res["structure"] if h.get("tag") == "H3")
             
-            state["brand_pages_index"] = brand_pages_index
-            state["internal_resources"] = [{"link": canon, "text": anchor, "score": score} for canon, (anchor, score) in sorted_links[:30]]
+            if h2_count > 0 or h3_count > 0:
+                total_h2 += h2_count
+                total_h3 += h3_count
+                valid_results_count += 1
+        
+        avg_h2 = round(total_h2 / valid_results_count, 1) if valid_results_count > 0 else 0
+        avg_h3 = round(total_h3 / valid_results_count, 1) if valid_results_count > 0 else 0
+        
+        return {
+            "avg_h2_count": avg_h2,
+            "avg_h3_count": avg_h3,
+            "total_h2_count": total_h2,
+            "total_h3_count": total_h3,
+            "heading_data_missing": valid_results_count == 0
+        }
 
-            # 4. AI Strategy & Brand Fact-Sheet 
-            combined_text = "\n\n".join(f"[Page: {url}]\n{text}" for url, text in brand_pages_index.items())[:12000]
-            if combined_text:
-                paa_str = "\n".join([f"- {q}" for q in state.get("serp_data", {}).get("paa_questions", [])[:10]])
-                context_prompt = f"""You are a Strategic Brand Analyst. Extract a FACT SHEET and Validated FAQ from this data for topic: "{primary_keyword}".\nPAA Background:\n{paa_str}\n\nContent:\n{combined_text}"""
-                res = await self.ai_client.send(context_prompt, step="brand_discovery")
-                state["brand_context"] = res["content"].strip()
+    def _extract_lsi_from_page_data(self, serp_data: Dict[str, Any]) -> List[str]:
+        """Extracts repeated phrases from observed headings, titles, and snippets."""
+        text_corpus = []
+        top_results = serp_data.get("top_results", [])
+        
+        for res in top_results:
+            if not isinstance(res, dict): continue
+            
+            text_corpus.append(res.get("title") or "")
+            text_corpus.append(res.get("meta_title") or "")
+            text_corpus.append(res.get("meta_description") or "")
+            text_corpus.append(res.get("snippet") or "")
+            
+            headings = res.get("headings", {})
+            if isinstance(headings, dict):
+                h1 = headings.get("h1")
+                if isinstance(h1, list): text_corpus.extend(h1)
+                elif h1: text_corpus.append(h1)
+                text_corpus.extend(headings.get("h2", []))
+                text_corpus.extend(headings.get("h3", []))
+            
+            structure = res.get("structure", [])
+            if isinstance(structure, list):
+                text_corpus.extend([h.get("text", "") for h in structure if h.get("text")])
 
-            # Neighborhood Discovery (Local SEO)
-            area = state.get("area")
-            if area:
-                nb_prompt = f"Return ONLY a valid JSON list of strings representing the top 10 most prominent neighborhoods or sub-areas in '{area}'. No preamble, no explanation. Example: [\"Neighborhood 1\", \"Neighborhood 2\"]"
-                nb_res = await self.ai_client.send(nb_prompt, step="local_seo")
-                
-                # Use robust recovery utility from json_utils (already imported)
-                neighborhoods = recover_json(nb_res["content"])
-                if isinstance(neighborhoods, list):
-                    state["area_neighborhoods"] = neighborhoods
-                else:
-                    logger.warning(f"Failed to recover neighborhoods list for area '{area}'. Falling back to empty list.")
-                    state["area_neighborhoods"] = []
+        phrases = []
+        for text in text_corpus:
+            if not text or len(text) < 10: continue
+            cleaned = re.sub(r'[^\w\s\u0600-\u06FF]', ' ', text.lower())
+            parts = [p.strip() for p in cleaned.split() if len(p.strip()) > 2]
+            
+            for i in range(len(parts) - 1):
+                phrases.append(f"{parts[i]} {parts[i+1]}")
+            for i in range(len(parts) - 2):
+                phrases.append(f"{parts[i]} {parts[i+1]} {parts[i+2]}")
 
-        except Exception as e:
-            logger.error(f"Brand Discovery failed: {e}", exc_info=True)
+        counts = Counter(phrases)
+        lsi = [phrase for phrase, count in counts.most_common(40) if count >= 2 and len(phrase) > 10]
+        return list(dict.fromkeys(lsi))[:15]
+
+    def _enrich_serp_enrichment_signals(self, serp_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Processes enrichment signals with strict source labeling.
+        Accepts AI-provided sources if present, otherwise calculates them.
+        """
+        provided_sources = serp_data.get("serp_enrichment_sources")
+        if isinstance(provided_sources, dict) and any(provided_sources.values()):
+            # Use AI-provided sources as primary source of truth
+            sources = provided_sources
+        else:
+            sources = {
+                "paa_questions": "not_observed",
+                "related_searches": "not_observed",
+                "autocomplete_suggestions": "not_observed",
+                "lsi_keywords": "not_observed"
+            }
+        
+        paa = serp_data.get("paa_questions")
+        if paa and isinstance(paa, list) and len(paa) > 0:
+            if sources.get("paa_questions") in ("not_observed", ""):
+                sources["paa_questions"] = "google_serp"
+        
+        related = serp_data.get("related_searches")
+        if related and isinstance(related, list) and len(related) > 0:
+            if sources.get("related_searches") in ("not_observed", ""):
+                sources["related_searches"] = "google_serp"
+        
+        auto = serp_data.get("autocomplete_suggestions")
+        if auto and isinstance(auto, list) and len(auto) > 0:
+            if sources.get("autocomplete_suggestions") in ("not_observed", ""):
+                sources["autocomplete_suggestions"] = "google_autocomplete"
+        
+        lsi = serp_data.get("lsi_keywords")
+        if lsi and isinstance(lsi, list) and len(lsi) > 0:
+            if sources.get("lsi_keywords") in ("not_observed", ""):
+                sources["lsi_keywords"] = "google_serp"
+        else:
+            extracted_lsi = self._extract_lsi_from_page_data(serp_data)
+            if extracted_lsi:
+                serp_data["lsi_keywords"] = extracted_lsi
+                sources["lsi_keywords"] = "page_content"
+
+        serp_data["serp_enrichment_sources"] = sources
+        return serp_data
+
+    def _commercial_intent_floor_applies(self, primary_keyword: str) -> bool:
+        normalized = (primary_keyword or "").lower()
+        tokens = {token for token in re.split(r"[^\w\u0600-\u06FF]+", normalized) if token}
+        if not tokens: return False
+
+        quality_signals = {"best", "top", "cheapest", "compare", "review", "reviews", "alternative", "alternatives", "افضل", "أفضل", "احسن", "أحسن", "ارخص", "أرخص", "مقارنة", "بدائل", "تقييم", "مراجعة"}
+        provider_signals = {"company", "agency", "provider", "providers", "office", "clinic", "firm", "شركة", "شركات", "وكالة", "وكالات", "مزود", "مزودين", "مكتب", "عيادة", "مؤسسة", "مركز"}
+        service_signals = {"service", "services", "price", "prices", "cost", "quote", "pricing", "خدمة", "خدمات", "سعر", "أسعار", "اسعار", "تكلفة", "تكلفه", "عرض", "تصميم", "تنظيف", "محاماة", "محاماه", "تسويق", "برمجة", "برمجه", "صيانة", "صيانه", "علاج", "استضافة", "استضافه"}
+        informational_starters = {"ما", "ماذا", "كيف", "لماذا", "why", "what", "how"}
+
+        has_quality = bool(tokens & quality_signals)
+        has_provider = bool(tokens & provider_signals)
+        has_service = bool(tokens & service_signals)
+
+        if has_quality and has_provider: return True
+        if has_provider and has_service: return True
+        if has_service and any(token in tokens for token in {"سعر", "أسعار", "اسعار", "تكلفة", "تكلفه", "price", "cost", "quote"}): return True
+        if tokens & informational_starters and not has_provider and not has_quality: return False
+        return False
+
+    def _apply_serp_intent_firewall(self, serp_insights: Dict[str, Any], primary_keyword: str) -> Dict[str, Any]:
+        if not isinstance(serp_insights, dict): serp_insights = {}
+        if not self._commercial_intent_floor_applies(primary_keyword): return serp_insights
+
+        intent_layer = serp_insights.setdefault("intent_analysis", {})
+        intent_layer["confirmed_intent"] = "commercial"
+        intent_layer["commercial_signal_strength"] = max(float(intent_layer.get("commercial_signal_strength") or 0.0), 0.7)
+        intent_layer["informational_signal_strength"] = max(float(intent_layer.get("informational_signal_strength") or 0.0), 0.2)
+        
+        structural_layer = serp_insights.setdefault("structural_intelligence", {})
+        if not structural_layer.get("dominant_page_type"):
+            structural_layer["dominant_page_type"] = intent_layer.get("dominant_page_type") or "mixed"
+
+        return serp_insights
+
+    def _looks_like_display_brand_name(self, candidate: str, primary_keyword: str = "") -> bool:
+        normalized = re.sub(r"\s+", " ", (candidate or "")).strip()
+        if not normalized: return False
+        lowered = normalized.lower()
+        pk_lower = (primary_keyword or "").lower()
+        words = normalized.split()
+        if pk_lower and pk_lower in lowered: return False
+        if not (1 <= len(words) <= 4): return False
+        if self._is_generic_brand_descriptor(normalized, primary_keyword): return False
+        return True
+
+    def _extract_explicit_brand_inputs(self, state: Dict[str, Any]) -> List[str]:
+        input_data = state.get("input_data", {})
+        urls = input_data.get("urls", [])
+        explicit = []
+        for item in urls:
+            if not isinstance(item, dict): continue
+            for key in ("text", "brand_name", "name", "label", "anchor"):
+                value = item.get(key)
+                if isinstance(value, str):
+                    cleaned = value.strip()
+                    if cleaned: explicit.append(cleaned)
+        return list(dict.fromkeys(explicit))
+
+    def _is_generic_brand_descriptor(self, candidate: str, primary_keyword: str = "") -> bool:
+        normalized = re.sub(r"\s+", " ", (candidate or "")).strip()
+        if not normalized: return True
+        lowered = normalized.lower()
+        tokens = [t for t in re.split(r"[^\w\u0600-\u06FF]+", lowered) if t]
+        if not tokens: return True
+        stop_tokens = {"the", "a", "an", "and", "for", "of", "in", "best", "top", "leading", "official", "global", "local", "modern", "افضل", "أفضل", "احسن"}
+        generic_service_tokens = {"company", "agency", "service", "services", "solution", "solutions", "platform", "group", "systems", "technology", "digital", "development", "web", "design", "marketing", "software", "شركة", "وكالة", "خدمة", "حل", "منصة", "مجموعة", "تقنية", "تطوير", "تصميم", "موقع"}
+        content_tokens = [t for t in tokens if t not in stop_tokens]
+        if not content_tokens: return True
+        keyword_tokens = {t for t in re.split(r"[^\w\u0600-\u06FF]+", (primary_keyword or "").lower()) if t and len(t) > 2}
+        if all(t in generic_service_tokens or t in keyword_tokens for t in content_tokens): return True
+        return False
+
+    def _extract_mentions_heuristic(self, text: str) -> List[str]:
+        if not text: return []
+        phrases = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b', text)
+        counts = Counter(phrases)
+        return [p for p, count in counts.most_common(5) if len(p) > 3]
+
+    def _canonicalize_brand_name(self, candidates_by_source: Dict[str, List[str]], brand_url: str, primary_keyword: str = "") -> Dict[str, Any]:
+        domain_derived = self._humanize_domain_brand(brand_url)
+        priority_order = ["explicit_input", "visible", "metadata", "mentions", "domain"]
+        scored_candidates = []
+        seen = set()
+
+        for source in priority_order:
+            for cand in candidates_by_source.get(source, []):
+                if not cand or cand.lower() in seen: continue
+                seen.add(cand.lower())
+                score = self._brand_candidate_score(cand, brand_url, primary_keyword)
+                if source == "explicit_input": score += 160
+                elif source == "visible": score += 100
+                elif source == "metadata": score += 50
+                scored_candidates.append({"name": cand, "score": score})
+
+        scored_candidates.sort(key=lambda x: x["score"], reverse=True)
+        best_name = scored_candidates[0]["name"] if scored_candidates else domain_derived
+        return {
+            "display_brand_name": best_name,
+            "official_brand_name": best_name,
+            "brand_aliases": [],
+            "domain_brand_name": domain_derived
+        }
+
+    def _sanitize_brand_context(self, raw_context: str, brand_name: str, primary_keyword: str) -> str:
+        return f"Official brand: {brand_name}. Use the brand as a supporting platform for {primary_keyword}. Keep the article buyer-first and entity-focused."
+
+    async def run_brand_discovery(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        brand_url = state.get("brand_url")
+        if not brand_url: return state
+        
+        # Identity Discovery
+        brand_assets = await self._discover_logo_and_colors(brand_url, state)
+        if brand_assets:
+            state["display_brand_name"] = brand_assets.get("brand_data", {}).get("display_brand_name")
+            state["brand_name"] = state["display_brand_name"]
+            state["brand_context"] = self._sanitize_brand_context("Fact sheet", state["brand_name"], state.get("primary_keyword", ""))
         return state
 
     async def run_brand_discovery_light(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Rapid brand discovery mode with logo, name, and basic internal link extraction."""
         brand_url = state.get("brand_url")
-        if brand_url and brand_url.startswith("http"):
-            logger.info(f"Starting light brand discovery for: {brand_url}")
-            brand_assets = await self._discover_logo_and_colors(brand_url, state)
-            
-            if brand_assets:
-                if state.get("generate_images", True):
-                    state["logo_path"] = brand_assets.get("logo_path")
-                    state["brand_colors"] = brand_assets.get("brand_colors", [])
-                
-                if brand_assets.get("brand_name"):
-                    state["brand_name"] = brand_assets.get("brand_name")
-                
-                # Restore: Populate internal resources from discovered links
-                discovered_links = brand_assets.get("discovered_links", [])
-                if discovered_links:
-                    if "internal_resources" not in state: state["internal_resources"] = []
-                    seen_canons = {LinkManager.canon_url(brand_url)}
-                    for r in state["internal_resources"]:
-                        seen_canons.add(LinkManager.canon_url(r.get("link", "")))
-                    
-                    added_count = 0
-                    for lnk in discovered_links:
-                        canon = LinkManager.canon_url(lnk["link"])
-                        if canon not in seen_canons:
-                            state["internal_resources"].append({
-                                "link": lnk["link"],
-                                "text": lnk["text"],
-                                "is_manual": False
-                            })
-                            seen_canons.add(canon)
-                            added_count += 1
-                        if added_count >= 8: break
-                    logger.info(f"Light mode: Discovered {added_count} sub-pages from homepage.")
-
-        if not state.get("brand_context"):
-            state["brand_context"] = state.get("brand_voice_description", "Standard Brand Context (Light Discovery)")
+        if brand_url:
+            domain_brand = self._humanize_domain_brand(brand_url)
+            state["brand_name"] = domain_brand
+            state["display_brand_name"] = domain_brand
+            state["brand_context"] = self._sanitize_brand_context("", domain_brand, state.get("primary_keyword", ""))
         return state
+
     async def run_web_research(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Step 0: Perform deep web research for topic grounding."""
         # --- MOCK BYPASS ---
@@ -295,10 +367,6 @@ class ResearchService:
         primary_keyword = state["primary_keyword"]
         area = state.get("area")
         lang = state.get("article_language", "ar")
-        in_map = {"ar": "في", "en": "in", "fr": "en", "es": "en", "de": "in"}
-        in_word = in_map.get(lang, "|")
-        search_query = f"{primary_keyword} {in_word} {area}" if area else primary_keyword
-        # Override the legacy builder to avoid duplicated area phrases in SERP queries.
         search_query = self._compose_search_query(primary_keyword, area, lang)
 
         with open("assets/prompts/templates/seo_web_research.txt") as f:
@@ -321,18 +389,19 @@ class ResearchService:
         if not serp_data.get("top_results"):
             raise RuntimeError("SERP returned no top results")
 
+        # Aggregate stats and enrich
+        serp_data["structural_stats"] = self._aggregate_serp_structural_stats(serp_data)
+        serp_data = self._enrich_serp_enrichment_signals(serp_data)
+
         state["serp_data"] = serp_data
         state["seo_intelligence"] = serp_data
         return state
 
     async def run_hybrid_research(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Step 0: Hybrid SERP + Strategy Research."""
         primary_keyword = state["primary_keyword"]
         area = state.get("area")
         lang = state.get("article_language", "ar")
-        in_map = {"ar": "في", "en": "in", "fr": "en", "es": "en", "de": "in"}
-        in_word = in_map.get(lang, "|")
-        search_query = f"{primary_keyword} {in_word} {area}" if area else primary_keyword
-        # Override the legacy builder to avoid duplicated area phrases in SERP queries.
         search_query = self._compose_search_query(primary_keyword, area, lang)
         
         logger.info(f"Running Hybrid SERP+Strategy Research for: {search_query}")
@@ -357,146 +426,70 @@ class ResearchService:
         if not serp_data.get("top_results"):
              serp_data = {"top_results": [{"title": primary_keyword, "url": "", "snippet": "Manual Fallback"}], "intent": "informational"}
 
+        # Aggregate stats and enrich
+        serp_data["structural_stats"] = self._aggregate_serp_structural_stats(serp_data)
+        serp_data = self._enrich_serp_enrichment_signals(serp_data)
+
         state["serp_data"] = serp_data
         state["seo_intelligence"] = {"serp_raw": serp_data, "market_analysis": serp_data}
         return state
 
     async def run_serp_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Neutral market observation phase. Explicitly isolated from brand identity."""
         serp_data = state.get("serp_data", {})
         primary_keyword = state.get("primary_keyword")
-        with open("assets/prompts/templates/seo_serp_analysis_observed_v2.txt") as f:
-            template = Template(f.read())
+        top_results = serp_data.get("top_results", [])[:3]
         
+        # 1. Build Neutral SERP Payload (Client brand fields excluded)
         light_serp = {
-            "paa": [q.get("question", "") if isinstance(q, dict) else q for q in serp_data.get("paa_questions", [])[:10]],
+            "paa": [q for q in serp_data.get("paa_questions", [])[:10]],
             "lsi": serp_data.get("lsi_keywords", [])[:20],
             "related": serp_data.get("related_searches", [])[:15],
-            "titles_pattern": [r.get("title", "")[:120] for r in serp_data.get("top_results", []) if isinstance(r, dict)][:state.get("competitor_count", 5)]
+            "structural_stats": serp_data.get("structural_stats", {})
         }
-
-        analysis_prompt = template.render(
-            primary_keyword=primary_keyword, 
-            serp_data=json.dumps(light_serp),
-            competitor_structures=state.get("seo_intelligence", {}).get("competitor_structures", [])
-        )
-        res = await self.ai_client.send(analysis_prompt, step="serp_analysis")
-        metadata = res["metadata"]
-        if state.get("workflow_logger"):
-            state["workflow_logger"].log_ai_call(step_name="serp_analysis", prompt=analysis_prompt, response=res["content"], tokens=metadata.get("tokens", {}), duration=metadata.get("duration", 0))
-
-        serp_insights = recover_json(res["content"]) or {}
-        serp_insights["semantic_assets"] = {k: (serp_data.get(k) or []) for k in ["paa_questions", "lsi_keywords", "related_searches", "autocomplete_suggestions"]}
-
-        top_results = serp_data.get("top_results", [])[:3]
-        competitor_headers = []
-        for res in top_results:
+        
+        # 2. Extract Competitor Structures (Observed Reality)
+        async def fetch_headers(res):
             url = res.get("url")
             if url:
                 headers = await ScraperUtils.fetch_headings_from_url(url)
-                if headers:
-                    competitor_headers.append({"url": url, "title": res.get("title"), "structure": headers})
+                if headers: return {"url": url, "title": res.get("title"), "structure": headers}
+            return None
+
+        results = await asyncio.gather(*[fetch_headers(res) for res in top_results])
+        competitor_headers = [r for r in results if r]
         
+        # 3. Perform Analysis (Brand-Unaware Prompt)
+        with open("assets/prompts/templates/seo_serp_analysis_observed_v2.txt") as f:
+            template = Template(f.read())
+        
+        analysis_prompt = template.render(
+            primary_keyword=primary_keyword, 
+            serp_data=json.dumps(light_serp), 
+            competitor_structures=competitor_headers
+        )
+        
+        res = await self.ai_client.send(analysis_prompt, step="serp_analysis")
+        serp_insights = recover_json(res["content"]) or {}
+        
+        # 4. Intent Firewall (Deterministic overrides via keyword signals only)
+        serp_insights = self._apply_serp_intent_firewall(serp_insights, primary_keyword or "")
+        
+        # 4.1 Enforce Deterministic Structural Stats (Override AI hallucinations)
+        intelligence = serp_insights.setdefault("structural_intelligence", {})
+        if light_serp.get("structural_stats"):
+            stats = light_serp["structural_stats"]
+            intelligence["avg_h2_count"] = stats.get("avg_h2_count", 0)
+            intelligence["avg_h3_count"] = stats.get("avg_h3_count", 0)
+            intelligence["total_h2_count"] = stats.get("total_h2_count", 0)
+            intelligence["total_h3_count"] = stats.get("total_h3_count", 0)
+            intelligence["heading_data_missing"] = stats.get("heading_data_missing", False)
+
+        # 5. Merge Insights (Preserving original brand state in parent object)
+        serp_insights["semantic_assets"] = {k: (serp_data.get(k) or []) for k in ["paa_questions", "lsi_keywords", "related_searches", "autocomplete_suggestions"]}
+        serp_insights["serp_enrichment_sources"] = serp_data.get("serp_enrichment_sources", {})
         state["seo_intelligence"] = {"serp_raw": serp_data, "market_analysis": serp_insights, "competitor_structures": competitor_headers}
         return state
 
     async def _discover_logo_and_colors(self, url: str, state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Extracts company logo URL and dominant colors from a website."""
-        try:
-            # Handle Non-ASCII URLs safely
-            from urllib.parse import quote, urlparse
-            parsed = urlparse(url)
-            if any(ord(c) > 127 for c in url):
-                safe_path = quote(parsed.path)
-                url = f"{parsed.scheme}://{parsed.netloc}{safe_path}"
-                if parsed.query: url += f"?{quote(parsed.query)}"
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, verify=False) as client:
-                r = await client.get(url, headers=headers)
-                if r.status_code != 200: return None
-                soup = BeautifulSoup(r.text, "html.parser")
-            
-            logo_url = None
-            discovered_brand_name = None
-            og_site = soup.find("meta", property="og:site_name")
-            if og_site: discovered_brand_name = og_site.get("content")
-            if not discovered_brand_name:
-                title_tag = soup.find("title")
-                if title_tag: discovered_brand_name = title_tag.get_text().split('|')[0].split('-')[0].strip()
-            if not discovered_brand_name:
-                discovered_brand_name = LinkManager.extract_brand_name(url)
-
-            logo_local_path = None
-            colors = []
-            is_svg = False
-            
-            if state.get("generate_images", True):
-                logo_candidates = soup.find_all("img", alt=lambda x: x and 'logo' in x.lower())
-                if not logo_candidates: logo_candidates = soup.find_all("img", class_=lambda x: x and 'logo' in x.lower())
-                
-                if logo_candidates: logo_url = urljoin(url, logo_candidates[0].get("src"))
-                else:
-                    og_image = soup.find("meta", property="og:image")
-                    if og_image: logo_url = og_image.get("content")
-
-                if not logo_url:
-                    logo_url = f"https://www.google.com/s2/favicons?sz=128&domain={urlparse(url).netloc}"
-
-                try:
-                    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, verify=False) as client:
-                        lr = await client.get(logo_url, headers=headers)
-                        if lr.status_code == 200:
-                            img_data = lr.content
-                            is_svg = logo_url.lower().endswith(".svg") or b"<svg" in img_data[:100].lower()
-                            ext = ".svg" if is_svg else ".png"
-                            logo_local_path = os.path.join(state.get("output_dir", self.work_dir), "assets/images", f"brand_logo_{uuid.uuid4().hex[:8]}{ext}")
-                            os.makedirs(os.path.dirname(logo_local_path), exist_ok=True)
-                            with open(logo_local_path, "wb") as f: f.write(img_data)
-                            colors = self._extract_colors_from_image(logo_local_path)
-                except: pass
-
-            # Link Extraction (Basic Discovery for light mode pool)
-            domain = LinkManager.domain(url)
-            discovered_links = []
-            for a in soup.find_all("a", href=True):
-                href = a["href"]
-                anchor = re.sub(r'\s+', ' ', a.get_text(strip=True)).strip()
-                full_url = urljoin(url, href)
-                if LinkManager.domain(full_url) != domain: continue
-                if not anchor or len(anchor) < 4 or len(anchor) > 60: continue
-                discovered_links.append({"link": full_url, "text": anchor})
-                if len(discovered_links) >= 20: break
-
-            return {
-                "logo_path": logo_local_path, 
-                "brand_colors": colors, 
-                "brand_name": discovered_brand_name, 
-                "is_svg": is_svg,
-                "discovered_links": discovered_links
-            }
-        except: return None
-
-    def _extract_colors_from_image(self, image_path: str) -> List[str]:
-        if not image_path or not os.path.exists(image_path): return []
-        try:
-            if image_path.lower().endswith(".svg"):
-                with open(image_path, "r", encoding="utf-8", errors="ignore") as f:
-                    hex_colors = re.findall(r'#(?:[0-9a-fA-F]{3}){1,2}', f.read())
-                    meaningful = [c.lower() for c in hex_colors if c.lower() not in ['#ffffff', '#000000', '#fff', '#000']]
-                    rgb = []
-                    for hc in meaningful[:3]:
-                        hc = hc.lstrip('#')
-                        if len(hc) == 3: hc = ''.join([c*2 for c in hc])
-                        rgb.append(f"rgb({int(hc[0:2], 16)},{int(hc[2:4], 16)},{int(hc[4:6], 16)})")
-                    return rgb
-            with Image.open(image_path) as img:
-                img_small = img.convert("RGBA").resize((50, 50))
-                colors = img_small.getcolors(2500)
-                filtered = []
-                if colors:
-                    for count, color in sorted(colors, reverse=True):
-                        if color[3] < 50 or sum(color[:3]) > 720 or sum(color[:3]) < 40: continue
-                        filtered.append(f"rgb({color[0]},{color[1]},{color[2]})")
-                        if len(filtered) >= 3: break
-                return filtered
-        except: return []
+        return None

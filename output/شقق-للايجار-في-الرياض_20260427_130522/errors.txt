@@ -1,0 +1,40 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 13:07:21
+ERROR: Outline validation failed after all retries. Last issues were:
+- H3_ATOMIZATION_VIOLATION: Subheading 'تأثير القرب من المترو والمناطق الحيوية على القيمة الإيجارية' combines multiple areas, segments, or ideas. Split it into one clear idea per H3.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- BRAND_KEYWORD_INTENT_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must stay directly connected to the primary keyword intent.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 798, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- H3_ATOMIZATION_VIOLATION: Subheading 'تأثير القرب من المترو والمناطق الحيوية على القيمة الإيجارية' combines multiple areas, segments, or ideas. Split it into one clear idea per H3.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- BRAND_KEYWORD_INTENT_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must stay directly connected to the primary keyword intent.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 13:07:39
+ERROR: Outline validation failed after all retries. Last issues were:
+- H3_ATOMIZATION_VIOLATION: Subheading 'تأثير القرب من المترو والمناطق الحيوية على القيمة الإيجارية' combines multiple areas, segments, or ideas. Split it into one clear idea per H3.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- BRAND_KEYWORD_INTENT_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must stay directly connected to the primary keyword intent.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 798, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- H3_ATOMIZATION_VIOLATION: Subheading 'تأثير القرب من المترو والمناطق الحيوية على القيمة الإيجارية' combines multiple areas, segments, or ideas. Split it into one clear idea per H3.
+- BRAND_DIFFERENTIATION_NAME_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must use the full official brand name 'احجز شقق وشاليهات وفلل خاصة في السعودية'.
+- BRAND_KEYWORD_INTENT_MISSING: Differentiation heading 'لماذا تختار منصة احجز شقق وشاليهات وفلل خاصة للوصول لخياراتك؟' must stay directly connected to the primary keyword intent.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

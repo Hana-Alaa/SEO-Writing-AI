@@ -11,6 +11,13 @@ Primary Keyword: {{ primary_keyword | default('Main Topic') }}
 SERP DATA:
 {{ serp_data | default('No data available.') }}
 
+- DETERMINISTIC STRUCTURAL STATS (PRE-COMPUTED):
+{% if serp_data.structural_stats %}
+  - Avg H2: {{ serp_data.structural_stats.avg_h2_count }}
+  - Avg H3: {{ serp_data.structural_stats.avg_h3_count }}
+  - Heading Data Missing: {{ serp_data.structural_stats.heading_data_missing }}
+{% endif %}
+
 {% if competitor_structures %}- RAW COMPETITOR STRUCTURES (REAL-TIME AUDIT):
 {{ competitor_structures | tojson }}{% endif %}
 
@@ -90,6 +97,9 @@ Return STRICT JSON only in this structure:
     "avg_word_count": 0,
     "avg_h2_count": 0,
     "avg_h3_count": 0,
+    "total_h2_count": 0,
+    "total_h3_count": 0,
+    "heading_data_missing": false,
     "dominant_heading_pattern": "",
     "cta_position_pattern": "",
     "cta_intensity_pattern": "",

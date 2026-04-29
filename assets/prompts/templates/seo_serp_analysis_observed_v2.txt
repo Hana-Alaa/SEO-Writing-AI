@@ -11,6 +11,27 @@ Primary Keyword: {{ primary_keyword | default('Main Topic') }}
 SERP DATA:
 {{ serp_data | default('No data available.') }}
 
+- DETERMINISTIC STRUCTURAL STATS (PRE-COMPUTED):
+{% if serp_data.structural_stats %}
+  - Avg H2: {{ serp_data.structural_stats.avg_h2_count }}
+  - Avg H3: {{ serp_data.structural_stats.avg_h3_count }}
+  - Total H2: {{ serp_data.structural_stats.total_h2_count }}
+  - Total H3: {{ serp_data.structural_stats.total_h3_count }}
+  - Heading Data Missing: {{ serp_data.structural_stats.heading_data_missing }}
+{% endif %}
+
+STRUCTURAL STATS LOCK:
+If deterministic structural stats are provided, copy them exactly into `structural_intelligence`.
+Do NOT recalculate, estimate, or override:
+- avg_h2_count
+- avg_h3_count
+- total_h2_count
+- total_h3_count
+- heading_data_missing
+
+If deterministic totals are missing but competitor_structures are provided, use the deterministic values injected by the code after AI response.
+The AI response must not be the final authority for heading counts.
+
 {% if competitor_structures %}- RAW COMPETITOR STRUCTURES (REAL-TIME AUDIT):
 {{ competitor_structures | tojson }}{% endif %}
 
@@ -55,7 +76,9 @@ Return:
 - informational_signal_strength
 
 STEP 2 - Structural Market Statistics
-Extract only what can be supported from observed data:
+Use deterministic structural stats when provided.
+For heading counts, never override deterministic values.
+For non-heading fields, extract only what can be supported from observed data:
 - avg_word_count
 - avg_h2_count
 - avg_h3_count
@@ -91,7 +114,7 @@ Rules for topic grouping:
 STEP 4 - Compatibility Fields
 Keep compatibility fields for downstream code, but do not turn them into strategy:
 - content_gaps: leave empty unless directly supported by repeated observed absences or explicit observed evidence
-- brand_advantages: leave empty unless explicit brand advantages are directly present in the provided input
+- brand_advantages: leave empty unless explicit brand advantages are directly present in the observed COMPETITOR modules. Do NOT use client brand context.
 - keyword_clusters: group only explicitly observed related phrases or LSI terms from the input
 - writing_guide: observed summary only, not strategy
 - differentiation_strategy: leave empty unless directly supported by observed page patterns
@@ -114,6 +137,9 @@ Return STRICT JSON only in this structure:
     "avg_word_count": 0,
     "avg_h2_count": 0,
     "avg_h3_count": 0,
+    "total_h2_count": 0,
+    "total_h3_count": 0,
+    "heading_data_missing": false,
     "dominant_heading_pattern": "",
     "cta_position_pattern": "",
     "cta_intensity_pattern": "",

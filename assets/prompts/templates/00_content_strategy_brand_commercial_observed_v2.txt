@@ -20,6 +20,9 @@ IMPORTANT:
 - You are not writing an idealized or over-optimized plan.
 - Commercial intent does NOT mean generic service-page logic.
 - Keep the main entity in the primary keyword as the center of the strategy.
+- Assume the reader is a buyer with little or no prior market knowledge.
+- Use simple, practical, buyer-facing language.
+- Keep the strategy helpful for a real buyer decision, not a business-growth or provider-selection pitch.
 
 STRICT RULES:
 1. Do NOT enforce:
@@ -32,11 +35,15 @@ STRICT RULES:
    Example:
    - apartments must remain apartments
    - do NOT broaden them into the real estate market
+   - all strategic fields must preserve the main entity of the primary keyword as the core subject
+   - do NOT drift into broader categories such as real estate, projects, developments, or market unless still clearly centered on the original entity
 
 3. Strategy must be:
    - intent-aligned
    - entity-focused
    - minimal, not inflated
+   - beginner-friendly
+   - decision-oriented
 
 4. Do NOT convert weak signals into core sections.
    - Treat `core_recurring_topics` as the strongest support.
@@ -68,10 +75,10 @@ STRICT RULES:
    - take the next step
 
 9. Keep section roles clean:
-   - `introduction`: define the keyword entity and immediate search context only
-   - `core_or_benefits`: explain the entity and buyer-facing value only
-   - `proof`: observed pricing, value, availability, or trust signals tied to the entity only
-   - `process_or_how`: practical buying path only
+   - `introduction`: start with a light, relevant hook, introduce the primary keyword naturally, explain what the reader will understand or decide, and keep any brand mention soft
+   - `core_or_benefits`: combine offer clarity with buyer-facing features
+   - `proof`: observed pricing, value, availability, delivery status, or trust signals tied to the entity only and kept at the product/unit/listing level
+   - `process_or_how`: practical buying path only, not legal-heavy process language
    - `faq`: objections actually supported by the keyword or strong SERP observations
    - `conclusion`: concise next-step closure
 
@@ -81,6 +88,26 @@ STRICT RULES:
    - financing complexity
    - infrastructure impact
    - broad authority narratives
+
+11. `primary_angle` must describe:
+   - what the reader is trying to decide
+   - using the main entity + location
+   - in buyer-facing language
+   - without business, provider, performance, legal, or investment outcomes
+
+12. `market_angle` must be compact and practical.
+   - It should describe the decision lens for comparing the main entity in the target area.
+   - Do NOT turn it into broad market commentary.
+
+13. `conversion_strategy` must stay within this bounded journey:
+   - clarify the offer
+   - show buyer-facing features
+   - provide practical proof
+   - help compare real options
+   - reduce friction in the buying path
+   - answer objections
+   - close with a confident final CTA
+   - Do NOT use funnel language, urgency pressure, or agency/service sales logic.
 
 OUTPUT FORMAT:
 You MUST return the output EXACTLY as a valid JSON object.

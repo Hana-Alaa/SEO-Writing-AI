@@ -12,6 +12,8 @@ Your task is to generate only the heading structure layer of an article outline 
 - Area: "{{ area | default('General') }}"
 - Brand Context: "{{ brand_context | default('') }}"
 - Head Entity: "{{ head_entity | default('') }}"
+- Entity Phrase: "{{ entity_phrase | default('') }}"
+- Service/Object Phrase: "{{ service_phrase | default(entity_phrase | default('')) }}"
 - Content Strategy: {{ (content_strategy | default({})) | tojson }}
 - Style Blueprint: {{ (style_blueprint | default({})) | tojson }}
 
@@ -39,35 +41,142 @@ Your task is to generate only the heading structure layer of an article outline 
   - Avoid: "أفضل مناطق شراء [entity] للبيع في [area]".
   - Prefer: "أفضل مناطق شراء [entity] للبيع في [area] حسب ميزانيتك".
 - This first H2 must contain the full primary keyword exactly, or the closest natural phrasing that preserves the same full search intent.
-- Derive the head entity from the primary keyword and keep it as the protagonist of core H2s. Do not replace it with a broader parent category unless the heading still clearly remains about the original entity.
+- **PRIMARY KEYWORD ANCHOR RULE**:
+  - The exact full Primary Keyword may appear only in the designated anchor H2 (the first visible core H2).
+  - Later H2s MUST preserve intent through semantic variants, specific decision angles, or object/action wording.
+  - Vary headings by unique decision angles: criteria, pricing, service type, process, comparison, FAQ, or user next-steps.
+  - **UNIQUE ANGLE MANDATE**: Each H2 MUST introduce a NEW decision angle or data point. Avoid H2s that are just rephrased versions of each other.
+  - **EXPAND, DON'T CHANGE (ANTI-DRIFT)**: Semantic variations must expand the core topic within its entity boundary, NOT change the topic (e.g., Avoid drifting from "Web Design" to generic "Tech Consulting").
+  - **REPETITION FAILURE**: Repeating the same phrase pattern (e.g., "Best [entity] in [area]") across 3+ H2s is a structural failure.
+- **ENTITY CONSISTENCY RULES**: 
+  - Treat **Entity Phrase** ("{{ entity_phrase }}") and **Service/Object Phrase** ("{{ service_phrase }}") as the main semantic topics, NOT phrases that must be copied into every heading.
+  - The entity does NOT have to appear explicitly in every heading. It may be implied through semantic context, object-level wording, or user-outcome phrasing.
+  - Semantic variation is allowed ONLY when the heading remains clearly anchored to the core entity domain.
+  - Do NOT drift into broad abstract themes that lose connection to entity_phrase (e.g., Avoid: "How to improve results"; Prefer: "How [service/product] improves results").
+  - Outcome-focused headings must still mention or imply the concrete service/product/entity, not just a vague benefit.
+  - H2 headings may use:
+    - Natural variations
+    - Action-oriented phrasing
+    - Outcome-oriented phrasing
+    - Object-level phrasing (the product/service itself)
+  - Allow variation between:
+    - Provider-level wording (who offers it, e.g., "{{ entity_phrase }}")
+    - Service/product-level wording (what is delivered, e.g., "{{ service_phrase }}")
+    - User-outcome wording (what the user gets, e.g., "[outcome-oriented entity variant]")
+  - Headings must remain clearly interpretable as part of the same entity domain.
+  - **PRICING/PROOF GUIDANCE (CRITICAL)**:
+    - Pricing/Cost headings MUST focus on the **Service/Object Phrase** ("{{ service_phrase }}") rather than the Provider Phrase ("{{ entity_phrase }}").
+    - Bad: "Average prices of [best provider phrase]" or "Cost of best [provider]"
+    - Good: "Cost of [service/product object] by scope, type, or location", "Average price of [service/product object] based on package, specs, or location", or "What affects the cost of [service/product object]?"
+    - Use direct pricing words natively in {{ article_language }} (e.g. أسعار, تكلفة, متوسط سعر).
+    - Avoid abstract wording like "عوامل تحديد التكلفة" unless paired with direct pricing wording.
+  - Avoid mechanical repetition. If most H2 headings reuse the exact entity phrase, it is a structural failure.
 - Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
 - If you create H3 subheadings, output the exact H3 strings in `subheadings`.
-- Every H3 must directly support, explain, compare, or break down a specific part of its parent H2. If an H3 introduces a new top-level topic or an adjacent entity, remove it or promote it to a separate H2. Location overlap (sharing the same city) is NOT enough to justify an H3; it must share a thematic or decision-based dimension with the parent.
+- H3 Generation Strategy: Decision Buckets vs. Atomic Details:
+  1. The Taxonomy Principle: Use H3s ONLY for classifying the entity into distinct "standalone siblings" (Types, Categories, Services, Locations, User Segments, Pricing Models, or Comparison Options). Do NOT create H3s for "Anatomy" (internal parts, specs, room layout, finishing, speed, or minor attributes). These belong in the H2 body.
+  2. The Decision Bifurcation Rule: Generate H3s ONLY if the H2 contains multiple distinct decision paths where a reader must choose between options. Fallback: It is better to return an empty `subheadings` array than to generate weak or forced H3s.
+  3. The Non-Overlap Rule: Each H3 must be a distinct bucket. If two H3s could be merged without losing significant meaning, do not separate them.
+  4. The Strength & Expansion Test: Every H3 must pass this check: "Can this H3 be expanded into a 150+ word standalone section without repeating the parent H2?". If NO, do not generate it.
+  5. Searchability Hint: Prefer common user-facing terms and searchable phrasing over obscure or technical classifications.
+  6. Service Constraint (Deliverable Framing): For service-based keywords, H3s MUST name standalone service categories, deliverables, or solution types, NOT provider categories.
+     - **DELIVERABLE RULE**: H3 = what the user is buying, not who is selling it.
+     - **CRITICAL**: Do NOT generate H3s for atomic tasks, execution steps, or low-level actions (e.g., Avoid: "Cleaning floors"; Prefer: "Deep Cleaning Services").
+     - Do NOT classify providers (e.g., Avoid: "Companies that offer X") unless the parent H2 is explicitly about comparing provider types.
+     - If no strong, standalone deliverable buckets exist, return an empty `subheadings` array.
+     - Bad: "شركات متخصصة في X", "[Provider type] by budget", "Cleaning floors"
+     - Good: "[Service type]", "[Deliverable category]", "[Solution variant]", "Deep cleaning services"
+
+### H3 Permission Rule
+
+Not every H2 needs H3 subheadings.
+
+Generate H3s only when the parent H2 naturally contains clear standalone buckets that the reader can choose, compare, or evaluate.
+
+Return an empty `subheadings` array when the H2 is:
+- a guidance/advice section
+- a proof/explanation section
+- a differentiation/brand trust section
+- a simple process section
+- a conclusion/CTA section
+
+Section-specific behavior:
+
+1. Offer H2:
+Use H3s only for real options:
+- service types
+- product types
+- locations
+- buyer segments
+Do NOT use H3s for criteria, mistakes, or advice points.
+
+2. Features H2:
+Use H3s only for product/service variants or deliverables.
+Do NOT use H3s for attributes, technical features, quality claims, or minor details.
+
+3. Proof/Pricing H2:
+Usually keep `subheadings` empty.
+Use H3s only if there are clear pricing buckets such as:
+- pricing by package
+- pricing by location
+- pricing by product/service type
+Do NOT use H3s for explanation points like “what affects the price”.
+
+4. Differentiation H2:
+Always return an empty `subheadings` array.
+Brand benefits should be written in the body, not as H3s.
+
+5. Process H2:
+Usually return an empty `subheadings` array.
+Use H3s only when each step is a complex standalone phase.
+Do NOT create H3s for simple steps like planning, execution, testing, or delivery.
+
+6. Comparison H2:
+H3s are optional.
+Use them only when the comparison sides or criteria are substantial enough to become mini-sections.
+
+7. FAQ H2:
+H3s are allowed and should be real user questions.
 - FAQ Section: If the article needs FAQs, place one FAQ-style H2 near the end using a real user-question angle. Every H3 under this section MUST be a real question starting with (ما / كيف / هل / كم). Use common buyer questions or PAA signals.
+- Legal FAQ Rule: Do not create legal, documentation, contract, or verification FAQ questions unless the primary keyword or observed SERP/PAA explicitly supports them. Do not infer legal FAQs from brand context alone.
 - Closing Section: If the article needs a closing section, place one conclusion-style H2 last using a useful next-step or takeaway angle, not the label "Conclusion".
 
 3. HEADING QUALITY RULES
 - Every visible H2/H3 must be specific, scannable, and meaningful on its own.
 - Prefer natural, user-facing phrasing that sounds like a conversation with an expert. Avoid overly formal, abstract, or "writerly" wording.
 - Simple MSA Requirement: Use clear Modern Standard Arabic or simple professional Arabic. Avoid colloquial slang or regional dialects.
-- Pattern: clear promise, decision angle, or direct question + topic/entity/location.
-- Example: Instead of "مواصفات وأنماط الشقق المتاحة", use "ما أنواع الشقق المتاحة في القاهرة الجديدة؟".
+- Pattern: clear promise, decision angle, or direct question + topic (using Semantic Entity Variants).
+- Example: Instead of "Generic [Entity] specifications", use "What [Entity] types are available in [Location]?".
 - Keep SEO Strength: While phrasing should be natural, do NOT remove the primary keyword or weaken the search intent.
 - Avoid writer labels and filler labels.
 - Forbidden generic headings include:
   - Introduction, Overview, Summary, FAQ, FAQs, Questions, Pricing, Features, Benefits, Process, Steps, Conclusion, Final Thoughts, Why Us, Contact Us, Guide, Complete Guide
   - Arabic equivalents used as bare generic labels for introduction, overview, FAQ, prices, features, steps, or conclusion
 - No duplicate angles. Each H2 must cover a different reader job.
-- At least one early H2 should reflect the area naturally when an area is provided.
-- In `features`, stay strictly focused on the unit-level features of the "{{ head_entity }}". Cover layout, size, finishing, or what the buyer gets inside the unit. Do NOT drift into area benefits, investment, or general lifestyle.
-- In `proof`, pricing headings must provide a clear value angle (ranges, area differences, or what affects the price). Every heading discussing price, cost, or meter rates MUST explicitly include "{{ head_entity }}". 
-  - Avoid: "أسعار المتر في {{ head_entity }} {{ area }}".
-  - Prefer: "متوسط أسعار {{ head_entity }} {{ area }} حسب المنطقة وأهم العوامل المؤثرة".
+- Strict Entity Control: Stay clearly anchored to the entity domain, even when using outcome-focused or user-oriented phrasing. If the keyword is about [Entity Type A], do NOT introduce [Entity Type B], [Entity Type C], or any other irrelevant product type.
+- In `features`, stay strictly focused on the unit-level features of "{{ entity_phrase }}". You may use semantic variants of the entity in the heading.
+- In `proof`, pricing headings must provide a clear value angle. 
+  - Pricing headings must name the concrete service/product/entity object, or a clear semantic variant of it.
+  - Every heading discussing price, cost, or meter rates MUST remain anchored to "{{ entity_phrase }}".
+  - Do NOT use generic terms like "services", "solutions", or "offerings" alone unless they are qualified by the entity.
+  - For provider-style keywords, pricing should focus on the delivered service/product, not the provider phrase.
+  - Avoid repeating the exact entity phrase literally in every pricing H2.
+  - Good Pattern: "Cost of [service/product object] by scope, type, or location" or "What affects the price of [entity/service]?".
+  - Avoid: "Average service prices in [area]" or "Cost of solutions by type".
 - In `comparison`, help the reader choose between real options. Use clear tradeoffs or scenario-based comparisons.
-  - Avoid: "مقارنة بين {{ head_entity }} الجاهزة وتحت الإنشاء".
-  - Prefer: "هل تختار {{ head_entity }} جاهزة أم تحت الإنشاء في {{ area }}؟".
-- In `process`, focus on the buying journey only. Do not insert legal verification or contract-validation headings unless the keyword, SERP/PAA, or strategy clearly requires them.
+  - Avoid literal repetition: "Comparison between {{ entity_phrase }} Type A and Type B".
+  - Prefer semantic variants: "Should you choose [object variant A] or [object variant B] in {{ area }}?" or "Key tradeoffs between [model X] and [model Y]".
+  - Also valid: comparisons based on real buyer tradeoffs relevant to the entity domain.
+- In `process`, focus on the buying journey only. Keep the main entity of the primary keyword explicit in the H2, and keep the main location explicit when present. Do not replace the entity with generic phrasing like `شقتك الجديدة`, and do not narrow the area into shorthand like `التجمع` when the primary keyword is broader. Do not insert legal verification or contract-validation headings unless the keyword, SERP/PAA, or strategy clearly requires them.
 - In commercial articles, brand names may appear softly in the introduction, directly in one dedicated differentiation section, and strongly in the conclusion. Do not inject brand names or brand-service framing into informational H2s or H3s.
+- In the dedicated differentiation section, use a natural persuasive tone (e.g., "لماذا تختار...").
+- The differentiation H2 must clearly communicate a decision or benefit related to choosing or finding the primary entity.
+- It must stay directly connected to the keyword intent.
+- Avoid vague or generic phrasing that does not clearly help the user decide.
+- Prefer:
+  - "لماذا تختار {{ brand_name | default('المنصة') }} للبحث عن {{ primary_keyword }}؟"
+  - "كيف تساعدك {{ brand_name | default('المنصة') }} في العثور على {{ primary_keyword }} بسهولة؟"
+
 - Optional sections such as legal checks, financing/payment, infrastructure, or generic investment angles should appear only when clearly justified by the keyword, SERP/PAA signals, or the strategy.
 - Keep headings concise. Usually 4 to 11 words is ideal, but clarity matters more than strict length.
 - If the article is informational, prioritize clarity, comparisons, mistakes, methods, examples, and practical questions.
@@ -75,6 +184,9 @@ Your task is to generate only the heading structure layer of an article outline 
 - If the article is comparison-based, prioritize criteria, side-by-side differences, tradeoffs, and best-fit guidance.
 - Every H2 should answer a specific question: "What decision or question does this help the reader solve?".
 - Headings must sound natural and useful, not like they were forced to satisfy a checklist.
+- **ARABIC QUALITY RULE**: In Arabic process headings, avoid broken noun coordination (e.g., Avoid: "اختيار وتعاقد مع"). 
+- Use natural phrasing: "خطوات اختيار [الكيان] والتعاقد معه" or "كيف تختار [الكيان] وتتعاقد معه".
+- All headings must be grammatically natural and professional in `{{ article_language }}`.
 
 4. SILENT SELF-CHECK BEFORE YOU ANSWER
 - Would a reader understand what each section gives them without reading the body?

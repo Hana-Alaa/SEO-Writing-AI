@@ -1,0 +1,36 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 13:36:50
+ERROR: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 4 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- COMPARISON_SECTION_WEAK: 'هل الأفضل اختيار شقق بنظام الدفع الشهري أم السنوي في الرياض؟' should frame a real decision comparison such as ready vs under-construction, area differences, or payment differences.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 802, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 4 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- COMPARISON_SECTION_WEAK: 'هل الأفضل اختيار شقق بنظام الدفع الشهري أم السنوي في الرياض؟' should frame a real decision comparison such as ready vs under-construction, area differences, or payment differences.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-27 13:37:09
+ERROR: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 4 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- COMPARISON_SECTION_WEAK: 'هل الأفضل اختيار شقق بنظام الدفع الشهري أم السنوي في الرياض؟' should frame a real decision comparison such as ready vs under-construction, area differences, or payment differences.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 802, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- PRIMARY_KEYWORD_STUFFING_RISK: The full primary keyword appears in 4 core H2 headings. Keep one clear anchor H2 and avoid repeating the exact full keyword everywhere.
+- COMPARISON_SECTION_WEAK: 'هل الأفضل اختيار شقق بنظام الدفع الشهري أم السنوي في الرياض؟' should frame a real decision comparison such as ready vs under-construction, area differences, or payment differences.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

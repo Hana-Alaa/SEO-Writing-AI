@@ -55,7 +55,11 @@ class DiagnosticReporter:
         # Deep Dive Sections
         md.append("## 🔦 Strategic Intelligence & Google Research")
         research_data = state.get("research_context", "N/A")
-        serp_data = state.get("serp_raw", {})
+        serp_data = (
+            state.get("serp_raw")
+            or state.get("serp_data")
+            or state.get("seo_intelligence", {}).get("serp_raw", {})
+        )
         
         md.append(f"\n### 🌐 Google (SERP) Insights")
         md.append(f"```json\n{json.dumps(serp_data, indent=2, ensure_ascii=False) if serp_data else 'No SERP data logged.'}\n```")

@@ -11,6 +11,90 @@ from src.utils.style_extractor import StyleExtractor
 
 logger = logging.getLogger(__name__)
 
+LOCKED_BRAND_TARGET_READER_STATE = (
+    "A buyer with little or no prior market knowledge who needs simple, practical "
+    "guidance to understand the available options, compare them confidently, and "
+    "take a clear next step without feeling overwhelmed."
+)
+
+LOCKED_BRAND_TONE_DIRECTION = (
+    "Clear, confident, beginner-friendly, practical, and persuasive without pressure."
+)
+
+LOCKED_BRAND_CTA_PHILOSOPHY = (
+    "Earn action through clarity and trust. A very soft CTA may appear at the end "
+    "of the introduction only if the section has already delivered clear value. "
+    "Reserve the main CTA for the conclusion."
+)
+
+LOCKED_BRAND_SECTION_ROLE_MAP = {
+    "introduction": (
+        "Start with a light, relevant hook that reflects the buyer's need. Naturally "
+        "introduce the primary keyword. Briefly explain what the reader will "
+        "understand or be able to decide after reading. Optionally include one soft "
+        "brand mention and one very soft CTA only if it feels earned by the value "
+        "already given. Avoid urgency, investment language, legal framing, or generic "
+        "market commentary."
+    ),
+    "core_or_benefits": (
+        "Combine offer clarity with key buyer-facing features. Explain what the "
+        "offering is, what types or forms are available, and what the buyer "
+        "practically gets, using simple and scannable language."
+    ),
+    "proof": (
+        "Provide concrete product-tied proof such as pricing reality, value "
+        "differences, availability, delivery status, or trust signals connected "
+        "directly to the entity and location. Proof must stay tied to the product "
+        "at the unit level or listing level, not abstract market conditions. Do "
+        "not drift into broad market commentary, investment framing, or generic "
+        "authority language unless the support is directly tied to the buyer's "
+        "decision about the original entity."
+    ),
+    "process_or_how": (
+        "Explain the practical buying journey step by step, from filtering and "
+        "shortlisting to inquiry, viewing, and decision, without legal or "
+        "contract-heavy framing unless explicitly justified."
+    ),
+    "faq": (
+        "Answer beginner buyer questions and objections in simple language, "
+        "especially around choosing, price, readiness, and the buying steps."
+    ),
+    "conclusion": (
+        "Summarize the value clearly, reduce hesitation, and guide the reader to a "
+        "confident next step with a direct but not pushy CTA."
+    ),
+}
+
+STRATEGY_UNSAFE_PHRASES = [
+    "performance-first execution",
+    "comparing providers",
+    "fear of losing leads",
+    "business outcomes",
+    "implementation path",
+    "delivery model",
+    "provider selection",
+    "digital presence",
+    "broad market opportunity",
+]
+
+INVESTMENT_HEAVY_PHRASES = [
+    "roi",
+    "investment return",
+    "yield",
+    "capital appreciation",
+    "resale return",
+    "investment opportunity",
+    "investment",
+]
+
+LEGAL_HEAVY_PHRASES = [
+    "legal verification",
+    "compliance",
+    "documentation checklist",
+    "contract execution",
+    "legal",
+]
+
 class StrategyService:
     """Service dedicated to intent detection, brand style analysis, and content strategy."""
 
@@ -294,7 +378,7 @@ class StrategyService:
 
             if isinstance(parsed, dict) and parsed:
                 normalized = self._normalize_content_strategy(
-                    parsed, primary_keyword, content_type, area
+                    parsed, primary_keyword, content_type, area, seo_intelligence=seo_intelligence
                 )
                 if self._is_valid_content_strategy(normalized):
                     final_data = normalized
@@ -306,7 +390,7 @@ class StrategyService:
         if final_data is None:
             logger.error("Content Strategy failed after retries. Using deterministic fallback.")
             final_data = self._normalize_content_strategy(
-                {}, primary_keyword, content_type, area
+                {}, primary_keyword, content_type, area, seo_intelligence=seo_intelligence
             )
 
         state["content_strategy"] = final_data
@@ -356,7 +440,275 @@ class StrategyService:
             
         return intent
 
-    def _normalize_content_strategy(self, data: Dict[str, Any], primary_keyword: str, content_type: str, area: str) -> Dict[str, Any]:
+    def _normalize_token(self, value: str) -> str:
+        return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+    def _keyword_supports_heavy_framing(self, primary_keyword: str, seo_intelligence: Optional[Dict[str, Any]] = None) -> bool:
+        keyword_norm = self._normalize_token(primary_keyword)
+        heavy_terms = INVESTMENT_HEAVY_PHRASES + LEGAL_HEAVY_PHRASES
+        if any(term in keyword_norm for term in heavy_terms):
+            return True
+
+        market_analysis = (seo_intelligence or {}).get("market_analysis", {}) if isinstance(seo_intelligence, dict) else {}
+        market_insights = market_analysis.get("market_insights", {}) if isinstance(market_analysis, dict) else {}
+        observations = market_insights.get("topic_observations", {}) if isinstance(market_insights, dict) else {}
+
+        for bucket_name in ("core_recurring_topics", "secondary_mentions"):
+            for topic in observations.get(bucket_name, []) or []:
+                topic_text = self._normalize_token(topic.get("topic", ""))
+                frequency = int(topic.get("frequency", 0) or 0)
+                confidence = self._normalize_token(topic.get("confidence", ""))
+                if any(term in topic_text for term in heavy_terms) and (frequency >= 2 or confidence == "high"):
+                    return True
+
+        return False
+
+    def _derive_head_entity(self, primary_keyword: str, area: str = "") -> str:
+        return self._derive_entity_terms(primary_keyword, area).get("head", "")
+
+    def _normalize_arabic(self, text: str) -> str:
+        if not text: return ""
+        replacements = {"أ": "ا", "إ": "ا", "آ": "ا", "ة": "ه", "ى": "ي", "ئ": "ء", "ؤ": "ء"}
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        return text.lower()
+
+    def _derive_entity_terms(self, primary_keyword: str, area: str = "") -> Dict[str, str]:
+        text = str(primary_keyword or "").strip()
+        if not text:
+            return {"head": "", "phrase": ""}
+
+        if area:
+            text = re.sub(re.escape(area), " ", text, flags=re.IGNORECASE)
+
+        tokens = re.findall(r"[\w\u0600-\u06FF]+", text, re.UNICODE)
+        normalized_tokens = [self._normalize_arabic(token) for token in tokens]
+        
+        stop_tokens = {
+            "for", "sale", "buy", "buying", "in", "vs", "best", "top", "cheap", "cheapest",
+            "what", "how", "guide", "review", "compare", "comparison", "near", "new",
+            "في", "فى", "للبيع", "شراء", "مقارنة", "افضل", "أفضل", "ارخص", "أرخص", "دليل",
+            "ما", "كيف", "هل", "سعر", "اسعار", "أسعار",
+        }
+        strong_property_heads = {
+            "شقه", "شقق", "عقار", "عقارات", "وحده", "وحدات", "محل", "محلات",
+            "فيلا", "فلل", "فيلات", "شاليه", "شاليهات", "ارض", "اراضي",
+            "apartment", "apartments", "flat", "flats", "villa", "villas", "chalet", "chalets",
+            "shop", "shops", "store", "stores", "land", "lands", "plot", "plots",
+        }
+        ambiguous_property_heads = {"مكتب", "مكاتب", "office", "offices"}
+        intent_tokens = {
+            "بيع", "للبيع", "شراء", "ايجار", "للايجار", "استئجار", "حجز", "للحجز",
+            "sale", "rent", "rental", "booking", "book",
+        }
+        boundary_tokens = {"في", "فى", "in", "near", "vs", "مقارنة", "مقارنه"}
+        compound_service_heads = {"شركه", "مكتب", "عياده", "مركز", "وكاله", "مؤسسه", "منصه", "خدمه", "خدمات"}
+
+        head = ""
+        head_index = -1
+        for idx, normalized in enumerate(normalized_tokens):
+            if normalized and normalized not in stop_tokens:
+                head = tokens[idx]
+                head_index = idx
+                break
+
+        if not head:
+            fallback = tokens[0] if tokens else text
+            return {"head": fallback, "phrase": fallback}
+
+        phrase_tokens = [head]
+        normalized_head = self._normalize_arabic(head)
+        has_property_intent = any(token in intent_tokens for token in normalized_tokens)
+        is_property_like = normalized_head in strong_property_heads or (
+            normalized_head in ambiguous_property_heads and has_property_intent
+        )
+
+        for idx in range(head_index + 1, len(tokens)):
+            token = tokens[idx]
+            normalized = normalized_tokens[idx]
+            if not normalized:
+                continue
+            if normalized in boundary_tokens or re.fullmatch(r"\d{4}", normalized):
+                break
+
+            if is_property_like:
+                break
+
+            phrase_tokens.append(token)
+
+        phrase = " ".join(phrase_tokens).strip() or head
+        return {"head": head, "phrase": phrase}
+
+    def _build_brand_market_angle(self, primary_keyword: str, area: str) -> str:
+        entity = self._derive_entity_terms(primary_keyword, area).get("phrase") or primary_keyword
+        place = area or "the target area"
+        return (
+            f"Help the reader compare {entity} in {place} by practical decision factors "
+            f"such as available options, fit, price or value, proof, and the clearest next step."
+        )
+
+    def _build_brand_primary_angle(self, primary_keyword: str, area: str) -> str:
+        entity = self._derive_entity_terms(primary_keyword, area).get("phrase") or primary_keyword
+        place = area or "the target area"
+        return (
+            f"Help the reader decide how to compare and choose {entity} in {place} "
+            f"based on practical buying factors."
+        )
+
+    def _build_brand_conversion_strategy(self) -> str:
+        return (
+            "Clarify the offer -> show buyer-facing features -> provide practical proof "
+            "-> help compare real options -> reduce friction in the buying path -> "
+            "answer objections -> close with a confident final CTA."
+        )
+
+    def _build_brand_local_strategy(self, primary_keyword: str, area: str) -> str:
+        entity = self._derive_entity_terms(primary_keyword, area).get("phrase") or primary_keyword
+        place = area or "the target area"
+        return (
+            f"Keep local references focused on {place} only when they help the reader "
+            f"compare, choose, or buy {entity} more confidently."
+        )
+
+    def _build_brand_emotional_trigger(self) -> str:
+        return "Confidence from understanding the options clearly and avoiding the wrong fit."
+
+    def _contains_forbidden_strategy_phrase(self, text: str, allow_heavy_framing: bool = False) -> bool:
+        normalized = self._normalize_token(text)
+        phrases = list(STRATEGY_UNSAFE_PHRASES)
+        if not allow_heavy_framing:
+            phrases += INVESTMENT_HEAVY_PHRASES + LEGAL_HEAVY_PHRASES
+        return any(phrase in normalized for phrase in phrases)
+
+    def _sanitize_brand_strategy_list(self, values: Any, allow_heavy_framing: bool = False) -> List[str]:
+        if not isinstance(values, list):
+            return []
+
+        sanitized = []
+        for value in values:
+            text = str(value or "").strip()
+            if not text:
+                continue
+            if self._contains_forbidden_strategy_phrase(text, allow_heavy_framing=allow_heavy_framing):
+                continue
+            sanitized.append(text)
+        return sanitized
+
+    def _sanitize_brand_scalar(
+        self,
+        value: Any,
+        fallback: str = "",
+        allow_heavy_framing: bool = False,
+    ) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return fallback
+        if self._contains_forbidden_strategy_phrase(text, allow_heavy_framing=allow_heavy_framing):
+            return fallback
+        return text
+
+    def _brand_commercial_defaults(self, primary_keyword: str, area: str) -> Dict[str, Any]:
+        return {
+            "primary_angle": self._build_brand_primary_angle(primary_keyword, area),
+            "market_angle": self._build_brand_market_angle(primary_keyword, area),
+            "target_reader_state": LOCKED_BRAND_TARGET_READER_STATE,
+            "pain_point_focus": [],
+            "emotional_trigger": self._build_brand_emotional_trigger(),
+            "depth_level": "comprehensive",
+            "authority_strategy": [],
+            "eeat_signals_to_include": [],
+            "differentiation_focus": [],
+            "conversion_strategy": self._build_brand_conversion_strategy(),
+            "cta_philosophy": LOCKED_BRAND_CTA_PHILOSOPHY,
+            "local_strategy": self._build_brand_local_strategy(primary_keyword, area),
+            "cultural_peer_areas": [],
+            "tone_direction": LOCKED_BRAND_TONE_DIRECTION,
+            "section_role_map": dict(LOCKED_BRAND_SECTION_ROLE_MAP),
+        }
+
+    def _apply_brand_commercial_contract(
+        self,
+        strategy: Dict[str, Any],
+        primary_keyword: str,
+        area: str,
+        seo_intelligence: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        contracted = dict(strategy)
+        defaults = self._brand_commercial_defaults(primary_keyword, area)
+        allow_heavy_framing = self._keyword_supports_heavy_framing(primary_keyword, seo_intelligence)
+
+        contracted["target_reader_state"] = defaults["target_reader_state"]
+        contracted["tone_direction"] = defaults["tone_direction"]
+        contracted["cta_philosophy"] = defaults["cta_philosophy"]
+        contracted["section_role_map"] = dict(defaults["section_role_map"])
+        contracted["depth_level"] = defaults["depth_level"]
+        contracted["cultural_peer_areas"] = []
+        contracted["market_angle"] = defaults["market_angle"]
+        contracted["local_strategy"] = self._sanitize_brand_scalar(
+            contracted.get("local_strategy"),
+            fallback=defaults["local_strategy"],
+            allow_heavy_framing=allow_heavy_framing,
+        )
+        contracted["emotional_trigger"] = self._sanitize_brand_scalar(
+            contracted.get("emotional_trigger"),
+            fallback=defaults["emotional_trigger"],
+            allow_heavy_framing=allow_heavy_framing,
+        )
+
+        candidate_primary_angle = contracted.get("primary_angle", "")
+        entity = self._derive_entity_terms(primary_keyword, area).get("phrase") or self._derive_head_entity(primary_keyword, area)
+        area_present = not area or area in str(candidate_primary_angle)
+        entity_present = not entity or entity in str(candidate_primary_angle)
+        decision_present = any(
+            token in self._normalize_token(candidate_primary_angle)
+            for token in ("decide", "compare", "choose", "buy")
+        )
+        if (
+            not candidate_primary_angle
+            or not area_present
+            or not entity_present
+            or not decision_present
+            or self._contains_forbidden_strategy_phrase(candidate_primary_angle, allow_heavy_framing=allow_heavy_framing)
+        ):
+            contracted["primary_angle"] = defaults["primary_angle"]
+        else:
+            contracted["primary_angle"] = str(candidate_primary_angle).strip()
+
+        candidate_conversion = contracted.get("conversion_strategy", "")
+        required_markers = ("offer", "features", "proof", "compare", "buying", "objection", "cta")
+        conversion_normalized = self._normalize_token(candidate_conversion)
+        if (
+            not candidate_conversion
+            or self._contains_forbidden_strategy_phrase(candidate_conversion, allow_heavy_framing=allow_heavy_framing)
+            or not all(marker in conversion_normalized for marker in required_markers)
+        ):
+            contracted["conversion_strategy"] = defaults["conversion_strategy"]
+        else:
+            contracted["conversion_strategy"] = str(candidate_conversion).strip()
+
+        contracted["pain_point_focus"] = self._sanitize_brand_strategy_list(
+            contracted.get("pain_point_focus"), allow_heavy_framing=allow_heavy_framing
+        )
+        contracted["authority_strategy"] = self._sanitize_brand_strategy_list(
+            contracted.get("authority_strategy"), allow_heavy_framing=allow_heavy_framing
+        )
+        contracted["eeat_signals_to_include"] = self._sanitize_brand_strategy_list(
+            contracted.get("eeat_signals_to_include"), allow_heavy_framing=allow_heavy_framing
+        )
+        contracted["differentiation_focus"] = self._sanitize_brand_strategy_list(
+            contracted.get("differentiation_focus"), allow_heavy_framing=allow_heavy_framing
+        )
+
+        return contracted
+
+    def _normalize_content_strategy(
+        self,
+        data: Dict[str, Any],
+        primary_keyword: str,
+        content_type: str,
+        area: str,
+        seo_intelligence: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         defaults = {
             "primary_angle": f"{primary_keyword} with performance-first execution",
             "market_angle": "Practical, conversion-focused, locally adapted",
@@ -381,6 +733,8 @@ class StrategyService:
                 "conclusion": "Reinforce value + final strong CTA"
             }
         }
+        if content_type == "brand_commercial":
+            defaults = self._brand_commercial_defaults(primary_keyword, area)
 
         out = defaults.copy()
         if isinstance(data, dict):
@@ -395,6 +749,14 @@ class StrategyService:
         else:
             # Deep merge role map
             out["section_role_map"] = {**defaults["section_role_map"], **out["section_role_map"]}
+
+        if content_type == "brand_commercial":
+            out = self._apply_brand_commercial_contract(
+                out,
+                primary_keyword,
+                area,
+                seo_intelligence=seo_intelligence,
+            )
 
         return out
 

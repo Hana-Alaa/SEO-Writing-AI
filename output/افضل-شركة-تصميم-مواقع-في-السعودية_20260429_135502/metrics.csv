@@ -1,0 +1,1085 @@
+﻿completion_tokens,duration_sec,estimated_cost,is_google,model,prompt_text,prompt_tokens,response_text,step_name,timestamp,total_tokens
+0,0,0.0,False,N/A,N/A,0,"{'title': 'افضل شركة تصميم مواقع في السعودية', 'language': 'ar', 'primary_keyword': 'افضل شركة تصميم مواقع في السعودية', 'output_dir': 'F:\\SEO-Writing-AI\\output\\افضل-شركة-تصميم-مواقع-في-السعودية_20260429_135502'}",EVENT: Initialization,2026-04-29T13:55:02.926307,0
+0,0.0,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: brand_discovery,2026-04-29T13:55:02.927318,0
+6336,45.457,0.0,False,unknown,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: افضل شركة تصميم مواقع في السعودية
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.",22343,"{""top_results"":[{""title"":""افضل شركة تصميم مواقع الكترونية و استضافة في السعودية"",""url"":""https://is.net.sa/ar/"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""افضل شركة تصميم مواقع الكترونية و استضافة في السعودية"",""h2"":[""عملاؤنا"",""تقييمات وآراء عملاؤنا"",""أهم الأسئلة حول خدماتنا""],""h3"":[""بناء هوية رقمية و بصرية"",""الفرق بين تصميم موقع الكتروني احترافي وموقع بقالب جاهز"",""الفرق بين شركات تصميم مواقع الانترنت""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""ارخص شركة تصميم مواقع"",""url"":""https://csit.sa/articles/ارخص-شركة-تصميم-مواقع"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""ارخص شركة تصميم مواقع"",""h2"":[""ما أهمية تصميم موقع الكتروني في 2025؟"",""ما الذي يميز شركة المنظومة الإبداعية عن غيرها من الشركات؟"",""كم تكلفة تصميم موقع إلكتروني؟"",""خطوات بسيطة لاختيار ارخص شركة تصميم مواقع مع مراعاة الجودة"",""لمن تناسب خدمات المنظومة الإبداعية؟"",""ما خطوات التعاقد مع شركة المنظومة الإبداعية؟"",""أفضل شركة تصميم مواقع الكترونية؟"",""خطوات تصميم موقع الكتروني:""] ,""h3"":[""الروابط الرئيسية"",""العلامات""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""افضل شركة تصميم مواقع في السعودية"",""url"":""https://mutasadir.sa"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""افضل شركة تصميم مواقع في السعودية"",""h2"":[""تصميم مواقع واستراتيجيات تسويق و سيو بالسوق السعودي"",""تصميم وتطوير المواقع الإلكترونية"",""تطوير وبرمجة تطبيقات الهاتف"",""حلول إدارة الإستضافة"",""إدارة الإعلانات الرقمية - Google Ads"",""التسويق عبر الفيديو"",""فيديوهات الموشن جرافيك"",""إدارة إعلانات وسائل التواصل الاجتماعي"",""تهيئة المواقع لمحركات البحث SEO""].slice(0,8),""h3"":[""شركة متصدر الأكثر ثقة بين شركات البرمجة والديجتال"",""نقدم استراتيجيات الخدمة المتكاملة لكل العملاء"",""خدمات برمجة وتسويق بالتزامات موثوقة""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""تصميم مواقع إلكترونية"",""استضافة سحابية"",""تحسين محركات البحث"",""تسويق رقمي""],""content_gaps"":[],""common_patterns"":[""Use of H1 titles containing 'أفضل شركة'"",""Use of H2 headings as informative questions"",""Use of bullet point lists under headings""],""common_strengths"":[""Clear H1 headings stating page purpose"",""Structured H2 and H3 headings"",""Use of bullet lists for feature presentation"",""Inclusion of CTAs""],""common_weaknesses"":[],""observed_notes"":[""Page 1 is dominated by commercial company pages rather than independent informational guides""],""unsupported_data"":[""meta_title not observed"",""meta_description not observed"",""estimated_word_count not determined""],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""page_content""}}",web_research,2026-04-29T13:55:48.388751,28679
+5522,45.405,0.0,False,unknown,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: افضل شركة تصميم مواقع في السعودية
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.",25960,"{""top_results"":[{""title"":""تصميم مواقع الكترونية 〖﻿اقل تكلفة〗〖افضل شركة〗 تصميم مواقع في السعودية"",""url"":""https://elryad.com/ar/"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""تصميم مواقع الكترونية"",""h2"":[""تصميم مواقع الكترونية وعروض الأسعار"",""تصميم مواقع الكترونية بمواصفات خاصة"",""افضل شركة تصميم مواقع في السعودية"",""خدمات تصميم مواقع الإنترنت"",""احصائياتنا""],""h3"":[""باقات تصميم المواقع الالكترونية مخصصة وفقا لرؤية شركة الرياض 2026 تلبي احتياجات جميع المؤسسات"",""تصميم مواقع الكترونية أساسية"",""تصميم مواقع الكترونية احترافية""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""أفضل شركة تصميم مواقع في السعودية | شركة تقنية"",""url"":""https://www.tqniait.com/web-design-saudi/"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""تصميم مواقع في السعودية"",""h2"":[""خصم يصل 25%"",""لفترة محدودة""],""h3"":[]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""},{""title"":""دليل اختيار أفضل شركة تصميم مواقع في السعودية 2026"",""url"":""https://khelj.com/blogs/50"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""دليل اختيار أفضل شركة تصميم مواقع في السعودية 2026"",""h2"":[""ما هو تصميم مواقع الويب؟"",""لماذا يتطلب السوق السعودي معايير خاصة؟"",""ما أهمية اختيار شركة تصميم مواقع محترفة؟"",""معايير اختيار أفضل شركة تصميم مواقع في السعودية"",""أسئلة يجب أن تطرحها قبل التعاقد مع شركة تصميم مواقع""],""h3"":[""كيف تقارن بين الشركات في السوق السعودي؟"",""أولًا المعايير الأساسية"",""ثانيًا المعايير التقنية الحاسمة""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""تصميم_مواقع"",""شركة_تصميم_مواقع"",""برمجة_مواقع"",""سيو_تقني"",""CoreWebVitals"",""خليج_للبرمجيات""],""content_gaps"":[],""common_patterns"":[""Use of bullet point lists to outline service features"",""Presence of H1 headings with the core service keyword"",""Use of images for credibility""],""common_strengths"":[""Clear H1 headings indicating the web design service"",""Use of bullet lists to present service details"",""Inclusion of images/logos to showcase work""],""common_weaknesses"":[""Lack of semantic HTML heading tags on company pages""],""observed_notes"":[""SERP includes both service landing pages and an informational guide""],""unsupported_data"":[""meta_title for elryad.com"",""meta_description for elryad.com"",""meta_title for tqniait.com"",""meta_description for tqniait.com"",""meta_title for khelj.com"",""meta_description for khelj.com""],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""page_content""}}",web_research,2026-04-29T13:56:34.133062,31482
+0,91.205,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: web_research,2026-04-29T13:56:34.134570,0
+0,9.542,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: serp_analysis,2026-04-29T13:56:43.677096,0
+0,1.595,0.0,False,unknown,"You are a Practical User Intent & Title Advisor.
+
+Input:
+- Raw topic: افضل شركة تصميم مواقع في السعودية
+- Primary keyword: افضل شركة تصميم مواقع في السعودية
+- Language: ar
+- Current Year: 2026
+- Top SERP titles: [""\u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 \u0627\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629 \u3016\ufeff\u0627\u0642\u0644 \u062a\u0643\u0644\u0641\u0629\u3017\u3016\u0627\u0641\u0636\u0644 \u0634\u0631\u0643\u0629\u3017 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629"", ""\u0623\u0641\u0636\u0644 \u0634\u0631\u0643\u0629 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 | \u0634\u0631\u0643\u0629 \u062a\u0642\u0646\u064a\u0629"", ""\u062f\u0644\u064a\u0644 \u0627\u062e\u062a\u064a\u0627\u0631 \u0623\u0641\u0636\u0644 \u0634\u0631\u0643\u0629 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 2026""]
+- SERP CTA styles: [""soft commercial"", ""aggressive"", ""soft commercial""]
+- Target Area: السعودية
+- Brand Name: 
+
+Task:
+1. Classify intent using the ""Practical Detection Hierarchy"":
+   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about ""Web Design"" becomes `commercial` if a Brand is present).
+   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.
+   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves ""Vs"", ""Comparison"", ""Better between X and Y"", or comparing different options, the intent is **comparative**.
+   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.
+
+Allowed intents:
+- informational → searching for knowledge, guides, or tutorials.
+- commercial → evaluating a specific service/product or ready to take action.
+- comparative → comparing different options with brand helpfulness as the preferred choice.
+
+Title rules:
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use a Helpful, Practical Advisor tone (e.g., ""Simplified"", ""Complete Guide"", ""Tips"", ""Top-Rated""). 
+- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
+- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.
+- BRANDING (FALLBACK): 
+    * If `Brand Name` is ""Not provided"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK): 
+    * If `Target Area` is ""Global"", ""General"", or ""International"", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.
+- No markdown, no extra text.
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": ""The Clear, Helpful, Brand-Focused H1""
+}",0,"{
+  ""optimized_title"": ""أفضل شركة تصميم مواقع في السعودية 2026: دليلك لاختيار شريكك التقني"",
+  ""intent"": ""commercial"",
+  ""metadata"": {
+    ""duration"": 1.5949201583862305,
+    ""model"": ""google/gemini-3-flash-preview"",
+    ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: افضل شركة تصميم مواقع في السعودية\n- Primary keyword: افضل شركة تصميم مواقع في السعودية\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0627\\u0644\\u0643\\u062a\\u0631\\u0648\\u0646\\u064a\\u0629 \\u3016\\ufeff\\u0627\\u0642\\u0644 \\u062a\\u0643\\u0644\\u0641\\u0629\\u3017\\u3016\\u0627\\u0641\\u0636\\u0644 \\u0634\\u0631\\u0643\\u0629\\u3017 \\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0633\\u0639\\u0648\\u062f\\u064a\\u0629\"", \""\\u0623\\u0641\\u0636\\u0644 \\u0634\\u0631\\u0643\\u0629 \\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0633\\u0639\\u0648\\u062f\\u064a\\u0629 | \\u0634\\u0631\\u0643\\u0629 \\u062a\\u0642\\u0646\\u064a\\u0629\"", \""\\u062f\\u0644\\u064a\\u0644 \\u0627\\u062e\\u062a\\u064a\\u0627\\u0631 \\u0623\\u0641\\u0636\\u0644 \\u0634\\u0631\\u0643\\u0629 \\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0633\\u0639\\u0648\\u062f\\u064a\\u0629 2026\""]\n- SERP CTA styles: [\""soft commercial\"", \""aggressive\"", \""soft commercial\""]\n- Target Area: السعودية\n- Brand Name: \n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""commercial\"",\n  \""confidence\"": 1.0,\n  \""optimized_title\"": \""أفضل شركة تصميم مواقع في السعودية 2026: دليلك لاختيار شريكك التقني\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 1858,
+      ""completion_tokens"": 54,
+      ""reasoning_tokens"": 0,
+      ""total_tokens"": 1912
+    },
+    ""reasoning_details"": [
+      {
+        ""type"": ""reasoning.encrypted"",
+        ""data"": ""CiEBjz1rXyeba8VmVw07RaAHmZQg01Qxad5k8X4S3xN0z6o="",
+        ""format"": ""google-gemini-v1"",
+        ""index"": 0
+      }
+    ]
+  },
+  ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: افضل شركة تصميم مواقع في السعودية\n- Primary keyword: افضل شركة تصميم مواقع في السعودية\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0627\\u0644\\u0643\\u062a\\u0631\\u0648\\u0646\\u064a\\u0629 \\u3016\\ufeff\\u0627\\u0642\\u0644 \\u062a\\u0643\\u0644\\u0641\\u0629\\u3017\\u3016\\u0627\\u0641\\u0636\\u0644 \\u0634\\u0631\\u0643\\u0629\\u3017 \\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0633\\u0639\\u0648\\u062f\\u064a\\u0629\"", \""\\u0623\\u0641\\u0636\\u0644 \\u0634\\u0631\\u0643\\u0629 \\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0633\\u0639\\u0648\\u062f\\u064a\\u0629 | \\u0634\\u0631\\u0643\\u0629 \\u062a\\u0642\\u0646\\u064a\\u0629\"", \""\\u062f\\u0644\\u064a\\u0644 \\u0627\\u062e\\u062a\\u064a\\u0627\\u0631 \\u0623\\u0641\\u0636\\u0644 \\u0634\\u0631\\u0643\\u0629 \\u062a\\u0635\\u0645\\u064a\\u0645 \\u0645\\u0648\\u0627\\u0642\\u0639 \\u0641\\u064a \\u0627\\u0644\\u0633\\u0639\\u0648\\u062f\\u064a\\u0629 2026\""]\n- SERP CTA styles: [\""soft commercial\"", \""aggressive\"", \""soft commercial\""]\n- Target Area: السعودية\n- Brand Name: \n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}""
+}",intent_title,2026-04-29T13:56:45.276577,0
+67,3.009,8.3e-05,True,google/gemini-3-flash-preview,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""افضل شركة تصميم مواقع في السعودية""
+Primary Keyword: ""افضل شركة تصميم مواقع في السعودية""
+Brand Context: """"
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}",631,"{
+  ""reasoning"": ""The user is searching for the 'best' service provider ('افضل شركة') in a specific industry (web design) and location (Saudi Arabia). This indicates a high-intent search for a professional solution or agency to fulfill a business need."",
+  ""intent"": ""Commercial""
+}",STEP_TOTAL: intent_title,2026-04-29T13:56:46.686644,698
+67,0.004,8.3e-05,True,google/gemini-3-flash-preview,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""افضل شركة تصميم مواقع في السعودية""
+Primary Keyword: ""افضل شركة تصميم مواقع في السعودية""
+Brand Context: """"
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}",631,"{
+  ""reasoning"": ""The user is searching for the 'best' service provider ('افضل شركة') in a specific industry (web design) and location (Saudi Arabia). This indicates a high-intent search for a professional solution or agency to fulfill a business need."",
+  ""intent"": ""Commercial""
+}",STEP_TOTAL: style_analysis,2026-04-29T13:56:46.690156,698
+762,6.722,0.0,False,unknown,"You are building a content strategy based on provided inputs.
+
+Inputs:
+- Primary Keyword: افضل شركة تصميم مواقع في السعودية
+- Intent: commercial
+- Content Type: brand_commercial
+- Target Area: السعودية
+- SERP Intent Analysis: {""confirmed_intent"": ""commercial"", ""intent_confidence_score"": 0.9, ""dominant_page_type"": ""Service Page / Guide"", ""service_vs_guide_ratio"": 0.66, ""commercial_signal_strength"": 0.8, ""informational_signal_strength"": 0.7}
+- SERP Structural Intelligence: {""dominant_page_type"": ""Service Page"", ""avg_word_count"": 0, ""avg_h2_count"": 4.0, ""avg_h3_count"": 2.0, ""total_h2_count"": 12, ""total_h3_count"": 6, ""heading_data_missing"": false, ""dominant_heading_pattern"": ""H2 for service categories, H3 for specific projects/features"", ""cta_position_pattern"": ""mixed"", ""cta_intensity_pattern"": ""moderate"", ""pricing_presence_ratio"": 0.66, ""faq_presence_ratio"": 0.33, ""list_presence_ratio"": 0.0, ""image_density_pattern"": ""medium"", ""chart_presence_ratio"": 0.0, ""trust_signal_density"": ""high"", ""local_keyword_density"": ""high"", ""detected_area"": ""Saudi Arabia""}
+- SERP Market Insights: {""content_gaps"": [], ""brand_advantages"": [{""brand"": ""elryad.com"", ""advantage"": ""Experience of more than 15 years, official website design, money-back guarantee""}, {""brand"": ""tqniait.com"", ""advantage"": ""24/7 customer service, stable services without interruption""}], ""keyword_clusters"": [{""cluster_name"": ""Core Services"", ""keywords"": [""\u062a\u0635\u0645\u064a\u0645_\u0645\u0648\u0627\u0642\u0639"", ""\u0628\u0631\u0645\u062c\u0629_\u0645\u0648\u0627\u0642\u0639"", ""\u062a\u0635\u0645\u064a\u0645 \u062a\u0637\u0628\u064a\u0642\u0627\u062a \u0627\u0644\u062c\u0648\u0627\u0644""]}, {""cluster_name"": ""Technical SEO"", ""keywords"": [""\u0633\u064a\u0648_\u062a\u0642\u0646\u064a"", ""CoreWebVitals""]}], ""writing_guide"": ""The content should balance between showcasing a portfolio of previous work (government and commercial) and providing criteria for choosing a provider in the Saudi market. High emphasis on trust signals like 'official' and 'experience years'."", ""differentiation_strategy"": [], ""mandatory_serp_topics"": [], ""market_data_signals"": {""avg_unit_price_range"": """", ""common_down_payment_or_fees"": """", ""typical_duration_or_terms"": """", ""notable_market_trends"": [""Shift towards custom development vs templates"", ""Focus on 2026 vision alignment""]}, ""topic_observations"": {""core_recurring_topics"": [{""topic"": ""\u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629 (Website Design)"", ""frequency"": 3, ""confidence"": ""high""}, {""topic"": ""\u0623\u0641\u0636\u0644 \u0634\u0631\u0643\u0629 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 (Best Company in KSA)"", ""frequency"": 3, ""confidence"": ""high""}, {""topic"": ""\u062a\u0635\u0645\u064a\u0645 \u0627\u0644\u0645\u062a\u0627\u062c\u0631 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629 (E-commerce Design)"", ""frequency"": 2, ""confidence"": ""high""}], ""secondary_mentions"": [{""topic"": ""\u0645\u0639\u0627\u064a\u064a\u0631 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u0634\u0631\u0643\u0629 (Selection Criteria)"", ""frequency"": 2, ""confidence"": ""medium""}, {""topic"": ""\u0627\u0633\u062a\u0636\u0627\u0641\u0629 \u0627\u0644\u0645\u0648\u0627\u0642\u0639 (Web Hosting)"", ""frequency"": 2, ""confidence"": ""medium""}, {""topic"": ""\u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0623\u0639\u0645\u0627\u0644/\u0627\u0644\u0639\u0645\u0644\u0627\u0621 (Portfolio/Clients)"", ""frequency"": 2, ""confidence"": ""medium""}], ""weak_signals"": [{""topic"": ""\u0633\u064a\u0648 \u062a\u0642\u0646\u064a (Technical SEO)"", ""frequency"": 1, ""confidence"": ""low""}, {""topic"": ""CoreWebVitals"", ""frequency"": 1, ""confidence"": ""low""}, {""topic"": ""\u062a\u0635\u0645\u064a\u0645 \u0627\u0644\u0647\u0648\u064a\u0629 \u0627\u0644\u062a\u062c\u0627\u0631\u064a\u0629 (Brand Identity)"", ""frequency"": 1, ""confidence"": ""low""}]}}
+
+CRITICAL RULE:
+You must NOT introduce any concept that is not strongly supported by:
+- the primary keyword
+OR
+- high-confidence SERP observations
+
+IMPORTANT:
+- You are building a minimal, realistic strategy.
+- You are not writing an idealized or over-optimized plan.
+- Commercial intent does NOT mean generic service-page logic.
+- Keep the main entity in the primary keyword as the center of the strategy.
+- Assume the reader is a buyer with little or no prior market knowledge.
+- Use simple, practical, buyer-facing language.
+- Keep the strategy helpful for a real buyer decision, not a business-growth or provider-selection pitch.
+
+STRICT RULES:
+1. Do NOT enforce:
+   - investment framing
+   - legal framing
+   - ROI or financial analysis
+   unless explicitly required by the keyword or strongly supported by repeated high-confidence SERP signals.
+
+2. Do NOT generalize the entity.
+   Example:
+   - apartments must remain apartments
+   - do NOT broaden them into the real estate market
+   - all strategic fields must preserve the main entity of the primary keyword as the core subject
+   - do NOT drift into broader categories such as real estate, projects, developments, or market unless still clearly centered on the original entity
+
+3. Strategy must be:
+   - intent-aligned
+   - entity-focused
+   - minimal, not inflated
+   - beginner-friendly
+   - decision-oriented
+
+4. Do NOT convert weak signals into core sections.
+   - Treat `core_recurring_topics` as the strongest support.
+   - Treat `secondary_mentions` as optional support only when they still serve the main entity and intent.
+   - Treat `weak_signals` as non-core. They must not drive the structure.
+
+5. Brand presence:
+   - allowed only in differentiation and conclusion
+   - must not influence structural decisions
+   - must not redefine the article as a brand-first page
+
+6. Avoid:
+   - over-architected structures
+   - unnecessary sections
+   - forced authority signals
+   - generic market commentary
+
+7. Use only the strongest observed signals.
+   - If SERP observations are thin or mixed, keep the strategy conservative.
+   - Leave unsupported fields minimal or empty rather than inflating them.
+
+8. The strategy must support a real user journey:
+   - understand the offering
+   - evaluate relevant features
+   - review concrete proof
+   - compare realistic options
+   - understand the practical buying path
+   - resolve objections
+   - take the next step
+
+9. Keep section roles clean:
+   - `introduction`: start with a light, relevant hook, introduce the primary keyword naturally, explain what the reader will understand or decide, and keep any brand mention soft
+   - `core_or_benefits`: combine offer clarity with buyer-facing features
+   - `proof`: observed pricing, value, availability, delivery status, or trust signals tied to the entity only and kept at the product/unit/listing level
+   - `process_or_how`: practical buying path only, not legal-heavy process language
+   - `faq`: objections actually supported by the keyword or strong SERP observations
+   - `conclusion`: concise next-step closure
+
+10. Do NOT force these into the strategy unless strongly supported:
+   - investment return
+   - legal verification
+   - financing complexity
+   - infrastructure impact
+   - broad authority narratives
+
+11. `primary_angle` must describe:
+   - what the reader is trying to decide
+   - using the main entity + location
+   - in buyer-facing language
+   - without business, provider, performance, legal, or investment outcomes
+
+12. `market_angle` must be compact and practical.
+   - It should describe the decision lens for comparing the main entity in the target area.
+   - Do NOT turn it into broad market commentary.
+
+13. `conversion_strategy` must stay within this bounded journey:
+   - clarify the offer
+   - show buyer-facing features
+   - provide practical proof
+   - help compare real options
+   - reduce friction in the buying path
+   - answer objections
+   - close with a confident final CTA
+   - Do NOT use funnel language, urgency pressure, or agency/service sales logic.
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object.
+Do NOT include any explanations, markdown formatting, or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+OUTPUT SAFETY:
+- If a concept is unsupported, leave it out.
+- If a list is weakly supported, return an empty list.
+- Do not name competitors.
+- Do not expand one-off signals into the strategy.",3392,"{
+  ""primary_angle"": ""مساعدة أصحاب الأعمال في السعودية على اختيار أفضل شركة لتصميم المواقع الإلكترونية بناءً على معايير الجودة الفنية وسابقة الأعمال المحلية."",
+  ""market_angle"": ""التركيز على التحول الرقمي في السوق السعودي والتوجه نحو البرمجة الخاصة المتوافقة مع رؤية 2030 بدلاً من القوالب الجاهزة."",
+  ""target_reader_state"": ""مشتري محتمل يبحث عن شريك تقني موثوق لتنفيذ مشروعه الرقمي ويحتاج لمعايير واضحة للمقارنة."",
+  ""pain_point_focus"": [
+    ""صعوبة العثور على شركة تلتزم بمواعيد التسليم"",
+    ""ضعف الدعم الفني بعد إطلاق الموقع"",
+    ""عدم توافق المواقع مع معايير محركات البحث (SEO)""
+  ],
+  ""emotional_trigger"": ""الثقة والاحترافية والنمو الرقمي المستدام."",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""استعراض الخبرة الطويلة في السوق السعودي"",
+    ""التركيز على سابقة الأعمال مع جهات حكومية وتجارية كبرى"",
+    ""إبراز الالتزام بالمعايير التقنية العالمية""
+  ],
+  ""eeat_signals_to_include"": [
+    ""سنوات الخبرة (أكثر من 15 عاماً)"",
+    ""ضمان استعادة الأموال"",
+    ""خدمة عملاء ودعم فني على مدار الساعة"",
+    ""مقر رسمي وتراخيص معتمدة""
+  ],
+  ""differentiation_focus"": [
+    ""البرمجة الخاصة (Custom Development)"",
+    ""التوافق التام مع الجوال ومعايير Core Web Vitals"",
+    ""توفير حلول استضافة آمنة ومحلية""
+  ],
+  ""conversion_strategy"": ""توضيح الخدمات المقدمة، عرض نماذج أعمال حقيقية، تقديم معايير اختيار واضحة، والإجابة على الأسئلة الشائعة لتقليل التردد قبل طلب عرض السعر."",
+  ""cta_philosophy"": ""دعوة مباشرة وهادئة لطلب استشارة أو عرض سعر مخصص دون ضغط بيعي مكثف."",
+  ""local_strategy"": ""استخدام مصطلحات السوق السعودي، الإشارة إلى رؤية المملكة 2030، والتركيز على المدن الرئيسية مثل الرياض وجدة."",
+  ""tone_direction"": ""مهني، عملي، وموجه نحو النتائج."",
+  ""section_role_map"": {
+    ""introduction"": ""تمهيد حول أهمية التواجد الرقمي في السعودية وتقديم معايير اختيار أفضل شركة تصميم مواقع."",
+    ""core_or_benefits"": ""استعراض خدمات تصميم المواقع والمتاجر الإلكترونية مع التركيز على المميزات التقنية."",
+    ""proof"": ""إبراز سابقة الأعمال، سنوات الخبرة، وضمانات جودة الخدمة."",
+    ""process_or_how"": ""خطوات العمل العملية من التحليل والتصميم إلى البرمجة والإطلاق."",
+    ""faq"": ""الإجابة على تساؤلات التكلفة، مدة التنفيذ، وخدمات الدعم الفني."",
+    ""conclusion"": ""ملخص نهائي يحفز القارئ على اتخاذ قرار البدء مع شريك تقني محترف.""
+  }
+}",content_strategy,2026-04-29T13:56:53.412301,4154
+762,6.726,0.000568,True,google/gemini-3-flash-preview,"You are building a content strategy based on provided inputs.
+
+Inputs:
+- Primary Keyword: افضل شركة تصميم مواقع في السعودية
+- Intent: commercial
+- Content Type: brand_commercial
+- Target Area: السعودية
+- SERP Intent Analysis: {""confirmed_intent"": ""commercial"", ""intent_confidence_score"": 0.9, ""dominant_page_type"": ""Service Page / Guide"", ""service_vs_guide_ratio"": 0.66, ""commercial_signal_strength"": 0.8, ""informational_signal_strength"": 0.7}
+- SERP Structural Intelligence: {""dominant_page_type"": ""Service Page"", ""avg_word_count"": 0, ""avg_h2_count"": 4.0, ""avg_h3_count"": 2.0, ""total_h2_count"": 12, ""total_h3_count"": 6, ""heading_data_missing"": false, ""dominant_heading_pattern"": ""H2 for service categories, H3 for specific projects/features"", ""cta_position_pattern"": ""mixed"", ""cta_intensity_pattern"": ""moderate"", ""pricing_presence_ratio"": 0.66, ""faq_presence_ratio"": 0.33, ""list_presence_ratio"": 0.0, ""image_density_pattern"": ""medium"", ""chart_presence_ratio"": 0.0, ""trust_signal_density"": ""high"", ""local_keyword_density"": ""high"", ""detected_area"": ""Saudi Arabia""}
+- SERP Market Insights: {""content_gaps"": [], ""brand_advantages"": [{""brand"": ""elryad.com"", ""advantage"": ""Experience of more than 15 years, official website design, money-back guarantee""}, {""brand"": ""tqniait.com"", ""advantage"": ""24/7 customer service, stable services without interruption""}], ""keyword_clusters"": [{""cluster_name"": ""Core Services"", ""keywords"": [""\u062a\u0635\u0645\u064a\u0645_\u0645\u0648\u0627\u0642\u0639"", ""\u0628\u0631\u0645\u062c\u0629_\u0645\u0648\u0627\u0642\u0639"", ""\u062a\u0635\u0645\u064a\u0645 \u062a\u0637\u0628\u064a\u0642\u0627\u062a \u0627\u0644\u062c\u0648\u0627\u0644""]}, {""cluster_name"": ""Technical SEO"", ""keywords"": [""\u0633\u064a\u0648_\u062a\u0642\u0646\u064a"", ""CoreWebVitals""]}], ""writing_guide"": ""The content should balance between showcasing a portfolio of previous work (government and commercial) and providing criteria for choosing a provider in the Saudi market. High emphasis on trust signals like 'official' and 'experience years'."", ""differentiation_strategy"": [], ""mandatory_serp_topics"": [], ""market_data_signals"": {""avg_unit_price_range"": """", ""common_down_payment_or_fees"": """", ""typical_duration_or_terms"": """", ""notable_market_trends"": [""Shift towards custom development vs templates"", ""Focus on 2026 vision alignment""]}, ""topic_observations"": {""core_recurring_topics"": [{""topic"": ""\u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629 (Website Design)"", ""frequency"": 3, ""confidence"": ""high""}, {""topic"": ""\u0623\u0641\u0636\u0644 \u0634\u0631\u0643\u0629 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 (Best Company in KSA)"", ""frequency"": 3, ""confidence"": ""high""}, {""topic"": ""\u062a\u0635\u0645\u064a\u0645 \u0627\u0644\u0645\u062a\u0627\u062c\u0631 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629 (E-commerce Design)"", ""frequency"": 2, ""confidence"": ""high""}], ""secondary_mentions"": [{""topic"": ""\u0645\u0639\u0627\u064a\u064a\u0631 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u0634\u0631\u0643\u0629 (Selection Criteria)"", ""frequency"": 2, ""confidence"": ""medium""}, {""topic"": ""\u0627\u0633\u062a\u0636\u0627\u0641\u0629 \u0627\u0644\u0645\u0648\u0627\u0642\u0639 (Web Hosting)"", ""frequency"": 2, ""confidence"": ""medium""}, {""topic"": ""\u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0623\u0639\u0645\u0627\u0644/\u0627\u0644\u0639\u0645\u0644\u0627\u0621 (Portfolio/Clients)"", ""frequency"": 2, ""confidence"": ""medium""}], ""weak_signals"": [{""topic"": ""\u0633\u064a\u0648 \u062a\u0642\u0646\u064a (Technical SEO)"", ""frequency"": 1, ""confidence"": ""low""}, {""topic"": ""CoreWebVitals"", ""frequency"": 1, ""confidence"": ""low""}, {""topic"": ""\u062a\u0635\u0645\u064a\u0645 \u0627\u0644\u0647\u0648\u064a\u0629 \u0627\u0644\u062a\u062c\u0627\u0631\u064a\u0629 (Brand Identity)"", ""frequency"": 1, ""confidence"": ""low""}]}}
+
+CRITICAL RULE:
+You must NOT introduce any concept that is not strongly supported by:
+- the primary keyword
+OR
+- high-confidence SERP observations
+
+IMPORTANT:
+- You are building a minimal, realistic strategy.
+- You are not writing an idealized or over-optimized plan.
+- Commercial intent does NOT mean generic service-page logic.
+- Keep the main entity in the primary keyword as the center of the strategy.
+- Assume the reader is a buyer with little or no prior market knowledge.
+- Use simple, practical, buyer-facing language.
+- Keep the strategy helpful for a real buyer decision, not a business-growth or provider-selection pitch.
+
+STRICT RULES:
+1. Do NOT enforce:
+   - investment framing
+   - legal framing
+   - ROI or financial analysis
+   unless explicitly required by the keyword or strongly supported by repeated high-confidence SERP signals.
+
+2. Do NOT generalize the entity.
+   Example:
+   - apartments must remain apartments
+   - do NOT broaden them into the real estate market
+   - all strategic fields must preserve the main entity of the primary keyword as the core subject
+   - do NOT drift into broader categories such as real estate, projects, developments, or market unless still clearly centered on the original entity
+
+3. Strategy must be:
+   - intent-aligned
+   - entity-focused
+   - minimal, not inflated
+   - beginner-friendly
+   - decision-oriented
+
+4. Do NOT convert weak signals into core sections.
+   - Treat `core_recurring_topics` as the strongest support.
+   - Treat `secondary_mentions` as optional support only when they still serve the main entity and intent.
+   - Treat `weak_signals` as non-core. They must not drive the structure.
+
+5. Brand presence:
+   - allowed only in differentiation and conclusion
+   - must not influence structural decisions
+   - must not redefine the article as a brand-first page
+
+6. Avoid:
+   - over-architected structures
+   - unnecessary sections
+   - forced authority signals
+   - generic market commentary
+
+7. Use only the strongest observed signals.
+   - If SERP observations are thin or mixed, keep the strategy conservative.
+   - Leave unsupported fields minimal or empty rather than inflating them.
+
+8. The strategy must support a real user journey:
+   - understand the offering
+   - evaluate relevant features
+   - review concrete proof
+   - compare realistic options
+   - understand the practical buying path
+   - resolve objections
+   - take the next step
+
+9. Keep section roles clean:
+   - `introduction`: start with a light, relevant hook, introduce the primary keyword naturally, explain what the reader will understand or decide, and keep any brand mention soft
+   - `core_or_benefits`: combine offer clarity with buyer-facing features
+   - `proof`: observed pricing, value, availability, delivery status, or trust signals tied to the entity only and kept at the product/unit/listing level
+   - `process_or_how`: practical buying path only, not legal-heavy process language
+   - `faq`: objections actually supported by the keyword or strong SERP observations
+   - `conclusion`: concise next-step closure
+
+10. Do NOT force these into the strategy unless strongly supported:
+   - investment return
+   - legal verification
+   - financing complexity
+   - infrastructure impact
+   - broad authority narratives
+
+11. `primary_angle` must describe:
+   - what the reader is trying to decide
+   - using the main entity + location
+   - in buyer-facing language
+   - without business, provider, performance, legal, or investment outcomes
+
+12. `market_angle` must be compact and practical.
+   - It should describe the decision lens for comparing the main entity in the target area.
+   - Do NOT turn it into broad market commentary.
+
+13. `conversion_strategy` must stay within this bounded journey:
+   - clarify the offer
+   - show buyer-facing features
+   - provide practical proof
+   - help compare real options
+   - reduce friction in the buying path
+   - answer objections
+   - close with a confident final CTA
+   - Do NOT use funnel language, urgency pressure, or agency/service sales logic.
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object.
+Do NOT include any explanations, markdown formatting, or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+OUTPUT SAFETY:
+- If a concept is unsupported, leave it out.
+- If a list is weakly supported, return an empty list.
+- Do not name competitors.
+- Do not expand one-off signals into the strategy.",3392,"{
+  ""primary_angle"": ""مساعدة أصحاب الأعمال في السعودية على اختيار أفضل شركة لتصميم المواقع الإلكترونية بناءً على معايير الجودة الفنية وسابقة الأعمال المحلية."",
+  ""market_angle"": ""التركيز على التحول الرقمي في السوق السعودي والتوجه نحو البرمجة الخاصة المتوافقة مع رؤية 2030 بدلاً من القوالب الجاهزة."",
+  ""target_reader_state"": ""مشتري محتمل يبحث عن شريك تقني موثوق لتنفيذ مشروعه الرقمي ويحتاج لمعايير واضحة للمقارنة."",
+  ""pain_point_focus"": [
+    ""صعوبة العثور على شركة تلتزم بمواعيد التسليم"",
+    ""ضعف الدعم الفني بعد إطلاق الموقع"",
+    ""عدم توافق المواقع مع معايير محركات البحث (SEO)""
+  ],
+  ""emotional_trigger"": ""الثقة والاحترافية والنمو الرقمي المستدام."",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""استعراض الخبرة الطويلة في السوق السعودي"",
+    ""التركيز على سابقة الأعمال مع جهات حكومية وتجارية كبرى"",
+    ""إبراز الالتزام بالمعايير التقنية العالمية""
+  ],
+  ""eeat_signals_to_include"": [
+    ""سنوات الخبرة (أكثر من 15 عاماً)"",
+    ""ضمان استعادة الأموال"",
+    ""خدمة عملاء ودعم فني على مدار الساعة"",
+    ""مقر رسمي وتراخيص معتمدة""
+  ],
+  ""differentiation_focus"": [
+    ""البرمجة الخاصة (Custom Development)"",
+    ""التوافق التام مع الجوال ومعايير Core Web Vitals"",
+    ""توفير حلول استضافة آمنة ومحلية""
+  ],
+  ""conversion_strategy"": ""توضيح الخدمات المقدمة، عرض نماذج أعمال حقيقية، تقديم معايير اختيار واضحة، والإجابة على الأسئلة الشائعة لتقليل التردد قبل طلب عرض السعر."",
+  ""cta_philosophy"": ""دعوة مباشرة وهادئة لطلب استشارة أو عرض سعر مخصص دون ضغط بيعي مكثف."",
+  ""local_strategy"": ""استخدام مصطلحات السوق السعودي، الإشارة إلى رؤية المملكة 2030، والتركيز على المدن الرئيسية مثل الرياض وجدة."",
+  ""tone_direction"": ""مهني، عملي، وموجه نحو النتائج."",
+  ""section_role_map"": {
+    ""introduction"": ""تمهيد حول أهمية التواجد الرقمي في السعودية وتقديم معايير اختيار أفضل شركة تصميم مواقع."",
+    ""core_or_benefits"": ""استعراض خدمات تصميم المواقع والمتاجر الإلكترونية مع التركيز على المميزات التقنية."",
+    ""proof"": ""إبراز سابقة الأعمال، سنوات الخبرة، وضمانات جودة الخدمة."",
+    ""process_or_how"": ""خطوات العمل العملية من التحليل والتصميم إلى البرمجة والإطلاق."",
+    ""faq"": ""الإجابة على تساؤلات التكلفة، مدة التنفيذ، وخدمات الدعم الفني."",
+    ""conclusion"": ""ملخص نهائي يحفز القارئ على اتخاذ قرار البدء مع شريك تقني محترف.""
+  }
+}",STEP_TOTAL: content_strategy,2026-04-29T13:56:53.415964,4154
+945,6.491,0.001123,True,google/gemini-3-flash-preview,"You are a Helpful, Clear Content Planner.
+Your task is to generate only the heading structure layer of an article outline in JSON format.
+
+0. CONTEXT
+- Feedback: ""None""
+- Article Title: ""أفضل شركة تصميم مواقع في السعودية 2026: دليلك لاختيار شريكك التقني""
+- Primary Keyword: ""افضل شركة تصميم مواقع في السعودية""
+- Core Keywords: [""\u0627\u0641\u0636\u0644 \u0634\u0631\u0643\u0629 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629""]
+- Article Language: ""ar""
+- Intent: ""commercial""
+- Content Type: ""brand_commercial""
+- Area: ""السعودية""
+- Brand Context: """"
+- Head Entity: ""شركه""
+- Entity Phrase: ""شركه تصميم مواقع""
+- Service/Object Phrase: ""تصميم مواقع""
+- Content Strategy: {""authority_strategy"": [""\u0627\u0633\u062a\u0639\u0631\u0627\u0636 \u0627\u0644\u062e\u0628\u0631\u0629 \u0627\u0644\u0637\u0648\u064a\u0644\u0629 \u0641\u064a \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0633\u0639\u0648\u062f\u064a"", ""\u0627\u0644\u062a\u0631\u0643\u064a\u0632 \u0639\u0644\u0649 \u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0623\u0639\u0645\u0627\u0644 \u0645\u0639 \u062c\u0647\u0627\u062a \u062d\u0643\u0648\u0645\u064a\u0629 \u0648\u062a\u062c\u0627\u0631\u064a\u0629 \u0643\u0628\u0631\u0649"", ""\u0625\u0628\u0631\u0627\u0632 \u0627\u0644\u0627\u0644\u062a\u0632\u0627\u0645 \u0628\u0627\u0644\u0645\u0639\u0627\u064a\u064a\u0631 \u0627\u0644\u062a\u0642\u0646\u064a\u0629 \u0627\u0644\u0639\u0627\u0644\u0645\u064a\u0629""], ""conversion_strategy"": ""Clarify the offer -\u003e show buyer-facing features -\u003e provide practical proof -\u003e help compare real options -\u003e reduce friction in the buying path -\u003e answer objections -\u003e close with a confident final CTA."", ""cta_philosophy"": ""Earn action through clarity and trust. A very soft CTA may appear at the end of the introduction only if the section has already delivered clear value. Reserve the main CTA for the conclusion."", ""cultural_peer_areas"": [], ""depth_level"": ""comprehensive"", ""differentiation_focus"": [""\u0627\u0644\u0628\u0631\u0645\u062c\u0629 \u0627\u0644\u062e\u0627\u0635\u0629 (Custom Development)"", ""\u0627\u0644\u062a\u0648\u0627\u0641\u0642 \u0627\u0644\u062a\u0627\u0645 \u0645\u0639 \u0627\u0644\u062c\u0648\u0627\u0644 \u0648\u0645\u0639\u0627\u064a\u064a\u0631 Core Web Vitals"", ""\u062a\u0648\u0641\u064a\u0631 \u062d\u0644\u0648\u0644 \u0627\u0633\u062a\u0636\u0627\u0641\u0629 \u0622\u0645\u0646\u0629 \u0648\u0645\u062d\u0644\u064a\u0629""], ""eeat_signals_to_include"": [""\u0633\u0646\u0648\u0627\u062a \u0627\u0644\u062e\u0628\u0631\u0629 (\u0623\u0643\u062b\u0631 \u0645\u0646 15 \u0639\u0627\u0645\u0627\u064b)"", ""\u0636\u0645\u0627\u0646 \u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0623\u0645\u0648\u0627\u0644"", ""\u062e\u062f\u0645\u0629 \u0639\u0645\u0644\u0627\u0621 \u0648\u062f\u0639\u0645 \u0641\u0646\u064a \u0639\u0644\u0649 \u0645\u062f\u0627\u0631 \u0627\u0644\u0633\u0627\u0639\u0629"", ""\u0645\u0642\u0631 \u0631\u0633\u0645\u064a \u0648\u062a\u0631\u0627\u062e\u064a\u0635 \u0645\u0639\u062a\u0645\u062f\u0629""], ""emotional_trigger"": ""\u0627\u0644\u062b\u0642\u0629 \u0648\u0627\u0644\u0627\u062d\u062a\u0631\u0627\u0641\u064a\u0629 \u0648\u0627\u0644\u0646\u0645\u0648 \u0627\u0644\u0631\u0642\u0645\u064a \u0627\u0644\u0645\u0633\u062a\u062f\u0627\u0645."", ""local_strategy"": ""\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0645\u0635\u0637\u0644\u062d\u0627\u062a \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u060c \u0627\u0644\u0625\u0634\u0627\u0631\u0629 \u0625\u0644\u0649 \u0631\u0624\u064a\u0629 \u0627\u0644\u0645\u0645\u0644\u0643\u0629 2030\u060c \u0648\u0627\u0644\u062a\u0631\u0643\u064a\u0632 \u0639\u0644\u0649 \u0627\u0644\u0645\u062f\u0646 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0645\u062b\u0644 \u0627\u0644\u0631\u064a\u0627\u0636 \u0648\u062c\u062f\u0629."", ""market_angle"": ""Help the reader compare \u0634\u0631\u0643\u0629 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 in \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 by practical decision factors such as available options, fit, price or value, proof, and the clearest next step."", ""pain_point_focus"": [""\u0635\u0639\u0648\u0628\u0629 \u0627\u0644\u0639\u062b\u0648\u0631 \u0639\u0644\u0649 \u0634\u0631\u0643\u0629 \u062a\u0644\u062a\u0632\u0645 \u0628\u0645\u0648\u0627\u0639\u064a\u062f \u0627\u0644\u062a\u0633\u0644\u064a\u0645"", ""\u0636\u0639\u0641 \u0627\u0644\u062f\u0639\u0645 \u0627\u0644\u0641\u0646\u064a \u0628\u0639\u062f \u0625\u0637\u0644\u0627\u0642 \u0627\u0644\u0645\u0648\u0642\u0639"", ""\u0639\u062f\u0645 \u062a\u0648\u0627\u0641\u0642 \u0627\u0644\u0645\u0648\u0627\u0642\u0639 \u0645\u0639 \u0645\u0639\u0627\u064a\u064a\u0631 \u0645\u062d\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u062d\u062b (SEO)""], ""primary_angle"": ""Help the reader decide how to compare and choose \u0634\u0631\u0643\u0629 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639 in \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 based on practical buying factors."", ""section_role_map"": {""conclusion"": ""Summarize the value clearly, reduce hesitation, and guide the reader to a confident next step with a direct but not pushy CTA."", ""core_or_benefits"": ""Combine offer clarity with key buyer-facing features. Explain what the offering is, what types or forms are available, and what the buyer practically gets, using simple and scannable language."", ""faq"": ""Answer beginner buyer questions and objections in simple language, especially around choosing, price, readiness, and the buying steps."", ""introduction"": ""Start with a light, relevant hook that reflects the buyer\u0027s need. Naturally introduce the primary keyword. Briefly explain what the reader will understand or be able to decide after reading. Optionally include one soft brand mention and one very soft CTA only if it feels earned by the value already given. Avoid urgency, investment language, legal framing, or generic market commentary."", ""process_or_how"": ""Explain the practical buying journey step by step, from filtering and shortlisting to inquiry, viewing, and decision, without legal or contract-heavy framing unless explicitly justified."", ""proof"": ""Provide concrete product-tied proof such as pricing reality, value differences, availability, delivery status, or trust signals connected directly to the entity and location. Proof must stay tied to the product at the unit level or listing level, not abstract market conditions. Do not drift into broad market commentary, investment framing, or generic authority language unless the support is directly tied to the buyer\u0027s decision about the original entity.""}, ""target_reader_state"": ""A buyer with little or no prior market knowledge who needs simple, practical guidance to understand the available options, compare them confidently, and take a clear next step without feeling overwhelmed."", ""tone_direction"": ""Clear, confident, beginner-friendly, practical, and persuasive without pressure.""}
+- Style Blueprint: {""cta_strategy"": {""density"": ""Balanced"", ""total_ideal_count"": 3, ""wording_patterns"": []}, ""formatting_blueprint"": {""bolding_frequency"": ""Standard""}, ""structural_skeleton"": [], ""tonal_dna"": {""audience_level"": ""General"", ""forbidden_jargon"": [], ""persona"": ""Professional"", ""sentence_rhythm"": ""Balanced""}}
+
+1. JOB TO BE DONE
+- Generate ONLY the heading layer of the outline. Do not plan paragraphs, tables, CTAs, or body copy.
+- Build a structure that is useful for the reader, strong for SEO, and easy to expand later into the full outline.
+- Every visible heading must represent a distinct search need, evaluation angle, or decision question.
+- Use natural language in the article language. Do not sound robotic, academic, or generic.
+
+2. STRUCTURE RULES
+- H1 is the final article title. Do not include H1 inside the outline array.
+- The first outline item MUST be the introduction section:
+  - `""section_type"": ""introduction""`
+  - `""heading_level"": ""INTRO""`
+  - Treat this as an unheaded opening block, not as a visible H2 or H3.
+  - `""heading_text""` is internal-use only. It will not be shown to the user, so keep it short and functional.
+  - Do not create any intro subheadings.
+  - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
+- After the introduction, create 4 to 8 visible H2 sections for a normal article.
+- If `content_type` is `brand_commercial`, create the commercial decision journey after the introduction in this order:
+  - `offer` -> `features` -> `proof` -> `comparison` -> `process` -> `faq` -> `conclusion`
+  - If a dedicated brand section is needed, place one `differentiation` section after `proof`, and always before `comparison`.
+  - Use matching `section_type` labels for those stages when possible so the structure is easy to validate and expand later.
+- The first visible core H2 MUST be decision-oriented, helpful, and specific. It must include a clear user goal and imply comparison or filtering. 
+  - Avoid: ""أفضل مناطق شراء [entity] للبيع في [area]"".
+  - Prefer: ""أفضل مناطق شراء [entity] للبيع في [area] حسب ميزانيتك"".
+- This first H2 must contain the full primary keyword exactly, or the closest natural phrasing that preserves the same full search intent.
+- **PRIMARY KEYWORD ANCHOR RULE**:
+  - The exact full Primary Keyword may appear only in the designated anchor H2 (the first visible core H2).
+  - Later H2s MUST preserve intent through semantic variants, specific decision angles, or object/action wording.
+  - Vary headings by unique decision angles: criteria, pricing, service type, process, comparison, FAQ, or user next-steps.
+  - **UNIQUE ANGLE MANDATE**: Each H2 MUST introduce a NEW decision angle or data point. Avoid H2s that are just rephrased versions of each other.
+  - **EXPAND, DON'T CHANGE (ANTI-DRIFT)**: Semantic variations must expand the core topic within its entity boundary, NOT change the topic (e.g., Avoid drifting from ""Web Design"" to generic ""Tech Consulting"").
+  - **REPETITION FAILURE**: Repeating the same phrase pattern (e.g., ""Best [entity] in [area]"") across 3+ H2s is a structural failure.
+- **ENTITY CONSISTENCY RULES**: 
+  - Treat **Entity Phrase** (""شركه تصميم مواقع"") and **Service/Object Phrase** (""تصميم مواقع"") as the main semantic topics, NOT phrases that must be copied into every heading.
+  - The entity does NOT have to appear explicitly in every heading. It may be implied through semantic context, object-level wording, or user-outcome phrasing.
+  - Semantic variation is allowed ONLY when the heading remains clearly anchored to the core entity domain.
+  - Do NOT drift into broad abstract themes that lose connection to entity_phrase (e.g., Avoid: ""How to improve results""; Prefer: ""How [service/product] improves results"").
+  - Outcome-focused headings must still mention or imply the concrete service/product/entity, not just a vague benefit.
+  - H2 headings may use:
+    - Natural variations
+    - Action-oriented phrasing
+    - Outcome-oriented phrasing
+    - Object-level phrasing (the product/service itself)
+  - Allow variation between:
+    - Provider-level wording (who offers it, e.g., ""شركه تصميم مواقع"")
+    - Service/product-level wording (what is delivered, e.g., ""تصميم مواقع"")
+    - User-outcome wording (what the user gets, e.g., ""[outcome-oriented entity variant]"")
+  - Headings must remain clearly interpretable as part of the same entity domain.
+  - **PRICING/PROOF GUIDANCE (CRITICAL)**:
+    - Pricing/Cost headings MUST focus on the **Service/Object Phrase** (""تصميم مواقع"") rather than the Provider Phrase (""شركه تصميم مواقع"").
+    - Bad: ""Average prices of [best provider phrase]"" or ""Cost of best [provider]""
+    - Good: ""Cost of [service/product object] by scope, type, or location"", ""Average price of [service/product object] based on package, specs, or location"", or ""What affects the cost of [service/product object]?""
+    - Use direct pricing words natively in ar (e.g. أسعار, تكلفة, متوسط سعر).
+    - Avoid abstract wording like ""عوامل تحديد التكلفة"" unless paired with direct pricing wording.
+  - Avoid mechanical repetition. If most H2 headings reuse the exact entity phrase, it is a structural failure.
+- Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
+- If you create H3 subheadings, output the exact H3 strings in `subheadings`.
+- H3 Generation Strategy: Decision Buckets vs. Atomic Details:
+  1. The Taxonomy Principle: Use H3s ONLY for classifying the entity into distinct ""standalone siblings"" (Types, Categories, Services, Locations, User Segments, Pricing Models, or Comparison Options). Do NOT create H3s for ""Anatomy"" (internal parts, specs, room layout, finishing, speed, or minor attributes). These belong in the H2 body.
+  2. The Decision Bifurcation Rule: Generate H3s ONLY if the H2 contains multiple distinct decision paths where a reader must choose between options. Fallback: It is better to return an empty `subheadings` array than to generate weak or forced H3s.
+  3. The Non-Overlap Rule: Each H3 must be a distinct bucket. If two H3s could be merged without losing significant meaning, do not separate them.
+  4. The Strength & Expansion Test: Every H3 must pass this check: ""Can this H3 be expanded into a 150+ word standalone section without repeating the parent H2?"". If NO, do not generate it.
+  5. Searchability Hint: Prefer common user-facing terms and searchable phrasing over obscure or technical classifications.
+  6. Service Constraint (Deliverable Framing): For service-based keywords, H3s MUST name standalone service categories, deliverables, or solution types, NOT provider categories.
+     - **DELIVERABLE RULE**: H3 = what the user is buying, not who is selling it.
+     - **CRITICAL**: Do NOT generate H3s for atomic tasks, execution steps, or low-level actions (e.g., Avoid: ""Cleaning floors""; Prefer: ""Deep Cleaning Services"").
+     - Do NOT classify providers (e.g., Avoid: ""Companies that offer X"") unless the parent H2 is explicitly about comparing provider types.
+     - If no strong, standalone deliverable buckets exist, return an empty `subheadings` array.
+     - Bad: ""شركات متخصصة في X"", ""[Provider type] by budget"", ""Cleaning floors""
+     - Good: ""[Service type]"", ""[Deliverable category]"", ""[Solution variant]"", ""Deep cleaning services""
+
+### H3 Permission Rule
+
+Not every H2 needs H3 subheadings.
+
+Generate H3s only when the parent H2 naturally contains clear standalone buckets that the reader can choose, compare, or evaluate.
+
+Return an empty `subheadings` array when the H2 is:
+- a guidance/advice section
+- a proof/explanation section
+- a differentiation/brand trust section
+- a simple process section
+- a conclusion/CTA section
+
+Section-specific behavior:
+
+1. Offer H2:
+Use H3s only for real options:
+- service types
+- product types
+- locations
+- buyer segments
+Do NOT use H3s for criteria, mistakes, or advice points.
+
+2. Features H2:
+Use H3s only for product/service variants or deliverables.
+Do NOT use H3s for attributes, technical features, quality claims, or minor details.
+
+3. Proof/Pricing H2:
+Usually keep `subheadings` empty.
+Use H3s only if there are clear pricing buckets such as:
+- pricing by package
+- pricing by location
+- pricing by product/service type
+Do NOT use H3s for explanation points like “what affects the price”.
+
+4. Differentiation H2:
+Always return an empty `subheadings` array.
+Brand benefits should be written in the body, not as H3s.
+
+5. Process H2:
+Usually return an empty `subheadings` array.
+Use H3s only when each step is a complex standalone phase.
+Do NOT create H3s for simple steps like planning, execution, testing, or delivery.
+
+6. Comparison H2:
+H3s are optional.
+Use them only when the comparison sides or criteria are substantial enough to become mini-sections.
+
+7. FAQ H2:
+H3s are allowed and should be real user questions.
+- FAQ Section: If the article needs FAQs, place one FAQ-style H2 near the end using a real user-question angle. Every H3 under this section MUST be a real question starting with (ما / كيف / هل / كم). Use common buyer questions or PAA signals.
+- Legal FAQ Rule: Do not create legal, documentation, contract, or verification FAQ questions unless the primary keyword or observed SERP/PAA explicitly supports them. Do not infer legal FAQs from brand context alone.
+- Closing Section: If the article needs a closing section, place one conclusion-style H2 last using a useful next-step or takeaway angle, not the label ""Conclusion"".
+
+3. HEADING QUALITY RULES
+- Every visible H2/H3 must be specific, scannable, and meaningful on its own.
+- Prefer natural, user-facing phrasing that sounds like a conversation with an expert. Avoid overly formal, abstract, or ""writerly"" wording.
+- Simple MSA Requirement: Use clear Modern Standard Arabic or simple professional Arabic. Avoid colloquial slang or regional dialects.
+- Pattern: clear promise, decision angle, or direct question + topic (using Semantic Entity Variants).
+- Example: Instead of ""Generic [Entity] specifications"", use ""What [Entity] types are available in [Location]?"".
+- Keep SEO Strength: While phrasing should be natural, do NOT remove the primary keyword or weaken the search intent.
+- Avoid writer labels and filler labels.
+- Forbidden generic headings include:
+  - Introduction, Overview, Summary, FAQ, FAQs, Questions, Pricing, Features, Benefits, Process, Steps, Conclusion, Final Thoughts, Why Us, Contact Us, Guide, Complete Guide
+  - Arabic equivalents used as bare generic labels for introduction, overview, FAQ, prices, features, steps, or conclusion
+- No duplicate angles. Each H2 must cover a different reader job.
+- Strict Entity Control: Stay clearly anchored to the entity domain, even when using outcome-focused or user-oriented phrasing. If the keyword is about [Entity Type A], do NOT introduce [Entity Type B], [Entity Type C], or any other irrelevant product type.
+- In `features`, stay strictly focused on the unit-level features of ""شركه تصميم مواقع"". You may use semantic variants of the entity in the heading.
+- In `proof`, pricing headings must provide a clear value angle. 
+  - Pricing headings must name the concrete service/product/entity object, or a clear semantic variant of it.
+  - Every heading discussing price, cost, or meter rates MUST remain anchored to ""شركه تصميم مواقع"".
+  - Do NOT use generic terms like ""services"", ""solutions"", or ""offerings"" alone unless they are qualified by the entity.
+  - For provider-style keywords, pricing should focus on the delivered service/product, not the provider phrase.
+  - Avoid repeating the exact entity phrase literally in every pricing H2.
+  - Good Pattern: ""Cost of [service/product object] by scope, type, or location"" or ""What affects the price of [entity/service]?"".
+  - Avoid: ""Average service prices in [area]"" or ""Cost of solutions by type"".
+- In `comparison`, help the reader choose between real options. Use clear tradeoffs or scenario-based comparisons.
+  - Avoid literal repetition: ""Comparison between شركه تصميم مواقع Type A and Type B"".
+  - Prefer semantic variants: ""Should you choose [object variant A] or [object variant B] in السعودية?"" or ""Key tradeoffs between [model X] and [model Y]"".
+  - Also valid: comparisons based on real buyer tradeoffs relevant to the entity domain.
+- In `process`, focus on the buying journey only. Keep the main entity of the primary keyword explicit in the H2, and keep the main location explicit when present. Do not replace the entity with generic phrasing like `شقتك الجديدة`, and do not narrow the area into shorthand like `التجمع` when the primary keyword is broader. Do not insert legal verification or contract-validation headings unless the keyword, SERP/PAA, or strategy clearly requires them.
+- In commercial articles, brand names may appear softly in the introduction, directly in one dedicated differentiation section, and strongly in the conclusion. Do not inject brand names or brand-service framing into informational H2s or H3s.
+- In the dedicated differentiation section, use a natural persuasive tone (e.g., ""لماذا تختار..."").
+- The differentiation H2 must clearly communicate a decision or benefit related to choosing or finding the primary entity.
+- It must stay directly connected to the keyword intent.
+- Avoid vague or generic phrasing that does not clearly help the user decide.
+- Prefer:
+  - ""لماذا تختار  للبحث عن افضل شركة تصميم مواقع في السعودية؟""
+  - ""كيف تساعدك  في العثور على افضل شركة تصميم مواقع في السعودية بسهولة؟""
+
+- Optional sections such as legal checks, financing/payment, infrastructure, or generic investment angles should appear only when clearly justified by the keyword, SERP/PAA signals, or the strategy.
+- Keep headings concise. Usually 4 to 11 words is ideal, but clarity matters more than strict length.
+- If the article is informational, prioritize clarity, comparisons, mistakes, methods, examples, and practical questions.
+- If the article is commercial, prioritize choosing, differentiation, cost/value, proof, process, objections, and next step.
+- If the article is comparison-based, prioritize criteria, side-by-side differences, tradeoffs, and best-fit guidance.
+- Every H2 should answer a specific question: ""What decision or question does this help the reader solve?"".
+- Headings must sound natural and useful, not like they were forced to satisfy a checklist.
+- **ARABIC QUALITY RULE**: In Arabic process headings, avoid broken noun coordination (e.g., Avoid: ""اختيار وتعاقد مع""). 
+- Use natural phrasing: ""خطوات اختيار [الكيان] والتعاقد معه"" or ""كيف تختار [الكيان] وتتعاقد معه"".
+- All headings must be grammatically natural and professional in `ar`.
+
+4. SILENT SELF-CHECK BEFORE YOU ANSWER
+- Would a reader understand what each section gives them without reading the body?
+- Are any headings generic writer labels?
+- Do any two headings overlap too much?
+- Is the order logical: hook -> understanding -> evaluation -> objections/questions -> next step?
+- Are the H3s real subtopics rather than repeated versions of the H2?
+
+5. OUTPUT FORMAT
+Return a single JSON object with this exact structure:
+{
+  ""title"": ""Final H1 title"",
+  ""outline"": [
+    {
+      ""section_id"": ""sec_01"",
+      ""heading_text"": ""Internal opening label"",
+      ""heading_level"": ""INTRO"",
+      ""section_type"": ""introduction"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_02"",
+      ""heading_text"": ""Reader-facing H2 heading"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""offer"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [""Optional reader-facing H3"", ""Optional reader-facing H3""]
+    }
+  ]
+}
+
+6. OUTPUT CONSTRAINTS
+- Valid JSON only.
+- No markdown fences.
+- No explanation before or after the JSON.
+- Do not include body content.
+- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `subheadings`.",8393,"{
+  ""title"": ""أفضل شركة تصميم مواقع في السعودية 2026: دليلك لاختيار شريكك التقني"",
+  ""outline"": [
+    {
+      ""section_id"": ""sec_01"",
+      ""heading_text"": ""مقدمة عن معايير اختيار شركات تصميم المواقع في المملكة"",
+      ""heading_level"": ""INTRO"",
+      ""section_type"": ""introduction"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_02"",
+      ""heading_text"": ""كيفية تحديد افضل شركة تصميم مواقع في السعودية لمشروعك القادم"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""offer"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": [
+        ""تصميم المواقع التعريفية للشركات والمؤسسات"",
+        ""تطوير المتاجر الإلكترونية المتكاملة"",
+        ""برمجة المنصات العقارية والخدمية المتخصصة""
+      ]
+    },
+    {
+      ""section_id"": ""sec_03"",
+      ""heading_text"": ""المواصفات الفنية التي يجب توافرها في المواقع الاحترافية"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""features"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_04"",
+      ""heading_text"": ""تكلفة تصميم مواقع الإنترنت في السوق السعودي لعام 2026"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""proof"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": [
+        ""باقات المواقع الاقتصادية للشركات الناشئة"",
+        ""تكلفة المواقع المخصصة (Custom Development) للمشاريع الكبرى""
+      ]
+    },
+    {
+      ""section_id"": ""sec_05"",
+      ""heading_text"": ""لماذا نعد الخيار الأمثل عند البحث عن افضل شركة تصميم مواقع في السعودية؟"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""differentiation"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_06"",
+      ""heading_text"": ""المفاضلة بين البرمجة الخاصة واستخدام القوالب الجاهزة"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""comparison"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_07"",
+      ""heading_text"": ""رحلة بناء موقعك: من الفكرة وحتى الإطلاق والدعم الفني"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""process"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_08"",
+      ""heading_text"": ""أسئلة شائعة حول خدمات تصميم المواقع في المملكة"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""faq"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [
+        ""كم يستغرق وقت تصميم موقع إلكتروني احترافي؟"",
+        ""هل تقدمون خدمات استضافة محلية داخل السعودية؟"",
+        ""كيف تضمن الشركة توافق الموقع مع محركات البحث SEO؟"",
+        ""هل يتوفر دعم فني بعد تسليم المشروع؟""
+      ]
+    },
+    {
+      ""section_id"": ""sec_09"",
+      ""heading_text"": ""ابدأ رحلة التحول الرقمي لمنشأتك مع شريك تقني موثوق"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""conclusion"",
+      ""section_intent"": ""commercial"",
+      ""subheadings"": []
+    }
+  ]
+}",STEP_TOTAL: outline_generation,2026-04-29T13:56:59.910280,9338

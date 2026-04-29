@@ -14,7 +14,9 @@ STRICT FACTUAL RULES:
 6. Prefer informational pages, guides, and articles when they actually appear on page 1.
 7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
 8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
-9. Output must reflect reality, not completeness.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
 
 Your task has TWO INTERNAL PHASES.
 Do NOT explain them.
@@ -43,16 +45,20 @@ For each selected result extract only what is explicitly observable:
 - has_charts_or_infographics (true/false)
 - CTA style (informational / soft commercial / aggressive / none)
 
-B. Extract real SERP elements only if explicitly observed:
-- People Also Ask (PAA) questions
-- related searches
-- autocomplete-style suggestions
-- LSI keyword variations explicitly visible in observed ranking pages
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
 
 Rules:
-- Remove exact duplicates only.
-- Keep phrasing close to what was actually observed.
-- If a real element is not observed, return an empty array.
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
 - Do not invent missing headings, questions, or phrases.
 
 PHASE 2 - LIGHT OBSERVATION SUMMARY
@@ -62,6 +68,20 @@ Based ONLY on observed data above:
 - Identify overused patterns only if directly visible in the sampled pages.
 - If something cannot be supported from observed data, leave it empty.
 - Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
 
 Return STRICT JSON only in this format:
 
@@ -95,7 +115,13 @@ Return STRICT JSON only in this format:
   "common_strengths": [],
   "common_weaknesses": [],
   "observed_notes": [],
-  "unsupported_data": []
+  "unsupported_data": [],
+  "serp_enrichment_sources": {
+    "paa_questions": "",
+    "related_searches": "",
+    "autocomplete_suggestions": "",
+    "lsi_keywords": ""
+  }
 }
 
 Return JSON only.

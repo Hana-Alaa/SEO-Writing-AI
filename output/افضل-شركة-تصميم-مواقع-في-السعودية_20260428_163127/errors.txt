@@ -1,0 +1,30 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-28 16:33:14
+ERROR: cannot access local variable 'head_entity' where it is not associated with a value
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 645, in _step_1_outline
+    head_entity=head_entity,
+                ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'head_entity' where it is not associated with a value
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-04-28 16:33:14
+ERROR: cannot access local variable 'head_entity' where it is not associated with a value
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 645, in _step_1_outline
+    head_entity=head_entity,
+                ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'head_entity' where it is not associated with a value
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

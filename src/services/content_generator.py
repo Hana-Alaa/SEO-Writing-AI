@@ -252,7 +252,9 @@ class OutlineGenerator:
             writing_blueprint: str = "",
             market_angle: str = "",
             heading_only_mode: bool = False,
-            head_entity: str = ""
+            head_entity: str = "",
+            entity_phrase: str = "",
+            service_phrase: str = ""
         ) -> Dict[str, Any]:
 
 
@@ -270,7 +272,6 @@ class OutlineGenerator:
         template = self.env.get_template(template_name)
 
 
-        # Rich Defaults with Deep Resilience
         final_blueprint = {
             "tonal_dna": {"persona": "Professional", "audience_level": "General", "forbidden_jargon": [], "sentence_rhythm": "Balanced"},
             "formatting_blueprint": {"bolding_frequency": "Standard"},
@@ -284,9 +285,11 @@ class OutlineGenerator:
                 else:
                     final_blueprint[k] = v
 
+        primary_keyword = keywords[0] if keywords else title
         prompt = template.render(
             title=title,
             keywords=keywords,
+            primary_keyword=primary_keyword,
             urls=urls,
             article_language=article_language,
             intent=intent,
@@ -318,13 +321,10 @@ class OutlineGenerator:
             brand_advantages=brand_advantages or [],
             writing_blueprint=writing_blueprint or "",
             heading_only_mode=heading_only_mode,
-            head_entity=head_entity
+            head_entity=head_entity,
+            entity_phrase=entity_phrase,
+            service_phrase=service_phrase
         )
-
-
-
-        logger.info("\n================ FINAL PROMPT (OutlineGenerator) ================\n")
-        logger.info(prompt)
         logger.info("\n=============================================================\n")
 
         # response = await self.ai_client.send(prompt)

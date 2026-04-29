@@ -20,6 +20,8 @@ OPENROUTER = {
         # "writing": "openai/gpt-5-mini",          #9
         # "writing": "anthropic/claude-opus-4.7",
         "writing": "google/gemini-3-flash-preview",
+        # "writing": "openai/gpt-4.1",
+        # "writing":"anthropic/claude-3-haiku",
         # "Writing": "qwen/qwen3.6-plus:free",
         # "Writing": "openai/gpt-5.4-nano",     #47
         # "Writing": "google/gemini-3.1-flash-lite-preview",         #7
