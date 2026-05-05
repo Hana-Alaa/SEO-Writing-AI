@@ -114,9 +114,13 @@ class OutlineGenerator:
             "comparison": "01_outline_generator_comparison.txt",
             "review_mode": "01_outline_generator_review_mode.txt",
         }
-        # Keep the legacy review-mode prompt untouched and move active
-        # heading-only iteration to a dedicated template file.
-        self.heading_only_template = "01_outline_generator_heading_only_v2.txt"
+        # Specialized templates for structural review mode (heading-only)
+        self.heading_only_templates = {
+            "brand_commercial": "01_outline_generator_heading_only_commercial_v2.txt",
+            "informational": "01_outline_generator_heading_only_informational_v2.txt"
+        }
+        # Fallback for legacy calls or missing types
+        self.heading_only_fallback = "01_outline_generator_heading_only_v2.txt"
 
     def _normalize_section(self, section: Dict[str, Any], idx: int, content_type: str, content_strategy: Dict[str, Any], area: Optional[str]):
 
@@ -261,9 +265,12 @@ class OutlineGenerator:
 
         current_year = str(datetime.now().year)
 
-        # Heading-Only Mode Isolation: Use specialized lightweight template
+        # Heading-Only Mode Isolation: Use specialized lightweight templates per content type
         if heading_only_mode:
-            template_name = self.heading_only_template
+            template_name = self.heading_only_templates.get(
+                content_type,
+                self.heading_only_fallback
+            )
         else:
             template_name = self.templates.get(
                 content_type,

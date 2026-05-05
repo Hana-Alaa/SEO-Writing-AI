@@ -1,0 +1,50 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-05-05 16:58:48
+ERROR: 'dict object' has no attribute 'enforced_structural_rules'
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 687, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\content_generator.py", line 296, in generate
+    prompt = template.render(
+             ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "assets\prompts\templates\01_outline_generator_heading_only_informational_v2.txt", line 29, in top-level template code
+    {% if content_strategy.enforced_structural_rules %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'enforced_structural_rules'
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-05-05 16:58:48
+ERROR: 'dict object' has no attribute 'enforced_structural_rules'
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 687, in _step_1_outline
+    outline_data = await self.outline_gen.generate(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\content_generator.py", line 296, in generate
+    prompt = template.render(
+             ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "C:\Users\Hana Alaa\AppData\Roaming\Python\Python312\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "assets\prompts\templates\01_outline_generator_heading_only_informational_v2.txt", line 29, in top-level template code
+    {% if content_strategy.enforced_structural_rules %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'enforced_structural_rules'
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

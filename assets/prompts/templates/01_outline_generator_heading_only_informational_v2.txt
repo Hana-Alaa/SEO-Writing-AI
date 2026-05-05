@@ -1,3 +1,5 @@
+Informational outline heading prompt derived from 01_outline_generator_heading_only_v2.txt
+
 You are a Helpful, Clear Content Planner.
 Your task is to generate only the heading structure layer of an article outline in JSON format.
 
@@ -24,9 +26,9 @@ Your task is to generate only the heading structure layer of an article outline 
 - Use natural language in the article language. Do not sound robotic, academic, or generic.
 
 2. STRUCTURE RULES
-{% if content_strategy.enforced_structural_rules %}
+{% if content_strategy.get('enforced_structural_rules') %}
 **MUST-HAVE SECTIONS & CONSTRAINTS**
-{% for rule in content_strategy.enforced_structural_rules %}
+{% for rule in content_strategy.get('enforced_structural_rules', []) %}
 - {{ rule }}
 {% endfor %}
 {% endif %}
@@ -40,30 +42,45 @@ Your task is to generate only the heading structure layer of an article outline 
   - Do not create any intro subheadings.
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
-- If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
-  - Default order: `offer` -> `features` -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
-  - For provider-selection or commercial investigation keywords (e.g., best company, agency, provider, افضل شركة, أفضل مكتب, مزود خدمة), do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
-  - In provider-selection outlines, any H2 about "how to choose", "how to evaluate", criteria, or decision filters MUST use `section_type: "features"` or another evaluation type, NOT `section_type: "offer"`.
-  - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
-  - If a dedicated brand section is needed, place one `differentiation` section after proof/pricing and before process.
-  - If the user needs confidence before choosing the brand, include one brand proof section after differentiation and before process using `section_type: "proof"` or `section_type: "case_study"`.
-  - The article should not become a pure brand page. It should help the reader evaluate the market first, then make the provided brand feel like the logical choice.
-  - Comparison is NOT a mandatory standalone section. If comparison is useful, it may be embedded inside the most relevant section (offer, features, proof/pricing, or location) unless it deserves a dedicated standalone H2.
+
 - If `content_type` is `informational`:
-  - Build an understanding-first article structure.
-  - Preferred flow:
-    context/definition -> types/categories/components -> how it works / key criteria -> practical uses/examples -> common mistakes or misconceptions -> optional comparison -> FAQ -> conclusion
+  INFORMATIONAL ARTICLE LOGIC:
+  Goal: educate the reader, build topical authority, and answer the search query fully.
+  The reader is learning. Every section must add new knowledge and must not repeat what was already explained.
+  Use a knowledge-building funnel from broad understanding to specific application.
+
+Expected logical flow (strict unless context requires otherwise)
+  1. Definition/context: what the topic is, its scope, and what it is not.
+  2. Importance/relevance: why it matters and what impact it has.
+  3. Types/components/categories, if relevant.
+  4. How it works or how to apply it in practice.
+  5. Common mistakes or misconceptions to avoid. This section is mandatory for informational articles.
+  6. FAQ with real reader questions as H3s.
+  7. Conclusion with a useful takeaway and at most one soft, non-commercial next step.
+
+  Rules:
+  - The outline MUST start with a definition/context section unless the query is explicitly advanced or clearly assumes prior knowledge.
+  - Common mistakes/misconceptions section is mandatory in every informational article unless the topic is too narrow and no meaningful mistakes exist.
+  - If a meaningful "common mistakes/misconceptions" section is missing, the output is INVALID and must be regenerated.
+  - FAQ H3s must be phrased as real search-style questions.
+  - Each H2 must introduce knowledge not already covered in any previous section.
+  - The article must be useful even if the reader never visits the brand’s website.
+  - Brand or platform mentions are allowed in maximum 1-2 places only, and only when contextual.
+  - The conclusion MAY include one soft, helpful next step. It MUST NOT include promotional, sales-driven, or conversion-focused language.
+  - Do not use generic conclusion headings like “Conclusion” or “Final Thoughts”; the final H2 must signal the takeaway.
+
+  Banned:
+  - Conversion-focused H2s.
+  - “Why choose [Brand]?” sections.
+  - CTA language in the middle of the article.
+  - Rewording the same section idea in multiple H2s.
+  - Skipping foundational explanation and jumping straight to advanced details.
+  - Generic H2s that do not signal section value.
+
   - Do NOT include brand, promotion, differentiation, case_study, or process-with-brand sections unless explicitly required by input.
   - The article should explain, organize, and clarify the topic, not persuade the reader to choose a provider.
   - Headings must remain specific, useful, and non-generic.
   - Use H3s only for meaningful informational buckets such as types, categories, stages, examples, mistakes, or questions.
-- Informational section-type guidance:
-  - Definition/context sections answer: “What is this and why does it matter?”
-  - Types/categories sections answer: “What forms or categories exist?”
-  - How-it-works sections answer: “How does it work in practice?”
-  - Practical/examples sections answer: “How is it used or applied?”
-  - Mistakes/myths sections answer: “What should the reader avoid or misunderstand?”
-  - FAQ sections answer real remaining user questions.
 - **LEAKAGE PREVENTION RULE**:
   - For informational content, the output is INVALID if it includes:
     - brand persuasion
@@ -100,13 +117,6 @@ Your task is to generate only the heading structure layer of an article outline 
     - Service/product-level wording (what is delivered, e.g., "{{ service_phrase }}")
     - User-outcome wording (what the user gets, e.g., "[outcome-oriented entity variant]")
   - Headings must remain clearly interpretable as part of the same entity domain.
-  - **PRICING/PROOF GUIDANCE (CRITICAL)**:
-    - Pricing/Cost headings MUST focus on the **Service/Object Phrase** ("{{ service_phrase }}") rather than the Provider Phrase ("{{ entity_phrase }}").
-    - Bad: "Average prices of [best provider phrase]" or "Cost of best [provider]"
-    - Good: "Cost of [service/product object] by scope, type, or location", "Average price of [service/product object] based on package, specs, or location", or "What affects the cost of [service/product object]?"
-    - Use direct pricing words natively in {{ article_language }} (e.g. أسعار, تكلفة, متوسط سعر).
-    - Avoid abstract wording like "عوامل تحديد التكلفة" unless paired with direct pricing wording.
-  - Avoid mechanical repetition. If most H2 headings reuse the exact entity phrase, it is a structural failure.
 - Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
 - If you create H3 subheadings, output the exact H3 strings in `subheadings`.
 - H3 Generation Strategy: Decision Buckets vs. Atomic Details:
@@ -115,13 +125,12 @@ Your task is to generate only the heading structure layer of an article outline 
   3. The Non-Overlap Rule: Each H3 must be a distinct bucket. If two H3s could be merged without losing significant meaning, do not separate them.
   4. The Strength & Expansion Test: Every H3 must pass this check: "Can this H3 be expanded into a 150+ word standalone section without repeating the parent H2?". If NO, do not generate it.
   5. Searchability Hint: Prefer common user-facing terms and searchable phrasing over obscure or technical classifications.
-  6. Service Constraint (Deliverable Framing): For service-based keywords, H3s MUST name standalone service categories, deliverables, or solution types, NOT provider categories.
-     - **DELIVERABLE RULE**: H3 = what the user is buying, not who is selling it.
-     - **CRITICAL**: Do NOT generate H3s for atomic tasks, execution steps, or low-level actions (e.g., Avoid: "Cleaning floors"; Prefer: "Deep Cleaning Services").
-     - Do NOT classify providers (e.g., Avoid: "Companies that offer X") unless the parent H2 is explicitly about comparing provider types.
-     - If no strong, standalone deliverable buckets exist, return an empty `subheadings` array.
-     - Bad: "شركات متخصصة في X", "[Provider type] by budget", "Cleaning floors"
-     - Good: "[Service type]", "[Deliverable category]", "[Solution variant]", "Deep cleaning services"
+  6. Category Constraint (Taxonomy Framing): H3s MUST name standalone categories, types, methods, or components, NOT broad descriptive qualities or minor attributes.
+     - **TAXONOMY RULE**: H3 = a distinct variant, type, or category of the topic.
+     - **CRITICAL**: Do NOT generate H3s for atomic tasks or low-level details that belong in the H2 body.
+     - If no strong, standalone taxonomy buckets exist, return an empty `subheadings` array.
+     - Bad: "[Topic] spec", "minor detail", "[Topic] advantage"
+     - Good: "[Topic Type]", "[Topic Category]", "[Method/Component]", "[Standalone Variant]"
 
 ### H3 Permission Rule
 
@@ -147,109 +156,7 @@ Do NOT use "how to choose" or decision-only phrasing for the Offer H2 if it cont
 Use H3s only for product/service variants or deliverables.
 Do NOT use H3s for attributes, technical features, quality claims, or minor details.ِ
 
-3. Proof/Pricing H2:
-Usually keep `subheadings` empty UNLESS meaningful segmentation exists.
-
-If pricing varies meaningfully by location, type, category, package, or scope, H3s MUST reflect the most decision-useful segmentation.
-
-PRICING INTENT GUIDELINE:
-- If location is the primary pricing segmentation and major zones have meaningful price differences, prefer splitting them into separate H3s rather than grouping them in one summary.
-- The pricing H2 defines the segmentation contract. If it promises pricing by location, area, zone, or neighborhood, every pricing H3 MUST be a concrete location/area/zone/neighborhood pricing bucket. If it promises pricing by type or category, every pricing H3 MUST be a concrete type/category pricing bucket.
-- For local property rental or listing queries tied to one city, prefer location-based pricing buckets when areas or neighborhoods are the strongest practical price driver, unless the pricing H2 explicitly promises type-based pricing.
-- The pricing H2 MUST commit to a single primary segmentation dimension.
-- Avoid combining multiple primary dimensions in the pricing H2, such as "by type and area".
-- If multiple dimensions are relevant, choose the one that best matches user search behavior and decision intent.
-
-When generating pricing H3s, think from the reader’s perspective:
-"What pricing information would a user expect to see first?"
-
-- Start with the most practical pricing breakdown that reflects how users usually search in this topic.
-
-- Prefer real-world price expectations (average prices, typical ranges) over abstract explanations.
-- Prefer phrasing that includes measurable pricing signals (e.g., average price, range, starting from, per unit)
-
-- Choose the segmentation that feels most natural for the topic:
-- If multiple pricing segmentations are valid, choose the one that best answers the reader’s first practical pricing question, not the easiest or most generic segmentation.
-  (e.g., by location, type, package, size, or usage — depending on what users care about most)
-- Prefer the segmentation that aligns with how users most commonly ask about pricing in this context (e.g., "prices in which area?", "cost per type?", "price by package?")
-- When the chosen pricing segmentation contains meaningful sub-buckets that users search separately, it is valid to create multiple H3s for those sub-buckets.
-- This is not repetition if each H3 represents a distinct pricing bucket and includes a measurable pricing signal.
-- Example: "متوسط أسعار [entity/service] في [area/zone A]" and "متوسط أسعار [entity/service] في [area/zone B]".
-
-- Once a primary pricing segmentation is selected, ALL H3s MUST follow that segmentation as the dominant structure.
-- If a stronger pricing segmentation is selected, weaker secondary segmentations MUST NOT appear as primary H3s.
-
-- You MAY include ONE supporting H3 ONLY if:
-  - it is expressed as a measurable pricing output
-  - AND it does NOT break the main segmentation structure
-  - The H3 must show a price expectation, average, range, starting price, cost difference, or cost variation by a specific dimension.
-- Do NOT use H3s that only explain why prices change.
-
-Avoid:
-- weak geographic summaries such as "تفاوت الأسعار حسب المنطقة" without specific breakdown
-- abstract or generic phrasing (e.g., "factors affecting price")
-- explanations without showing actual pricing expectations
-- brand promotion or offers disguised as pricing H3s
-
-Goal:
-Every pricing H3 should help the reader quickly understand:
-"How much will this cost in practice?"
-
-You MUST:
-- maintain a consistent pricing segmentation across all H3s within the section
-- keep the pricing H2 and all pricing H3s aligned to the same primary segmentation dimension
-- ensure pricing H3s answer “how much does it cost in practice?”
-- prioritize the most decision-impacting pricing segmentation over secondary distinctions
-- at least one H3 MUST represent real-world price ranges or average prices using the chosen segmentation
-- explanatory H3s MUST be phrased in a way that still reflects pricing output (not just abstract factors)
-- make segmentation the dominant structure of pricing H3s
-- choose the segmentation that best matches the search behavior for the topic
-
-You MUST NOT:
-- mix multiple pricing segmentations within the same section unless one is clearly dominant and others are minimal
-- create mixed pricing H3 sets such as type + type + explanation, or location + type + explanation, under one pricing H2
-- assume a fixed segmentation for every topic
-- assume location as the default pricing segmentation unless it is the most decision-relevant dimension for this topic
-- assume type/category as the default pricing segmentation
-- revert to type-based pricing when location/area is clearly the selected or more decision-useful pricing segmentation
-- rely only on explanatory H3s like “what affects price”
-- choose secondary distinctions as the main pricing segmentation if they are not how users typically search
-
-Bad:
-- عوامل تحديد السعر
-- تأثير الموقع على التكلفة
-- أسباب اختلاف الأسعار
-- عروض [Brand]: أسعار تنافسية وخدمات إضافية
-
-Good:
-- متوسط أسعار [entity/service] حسب [most relevant segmentation]
-- تكلفة [entity/service] حسب [package/scope/location/type]
-- أسعار [entity/service] في [specific area/package/type] when that matches search intent
-- فرق التكلفة بين [option A] و[option B]
-- متوسط السعر حسب [specific dimension]
-
 ---
-
-4. Differentiation H2:
-Always return an empty `subheadings` array.
-Brand benefits should be written in the body, not as H3s.
-
-Brand proof sections are recommended for brand_commercial content when the reader needs evidence before choosing the provided brand.
-Use `section_type: "proof"` or `section_type: "case_study"` for this section.
-Place brand proof after differentiation and before process.
-The heading may mention the brand only when it clearly promises evidence, not promotion.
-Good brand proof H2 examples:
-- أمثلة من مشاريع ناجحة نفذتها [Brand]
-- كيف تثبت [Brand] جودة خدماتها؟
-- نتائج وتجارب عملاء تؤكد خبرة [Brand]
-- نماذج أعمال [Brand] في [service/product]
-Do NOT add a brand proof section if it would only repeat differentiation without evidence.
-Do NOT invent unsupported metrics, client names, guarantees, testimonials, or case studies. If evidence is not provided, phrase the heading around evidence types the article can discuss safely, such as portfolio, process quality, review signals, or measurable outcomes when available.
-
-5. Process H2:
-Usually return an empty `subheadings` array.
-Use H3s only when each step is a complex standalone phase.
-Do NOT create H3s for simple steps like planning, execution, testing, or delivery.
 
 6. Comparison H2:
 Comparison sections are OPTIONAL.
@@ -295,12 +202,11 @@ H3s are allowed and should be real user questions.
   - The H2 MUST describe available concrete options/types directly (e.g., "أنواع [entity] المتوفرة").
   - It is FORBIDDEN to use "how to choose" phrasing or any decision-guide phrasing (e.g., Avoid: "كيفية اختيار...").
   - If the H2 asks how to choose, compare, evaluate, or determine the best provider, it is NOT an offer section. Use a features/evaluation section instead.
-  - For brand_commercial provider-selection content, the offer H2 should name concrete services or deliverables the provided brand/company can execute (e.g., "خدمات تصميم المواقع التي تقدمها [Brand] حسب احتياج مشروعك").
   - If H3s exist, the H2 MUST be the category/type label, not advice.
   - H3s MUST include meaningful qualifiers when applicable (usage, target user, pricing level, or suitability), unless the base category is already inherently specific.
   - Avoid bare labels when a clearer, more decision-useful phrasing is possible.
-  - For service-based or agency queries, the offer section MUST include concrete service categories or deliverables (e.g., types of services provided).
-  - If the offer section does not clearly list services or solutions, the outline is INVALID.
+  - For informational content, offer/type sections should describe neutral categories, types, methods, components, or options when relevant.
+  - If the topic is not naturally split into types/categories/options, do not create an offer section.
 
 ---
 
@@ -362,31 +268,16 @@ H3s are allowed and should be real user questions.
 
 ---
 
-- **PROCESS SECTION (section_type: process)**:
-  - The Process H2 MUST include a clear action (buy, rent, book, choose, etc.)
-  - MUST stay anchored to the entity/service
-  - MUST include brand context if brand_commercial
-
-  Generic journey phrasing is FORBIDDEN:
-  - "رحلة البحث"
-  - "رحلة اختيار"
-  - "خطوات العثور"
-
-  Correct pattern:
-  - "خطوات [action] لـ [entity/service] عبر [Brand]"
-
----
-
 ### 5. HEADING QUALITY RULES
 
 #### FEATURES VS COMPARISON SEPARATION RULE
 
-- If the offer section answers "how to choose" or overlaps with evaluation criteria, it is INVALID and must be rewritten as concrete services.
-- Offer sections define what services/deliverables/options are available.
+- Do not force service-selling, provider deliverables, brand services, or commercial offer sections in informational outlines.
+- Offer sections define what categories, types, methods, components, or options are available.
 - Features sections MUST define evaluation criteria only (HOW to evaluate).
 - They MUST describe how the user evaluates or chooses between options.
 - They MUST NOT include direct comparisons (A vs B) or specific alternatives.
-- Offer and features MUST NOT answer the same question. If both headings are about choosing/evaluating the best provider, the offer section is missing and must be rewritten as concrete services/deliverables.
+- Offer and features MUST NOT answer the same question. Ensure the "Offer" section (Types/Categories) is distinct from the "Features" section (Evaluation criteria).
 
 - Comparison sections MUST compare specific options, types, or scenarios (WHAT to choose between).
 - They MUST apply real decision criteria to help the user choose.
@@ -401,9 +292,7 @@ H3s are allowed and should be real user questions.
 - If multiple sections perform segmentation, each MUST use a different decision dimension.
 - Offer sections usually segment by type, category, deliverable, product/service option, or user segment.
 - Location sections segment by area, geography, proximity, accessibility, or local suitability.
-- Pricing/proof sections segment by cost driver, pricing model, package, scope, type, or location when relevant.
 - Features sections define evaluation criteria, not option groups.
-- Process sections explain action sequence, not choices.
 
 If two H2s could be summarized with the same question, the output is weak.
 
@@ -411,8 +300,6 @@ Examples:
 - Offer answers: "What options exist?"
 - Features answers: "How should I evaluate?"
 - Location answers: "Where is best for my need?"
-- Pricing answers: "What will it cost and why?"
-- Process answers: "How do I complete the action?"
 - FAQ answers: "What common questions remain?"
 
 If two sections use the same decision dimension or repeat the same conceptual role, the output is INVALID and must be regenerated with clearer separation.
@@ -422,9 +309,7 @@ If two sections use the same decision dimension or repeat the same conceptual ro
 - Each H2 must represent a unique decision angle:
   - Criteria
   - Comparison
-  - Pricing
   - Segmentation
-  - Process
   - FAQ
   - Next step
 
@@ -443,10 +328,6 @@ If two sections use the same decision dimension or repeat the same conceptual ro
   - Good: "أفضل مناطق [area] لاختيار [entity] حسب احتياجك"
   - Good: "أفضل مناطق [area] لـ [action] [entity] بناءً على الميزانية ونمط الاستخدام"
   - Good: "كيف تختار المنطقة الأنسب لـ [action] [entity] في [area]؟"
-
-- **Generic vs. Action-Anchored (Process):**
-  - Bad: "رحلة البحث عن [entity] المثالي"
-  - Good: "خطوات [action] لـ [entity] في [area] عبر [Brand]"
 
 - **Vague vs. Specific (FAQ):**
   - Bad: "أسئلة شائعة حول [area]"
@@ -479,9 +360,9 @@ Return ONLY valid JSON in the following format:
 ```
 
 ### 9. DETAILED SECTION INSTRUCTIONS
-{% if content_strategy.section_role_map %}
+{% if content_strategy.get('section_role_map') %}
 Follow these role-specific instructions for each section type:
-{% for role_key, instruction in content_strategy.section_role_map.items() %}
+{% for role_key, instruction in content_strategy.get('section_role_map', {}).items() %}
 - **{{ role_key }}**: {{ instruction }}
 {% endfor %}
 {% endif %}
@@ -494,6 +375,10 @@ Follow these role-specific instructions for each section type:
 - Would a reader understand what each section gives them without reading the body?
 - Are any headings generic writer labels?
 - Do any two headings overlap too much?
+- Does the article move from definition/context to practical application?
+- Is there a common mistakes/misconceptions section?
+- Does every H2 add new knowledge?
+- Is any CTA limited to the conclusion and non-commercial?
 - Is the order logical: hook -> understanding -> evaluation -> objections/questions -> next step?
 - Are the H3s real subtopics rather than repeated versions of the H2?
 
