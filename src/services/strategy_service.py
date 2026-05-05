@@ -4,6 +4,7 @@ import json
 import asyncio
 import re
 from typing import Dict, Any, List, Optional
+from datetime import datetime
 from jinja2 import Template
 from src.utils.json_utils import recover_json
 
@@ -104,7 +105,7 @@ class StrategyService:
         self.env = jinja_env
         self.intent_template = intent_template
         self.style_extractor = StyleExtractor(ai_client)
-        
+
         self.strategy_map = {
             "brand_commercial": "00_content_strategy_brand_commercial_observed_v2.txt",
             "informational": "00_content_strategy_informational.txt",
@@ -164,6 +165,64 @@ class StrategyService:
 
         return "en"
 
+    def _keyword_has_provider_service_commercial_signals(self, primary_keyword: str) -> bool:
+        """Narrow deterministic commercial signal check; avoids blind 'best' conversion."""
+        normalized = (primary_keyword or "").lower()
+        tokens = {
+            token
+            for token in re.split(r"[^\w\u0600-\u06FF]+", normalized)
+            if token
+        }
+        if not tokens:
+            return False
+
+        quality_signals = {
+            "best", "top", "cheapest", "compare", "review", "reviews",
+            "أفضل", "افضل", "أحسن", "احسن", "أرخص", "ارخص", "مقارنة",
+        }
+        provider_signals = {
+            "company", "agency", "provider", "office", "clinic", "firm",
+            "شركة", "شركات", "وكالة", "مكتب", "عيادة", "مزود", "مركز",
+        }
+        service_signals = {
+            "service", "services", "price", "prices", "cost", "quote",
+            "خدمة", "خدمات", "سعر", "أسعار", "اسعار", "تكلفة", "تصميم",
+            "تنظيف", "محاماة", "تسويق", "برمجة", "تطوير", "صيانة",
+        }
+
+        has_quality = bool(tokens & quality_signals)
+        has_provider = bool(tokens & provider_signals)
+        has_service = bool(tokens & service_signals)
+        return (has_quality and has_provider) or (has_provider and has_service)
+
+    def resolve_content_type(
+        self,
+        intent: Optional[str],
+        brand_present: bool,
+        requested_content_type: Optional[str],
+        primary_keyword: str,
+        workflow_mode: str = "core",
+    ) -> str:
+        """Single resolver for content_type so individual steps do not drift."""
+        requested = (requested_content_type or "").strip().lower()
+        if workflow_mode == "advanced" and requested:
+            if requested in {"commercial", "brand_commercial"}:
+                return "brand_commercial"
+            if requested in {"comparison", "comparative"}:
+                return "comparison"
+            return "informational"
+
+        normalized_intent = (intent or "").strip().lower()
+        keyword_commercial = self._keyword_has_provider_service_commercial_signals(primary_keyword)
+
+        if any(value in normalized_intent for value in ("comparison", "comparative")):
+            return "comparison"
+        if any(value in normalized_intent for value in ("commercial", "transactional")) or keyword_commercial:
+            return "brand_commercial"
+        if brand_present and keyword_commercial:
+            return "brand_commercial"
+        return "informational"
+
     async def run_intent_title(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Classify user intent and refine the title via AI."""
         raw_title = state.get("raw_title") or "Untitled"
@@ -193,7 +252,7 @@ class StrategyService:
             area=area,
             brand_name=state.get("brand_name", "")
         )
-        
+
         if state.get("workflow_logger"):
             state["workflow_logger"].log_ai_call(
                 step_name="intent_title",
@@ -228,42 +287,30 @@ class StrategyService:
 
         # 1. Run Strategic AI Classifier (Universal Thinking)
         detected_intent = await self.detect_intent_ai(raw_title, primary_keyword, state=state)
-        
+
         # 2. Reconcile Intents (Combining Title Intent and Strategic Logic)
         # We look into both intent_normalized (from title) and detected_intent (from classifier)
         all_intents = f"{intent_normalized} {detected_intent}"
-        
-        # 3. Mode-based Content Type Selection (Prioritize Intelligent Logic)
-        user_article_type = state.get("article_type")
-        if state.get("workflow_mode") == "advanced" and user_article_type:
-            if user_article_type == "commercial":
-                state["content_type"] = "brand_commercial"
-            elif user_article_type == "comparison":
-                state["content_type"] = "comparison"
-            else:
-                state["content_type"] = "informational"
-        else:
-            if any(x in intent_normalized for x in ["commercial", "transactional"]):
-                state["content_type"] = "brand_commercial"
-            elif any(x in intent_normalized for x in ["comparison", "comparative"]):
-                state["content_type"] = "comparison"
-            else:
-                # 5. Secondary Guard: If brand exists, it is Commercial
-                brand_name = state.get("brand_name")
-                if brand_name and brand_name.lower() not in ["not provided", "none", ""]:
-                    state["content_type"] = "brand_commercial"
-                else:
-                    state["content_type"] = "informational"
-        
+
+        brand_name = state.get("brand_name")
+        brand_present = bool(brand_name and brand_name.lower() not in ["not provided", "none", ""])
+        state["content_type"] = self.resolve_content_type(
+            intent=f"{intent_normalized} {detected_intent}",
+            brand_present=brand_present,
+            requested_content_type=state.get("article_type"),
+            primary_keyword=primary_keyword,
+            workflow_mode=state.get("workflow_mode", "core"),
+        )
+
         logger.info(f"Strategic Decision: TitleIntent='{intent_normalized}', ClassifierIntent='{detected_intent}' -> Final='{state['content_type']}'")
 
         state["input_data"]["title"] = optimized_title
         return state
-        
+
         # Skip the redundant classifier step if we already deterministically mapped the type via Advanced Mode
         if not (state.get("workflow_mode") == "advanced" and user_article_type):
             await self.detect_intent_ai(raw_title, primary_keyword, state=state)
-        
+
         return state
 
     async def run_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -271,7 +318,7 @@ class StrategyService:
         input_data = state.get("input_data", {})
         ref_path = input_data.get("logo_reference_path")
         style_ref = input_data.get("style_reference")
-        
+
         state["brand_visual_style"] = ""
         state["style_blueprint"] = {}
 
@@ -303,8 +350,22 @@ class StrategyService:
         seo_intelligence = state.get("seo_intelligence", {})
         content_type = state.get("content_type")
         area = state.get("area") or "Global"
-        
+
         full_intel = seo_intelligence.get("market_analysis", {})
+        serp_intent = (
+            full_intel.get("intent_analysis", {}).get("confirmed_intent")
+            or intent
+        )
+        brand_name = state.get("brand_name")
+        brand_present = bool(brand_name and brand_name.lower() not in ["not provided", "none", ""])
+        state["content_type"] = self.resolve_content_type(
+            intent=serp_intent,
+            brand_present=brand_present,
+            requested_content_type=state.get("article_type"),
+            primary_keyword=primary_keyword or "",
+            workflow_mode=state.get("workflow_mode", "core"),
+        )
+        content_type = state["content_type"]
 
         intent_layer = full_intel.get("intent_analysis", {})
         structural_layer = full_intel.get("structural_intelligence", {})
@@ -315,7 +376,7 @@ class StrategyService:
             semantic = full_intel.get("semantic_assets", {})
             lsi = semantic.get("lsi_keywords", [])
             related = semantic.get("related_searches", [])
-            
+
             raw_fallback = [primary_keyword] + lsi[:5] + related[:5]
             safe_fallback = []
             for kw in raw_fallback:
@@ -372,7 +433,7 @@ class StrategyService:
                 logger.error("Content Strategy AI returned empty response")
                 state["content_strategy"] = {}
                 return state
-            
+
             json_text = self._extract_first_json_object(raw)
             parsed = recover_json(json_text)
 
@@ -393,18 +454,54 @@ class StrategyService:
                 {}, primary_keyword, content_type, area, seo_intelligence=seo_intelligence
             )
 
+        final_data = self._apply_dynamic_section_role_overrides(final_data, state)
+
         state["content_strategy"] = final_data
         return state
 
+    def _apply_dynamic_section_role_overrides(self, strategy: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
+        """Applies dynamic overrides to the section_role_map based on content context."""
+        out = dict(strategy)
+
+        content_type = state.get("content_type", "informational")
+        intent = state.get("intent", "")
+        primary_keyword = str(state.get("primary_keyword", ""))
+        area = state.get("area", "")
+        display_brand_name = state.get("display_brand_name", state.get("brand_name", ""))
+
+        # Dynamic guidance is kept out of content_strategy to preserve the locked JSON shape.
+        is_commercial_or_local = content_type in ["brand_commercial", "listing", "real_estate"] or any(sig in str(intent).lower() for sig in ["commercial", "local"])
+        is_property_rental = any(sig in str(intent).lower() or sig in primary_keyword or sig in content_type.lower() for sig in ["listing", "real_estate", "property", "rental", "hospitality", "عقار", "شقق", "فلل", "اراضي", "ايجار", "للايجار"])
+
+        if area and area in primary_keyword and is_commercial_or_local:
+            if is_property_rental:
+                state["location_section_guidance"] = (
+                    "Location sections must describe entity/listing/service availability or suitability across locations, neighborhoods, or areas. "
+                    "The H2 and all H3s must stay anchored to the main entity/listing/service and must not describe areas generically."
+                )
+            else:
+                state["location_section_guidance"] = (
+                    "Describe service availability or coverage areas for the main entity. Stay focused on the service provision in those areas."
+                )
+
+        # Structural Enforcements List
+        enforced_structural_rules = []
+        if area and area in primary_keyword and is_commercial_or_local and is_property_rental:
+            enforced_structural_rules.append("LOCATION ENFORCEMENT: Create a dedicated H2 section about the main entity/listing/service availability or options across locations/neighborhoods/areas. The H2 and all H3s must stay anchored to the main entity/listing/service and must not describe areas generically.")
+
+        if content_type == "brand_commercial" and display_brand_name:
+            enforced_structural_rules.append(f"BRAND PROCESS ENFORCEMENT: The process H2 MUST incorporate the '{display_brand_name}' assisted journey or entity journey.")
+
+        state["enforced_structural_rules"] = enforced_structural_rules
+        return out
+
     async def detect_intent_ai(self, raw_title: str, primary_keyword: str, state: Dict[str, Any] = None) -> str:
         """AI classifier to detect intent (informational, commercial, etc.) using strategic JSON logic."""
-        from datetime import datetime
-        import json
         import re
 
         if not hasattr(self, 'intent_template'):
             return "informational"
-             
+
         prompt = self.intent_template.render(
             raw_title=raw_title,
             primary_keyword=primary_keyword,
@@ -422,7 +519,7 @@ class StrategyService:
             if not data:
                 # If extraction failed, try recovering from the full content
                 data = recover_json(content)
-            
+
             intent = (data or {}).get("intent", "informational").lower().strip()
             reasoning = (data or {}).get("reasoning", "")
             logger.info(f"[Intent_Intelligence] Classified as '{intent}' because: {reasoning}")
@@ -437,7 +534,7 @@ class StrategyService:
              state["last_step_model"] = res["metadata"].get("model", "unknown")
              # NEW: Store the detected intent in state for the workflow router
              state["intent"] = intent
-            
+
         return intent
 
     def _normalize_token(self, value: str) -> str:
@@ -483,7 +580,7 @@ class StrategyService:
 
         tokens = re.findall(r"[\w\u0600-\u06FF]+", text, re.UNICODE)
         normalized_tokens = [self._normalize_arabic(token) for token in tokens]
-        
+
         stop_tokens = {
             "for", "sale", "buy", "buying", "in", "vs", "best", "top", "cheap", "cheapest",
             "what", "how", "guide", "review", "compare", "comparison", "near", "new",

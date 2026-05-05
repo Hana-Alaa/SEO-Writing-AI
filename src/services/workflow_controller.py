@@ -16,7 +16,7 @@ import copy
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
-from langdetect import detect  
+from langdetect import detect
 from jinja2 import Environment, FileSystemLoader, Template, StrictUndefined
 import hashlib
 import requests
@@ -49,7 +49,7 @@ from src.services.strategy_service import StrategyService
 from src.services.validation_service import ValidationService
 from src.services.semantic_service import SemanticService
 from src.utils.contract_safety import PipelineContractError, validate_service_call, is_signature_mismatch
-BASE_DIR = Path(__file__).resolve().parents[2] 
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 # Custom errors
@@ -74,7 +74,7 @@ class AsyncExecutor:
         attempt = 0
         while attempt <= retries:
             logger.info(f"--- Starting Step: {step_name} (Attempt {attempt + 1}/{retries + 1}) ---")
-            
+
             # Use WorkflowLogger if available in state
             workflow_logger = state.get("workflow_logger")
             start_time = 0
@@ -82,19 +82,19 @@ class AsyncExecutor:
                 start_time = workflow_logger.start_step(step_name)
             else:
                 start_time = time.time()
-            
+
             try:
                 # Capture state BEFORE execution for logging
                 input_state = state.copy() if isinstance(state, dict) else state
-                
+
                 # Execute the async coordination step
                 new_state = await func(state)
-                
+
                 if new_state is None:
                     new_state = state
-                
+
                 duration = time.time() - start_time
-                
+
                 if workflow_logger:
                     # Log step completion with inputs and outputs
                     workflow_logger.log_step_details(
@@ -103,7 +103,7 @@ class AsyncExecutor:
                         input_data=input_state,
                         output_data=new_state
                     )
-                    
+
                     # Collect token info if available in new_state (requires AI clients to report tokens)
                     tokens = new_state.get("last_step_tokens")
                     model = new_state.get("last_step_model", "unknown")
@@ -115,16 +115,16 @@ class AsyncExecutor:
                         tokens=tokens,
                         model=model
                     )
-                
+
                 if self.observer:
                     self.observer.log_workflow_step(step_name, duration)
                 logger.info(f"--- Finished Step: {step_name} (Duration: {duration:.2f}s) ---")
                 return {"status": "success", "step": step_name, "duration": duration, "data": new_state}
-            
+
             except Exception as e:
                 duration = time.time() - start_time
                 logger.error(f"Error in step '{step_name}' attempt {attempt + 1}: {e}")
-                
+
                 if workflow_logger:
                     # Log to the technical errors.txt file
                     tb_str = traceback.format_exc()
@@ -133,14 +133,14 @@ class AsyncExecutor:
                         error_msg=str(e),
                         traceback_str=tb_str
                     )
-                    
+
                     workflow_logger.log_step_details(
                         step_name=step_name,
                         duration=duration,
                         input_data=state,
                         error=str(e)
                     )
-                
+
                 # FATAL CONTRACT FAILURE: Non-retryable
                 if isinstance(e, PipelineContractError) or is_signature_mismatch(e):
                     logger.critical(f"FATAL CONTRACT FAILURE in step '{step_name}': {e}. Aborting.")
@@ -151,7 +151,7 @@ class AsyncExecutor:
                     await asyncio.sleep(0.1) # Reduced from 1s for better responsiveness
                 else:
                     return {"status": "error", "step": step_name, "duration": duration, "error": str(e), "data": state}
-        
+
         return {"status": "error", "step": step_name, "error": "Max retries exceeded", "data": state}
 
 class AsyncWorkflowController:
@@ -163,7 +163,7 @@ class AsyncWorkflowController:
         self.observer = self.ai_client.observer
         # self.ai_client = GeminiClient()
         # self.ai_client = GroqClient()
-        
+
         # self.ai_client = HuggingFaceClient(
         #     model="TheBloke/Llama-2-7B-Chat-GGML"
         # )
@@ -174,7 +174,7 @@ class AsyncWorkflowController:
         self.image_prompt_planner = ImagePromptPlanner(
             ai_client=self.ai_client,
             template_path=BASE_DIR / "assets/prompts/templates/06_image_planner.txt"
-            
+
         )
         self.env = Environment(
             loader=FileSystemLoader("assets/prompts/templates"),
@@ -183,11 +183,11 @@ class AsyncWorkflowController:
 
         with open("assets/prompts/templates/00_intent_classifier.txt", "r", encoding="utf-8") as f:
             self.intent_template = Template(f.read(), undefined=StrictUndefined)
-        
+
         # Semantic Intelligence Layer
         self.semantic_service = SemanticService()
         self.semantic_model = self.semantic_service.model
-        
+
         # Content generation services
         self.title_generator = TitleGenerator(self.ai_client)
         self.outline_gen = OutlineGenerator(self.ai_client)
@@ -205,7 +205,7 @@ class AsyncWorkflowController:
             intent_template=self.intent_template
         )
         self.validator = ValidationService(ai_client=self.ai_client, semantic_model=self.semantic_service)
-        
+
         # Hardened Error Management: Essential steps that MUST succeed
         self.CRITICAL_STEPS = {
             "analysis_init",
@@ -216,7 +216,7 @@ class AsyncWorkflowController:
             "content_writing",
             "assembly"
         }
-        
+
         # Hard-Stop Flag for critical failures
         self.workflow_failed = False
 
@@ -225,7 +225,7 @@ class AsyncWorkflowController:
             ai_client=self.ai_client,
             save_dir=os.path.join(work_dir, "assets/images"),
         )
-        
+
         # Run startup contract audit (smoke test)
         self.preflight_system_audit()
 
@@ -242,7 +242,7 @@ class AsyncWorkflowController:
         state.setdefault("content_type", "informational")
         state.setdefault("brand_link_used", False)
         state.setdefault("used_internal_links", [])
-        state.setdefault("used_external_links", []) 
+        state.setdefault("used_external_links", [])
         state.setdefault("prohibited_competitors", [])
         state.setdefault("blocked_external_domains", set())
         state.setdefault("brand_name", ""); state.setdefault("display_brand_name", ""); state.setdefault("official_brand_name", ""); state.setdefault("brand_aliases", []); state.setdefault("domain_brand_name", "")
@@ -252,7 +252,7 @@ class AsyncWorkflowController:
         state.setdefault("full_content_so_far", "")
         state.setdefault("brand_mentions_count", 0)
         state.setdefault("used_anchors", [])
-        
+
         # Check for Heading-Only Mode
         heading_only_mode = state.get("input_data", {}).get("heading_only_mode", False)
         state["heading_only_mode"] = heading_only_mode
@@ -274,7 +274,7 @@ class AsyncWorkflowController:
         # Dynamic Image Skipping
         generate_images = state.get("generate_images", True)
         num_images = state.get("num_images", 7)
-        
+
         if generate_images and num_images > 0:
             steps.extend([
                 ("image_prompting", self._step_4_generate_image_prompts, 0),
@@ -301,7 +301,7 @@ class AsyncWorkflowController:
         for name, func, retries in steps:
             result = await self.executor.run_step(name, func, state, retries=retries)
             state = result.get("data", state)
-            
+
             if result["status"] == "error":
                 if name in self.CRITICAL_STEPS:
                     logger.error(f"FATAL ERROR at critical step '{name}': {result.get('error')}")
@@ -311,10 +311,10 @@ class AsyncWorkflowController:
                 else:
                     logger.warning(f"Non-critical step '{name}' failed. Continuing...")
                     continue
-            
+
             # Runtime Debug: Trace current step and mode
             print(f"[TRACER_V1] Step: '{name}' | heading_only_mode={state.get('heading_only_mode')} (type: {type(state.get('heading_only_mode'))})")
-            
+
             # Heading-Only Mode: Stop immediately after outline generation
             if state.get("heading_only_mode") and name == "outline_generation":
                 logger.info("Heading-Only Mode active: Stopping workflow after outline generation.")
@@ -337,7 +337,7 @@ class AsyncWorkflowController:
         keywords = input_data.get("keywords", [])
         if isinstance(keywords, str):
             keywords = [k.strip() for k in keywords.split(",") if k.strip()]
-        
+
         primary_keyword = keywords[0] if keywords else raw_title
         user_lang = input_data.get("article_language")
         # article_language = user_lang if user_lang else (detect(raw_title) if raw_title else "en")
@@ -354,7 +354,7 @@ class AsyncWorkflowController:
         state["primary_keyword"] = primary_keyword
         state["raw_title"] = raw_title
         state["keywords"] = keywords
-        
+
         # Dual-Mode / Advanced Customization
         state["workflow_mode"] = input_data.get("workflow_mode", "core")
         state["tone"] = input_data.get("tone")
@@ -362,51 +362,51 @@ class AsyncWorkflowController:
         state["pov"] = input_data.get("pov")
         state["article_size"] = input_data.get("article_size") or "core_dynamic_expansion"
         state["brand_voice_description"] = input_data.get("brand_voice_description")
-        
+
         state["include_conclusion"] = input_data.get("include_conclusion", True)
         state["include_faq"] = input_data.get("include_faq", True)
         state["include_tables"] = input_data.get("include_tables", True)
         state["include_bullet_lists"] = input_data.get("include_bullet_lists", True)
         state["include_comparison_blocks"] = input_data.get("include_comparison_blocks", True)
         state["bold_key_terms"] = input_data.get("bold_key_terms", True)
-        
+
         state["num_images"] = input_data.get("num_images", 7)
         state["image_style"] = input_data.get("image_style", "illustration")
         state["image_size"] = input_data.get("image_size", "1024x1024")
-        
+
         state["custom_keyword_density"] = input_data.get("custom_keyword_density")
         state["secondary_keywords"] = input_data.get("secondary_keywords", [])
         state["competitor_count"] = input_data.get("competitor_count", 5)
         state["min_external_links"] = max(0, int(input_data.get("min_external_links", 2)))
-        
+
         state["logo_image"] = input_data.get("logo_image")
         state["reference_image"] = input_data.get("reference_image")
         state["brand_voice_guidelines"] = input_data.get("brand_voice_guidelines")
         state["brand_voice_examples"] = input_data.get("brand_voice_examples")
 
-        
+
         # Derive brand_url from the FIRST URL provided in the UI list
         urls = state.get("input_data", {}).get("urls", [])
         external_urls = state.get("input_data", {}).get("external_urls", [])
         brand_url = urls[0].get("link") if urls else None
         state["brand_url"] = brand_url
-        
+
         # PRE-INITIALIZE internal_resources with user-provided URLs
         state["internal_resources"] = []
         state["external_resources"] = []
         seen_canons = set()
-        
+
         # Prioritize brand_url from internal_links if marked as brand
         brand_url = None
         for u in urls:
             if u.get("is_brand"):
                 brand_url = u.get("link")
                 break
-        
+
         # If no brand_url found from is_brand, use the first URL as before
         if not brand_url and urls:
             brand_url = urls[0].get("link")
-            
+
         state["brand_url"] = brand_url
 
         if brand_url:
@@ -418,15 +418,15 @@ class AsyncWorkflowController:
                 "is_brand": True # Mark the primary brand URL as brand
             })
             seen_canons.add(LinkManager.canon_url(brand_url))
-        
+
         for u in urls:
             link = u.get("link", "")
             if not link or not link.startswith("http"): continue
-            
+
             # Skip if already seen (e.g., if it was the brand_url)
             canon = LinkManager.canon_url(link)
             if canon in seen_canons: continue
-            
+
             state["internal_resources"].append({
                 "link": link,
                 "text": u.get("text", ""),
@@ -444,7 +444,7 @@ class AsyncWorkflowController:
                 "text": u.get("text", ""),
                 "is_manual": True
             })
-        
+
         # Helper for junk slugs (restore manual link protection)
         junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help', 'faq'}
         def is_junk_init(url_str):
@@ -469,10 +469,10 @@ class AsyncWorkflowController:
         slug_base = LinkManager.sluggify(primary_keyword)
         slug = f"{slug_base}_{timestamp}"
         state["slug"] = slug
-        
+
         output_dir = os.path.join(self.work_dir, slug)
         os.makedirs(output_dir, exist_ok=True)
-        
+
         # Initialize WorkflowLogger
         state["workflow_logger"] = WorkflowLogger(output_dir)
         state["workflow_logger"].log_event("Initialization", {
@@ -481,10 +481,10 @@ class AsyncWorkflowController:
             "primary_keyword": primary_keyword,
             "output_dir": output_dir
         })
-        
+
         state["output_dir"] = output_dir
         state["used_phrases"] = []
-        
+
         # Initialize external link controls
         state["max_external_links"] = 6
         state["blocked_external_domains"] = set()
@@ -517,30 +517,30 @@ class AsyncWorkflowController:
         return await self.research_service.run_serp_analysis(state)
 
     # Strategy methods migrated to StrategyService
-    
+
     async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates the article outline with a soft retry loop for validation failures."""
-        
+
         input_data = state.get("input_data", {})
         title = input_data.get("title") or "Untitled"
         keywords = input_data.get("keywords") or []
         urls_raw = input_data.get("urls", [])
         urls_norm = []
-        
+
         # We use state["internal_resources"] which was populated in brand_discovery
         # Junk link filter (avoid Contact, Login, etc.)
         junk_slugs = {'contact', 'about', 'login', 'signup', 'account', 'cart', 'checkout', 'privacy', 'terms', 'help'}
-        
+
         def is_junk(url):
             path = urlparse(url).path.lower().rstrip('/')
             last_segment = path.split('/')[-1]
             return last_segment in junk_slugs
 
         internal_resources = state.get("internal_resources", [])
-        
+
         # Filter internal_resources based on junk slugs, BUT PROTECT manual URLs
         filtered_internal_resources = [
-            r for r in internal_resources 
+            r for r in internal_resources
             if r.get("is_manual") or not is_junk(r.get('link', ''))
         ]
 
@@ -552,15 +552,15 @@ class AsyncWorkflowController:
             if not canon: continue
             if canon not in temp_map or (r.get("is_manual") and not temp_map[canon].get("is_manual")):
                 temp_map[canon] = r
-                
+
         deduplicated_internal_resources = list(temp_map.values())
-        
+
         logger.info(f"Final internal pool: {len(deduplicated_internal_resources)} resources ({sum(1 for r in deduplicated_internal_resources if r.get('is_manual'))} manual, {sum(1 for r in deduplicated_internal_resources if not r.get('is_manual'))} discovered).")
 
         state["internal_url_set"] = set()
         for res in deduplicated_internal_resources:
             urls_norm.append({
-                "text": res.get("text", "Internal Resource"), 
+                "text": res.get("text", "Internal Resource"),
                 "link": res.get("link"),
                 "is_manual": res.get("is_manual", False)
             })
@@ -569,12 +569,12 @@ class AsyncWorkflowController:
                 state["internal_url_set"].add(canon)
 
         for u in urls_norm:
-            u["type"] = "internal" 
+            u["type"] = "internal"
 
         seo_intelligence = state.get("seo_intelligence", {})
         content_strategy = state.get("content_strategy", {})
         area = state.get("area")
-        
+
         content_type = state.get("content_type", "informational") or "informational"
         intent = state.get("intent") or "informational"
         # article_language = input_data.get("article_language", "en")
@@ -594,7 +594,7 @@ class AsyncWorkflowController:
 
         if pricing_ratio > 0.4:
             mandatory.add("pricing")
-            
+
         # Conditionally require case study
         has_case_study = False
         if content_type == "brand_commercial":
@@ -607,8 +607,8 @@ class AsyncWorkflowController:
                     break
         if has_case_study:
             mandatory.add("case_study")
-    
-        
+
+
         feedback = None
         outline = []
         outline_data = {}
@@ -675,6 +675,9 @@ class AsyncWorkflowController:
                     area=area or "",
                     seo_intelligence=h_seo_intelligence,
                 )
+                if state.get("enforced_structural_rules"):
+                    h_content_strategy = dict(h_content_strategy)
+                    h_content_strategy["enforced_structural_rules"] = state.get("enforced_structural_rules", [])
                 logger.info(
                     "[TRACER_V1] Heading-Only Detox & Distillation fired for '%s'.",
                     state.get("primary_keyword", ""),
@@ -737,15 +740,15 @@ class AsyncWorkflowController:
                     feedback = "Outline generation returned empty result. Please provide a full, structured JSON outline."
 
             # (Redundant block removed)
-            
+
             outline = outline_data.get("outline", [])
-            
+
             # Validation Layer
             errors = []
-            
+
             # 0. FAQ Consolidation (Robustness)
             outline = self.validator.consolidate_faq(outline)
-            
+
             # Pruning and Repair (Deterministic)
             # TEMPORARY: Relaxed validation for heading-only mode
             heading_only_mode = state.get("heading_only_mode", False)
@@ -760,7 +763,7 @@ class AsyncWorkflowController:
                         content_strategy=h_content_strategy,
                         seo_intelligence=h_seo_intelligence,
                     )
-                
+
                 outline = self.validator.repair_outline_deterministic(
                     outline,
                     primary_keyword=state.get("primary_keyword", ""),
@@ -769,7 +772,7 @@ class AsyncWorkflowController:
                     brand_name=state.get("brand_name", ""),
                     area=area or ""
                 )
-                
+
                 # 1. Intent Distribution
                 outline, dist_errors = self.validator.enforce_intent_distribution(
                     outline,
@@ -801,14 +804,14 @@ class AsyncWorkflowController:
                 errors.extend(quality_errors)
             else:
                 logger.info("Heading-only mode: Heavy quality validation and deterministic repairs bypassed.")
-            
+
             last_validation_errors = list(errors)
 
             if not errors:
                 logger.info(f"Outline validated successfully on attempt {attempt + 1}.")
                 outline_validated = True
                 break
-            
+
             feedback = "Validation failed. Please correct the following issues and regenerate the outline:\n- " + "\n- ".join(errors)
             logger.warning(f"Outline validation failed (attempt {attempt + 1}): {feedback}")
 
@@ -857,7 +860,7 @@ class AsyncWorkflowController:
                 f"(missing ~{paa_check['missing_count']} PAA-inspired H2s). "
                 f"Prompt 01_outline_generator.txt should produce ≥15% PAA coverage."
             )
-        
+
         # Ensure mandatory sections exist (for logging/debugging)
         present_types = {(s.get("section_type") or "").lower().strip() for s in outline}
         if "faq" not in present_types:
@@ -915,7 +918,7 @@ class AsyncWorkflowController:
             if dom:
                 authority_domains.add(dom)
         state["authority_domains"] = authority_domains
-        
+
         # Extract brand names for the prohibited list
         prohibited_names = []
         for domain in state["blocked_external_domains"]:
@@ -923,7 +926,7 @@ class AsyncWorkflowController:
             name = domain.split('.')[0].capitalize()
             if name and len(name) > 1:
                 prohibited_names.append(name)
-        
+
         state["prohibited_competitors"] = prohibited_names
         logger.info(f"Prohibited competitors identified: {state['prohibited_competitors']}")
 
@@ -931,7 +934,7 @@ class AsyncWorkflowController:
             "internal_topics": urls_norm,
             "affiliate_policy": {"max_per_section": 3, "placement": "distributed", "tone": "neutral"}
         }
-                
+
         # primary_keyword = keywords[0] if keywords else title
         primary_keyword = state.get("primary_keyword")
         for sec in outline:
@@ -940,21 +943,21 @@ class AsyncWorkflowController:
             if not sec.get("assigned_keywords"):
                  # Robust safety fallback
                  sec["assigned_keywords"] = keywords[:3] if keywords else [primary_keyword]
-        
+
         # --- Smart Link Pool Preparation (Contextual Flow) ---
         internal_pool = list(state.get("internal_url_set", set()))
-        
+
         # External Authority References (Broad pool for the AI to choose from)
         external_refs = []
         for item in serp_data.get("reference_authority_links", []):
             url = item.get("url") if isinstance(item, dict) else item
-            if url: 
+            if url:
                 external_refs.append(LinkManager.canon_url(url))
-        
+
         # Limit to top 15 internal links to avoid prompt bloat, but keep it a broad pool
         internal_pool = list(dict.fromkeys(internal_pool))[:15]
         external_refs = list(dict.fromkeys(external_refs))[:10]
-        
+
         state["available_links_pool"] = {
             "internal": internal_pool,
             "external_references": external_refs
@@ -976,15 +979,280 @@ class AsyncWorkflowController:
 
         state["internal_url_set"] = set(internal_links)
 
-        missing = mandatory - present_types
+        missing = self.validator._missing_required_sections(present_types, mandatory)
 
         if missing:
             logger.error(f"[outline_validate] Missing mandatory sections: {missing}")
             # we could raise error or just log depending on strictness
             # raise ValueError(f"Missing mandatory sections: {missing}")
 
+        if state.get("heading_only_mode"):
+            try:
+                audit_brand_name = state.get("brand_name") or state.get("display_brand_name") or ""
+                audit_display_brand_name = state.get("display_brand_name") or audit_brand_name
+                report = self.validator.audit_heading_outline_quality(
+                    outline=outline,
+                    content_type=content_type,
+                    area=area,
+                    primary_keyword=primary_keyword,
+                    brand_name=audit_brand_name,
+                    display_brand_name=audit_display_brand_name,
+                    content_strategy=content_strategy,
+                    seo_intelligence=seo_intelligence,
+                    entity_phrase=entity_phrase,
+                    service_phrase=service_phrase
+                )
+                state["heading_quality_audit"] = report
+                if state.get("workflow_logger"):
+                    state["workflow_logger"].log_event("heading_quality_audit", report)
+                logger.info(f"Heading quality audit complete. Passed: {report.get('passed')}")
+
+                # AI Outline Critique (Diagnostic Only)
+                if (
+                    state.get("outline")
+                    and state.get("heading_only_mode")
+                    and hasattr(self.outline_gen, "critique_outline")
+                ):
+                    try:
+                        critique = await self.outline_gen.critique_outline(
+                            primary_keyword=primary_keyword,
+                            title=title,
+                            outline=outline,
+                            content_type=content_type,
+                            intent=intent,
+                            area=area or "",
+                            entity_phrase=entity_phrase or "",
+                            service_phrase=service_phrase or "",
+                            display_brand_name=audit_display_brand_name,
+                            content_strategy=content_strategy,
+                            heading_quality_audit=report
+                        )
+                        state["ai_outline_critique"] = critique
+                        if state.get("workflow_logger"):
+                            state["workflow_logger"].log_event("ai_outline_critique", critique)
+                        logger.info("AI Outline Critique complete.")
+                    except Exception as crit_e:
+                        logger.error(f"AI Outline Critique step failed: {crit_e}")
+
+                # Controlled Heading Fix Layer: disabled by default. Audit mode must not mutate outlines.
+                if (
+                    state.get("heading_only_mode")
+                    and state.get("heading_fix_enabled") is True
+                    and hasattr(self.outline_gen, "fix_outline_headings")
+                ):
+                    state["heading_quality_audit_before_fix"] = state.get("heading_quality_audit")
+                    state["ai_outline_critique_before_fix"] = state.get("ai_outline_critique")
+
+                    fix_result = await self._run_controlled_heading_fix(state)
+                    state["heading_fix"] = fix_result
+
+                    if fix_result.get("accepted"):
+                        logger.info("Heading fix candidate accepted and applied.")
+                    else:
+                        logger.info(f"Heading fix candidate rejected: {fix_result.get('reason')}")
+
+            except Exception as e:
+                import traceback
+                logger.error(f"Heading quality audit failed: {e}\n{traceback.format_exc()}")
+
         return state
-    
+
+    async def _run_controlled_heading_fix(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Orchestrates the controlled heading fix layer with validation."""
+        outline = state.get("outline", [])
+        if not outline:
+            return {"enabled": True, "attempted": False, "accepted": False, "reason": "No outline to fix"}
+
+        audit = state.get("heading_quality_audit", {})
+        critique = state.get("ai_outline_critique", {})
+
+        # Actionable check v1: only run if there are warnings or critique issues
+        has_warnings = bool(audit.get("warnings"))
+        has_critique_issues = critique.get("overall_score", 10) < 9.0
+
+        if not (has_warnings or has_critique_issues):
+            return {"enabled": True, "attempted": False, "accepted": False, "reason": "No actionable issues detected"}
+
+        input_data = state.get("input_data", {})
+        primary_keyword = str(state.get("primary_keyword", ""))
+        content_type = state.get("content_type", "informational")
+        area = state.get("area", "")
+        entity_phrase = state.get("entity_phrase", "")
+        service_phrase = state.get("service_phrase", "")
+        display_brand_name = state.get("display_brand_name", "")
+        content_strategy = copy.deepcopy(state.get("content_strategy", {}))
+
+        # Inject calibration rules into strategy for the fix layer
+        calibration_rules = [
+            "H3 consistency: All H3s inside an 'Offer' section must reflect the same intent (e.g. rental) as the parent H2.",
+            "Intent words: Ensure intent words like 'للايجار' are present where appropriate.",
+            "Generic H2 tightening: Rewrite generic patterns like 'أهم المزايا' or 'المرافق' to be decision-focused (e.g. 'المزايا التي يجب توفرها عند استئجار شقة').",
+            "Semantic consistency: All headings must stay aligned with entity_phrase, service_phrase, and intent."
+        ]
+        content_strategy["heading_quality_calibration"] = calibration_rules
+
+        logger.info("Attempting controlled heading fix with semantic calibration...")
+        fix_data = await self.outline_gen.fix_outline_headings(
+            primary_keyword=primary_keyword,
+            outline=outline,
+            content_type=content_type,
+            area=area,
+            entity_phrase=entity_phrase,
+            service_phrase=service_phrase,
+            display_brand_name=display_brand_name,
+            content_strategy=content_strategy,
+            heading_quality_audit=audit,
+            ai_outline_critique=critique
+        )
+
+        fixed_candidate = fix_data.get("outline", [])
+        raw_changes = fix_data.get("changes", [])
+
+        if not fixed_candidate or fixed_candidate == outline:
+            logger.info("Heading fix: AI proposed no changes.")
+            return {"enabled": True, "attempted": True, "accepted": False, "reason": "No changes proposed by AI"}
+
+        # --- Tightening Layer: Revert Over-edits ---
+        final_fixed = []
+        final_changes = []
+
+        # Helper to identify sections with issues
+        warned_section_ids = {w.get("section_id") for w in audit.get("warnings", []) if w.get("section_id")}
+
+        # FIX: Critique categories are lists of dicts, must extract section_id
+        critique_issue_ids = set()
+        for category in ["weak_sections", "h3_issues", "brand_alignment_issues", "faq_issues"]:
+            for item in critique.get(category, []):
+                if isinstance(item, dict) and item.get("section_id"):
+                    critique_issue_ids.add(item.get("section_id"))
+
+        # Repetition issues have a list of sections
+        for item in critique.get("repetition_issues", []):
+            if isinstance(item, dict) and item.get("sections"):
+                for sid in item.get("sections", []):
+                    critique_issue_ids.add(sid)
+
+        problematic_ids = warned_section_ids | critique_issue_ids
+
+        logger.info(f"Heading fix debugging: Problematic section IDs: {problematic_ids}")
+
+        # Helper for intro severity
+        intro_severity = "low"
+        intro_warnings = [w for w in audit.get("warnings", []) if w.get("section_id") == "sec_01" or w.get("heading_level") == "INTRO"]
+        if any(w.get("severity") in ["medium", "high"] for w in intro_warnings):
+            intro_severity = "medium"
+
+        for orig, fixed in zip(outline, fixed_candidate):
+            sid = orig.get("section_id")
+            stype = orig.get("section_type")
+
+            revert = False
+
+            # Rule 4: Do NOT modify CONCLUSION
+            if stype == "conclusion":
+                revert = True
+
+            # Rule 4: Do NOT modify INTRO unless severity >= medium
+            elif stype == "introduction" or orig.get("heading_level") == "INTRO":
+                if intro_severity == "low":
+                    revert = True
+
+            # Rule 3: Only modify sections that have audit warnings or critique issues
+            elif sid not in problematic_ids:
+                logger.debug(f"Reverting change to section {sid} as it was not flagged as problematic.")
+                revert = True
+
+            if revert:
+                final_fixed.append(orig)
+            else:
+                if orig.get("heading_text") != fixed.get("heading_text"):
+                    logger.info(f"Applying fix to section {sid}: '{orig.get('heading_text')}' -> '{fixed.get('heading_text')}'")
+                final_fixed.append(fixed)
+                # Keep changes for this section
+                for c in raw_changes:
+                    if c.get("section_id") == sid:
+                        final_changes.append(c)
+
+        fixed_candidate = final_fixed
+        changes = final_changes
+
+        if fixed_candidate == outline:
+            logger.warning("Heading fix: All proposed changes were reverted by tightening layer. Check problematic_ids logic.")
+            return {"enabled": True, "attempted": True, "accepted": False, "reason": "All AI changes were reverted by tightening layer (over-editing prevention)"}
+
+        # 1. Structural Validation
+        if len(fixed_candidate) != len(outline):
+            return {"enabled": True, "attempted": True, "accepted": False, "reason": "Structural failure: Section count changed", "changes": changes}
+
+        for orig, fixed in zip(outline, fixed_candidate):
+            for field in ["section_id", "section_type", "section_intent", "heading_level"]:
+                if orig.get(field) != fixed.get(field):
+                    return {"enabled": True, "attempted": True, "accepted": False, "reason": f"Structural failure: Field {field} changed in section {orig.get('section_id')}", "changes": changes}
+
+        # 2. Quality Validation (Rerun Audit)
+        try:
+            audit_brand_name = state.get("brand_name") or state.get("display_brand_name") or ""
+            audit_display_brand_name = state.get("display_brand_name") or audit_brand_name
+            new_report = self.validator.audit_heading_outline_quality(
+                outline=fixed_candidate,
+                content_type=content_type,
+                area=area,
+                primary_keyword=primary_keyword,
+                brand_name=audit_brand_name,
+                display_brand_name=audit_display_brand_name,
+                content_strategy=content_strategy,
+                seo_intelligence=state.get("seo_intelligence", {}),
+                entity_phrase=entity_phrase,
+                service_phrase=service_phrase
+            )
+
+            old_warnings_count = len(audit.get("warnings", []))
+            new_warnings_count = len(new_report.get("warnings", []))
+
+            # Reject if warnings increased
+            if new_warnings_count > old_warnings_count:
+                return {
+                    "enabled": True,
+                    "attempted": True,
+                    "accepted": False,
+                    "reason": f"Quality failure: Warnings increased from {old_warnings_count} to {new_warnings_count}",
+                    "warnings_before": old_warnings_count,
+                    "warnings_after": new_warnings_count,
+                    "changes": changes
+                }
+
+            # Check for new HIGH severity warnings
+            old_high = [w for w in audit.get("warnings", []) if w.get("severity") == "high"]
+            new_high = [w for w in new_report.get("warnings", []) if w.get("severity") == "high"]
+            if len(new_high) > len(old_high):
+                 return {
+                    "enabled": True,
+                    "attempted": True,
+                    "accepted": False,
+                    "reason": "Quality failure: New high-severity warnings introduced",
+                    "changes": changes
+                }
+
+            # Acceptance!
+            state["outline"] = fixed_candidate
+            state["heading_quality_audit"] = new_report
+            # We don't rerun critique to save tokens/time as requested (diagnostic only)
+
+            return {
+                "enabled": True,
+                "attempted": True,
+                "accepted": True,
+                "reason": "Applied fixes successfully",
+                "warnings_before": old_warnings_count,
+                "warnings_after": new_warnings_count,
+                "changed_sections": [c.get("section_id") for c in changes],
+                "changes": changes
+            }
+
+        except Exception as e:
+            logger.error(f"Validation of fixed outline failed: {e}")
+            return {"enabled": True, "attempted": True, "accepted": False, "reason": f"Validation error: {str(e)}", "changes": changes}
+
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
         input_data = state.get("input_data", {})
         title = input_data.get("title", "Untitled")
@@ -1041,11 +1309,11 @@ class AsyncWorkflowController:
             logger.info(f"Writing {len(outline)} sections in SEQUENTIAL mode (Smart Pool Enforcement: {is_commercial})")
             results = []
             available_pool = state.get("available_links_pool", {"internal": [], "external": []})
-            
+
             for idx, section in enumerate(outline):
                 # Inject current pool into section context for the prompt
                 section["available_link_pool"] = available_pool
-                
+
                 res = await self._write_single_section(
                     title=title,
                     global_keywords=global_keywords,
@@ -1062,14 +1330,14 @@ class AsyncWorkflowController:
                     brand_advantages=seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("brand_advantages", []),
                     writing_blueprint=seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("writing_blueprint", "")
                 )
-                
+
                 # UPDATE POOL: Extract used links and remove them
                 if res and res.get("generated_content"):
                     content = res["generated_content"]
                     # UPDATE POOL: Prune used internal links only (External are per-fact)
                     content = res["generated_content"]
                     used_urls = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
-                    
+
                     old_internal = available_pool.get("internal", [])
                     available_pool["internal"] = [u for u in old_internal if u not in used_urls]
                     if len(old_internal) != len(available_pool["internal"]):
@@ -1081,21 +1349,21 @@ class AsyncWorkflowController:
                     state["full_content_so_far"] += "\n\n" + res["generated_content"]
                     # Update Last Section Content (For Logical Flow)
                     state["last_section_content"] = res["generated_content"]
-                    
+
                     # Track CTAs using has_cta helper
                     def has_cta_local(text):
                         return bool(re.search(r'<a\b|<button\b|\[.*?\]\(https?://', text))
-                    
+
                     if has_cta_local(res["generated_content"]):
                          state["ctas_placed"] = state.get("ctas_placed", 0) + 1
-                    
+
                     # Track Tables (Max 2 rule)
                     if "|" in res["generated_content"] and re.search(r"\|\s*---\s*\|", res["generated_content"]):
                          state["tables_placed"] = state.get("tables_placed", 0) + 1
 
                     # Update global brand mention count
                     state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
-                         
+
                 results.append(res)
 
         sections_content = {}
@@ -1117,7 +1385,7 @@ class AsyncWorkflowController:
             primary_keyword = global_keywords.get("primary", "")
             if primary_keyword:
                 full_text_for_search = (res.get("heading_text") or "") + "\n" + res.get("generated_content", "")
-                
+
                 # Robust regex for Arabic & English: handles common Arabic prefixes/suffixes
                 # [و|ب|ل|ف|ك|ال]* -> matches common prefixes
                 # (keyword)
@@ -1128,13 +1396,13 @@ class AsyncWorkflowController:
                     pattern = r'(?:[وبلفك]|ال)*{}(?:[ةاتونينههمناي])*'.format(re.escape(primary_keyword.lower()))
                 else:
                     pattern = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
-                    
+
                 matches = re.findall(pattern, full_text_for_search.lower())
                 state["global_keyword_count"] = state.get("global_keyword_count", 0) + len(matches)
 
             # Update full content summary
             state["full_content_so_far"] = state.get("full_content_so_far", "") + "\n\n" + res.get("generated_content", "")
-            
+
             # For parallel results, update the brand_mentions_count if not already updated in serial loop
             if PARALLEL_SECTIONS:
                 state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
@@ -1197,12 +1465,12 @@ class AsyncWorkflowController:
         market_angle: str = ""
     ) -> Optional[Dict[str, Any]]:
         """Worker to write one section."""
-        
+
         section_id = section.get("section_id") or section.get("id")
         brand_url = state.get("brand_url")
         brand_link_used = state.get("brand_link_used", False)
         section_type = (section.get("section_type") or "").lower()
-        
+
         # Always allow the introduction to use the brand link, regardless of state.
         is_introduction = section_type == "introduction"
         can_use_brand_link = bool(brand_url) and (is_introduction or not brand_link_used)
@@ -1210,7 +1478,7 @@ class AsyncWorkflowController:
         execution_plan = self._build_execution_plan(section, state)
         if force_local:
             execution_plan["local_context_required"] = True
-            
+
         execution_plan["brand_link_allowed"] = can_use_brand_link
         execution_plan["brand_url"] = brand_url
 
@@ -1260,7 +1528,7 @@ class AsyncWorkflowController:
         blocked_domains = state.get("blocked_external_domains", set())
         allowed_domains = state.get("authority_domains", set())
         brand_domain = LinkManager.domain(state.get("brand_url", ""))
-        
+
         for r in serp_results:
             url = r.get("url")
             if not url: continue
@@ -1274,30 +1542,30 @@ class AsyncWorkflowController:
             external_sources.append({"url": url, "text": r.get("title", "External Resource")})
             if len(external_sources) >= 8: # Cap to 8 sources
                 break
-        
+
         logger.info(f"Extracted {len(external_sources)} external sources for section '{section.get('heading_text')}'")
-        
+
         # --- Runtime CTA Assignment ---
         # The outline generator and ValidationService now determine the strategic cta_eligible flag.
         # SectionWriter respects section.get('cta_eligible') and section.get('section_intent').
         cta_type = section.get("cta_type", "none")
-            
+
         # --- Context Windowing (Token Optimization) ---
-        # Instead of sending the entire article text (token heavy), 
+        # Instead of sending the entire article text (token heavy),
         # we send the Intro + Full Map of Headings + last 3 sections.
         intro_text = state.get("introduction_text", "")
-        
+
         # Get generated content and headings of all sections written so far
         all_sections_data = list(state.get("sections", {}).values())
         all_headings = [s.get("heading_text", "No Heading") for s in all_sections_data if "generated_content" in s]
         all_content = [s["generated_content"] for s in all_sections_data if "generated_content" in s]
-        
+
         # Keep the last 3 sections for immediate narrative flow
         recent_context = "\n\n".join(all_content[-3:]) if all_content else ""
-        
+
         # Build a cumulative map of what has been covered so far to prevent conceptual repetition
         full_article_map = " | ".join(all_headings) if all_headings else "None"
-        
+
         cumulative_history = f"STORY SO FAR (Headings): {full_article_map}\n\n"
         optimized_context = f"{cumulative_history}ARTICLE INTRODUCTION:\n{intro_text}\n\nRECENT CONTEXT (Last 3 Sections):\n{recent_context}" if intro_text else recent_context
 
@@ -1320,7 +1588,7 @@ class AsyncWorkflowController:
             area=state.get("area"),
             used_phrases=used_phrases,
             used_internal_links=state.get("used_internal_links", []),
-            used_external_links=state.get("used_external_links", []), 
+            used_external_links=state.get("used_external_links", []),
             section_index=section_index,
             total_sections=total_sections,
             brand_context=brand_context,
@@ -1376,7 +1644,7 @@ class AsyncWorkflowController:
             area=state.get("area"),
             used_phrases=used_phrases,
             used_internal_links=state.get("used_internal_links", []),
-            used_external_links=state.get("used_external_links", []), 
+            used_external_links=state.get("used_external_links", []),
             section_index=section_index,
             total_sections=total_sections,
             brand_context=brand_context,
@@ -1414,7 +1682,7 @@ class AsyncWorkflowController:
             market_angle=market_angle,
             used_anchors=state.get("used_anchors", [])
         )
-        
+
         content = res_data.get("content", "")
         # --- Extract and track Anchor Texts for rotation ---
         if content:
@@ -1425,10 +1693,10 @@ class AsyncWorkflowController:
                     clean_anchor = anchor.strip().lower()
                     if clean_anchor not in state["used_anchors"]:
                         state["used_anchors"].append(clean_anchor)
-        
+
         used_links = res_data.get("used_links", [])
         brand_link_used_in_sec = res_data.get("brand_link_used", False)
-        
+
 
         # --- ENTITY LOCKDOWN CHECK (REMOVED FOR CREATIVITY) ---
         # We now rely on the AI's natural expert knowledge and strict 'No Competitor' policy.
@@ -1451,12 +1719,12 @@ class AsyncWorkflowController:
                 for unit in knowledge_units:
                     if unit not in state["used_claims"]:
                         state["used_claims"].append(unit)
-            
+
             # Fallback/Supplemental: Extract substantial sentences if no explicit units provided
             if not knowledge_units:
                 substantial_sentences = [s for s in new_sentences if len(s) > 60] # Increased threshold to reduce noise
                 state["used_claims"].extend(substantial_sentences)
-            
+
             # Also sync to used_topics for legacy monitoring
             if knowledge_units:
                 state.setdefault("used_topics", [])
@@ -1505,7 +1773,7 @@ class AsyncWorkflowController:
                     section=section,
                     state=state
                 )
-                
+
                 # Check for "Fixable Quality Issues" that warrant an automated repair attempt
                 # We specifically look for errors defined in ValidationService, following v2.2 priorities
                 priority_map = {
@@ -1530,10 +1798,10 @@ class AsyncWorkflowController:
                 }
                 fixable_issues = list(priority_map.keys())
                 active_repair_needed = any(any(issue in err for issue in fixable_issues) for err in validation_errors) if (not is_valid and validation_errors) else False
-                
+
                 if active_repair_needed:
                     logger.info(f"Active Repair Triggered for section '{section.get('heading_text')}'. Total errors: {len(validation_errors)}")
-                    
+
                     # Sort errors by priority so we don't overwhelm the AI
                     # We group errors by their base code to identify the highest priority one
                     scoped_errors = []
@@ -1544,19 +1812,19 @@ class AsyncWorkflowController:
                                 prio = p
                                 break
                         scoped_errors.append((prio, err))
-                    
+
                     scoped_errors.sort(key=lambda x: x[0])
-                    
+
                     # Only send top 1-2 priorities in the first repair attempt to keep feedback actionable
                     top_priority = scoped_errors[0][0]
                     filtered_errors = [e for p, e in scoped_errors if p <= top_priority + 1] # Allow one level deeper if needed
-                    
+
                     feedback_str = "\n".join([f"- {err}" for err in filtered_errors])
-                    
+
                     # Update execution plan for repair mode (used by template's REFINEMENT MODE)
                     repair_plan = execution_plan.copy()
                     repair_plan["structure_rule"] = f"FIX QUALITY ERRORS (Strategic Correction):\n{feedback_str}"
-                    
+
                     # PREFLIGHT CONTRACT CHECK (Repair Mode)
                     validate_service_call(
                         self.section_writer.write,
@@ -1577,7 +1845,7 @@ class AsyncWorkflowController:
                         area=state.get("area"),
                         used_phrases=used_phrases,
                         used_internal_links=state.get("used_internal_links", []),
-                        used_external_links=state.get("used_external_links", []), 
+                        used_external_links=state.get("used_external_links", []),
                         section_index=section_index,
                         total_sections=total_sections,
                         brand_context=brand_context,
@@ -1634,7 +1902,7 @@ class AsyncWorkflowController:
                         area=state.get("area"),
                         used_phrases=used_phrases,
                         used_internal_links=state.get("used_internal_links", []),
-                        used_external_links=state.get("used_external_links", []), 
+                        used_external_links=state.get("used_external_links", []),
                         section_index=section_index,
                         total_sections=total_sections,
                         brand_context=brand_context,
@@ -1671,7 +1939,7 @@ class AsyncWorkflowController:
                         market_angle=market_angle,
                         used_anchors=state.get("used_anchors", [])
                     )
-                    
+
                     new_content = repair_data.get("content", "")
                     if new_content:
                         logger.info(f"Section '{section.get('heading_text')}' repaired successfully.")
@@ -1686,12 +1954,12 @@ class AsyncWorkflowController:
                     output_dir = state.get("output_dir", self.work_dir)
                     val_err_path = os.path.join(output_dir, "validation_errors.txt")
                     section_title = section.get("heading_text", "Untitled Section")
-                    
+
                     with open(val_err_path, "a", encoding="utf-8") as f:
                         f.write(f"\n--- SECTION: {section_title} ({section_id}) ---\n")
                         for err in validation_errors:
                             f.write(f"- [QUALITY ISSUE]: {err}\n")
-                        
+
                         repeated = self.validator.detect_repetition(final_content, state.get("used_phrases", []))
                         if repeated and len(repeated) > 0:
                             for rep in repeated:
@@ -1709,7 +1977,7 @@ class AsyncWorkflowController:
                 # Use word boundaries or just count occurrences
                 pattern = r'\b{}\b'.format(re.escape(brand_name.lower()))
                 mentions_in_section = len(re.findall(pattern, final_content.lower()))
-                
+
                 # In Arabic, word boundaries might be tricky with prefixes. Let's do a direct count as fallback if word boundaries fail, but regex with \b works decently.
                 if mentions_in_section == 0 and brand_name.lower() in final_content.lower():
                      mentions_in_section = final_content.lower().count(brand_name.lower())
@@ -1723,7 +1991,7 @@ class AsyncWorkflowController:
                 "brand_mentions_count": mentions_in_section
             }
         return None
-    
+
     async def _step_4_generate_image_prompts(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates image prompts using the image client."""
         if not self.enable_images:
@@ -1774,18 +2042,18 @@ class AsyncWorkflowController:
 
         logo_path = state.get("input_data", {}).get("logo_image_path") or state.get("logo_path")
         brand_colors = state.get("brand_colors", [])
-        
+
         if not logo_path or not brand_colors:
             logger.info("Skipping Master Frame generation: No logo or brand colors found.")
             return state
 
         color_str = ", ".join(brand_colors)
         primary_keyword = state.get("primary_keyword") or state.get("input_data", {}).get("primary_keyword", "Professional Business")
-        
+
         # Design a prompt for a functional 'Picture Frame' border
         # Use a simplified keyword for the frame to avoid content leakage
         simple_keyword = primary_keyword.split(',')[0].strip()[:30]
-        
+
         frame_prompt = f"""Minimalist 'Bottom Wave' corporate template for {simple_keyword}.
         Create a clean, professional horizontal 16:9 template.
         Design a VERY SUBTLE, thin artistic wave or curve strictly at the BOTTOM 10% of the image using {color_str}.
@@ -1795,7 +2063,7 @@ class AsyncWorkflowController:
         The design should be extremely clean, like a blank high-end professional header/footer paper."""
 
         logger.info(f"Generating Master Frame with colors: {color_str}")
-        
+
         # We use a single generation for the Master Frame
         try:
             # Create a temporary 'prompt' object for the image client
@@ -1805,37 +2073,37 @@ class AsyncWorkflowController:
                 "image_type": "MasterFrame",
                 "section_id": "master_frame"
             }
-            
+
             output_dir = state.get("output_dir", self.work_dir)
             frames_dir = os.path.join(output_dir, "assets/images")
             os.makedirs(frames_dir, exist_ok=True)
-            
+
             self.image_client.save_dir = frames_dir
             master_frame_res = await self.image_client.generate_images(
                 [frame_prompt_obj],
                 primary_keyword=primary_keyword,
                 workflow_logger=state.get("workflow_logger")
             )
-            
+
             if master_frame_res and "local_path" in master_frame_res[0]:
                 raw_frame_path = os.path.abspath(master_frame_res[0]["local_path"])
-                
+
                 # Now, use ImageGenerator to add the LOGO to this new Master Frame permanently
                 final_master_frame_path = self.image_client.create_branded_template(
                     base_frame_path=raw_frame_path,
                     logo_path=logo_path,
                     output_path=os.path.join(frames_dir, "master_brand_template.png")
                 )
-                
+
                 if final_master_frame_path:
                     state["master_frame_path"] = final_master_frame_path
                     logger.info(f"Master Frame created successfully: {final_master_frame_path}")
-                
+
         except Exception as e:
             logger.error(f"Failed to generate Master Frame: {e}")
-            
+
         return state
-    
+
     async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Downloads images (now parallel in the client)."""
         if not self.enable_images:
@@ -1848,11 +2116,11 @@ class AsyncWorkflowController:
         primary_keyword = state.get("primary_keyword")
         # logo_path = state.get("input_data", {}).get("logo_path")
         brand_visual_style = state.get("brand_visual_style", "")
-        
+
         # Prioritize USER OVERRIDES if available, else use auto-discovered
         image_frame_path = state.get("input_data", {}).get("image_frame_path") or state.get("master_frame_path")
         logo_path = state.get("input_data", {}).get("logo_image_path") or state.get("logo_path")
-        
+
         # Zero out previous step tokens
         state["last_step_tokens"] = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
@@ -1876,7 +2144,7 @@ class AsyncWorkflowController:
 
         state["assets/images"] = images
         return state
- 
+
     async def _step_5_assembly(self, state):
         title = state.get("input_data", {}).get("title", "Untitled")
         outline = state.get("outline", [])
@@ -1906,27 +2174,27 @@ class AsyncWorkflowController:
                     logger.warning(f"High similarity ({similarity:.2f}) detected between section '{section.get('heading_text')}' and a previous section. Flagging for pruning.")
                     is_redundant = True
                     break
-            
+
             # Prune redundant intros anyway for consistent quality
             section["generated_content"] = self.validator.prune_redundant_intros(content)
             final_sections.append(section)
-        
+
         # PREFLIGHT CONTRACT CHECK
         validate_service_call(
             self.assembler.assemble,
-            title=title, 
-            sections=final_sections, 
+            title=title,
+            sections=final_sections,
             article_language=article_language,
             content_type=state.get("content_type", "informational")
         )
 
         assembled = await self.assembler.assemble(
-            title=title, 
-            sections=final_sections, 
+            title=title,
+            sections=final_sections,
             article_language=article_language,
             content_type=state.get("content_type", "informational")
         )
-        
+
         # Final pass redundancy pruning on the whole assembled markdown
         # One final pass at the very end will suffice
         # md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
@@ -1940,7 +2208,7 @@ class AsyncWorkflowController:
         draft_markdown = state.get("final_output", {}).get("final_markdown", "")
         if not draft_markdown:
             return state
-            
+
         outline = state.get("outline", [])
         sections_dict = state.get("sections", {})
         ordered_sections = [
@@ -1948,7 +2216,7 @@ class AsyncWorkflowController:
             for s in outline
             if s.get("section_id") in sections_dict
         ]
-        
+
         article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "ar")
         brand_name = state.get("brand_name", "")
         brand_source_text = state.get("input_data", {}).get("brand_source_text", "")
@@ -1959,7 +2227,7 @@ class AsyncWorkflowController:
             market_insights = market_analysis.get("market_insights", {})
             if isinstance(market_insights, dict):
                 brand_advantages_list = market_insights.get("brand_advantages", [])
-        
+
         brand_advantages = "\n".join(brand_advantages_list) if isinstance(brand_advantages_list, list) else str(brand_advantages_list)
 
         for i, section in enumerate(ordered_sections):
@@ -1967,7 +2235,7 @@ class AsyncWorkflowController:
             heading = section.get("heading_text", "")
             is_intro = (section.get("section_type", "").lower() == "introduction")
             is_conclusion = (section.get("section_type", "").lower() == "conclusion")
-            
+
             # --- DYNAMIC CONTEXT REBUILD ---
             # Rebuild the draft text on each iteration so the Humanizer sees the live updates
             live_draft_parts = []
@@ -1977,7 +2245,7 @@ class AsyncWorkflowController:
                 if s.get("section_type") != "introduction":
                     live_draft_parts.append(f"{'#' * lvl_num} {s.get('heading_text', '')}")
                 live_draft_parts.append(s.get("generated_content", ""))
-            
+
             dynamic_draft = "\n\n".join(live_draft_parts)
 
             logger.info(f"Humanizing section: {heading}")
@@ -2017,30 +2285,30 @@ class AsyncWorkflowController:
                     section["generated_content"] = new_content
             except Exception as e:
                 logger.error(f"Humanization failed for section '{heading}': {e}. Falling back to original.")
-            
+
         # Re-assemble the article after humanization
         # PREFLIGHT CONTRACT CHECK
         validate_service_call(
             self.assembler.assemble,
-            title=title, 
-            sections=ordered_sections, 
+            title=title,
+            sections=ordered_sections,
             article_language=article_language,
             content_type=state.get("content_type", "informational")
         )
 
         title = state.get("input_data", {}).get("title", "Untitled")
         assembled = await self.assembler.assemble(
-            title=title, 
-            sections=ordered_sections, 
+            title=title,
+            sections=ordered_sections,
             article_language=article_language,
             content_type=state.get("content_type", "informational")
         )
-        
+
         # Final pass redundancy pruning on the whole assembled markdown
         # Sanitization disabled per quality hardening plan - relying on LinkManager's final pass
         # md = LinkManager.deduplicate_links_in_markdown(md, brand_domain=brand_domain, max_internal=6)
         md = assembled.get("final_markdown", "")
-        
+
         # Final Article-Level CTA Budget Validation
         word_count = len(md.split())
         is_budget_ok, budget_error = self.validator.validate_article_cta_budget(
@@ -2138,7 +2406,7 @@ class AsyncWorkflowController:
         if h1 and not self.validator.validate_h1_length(h1):
             logger.warning(f"H1 length invalid ({len(h1)} chars). Falling back to explicit title.")
             meta_json["h1"] = state.get("input_data", {}).get("title", h1)
-            
+
         state["seo_meta"] = meta_json
         return state
 
@@ -2163,8 +2431,8 @@ class AsyncWorkflowController:
                 "issues": ["Final markdown missing"]
             }
             return state
-        
-        
+
+
         # Article Validation Silent Mode (Disabled as requested)
         critical_issues = []
         warnings = []
@@ -2183,14 +2451,14 @@ class AsyncWorkflowController:
             structural_intel = state.get("seo_intelligence", {}).get("market_analysis", {}).get("structural_intelligence", {})
             # article_language = state.get("article_language", "en")
             article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "en")
-            
+
             is_dense_enough = self.validator.calculate_sales_density(
-                final_md, 
-                state.get("intent"), 
-                article_language, 
+                final_md,
+                state.get("intent"),
+                article_language,
                 structural_intel
             )
-            
+
             if not is_dense_enough:
                 intensity = structural_intel.get("cta_intensity_pattern", "soft commercial")
                 critical_issues.append(f"Sales density too low for {intensity} mode")
@@ -2240,14 +2508,14 @@ class AsyncWorkflowController:
             "intent_clusters": state.get("intent_clusters", [])
         }
         outline = state.get("outline", [])
-        
+
         semantic_report = self.validator.validate_semantic_coverage(
-            final_md, 
-            semantic_metadata, 
+            final_md,
+            semantic_metadata,
             outline
         )
         state["semantic_coverage_report"] = semantic_report
-        
+
         # Add semantic warnings if coverage is low (Advisory)
         if not semantic_report.get("semantic_coverage_ok", True):
             missing = semantic_report.get("missing_concepts", [])
@@ -2256,8 +2524,8 @@ class AsyncWorkflowController:
         # PREFLIGHT CONTRACT CHECK
         validate_service_call(
             self.article_validator.validate,
-            final_markdown=final_md, 
-            meta=meta, 
+            final_markdown=final_md,
+            meta=meta,
             images=images,
             title=title,
             article_language=article_language,
@@ -2271,8 +2539,8 @@ class AsyncWorkflowController:
         )
 
         report_raw = await self.article_validator.validate(
-            final_markdown=final_md, 
-            meta=meta, 
+            final_markdown=final_md,
+            meta=meta,
             images=images,
             title=title,
             article_language=article_language,
@@ -2299,11 +2567,11 @@ class AsyncWorkflowController:
         ai_critical = report_json.get("critical_issues", [])
         if isinstance(ai_critical, list):
             critical_issues.extend(ai_critical)
-            
+
         ai_warnings = report_json.get("warnings", [])
         if isinstance(ai_warnings, list):
             warnings.extend(ai_warnings)
-        
+
         # Backward compatibility for "issues" field if it exists
         if "issues" in report_json and isinstance(report_json["issues"], list):
             critical_issues.extend(report_json["issues"])
@@ -2322,7 +2590,7 @@ class AsyncWorkflowController:
         """Step 9: Render HTML page"""
         final_output = self._assemble_final_output(state)
         output_dir = state.get("output_dir", "")
-        
+
         # Prepare data for renderer
         # Ensure the renderer receives the full assembled output including schemas
         render_data = final_output.copy()
@@ -2348,7 +2616,7 @@ class AsyncWorkflowController:
                 logger.error(f"Failed to save Markdown file: {e}")
 
         return state
-    
+
     def preflight_system_audit(self):
         """
         Lightweight smoke test for service availability and required methods.
@@ -2366,18 +2634,18 @@ class AsyncWorkflowController:
             (self.research_service, "run_hybrid_research"),
             (self.strategy_service, "run_content_strategy")
         ]
-        
+
         for service, method_name in critical_components:
             if service is None:
                 raise PipelineContractError(f"Startup Audit Failed: {type(service).__name__} is missing (None).")
-            
+
             method = getattr(service, method_name, None)
             if method is None:
                 raise PipelineContractError(f"Startup Audit Failed: Service '{type(service).__name__}' is missing required method '{method_name}'.")
-            
+
             if not callable(method):
                 raise PipelineContractError(f"Startup Audit Failed: '{type(service).__name__}.{method_name}' is not callable.")
-                
+
         logger.info("Pipeline Preflight System Audit: PASS (Structural Integrity Verified)")
 
     # ---------------- UTILITIES ---
@@ -2386,7 +2654,7 @@ class AsyncWorkflowController:
         """Constructs the per-section execution plan with CTA rules and writing constraints."""
         content_type = state.get("content_type", "informational")
         section_type = (section.get("section_type") or "").lower()
-        
+
         # Base plan
         plan = {
             "writing_mode": "standard",
@@ -2401,7 +2669,7 @@ class AsyncWorkflowController:
         # Override for specific section types
         if section_type == "introduction":
             plan["writing_mode"] = "hooks-driven"
-            
+
         elif section_type == "conclusion":
             plan["writing_mode"] = "summary-driven"
             if content_type == "brand_commercial":
@@ -2409,7 +2677,7 @@ class AsyncWorkflowController:
                 plan["cta_type"] = "strong"
                 section["cta_eligible"] = True
                 section["cta_type"] = "strong"
-        
+
         elif section_type == "faq":
             plan["writing_mode"] = "direct-answer"
             plan["structure_rule"] = "H3 Questions followed by concise answers."
@@ -2429,36 +2697,39 @@ class AsyncWorkflowController:
         raw_title = input_data.get("title", "Untitled")
         meta_title = seo_meta.get("meta_title", "")
 
-        # For commercial articles, inject brand name into title & meta_title
+        # For commercial articles, inject the strongest known display brand into title/meta.
+        # Domain-derived names are a last resort only; never override discovered/input brands.
         if content_type == "brand_commercial":
-            brand_url = state.get("brand_url", "")
-            if brand_url:
-                # Extract a clean brand name from the domain
-                domain = LinkManager.domain(brand_url)  # e.g., "cems-it.com"
-                brand_name = domain.split(".")[0]  # e.g., "cems-it"
-                brand_name = brand_name.replace("-", " ").replace("_", " ").title()  # e.g., "Cems It"
+            brand_name = (
+                state.get("display_brand_name")
+                or state.get("brand_name")
+                or state.get("official_brand_name")
+                or ""
+            )
+            if not brand_name:
+                brand_url = state.get("brand_url", "")
+                if brand_url:
+                    domain = LinkManager.domain(brand_url)  # e.g., "cems-it.com"
+                    domain_brand = domain.split(".")[0] if domain else ""
+                    brand_name = domain_brand.replace("-", " ").replace("_", " ").title()
 
-                # Append to article title if not already included
+            if brand_name:
                 if brand_name.lower() not in raw_title.lower():
                     raw_title = f"{raw_title} | {brand_name}"
 
-                # Append to meta_title if not already included (meta titles are character-limited)
                 if meta_title and brand_name.lower() not in meta_title.lower():
-                    # Keep meta_title under 60 chars
                     candidate = f"{meta_title} | {brand_name}"
                     if len(candidate) <= 65:
                         meta_title = candidate
-                    # If too long, just use the original meta_title unchanged
-                    # candidate = candidate[:65] # Optional trimming
 
         if state.get("heading_only_mode"):
             outline = state.get("outline", [])
             heading_map = []
-            
+
             # Build a clear structural map for review
             for sec in outline:
                 sec_type = (sec.get("section_type") or "").lower()
-                
+
                 # Omit Introduction as an H2 (Rule #2)
                 if sec_type == "introduction":
                     heading_map.append({
@@ -2477,7 +2748,7 @@ class AsyncWorkflowController:
                     "subheadings": sec.get("subheadings", []) # Explicit H3s (Rule #3)
                 }
                 heading_map.append(item)
-            
+
             # Generate readable markdown preview (Rule: No content, only headings)
             preview_lines = [f"# {raw_title}", ""]
             for sec in heading_map:
@@ -2488,11 +2759,11 @@ class AsyncWorkflowController:
                     level = sec.get("heading_level", "H2").upper()
                     prefix = "##" if level == "H2" else "###"
                     preview_lines.append(f"{prefix} {sec.get('heading_text', 'Untitled Section')}")
-                    
+
                     # Add H3 subheadings if present
                     for sub in sec.get("subheadings", []):
                         preview_lines.append(f"### {sub}")
-                    
+
                     preview_lines.append("")
 
             return {
@@ -2534,21 +2805,21 @@ class AsyncWorkflowController:
             # Debug / Storage
             "output_dir": state.get("output_dir", ""),
         }
-    
+
     async def _step_3_global_coherence_pass(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Performs an article-level coherence audit. 
-        Takes the full assembled markdown (with section markers), polishes narrative flow 
+        Performs an article-level coherence audit.
+        Takes the full assembled markdown (with section markers), polishes narrative flow
         and deduplicates concepts, then splits the result back into state['sections'].
         """
         logger.info("Starting Global Coherence & Redundancy Pass...")
-        
+
         # 1. Assemble current sections into a structured draft with ID markers
         title = state.get("input_data", {}).get("title", "Untitled")
         outline = state.get("outline", [])
         sections_dict = state.get("sections", {})
         article_language = state.get("article_language") or state.get("input_data", {}).get("article_language", "en")
-        
+
         if not sections_dict:
             logger.warning("No sections found for global coherence pass.")
             return state
@@ -2558,19 +2829,19 @@ class AsyncWorkflowController:
             for s in outline
             if s.get("section_id") in sections_dict
         ]
-        
+
         # PREFLIGHT CONTRACT CHECK
         validate_service_call(
             self.assembler.assemble,
-            title=title, 
-            sections=ordered_sections, 
+            title=title,
+            sections=ordered_sections,
             article_language=article_language,
             content_type=state.get("content_type", "informational")
         )
 
         assembled_data = await self.assembler.assemble(
-            title=title, 
-            sections=ordered_sections, 
+            title=title,
+            sections=ordered_sections,
             article_language=article_language,
             content_type=state.get("content_type", "informational")
         )
@@ -2584,7 +2855,7 @@ class AsyncWorkflowController:
         style_blueprint = state.get("style_blueprint", {})
         tone = state.get("tone") or style_blueprint.get("writing_tone", "Conversational")
         audience_level = style_blueprint.get("tonal_dna", {}).get("audience_level", "General")
-        
+
         # Load template (reusing existing path for consistency)
         try:
             from jinja2 import Environment, FileSystemLoader
@@ -2603,23 +2874,23 @@ class AsyncWorkflowController:
             primary_keyword=state.get("primary_keyword", ""),
             brand_name=state.get("brand_name", "")
         )
-        
+
         # 3. AI Execution
         try:
             res = await self.ai_client.send(prompt, step="global_coherence_audit")
             polished_full_md = res.get("content", "")
-            
+
             if not polished_full_md:
                 logger.warning("AI returned empty content for coherence pass. Falling back.")
                 return state
-                
+
             # 4. Validated Splitting Logic
             # Pattern to find markers: <!-- section_id: ... -->
             marker_pattern = r"<!-- section_id: (.*?) -->"
-            
+
             # Split the content. re.split with a group returns the separators in the list.
             parts = re.split(marker_pattern, polished_full_md)
-            
+
             # Reconstruct sections: [prelude, id1, content1, id2, content2, ...]
             revised_sections_map = {}
             for i in range(1, len(parts), 2):
@@ -2630,17 +2901,17 @@ class AsyncWorkflowController:
             # Validation 1: Marker Count Consistency
             original_ids = set(sections_dict.keys())
             revised_ids = set(revised_sections_map.keys())
-            
+
             # Validation 2: Structural Integrity
             if original_ids == revised_ids and len(revised_ids) == len(original_ids):
                 # Success! Propagate changes back to sections
                 for sid, new_content in revised_sections_map.items():
                     # Preserve any metadata while updating the generated_content
                     sections_dict[sid]["generated_content"] = new_content
-                
+
                 state["sections"] = sections_dict
                 logger.info(f"Global Coherence Pass: Successfully synchronized {len(revised_ids)} sections.")
-                
+
                 # Update full_content_so_far from the new truth
                 state["full_content_so_far"] = "\n\n".join([s["generated_content"] for s in ordered_sections])
             else:
@@ -2649,9 +2920,9 @@ class AsyncWorkflowController:
                 logger.warning(f"Global Coherence Pass validation failed. Structural drift detected.")
                 logger.warning(f"Missing IDs: {missing} | Extra IDs: {extra}")
                 # Fallback: We do nothing to state['sections'], keeping the original work safe.
-                
+
             return state
-            
+
         except Exception as e:
             logger.error(f"Global Coherence Pass failed: {e}")
             return state
@@ -2676,7 +2947,7 @@ class AsyncWorkflowController:
         sanitized_brand_context = brand_context
         sanitized_brand_advantages = copy.deepcopy(brand_advantages)
         sanitized_writing_blueprint = writing_blueprint
-        
+
         kw_lower = primary_keyword.lower()
 
         if content_type == "brand_commercial":
@@ -2709,7 +2980,7 @@ class AsyncWorkflowController:
                 )
 
             return sanitized_strategy, sanitized_brand_context, sanitized_brand_advantages, sanitized_writing_blueprint
-        
+
         # 2. Heuristic Triggers
         # Investment Triggers: استثمار (investment), عائد (return), ROI, تأجير (rent/lease), resale, capital appreciation
         investment_triggers = ["استثمار", "عائد", "roi", "تأجير", "resale", "capital appreciation", "investment", "yield"]
@@ -2727,19 +2998,19 @@ class AsyncWorkflowController:
             sanitized_strategy["primary_angle"] = f"Help the reader compare available options for {primary_keyword} and move toward a confident purchase decision."
         else:
             sanitized_strategy["primary_angle"] = f"Help the reader understand {primary_keyword} clearly and answer the main search question."
-            
+
         # 4. Downgrade Authority Strategy
         if not has_investment and not has_legal:
             sanitized_strategy["authority_strategy"] = [
                 s for s in sanitized_strategy.get("authority_strategy", [])
                 if not any(t in str(s).lower() for t in investment_triggers + legal_triggers)
             ]
-            
+
         # 5. Sanitize section_role_map
         roles = sanitized_strategy.get("section_role_map", {})
         if "introduction" in roles:
             roles["introduction"] = f"Define {primary_keyword} and address core search intent clearly without sales urgency or industry hooks."
-        
+
         if not has_investment:
             if "proof" in roles:
                 roles["proof"] = "Show general evidence of quality or standard benefits, avoiding ROI or financial growth metrics."
@@ -2752,7 +3023,7 @@ class AsyncWorkflowController:
         # 6. Compress Brand Context
         if sanitized_brand_context:
             sanitized_brand_context = "Provide objective structural guidance. Brand differentiation should be secondary and used only in conclusion or for unique value-adds, never for pricing or FAQ headings."
-            
+
         # 7. Downgrade Brand Advantages & Writing Blueprint
         if not has_commercial:
             sanitized_brand_advantages = []
@@ -2762,7 +3033,7 @@ class AsyncWorkflowController:
                 sanitized_brand_advantages = ["Professional service provider with relevant market expertise."]
             if sanitized_writing_blueprint:
                 sanitized_writing_blueprint = "Focus on direct value and clear comparisons. Avoid aggressive sales copy."
-            
+
         return sanitized_strategy, sanitized_brand_context, sanitized_brand_advantages, sanitized_writing_blueprint
 
     def _distill_serp_intelligence(
@@ -2780,35 +3051,35 @@ class AsyncWorkflowController:
         market_analysis = h_intel.get("market_analysis", {})
         market_insights = market_analysis.get("market_insights", {})
         mandatory_topics = market_insights.get("mandatory_serp_topics", [])
-        
+
         paa_questions = h_intel.get("serp_raw", {}).get("paa_questions", [])
         kw_lower = primary_keyword.lower()
-        
+
         # 1. Triggers (Shared with Strategy Detox)
         investment_triggers = ["استثمار", "عائد", "roi", "تأجير", "resale", "capital appreciation", "investment", "yield"]
         legal_triggers = ["عقد", "قانوني", "ترخيص", "ملكية", "توثيق", "نزاع", "legal", "law", "contract", "dispute"]
         all_drift_triggers = investment_triggers + legal_triggers
 
         has_justification = any(t in kw_lower for t in all_drift_triggers)
-        
+
         distilled_facts = []
         new_mandatory = []
-        
+
         # 2. Process Mandatory SERP Topics
         for topic in mandatory_topics:
             topic_lower = str(topic).lower()
             contains_drift = any(t in topic_lower for t in all_drift_triggers)
-            
+
             if contains_drift and not has_justification:
                 # WEAK SIGNAL: Downgrade to context/facts, remove from mandatory H2s
                 distilled_facts.append(f"Competitor signal (Downgraded): {topic}")
                 continue
-            
+
             # Check if tied to primary keyword entity
             # e.g. if keyword is "apartments", we want "Apartment prices" not "Real estate prices"
             # This is a soft check for now
             new_mandatory.append(topic)
-            
+
         # 3. Process PAA Questions for Placement
         # If a PAA question is very frequent but drifted, it should be an FAQ candidate, not H2
         paa_faq_candidates = []
@@ -2816,7 +3087,7 @@ class AsyncWorkflowController:
             q_text = q.get("question", str(q)) if isinstance(q, dict) else str(q)
             if any(t in q_text.lower() for t in all_drift_triggers) and not has_justification:
                 paa_faq_candidates.append(q_text)
-                
+
         # 4. Update the localized intelligence view
         market_insights["mandatory_serp_topics"] = new_mandatory
         market_insights["distilled_serp_context"] = {
@@ -2824,7 +3095,7 @@ class AsyncWorkflowController:
             "paa_faq_candidates": paa_faq_candidates,
             "entity_focus_warning": f"Structural focus MUST remain on the entity: '{primary_keyword}'."
         }
-        
+
         # 5. Sanitize Writing Guide
         guide = market_insights.get("writing_guide", "")
         if not has_justification:

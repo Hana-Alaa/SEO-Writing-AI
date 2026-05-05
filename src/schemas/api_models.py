@@ -77,3 +77,6 @@ class ArticleResponse(BaseModel):
     heading_only_mode: Optional[bool] = False
     outline_structure: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
     heading_preview_markdown: Optional[str] = None
+    heading_quality_audit: Optional[Dict[str, Any]] = None
+    ai_outline_critique: Optional[Dict[str, Any]] = None
+    heading_fix: Optional[Dict[str, Any]] = None

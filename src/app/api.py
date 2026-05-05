@@ -324,7 +324,10 @@ async def generate_article(
             images=image_list,
             heading_only_mode=final_state.get("heading_only_mode", False),
             outline_structure=final_state.get("outline_structure", []),
-            heading_preview_markdown=final_state.get("heading_preview_markdown")
+            heading_preview_markdown=final_state.get("heading_preview_markdown"),
+            heading_quality_audit=final_state.get("heading_quality_audit", {}),
+            ai_outline_critique=final_state.get("ai_outline_critique", {}),
+            heading_fix=final_state.get("heading_fix", {})
         )
         
     except Exception as e:

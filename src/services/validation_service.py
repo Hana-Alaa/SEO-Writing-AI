@@ -126,14 +126,14 @@ class ValidationService:
     def __init__(self, ai_client=None, semantic_model=None):
         self.ai_client = ai_client
         self.semantic_model = semantic_model
-        
+
         # Bootstrap default thresholds for tone intensity
         self.TONE_THRESHOLDS = {
             "informational": 5.0,
             "commercial": 8.0,
             "hybrid": 6.0
         }
-        
+
         # Categorized Sales Markers for Tone Validation (v2.3)
         # Category A: Aggressive (BANNED in Introduction, High weight in Body)
         self.AGGRESSIVE_MARKERS = {
@@ -141,14 +141,14 @@ class ValidationService:
             "سجل": 3, "لا تفوت": 3, "أسرع": 2, "exclusive": 3, "limited offer": 3,
             "roi": 3, "عائد استثماري": 2.5, "أفضل الأسعار": 2.5
         }
-        
+
         # Category B: Soft (ALLOWED in Introduction, Low weight/Neutral)
         self.SOFT_MARKERS = {
             "luxury": 1.5, "prime location": 1, "strategic": 1, "investment": 1,
             "أفضل": 0.5, "أرقى": 0.5, "أسرع": 1, "أحدث": 0.5, "مميز": 0.5,
             "منصة": 0, "موقع": 0, "يساعدك": 0, "ثقة": 0, "خبرة": 0 # Zero weight for branding/trust help
         }
-        
+
         # Category C: Abstract Jargon & Prestige Framing (BANNED in Intro, Weighted limit in Body) (v4.0)
         self.JARGON_MARKERS = {
             "استثمار": 1, "استثماري": 1, "استراتيجي": 1, "حصري": 1, "إليت": 1,
@@ -156,11 +156,11 @@ class ValidationService:
             "strategic": 1.5, "premium": 1.5, "lifestyle": 1.5, "asset": 1.5,
             "competitive": 1.5, "prestige": 2, "elite": 2, "luxury": 1.5,
             # Prestige/Framing Patterns (Detox v4.0)
-            "تموضع": 1.5, "التموضع": 1.5, "منظومه": 2, "المنظومه": 2, 
-            "رياده": 2, "الرياده": 2, "سلطنه": 3, "executive": 2.5, 
+            "تموضع": 1.5, "التموضع": 1.5, "منظومه": 2, "المنظومه": 2,
+            "رياده": 2, "الرياده": 2, "سلطنه": 3, "executive": 2.5,
             "positioning": 1.5, "analysis": 1.0, "framework": 2.0, "protocol": 2.0
         }
-        
+
         # Combined pool for general density calculation
         self.SALES_MARKERS = {**self.AGGRESSIVE_MARKERS, **self.SOFT_MARKERS, **self.JARGON_MARKERS}
 
@@ -170,23 +170,23 @@ class ValidationService:
         Ensures the text is accessible without distorting meaning.
         """
         if not text: return {"fail": False}
-        
+
         # 1. Normalize and segment
         text_norm = self._normalize_arabic(text.lower())
         # Split into sentences using standard and Arabic delimiters
         sentences = [s.strip() for s in re.split(r'[.!?؟\n]', text_norm) if s.strip()]
-        
+
         words_overall = re.findall(r'\b\w+\b', text_norm)
         total_word_count = max(len(words_overall), 1)
-        
+
         cumulative_jargon_score = 0.0
         found_jargon = Counter()
-        
+
         # 2. Analyze sentence-level context and proximity
         for sentence in sentences:
             sentence_jargon_score = 0.0
             sentence_jargon_count = 0
-            
+
             # Find jargon markers in this specific sentence
             for marker, weight in self.JARGON_MARKERS.items():
                 pattern = r'\b{}\b'.format(re.escape(self._normalize_arabic(marker)))
@@ -196,34 +196,34 @@ class ValidationService:
                     sentence_jargon_score += (matches * weight)
                     sentence_jargon_count += matches
                     found_jargon[marker] += matches
-            
+
             # PROXIMITY PENALTY: If multiple jargon words share a sentence, boost the score
             if sentence_jargon_count > 1:
                 sentence_jargon_score *= 1.5
-                
+
             # SALES CONTEXT PENALTY: Check if aggressive markers share this sentence
             found_aggressive = False
             for agg_marker in self.AGGRESSIVE_MARKERS.keys():
                 if self._normalize_arabic(agg_marker) in sentence:
                     found_aggressive = True
                     break
-            
+
             if found_aggressive and sentence_jargon_count > 0:
                 sentence_jargon_score *= 2.0
-                
+
             cumulative_jargon_score += sentence_jargon_score
-            
+
         # 3. Calculate Final Intensity (Normalized per 100 words)
         intensity = (cumulative_jargon_score / total_word_count) * 100
-        
+
         # NEW THRESHOLD: 5.0 (v4.0 allows single natural occurrences)
         # Minimum absolute floor: 3.0
         max_rep = max(found_jargon.values()) if found_jargon else 0
-        
+
         jargon_list = list(found_jargon.keys())
         msg = f"PLAIN_LANGUAGE_REQUIRED: Content feels too abstract, prestige-heavy, or uses expert-only framing (Intensity {intensity:.1f}, Score {cumulative_jargon_score:.1f}). Found: {', '.join(jargon_list)}. "
         msg += "You MUST write for a zero-knowledge reader. Do NOT do shallow synonym replacement. You must fully reconstruct the sentence in simple everyday language. Preserve the meaning, but explain the practical outcome using concrete actions or results. Do not keep the original investor-style sentence structure."
-        
+
         if cumulative_jargon_score >= 3.0 and (intensity > 5.0 or max_rep > 3):
             return {
                 "fail": True,
@@ -235,33 +235,33 @@ class ValidationService:
                 "fail": False,
                 "warnings": [msg.replace("PLAIN_LANGUAGE_REQUIRED", "PLAIN_LANGUAGE_WARNING")]
             }
-            
+
         return {"fail": False}
 
     def _check_intro_tone_profile(self, text: str) -> Dict[str, Any]:
         """
-        Specialized validation for introductions. 
+        Specialized validation for introductions.
         Permits soft branding/trust language but bans aggressive triggers.
         """
         if not text: return {"fail": False}
-        
+
         text_norm = self._normalize_arabic(text.lower())
         found_aggressive = []
-        
+
         for marker in self.AGGRESSIVE_MARKERS.keys():
             marker_norm = self._normalize_arabic(marker.lower())
             if marker_norm in text_norm:
                 found_aggressive.append(marker)
-                
+
         # Check for direct standard link patterns which could be CTAs
         # (Though some links are allowed, direct CTA phrases in links are the problem)
         if found_aggressive:
             return {
-                "fail": True, 
-                "reason": "INTRO_TONE_PROFILE_MISMATCH", 
+                "fail": True,
+                "reason": "INTRO_TONE_PROFILE_MISMATCH",
                 "message": f"Introduction contains aggressive sales triggers: {', '.join(found_aggressive)}. The introduction is allowed to be commercial, but only in a soft, trust-based manner."
             }
-            
+
         return {"fail": False}
 
     def _check_structural_integrity(self, content: str, target_format: str, heading_text: str) -> List[str]:
@@ -271,14 +271,14 @@ class ValidationService:
         """
         errors = []
         if not content: return errors
-        
+
         paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
-        
+
         # 1. Detection of Hidden Subsections (Bold labels used as headers in paragraphs)
         # Look for 3+ occurrences of "**Label**:" or "**Label** " at the start of paragraphs/lines
         hidden_pattern = r'(?m)^\s*\*\*([^*:]+)\*\*[:\s]'
         hidden_labels = re.findall(hidden_pattern, content)
-        
+
         # Heuristic: If 3+ labels found and each is followed by substantial text (> 15 words)
         if len(hidden_labels) >= 3:
              # Verify if they are true 'Mini-Stories'
@@ -290,7 +290,7 @@ class ValidationService:
                  follow_up = re.search(pattern, content, re.DOTALL)
                  if follow_up and len(follow_up.group(1).split()) > 15:
                      valid_hidden += 1
-             
+
              if valid_hidden >= 3:
                  errors.append(f"HIDDEN_SUBSECTIONS_DETECTED: Section '{heading_text}' uses bold labels for 3+ independent items with details. These MUST be converted into H3 subsections for better SEO and readability.")
 
@@ -300,7 +300,7 @@ class ValidationService:
             total_words = len(content.split())
             bullet_words = sum(len(l.split()) for l in bullet_lines)
             narrative_ratio = (total_words - bullet_words) / max(total_words, 1)
-            
+
             # Condition A: Mostly narrative (>80%) with very few bullets (1-2)
             if narrative_ratio > 0.8 and len(bullet_lines) <= 2:
                 # Condition B: Overlap Analysis (Do bullets just repeat paragraph content?)
@@ -314,13 +314,13 @@ class ValidationService:
                     if lines[i].strip() and not lines[i].strip().startswith(("#", "-", "*", "•")):
                         preceding_text = lines[i].strip().lower()
                         break
-                
+
                 if preceding_text:
                     # Check for token overlap
                     bullet_tokens = set(re.findall(r'\b\w{3,}\b', bullet_text))
                     preceding_tokens = set(re.findall(r'\b\w{3,}\b', preceding_text))
                     overlap = bullet_tokens.intersection(preceding_tokens)
-                    
+
                     if len(overlap) / max(len(bullet_tokens), 1) > 0.6:
                         errors.append(f"DECORATIVE_BULLETS_DETECTED: The bullets in '{heading_text}' appear to be decorative, merely repeating info already stated in the narrative. Lists must add real structural value or independent details.")
 
@@ -329,7 +329,7 @@ class ValidationService:
             h3_count = len(re.findall(r'^###\s', content, re.MULTILINE))
             if h3_count < 2:
                 errors.append(f"STRUCTURE_FORMAT_MISMATCH: Section '{heading_text}' was assigned 'h3_subsections' but contains {h3_count} H3 headers. Each independent item MUST have its own H3 header.")
-        
+
         elif target_format == "direct_bullets":
             if not bullet_lines:
                 errors.append(f"STRUCTURE_FORMAT_MISMATCH: Section '{heading_text}' was assigned 'direct_bullets' but contains no bulleted list.")
@@ -343,7 +343,7 @@ class ValidationService:
                     if not stripped or stripped.startswith("#"): continue
                     if stripped.startswith(("-", "*", "•")): break
                     lead_in_count += 1
-                
+
                 if lead_in_count > 2:
                     errors.append(f"STRUCTURE_FORMAT_MISMATCH: 'direct_bullets' format allows max 2 intro lines. Found {lead_in_count} lines of narrative lead-in in '{heading_text}'. Start the list immediately.")
 
@@ -426,7 +426,7 @@ class ValidationService:
             "مكاتب": "مكتب", "مكتب": "مكاتب",
             "محلات": "محل", "محل": "محلات",
         }
-        
+
         bases = list(variants)
         for base in bases:
             if base in arab_pairs:
@@ -456,7 +456,7 @@ class ValidationService:
         location_tokens = []
         if area_tokens:
             location_tokens = [token for token in area_tokens if token in keyword_tokens]
-        
+
         if not location_tokens:
             # Fallback heuristic: Try to find location in the primary keyword
             # Usually after 'في' or just the last token if we have 3+ tokens
@@ -470,7 +470,7 @@ class ValidationService:
                 last_token = keyword_tokens[-1]
                 if last_token != head_entity and last_token not in self.ENTITY_SKIP_TOKENS:
                     location_tokens = [last_token]
-        
+
         # Intent is what's left after entity and location are removed
         intent_tokens = [
             token for token in keyword_tokens
@@ -548,15 +548,15 @@ class ValidationService:
     def _heading_contains_exact_brand_name(self, text: str, brand_name: str) -> bool:
         normalized_brand = self._normalize_heading_label(brand_name)
         normalized_text = self._normalize_heading_label(text)
-        
+
         if bool(normalized_brand) and normalized_brand in normalized_text:
             return True
-            
+
         if len(brand_name) > 30:
             substitutes = ["المنصه", "المنصة", "الموقع", "الخدمه", "الخدمة", "منصة", "موقع", "خدمة"]
             if any(sub in normalized_text.split() for sub in substitutes):
                 return True
-                
+
         return False
 
     def _brand_heading_allowed(self, section_type: str) -> bool:
@@ -669,19 +669,19 @@ class ValidationService:
 
     def _faq_question_is_supported(self, question: str, keyword_profile: Dict[str, Any], support_blob: str) -> bool:
         question_tokens = self._expanded_token_set(question)
-        
+
         # 1. Overlap with keyword intent or location
         location_tokens = set(keyword_profile.get("location_tokens", []))
         intent_tokens = set(keyword_profile.get("intent_tokens", []))
         if question_tokens.intersection(location_tokens) or question_tokens.intersection(intent_tokens):
             return True
-            
+
         # 2. Overlap with head entity
         head_entity = keyword_profile.get("head_entity", "")
         head_variants = self._expand_token_variants(head_entity) if head_entity else set()
         if head_variants.intersection(question_tokens):
             return True
-            
+
         # 3. Found in support blob (PAA, related searches)
         normalized_q = self._normalize_heading_label(question)
         # We check if any significant part of the question is in the support blob
@@ -689,24 +689,24 @@ class ValidationService:
         meaningful_tokens = [t for t in question_tokens if len(t) > 2]
         if meaningful_tokens and sum(1 for t in meaningful_tokens if t in support_blob) >= max(1, len(meaningful_tokens) // 2):
             return True
-            
+
         # 4. Safe buyer-facing commercial signals (Always acceptable)
         # Normalized: سعر, اسعار, مساحه, مساحات, تشطيب, احياء, مناطق, حجز, معاينه, استلام
         safe_buyer_signals = ("سعر", "اسعار", "مساحه", "مساحات", "تشطيب", "احياء", "مناطق", "حجز", "معاينه", "استلام")
         if any(signal in question_tokens for signal in safe_buyer_signals):
             return True
-            
+
         return False
 
     def _subheading_is_too_granular(self, text: str, stage: str = "") -> bool:
         normalized = self._normalize_heading_label(text)
-        
+
         # 1. Banned granular detail signals (paragraph-level details)
         granular_signals = (
-            "تشطيب", "تقسيم", "توزيع", "تهويه", "تهوية", "تكييف", "مواصفات", "تفاصيل", "داخليه", "داخلية", "جوده", "جودة", 
+            "تشطيب", "تقسيم", "توزيع", "تهويه", "تهوية", "تكييف", "مواصفات", "تفاصيل", "داخليه", "داخلية", "جوده", "جودة",
             "finishing", "layout", "ventilation", "conditioning", "specs", "details", "internal", "quality"
         )
-        
+
         # 2. Section-Specific Rules
         if stage == "features":
             # Features section MUST focus on Unit Types / Categories
@@ -714,7 +714,7 @@ class ValidationService:
             unit_types = ("استوديو", "عائلي", "عائليه", "دوبلكس", "حديقه", "حديقة", "جاهزه", "جاهزة", "شقق", "فيلا", "فلل", "بنتهاوس", "تاون هاوس")
             if any(ut in normalized for ut in unit_types):
                 return False # Strong standalone bucket
-            
+
             # If it's in features and not a unit type but contains granular signals, it's weak
             if any(gs in normalized for gs in granular_signals):
                 return True
@@ -724,7 +724,7 @@ class ValidationService:
         words = normalized.split()
         if len(words) <= 3 and any(gs in normalized for gs in granular_signals):
             return True
-            
+
         return False
 
     def repair_outline_deterministic(
@@ -750,7 +750,7 @@ class ValidationService:
         entity_phrase = keyword_profile.get("entity_phrase", "") or head_entity
         intent_tokens = keyword_profile.get("intent_tokens", [])
         location_tokens = keyword_profile.get("location_tokens", [])
-        
+
         support_blob = self._build_outline_support_blob(
             primary_keyword=primary_keyword,
             content_strategy=content_strategy,
@@ -774,7 +774,7 @@ class ValidationService:
                 normalized_h = self._normalize_heading_label(heading_text)
                 has_intent = any(tok in normalized_h for tok in intent_tokens) if intent_tokens else True
                 has_loc = all(tok in normalized_h for tok in location_tokens) if location_tokens else True
-                
+
                 if not has_intent or not has_loc:
                     entity_str = entity_phrase or head_entity or "العقار"
                     intent_str = ""
@@ -791,7 +791,7 @@ class ValidationService:
                 effective_brand = brand_name if brand_name and len(brand_name) <= 30 else "المنصة"
                 has_brand = self._heading_contains_exact_brand_name(heading_text, brand_name)
                 has_intent = normalized_pk and normalized_pk in self._normalize_heading_label(heading_text)
-                
+
                 if not has_brand or not has_intent:
                     anchor_topic = primary_keyword or entity_phrase or head_entity or "الخدمة"
                     new_heading = f"لماذا تختار {effective_brand} للبحث عن {anchor_topic}؟"
@@ -850,19 +850,19 @@ class ValidationService:
     ) -> bool:
         parent_tokens = self._expanded_token_set(parent_heading)
         child_tokens = self._expanded_token_set(child_heading)
-        
+
         # 1. Semantic overlap (Intersection of non-location tokens)
         location_tokens = set(keyword_profile.get("location_tokens", []))
         meaningful_parent = parent_tokens - location_tokens
         meaningful_child = child_tokens - location_tokens
-        
+
         if meaningful_parent.intersection(meaningful_child):
             return True
 
         # 2. Bridge via head entity or shared intent
         head_entity = keyword_profile.get("head_entity", "")
         head_variants = self._expand_token_variants(head_entity) if head_entity else set()
-        
+
         if head_variants.intersection(meaningful_parent) and head_variants.intersection(meaningful_child):
             return True
 
@@ -995,23 +995,23 @@ class ValidationService:
         Formula: (weighted_sales_score / word_count) * 100
         """
         if not text: return 0.0
-        
+
         words = re.findall(r'\b\w+\b', text.lower())
         word_count = max(len(words), 1)
-        
+
         total_score = 0.0
         text_lower = text.lower()
         text_normalized = self._normalize_arabic(text_lower)
-        
+
         for marker, weight in self.SALES_MARKERS.items():
             pattern = re.escape(marker.lower())
             # For Arabic, check both raw and normalized
             count = len(re.findall(pattern, text_lower))
             if count == 0:
                 count = len(re.findall(self._normalize_arabic(marker), text_normalized))
-            
+
             total_score += (count * weight)
-            
+
         intensity = (total_score / word_count) * 100
         return round(intensity, 2)
 
@@ -1021,16 +1021,16 @@ class ValidationService:
         Returns a dictionary of found elements and a pass/fail status.
         """
         if not text: return {"pass": False, "found": []}
-        
+
         text_norm = self._normalize_arabic(text)
-        
+
         found_entity = any(self._normalize_arabic(v) in text_norm for v in entity_variants)
         found_location = any(self._normalize_arabic(v) in text_norm for v in location_variants)
         found_intent = any(self._normalize_arabic(v) in text_norm for v in intent_variants)
-        
+
         # Hard fail if EITHER entity or location is missing
         is_anchored = found_entity and found_location
-        
+
         return {
             "is_anchored": is_anchored,
             "has_entity": found_entity,
@@ -1046,25 +1046,25 @@ class ValidationService:
         """
         if not text or not main_area or not sub_area:
             return {"fail": False, "reason": ""}
-            
+
         text_norm = self._normalize_arabic(text)
         main_norm = self._normalize_arabic(main_area)
         sub_norm = self._normalize_arabic(sub_area)
-        
+
         # 1. First Sentence Check
         sentences = self.extract_sentences(text)
         if sentences:
             first_sentence_norm = self._normalize_arabic(sentences[0])
             if sub_norm in first_sentence_norm and main_norm not in first_sentence_norm:
                 return {"fail": True, "reason": "CHILD_CONTEXT_HIJACK", "message": f"Sub-area '{sub_area}' established in the first sentence before the main city '{main_area}' context was anchored."}
-        
+
         # 2. Mention Ratio Check
         main_count = text_norm.count(main_norm)
         sub_count = text_norm.count(sub_norm)
-        
+
         if sub_count > main_count and sub_count > 1:
             return {"fail": True, "reason": "DOMINANCE_DRIFT", "message": f"Sub-area '{sub_area}' mentions ({sub_count}) exceed main area '{main_area}' mentions ({main_count}). The district is overshadowing the city context."}
-            
+
         return {"fail": False}
 
     def validate_h1_length(self, h1: str) -> bool:
@@ -1285,7 +1285,7 @@ class ValidationService:
         """
         if not text:
             return False
-            
+
         # Curated CTA Patterns (Arabic + English)
         cta_patterns = [
             # Arabic CTAs
@@ -1297,7 +1297,7 @@ class ValidationService:
             r"learn\s+more", r"call\s+us", r"register\s+now", r"free\s+consultation",
             r"shop\s+now"
         ]
-        
+
         anchor_text = ""
         if is_html:
             # For HTML, we assume 'text' is the inner content of <a> or <button>
@@ -1308,7 +1308,7 @@ class ValidationService:
             if not match:
                 return False
             anchor_text = match.group(1).lower().strip()
-        
+
         # Check against patterns
         for pattern in cta_patterns:
             if re.search(pattern, anchor_text, re.IGNORECASE):
@@ -1338,11 +1338,11 @@ class ValidationService:
         cta_eligible = section.get('cta_eligible', False)
         section_type = (section.get('section_type') or '').lower().strip()
         valid_types = ['introduction', 'body', 'faq', 'conclusion']
-        
+
         if not section_type or section_type not in valid_types:
             errors.append(f"SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('{section_type}'). It MUST be explicitly defined as exactly one of: {valid_types}. Do NOT guess based on position.")
             return False, errors
-            
+
         is_conclusion = section_type == 'conclusion'
         is_introduction = section_type == 'introduction'
 
@@ -1357,16 +1357,16 @@ class ValidationService:
             # 1. Markdown Links [Text](URL) - Use pattern-based detection
             md_links = re.findall(r"\[.*?\]\(https?://.*?\)", text)
             ctas.extend([l for l in md_links if self.is_cta_link(l, is_html=False)])
-            
+
             # 2. HTML <a> tags - Structural Detection (Explicit CTA blocks)
             # Find the full tag match, not just inner text
             html_links = re.findall(r"<a\b.*?>.*?</a>", text, re.IGNORECASE | re.DOTALL)
             ctas.extend(html_links)
-            
+
             # 3. HTML <button> tags - Structural Detection (Explicit CTA blocks)
             buttons = re.findall(r"<button\b.*?>.*?</button>", text, re.IGNORECASE | re.DOTALL)
             ctas.extend(buttons)
-            
+
             return ctas
 
         def has_cta(text):
@@ -1399,7 +1399,7 @@ class ValidationService:
             else:
                 if not (1 <= len(paragraphs) <= 2):
                     errors.append(f"INTRO_STRUCTURE_VIOLATION: Informational introduction '{heading_text}' must contain 1 to 2 distinct paragraphs.")
-            
+
             if any(p.lstrip().startswith(("#", "###", "####")) for p in paragraphs):
                 errors.append(f"INTRO_STRUCTURE_VIOLATION: Introduction '{heading_text}' must not contain nested headings.")
             if any("|" in p and "\n|" in p for p in paragraphs) or any(p.lstrip().startswith(("- ", "* ", "1. ")) for p in paragraphs):
@@ -1478,16 +1478,16 @@ class ValidationService:
             # 2. Intro Semantic Anchoring Enforcement
             if is_introduction and paragraphs:
                 first_para = paragraphs[0]
-                
+
                 # Enforce PRIMARY keyword placement with fuzzy/normalized matching (v4.0.3)
                 # 1. Normalize strings
                 pk_norm = self._normalize_arabic(primary_kw.lower())
                 para_norm = self._normalize_arabic(first_para.lower())
-                
+
                 # 2. Extract core tokens
                 stop_words = {"في", "من", "على", "عن", "الى", "الي", "ب", "ل", "ك", "ال"}
                 pk_tokens = [w for w in re.findall(r'\b\w+\b', pk_norm) if w not in stop_words and len(w) > 2]
-                
+
                 # 3. Validation Rules
                 if not pk_tokens:
                      has_pk = primary_kw.lower() in first_para.lower()
@@ -1496,12 +1496,12 @@ class ValidationService:
                      matches = sum(1 for t in pk_tokens if t in para_norm)
                      # Accept if at least 70% of core tokens are present (allows slight variations)
                      has_pk = (matches / len(pk_tokens)) >= 0.7 if len(pk_tokens) > 1 else matches == 1
-                     
+
                      # Detect forced/awkward insertion (e.g., placing the keyword isolated at the absolute start)
                      forced_pattern = r'^[\s\*\#\-\:]*{}(?:\s|$)'.format(re.escape(pk_tokens[0]))
                      if re.match(forced_pattern, para_norm):
                           errors.append(f"INTRO_PK_FORCED: Primary keyword '{primary_kw}' seems artificially forced at the very beginning (awkward/isolated). It MUST be naturally woven into a grammatical sentence.")
-                
+
                 if not has_pk:
                     errors.append(f"INTRO_PK_MISSING: The primary keyword '{primary_kw}' (or natural variation) must appear in the first paragraph of the introduction.")
                 else:
@@ -1511,19 +1511,19 @@ class ValidationService:
                         first_two_norm = self._normalize_arabic(" ".join(sentences[:2]).lower())
                         if pk_tokens and sum(1 for t in pk_tokens if t in first_two_norm) == 0:
                             logger.warning(f"INTRO_PK_DELAYED: Primary keyword '{primary_kw}' is present but delayed in section '{heading_text}'. Soft warning.")
-                
+
                 # Derive semantic sets from primary_kw and area
                 entity_variants = [w for w in re.findall(r'\b\w+\b', primary_kw) if len(w) > 2][:2]
                 location_variants = [area] if area else [primary_kw.split("في")[-1].strip()] if "في" in primary_kw else []
                 intent_signals = ["بيع", "شراء", "حجز", "استكشاف", "بحث", "سعر", "اسعار", "تواصل"]
-                
+
                 anchor_results = self._check_topic_anchoring(
-                    first_para, 
-                    entity_variants=entity_variants, 
-                    location_variants=location_variants, 
+                    first_para,
+                    entity_variants=entity_variants,
+                    location_variants=location_variants,
                     intent_variants=intent_signals
                 )
-                
+
                 if anchor_results["missing_hard"]:
                     missing = []
                     if not anchor_results["has_entity"]: missing.append("Core Entity (Subject)")
@@ -1541,7 +1541,7 @@ class ValidationService:
                     geo_check = self._check_geographic_drift(content, main_area=area, sub_area=sub_area)
                     if geo_check.get("fail"):
                         errors.append(f"INTRO_GEO_SCOPE_DRIFT: {geo_check['message']}")
-                
+
                 # 4. Intro Tone Profile Sentinel (v2.3)
                 tone_profile = self._check_intro_tone_profile(content)
                 if tone_profile.get("fail"):
@@ -1681,12 +1681,12 @@ class ValidationService:
         # --- Price analysis and payment-systems specific checks ---
         # --- Domain-Agnostic Metric & Formatting Checks ---
         heading_lower = heading_text.lower()
-        
+
         # 1) Numeric Metric Enforcement (Price, Cost, Specs, Stats)
         # If the heading promises a quantifiable metric, we MUST find numbers in the content.
         try:
             metric_triggers = [
-                "سعر", "price", "تكلفة", "cost", "قيمة", "value", 
+                "سعر", "price", "تكلفة", "cost", "قيمة", "value",
                 "راتب", "salary", "أجر", "wage", "رسوم", "fees",
                 "مساحة", "area", "حجم", "size", "نسبة", "percentage",
                 "عائد", "roi", "stats", "إحصائيات", "أرقام", "numbers",
@@ -1705,7 +1705,7 @@ class ValidationService:
         # If the heading promises a system or a plan, it MUST use a visual format (Table or List).
         try:
             procedural_triggers = [
-                "سداد", "payment", "خطة", "plan", "نظام", "system", 
+                "سداد", "payment", "خطة", "plan", "نظام", "system",
                 "خطوات", "steps", "طريقة", "method", "عملية", "process",
                 "أنظمة", "schedules", "installment", "تقسيط",
                 "جدول", "schedule", "ترتيب", "standing", "points"
@@ -1714,7 +1714,7 @@ class ValidationService:
                 # Require either a table or a list for procedural clarity
                 has_table = bool(re.search(r"^\s*\|.+\n\s*\|[-: \t]+\n", content, re.MULTILINE))
                 has_list = bool(re.search(r"^\s*[-*•]\s|^\s*\d+\.\s", content, re.MULTILINE))
-                
+
                 if not (has_table or has_list):
                     errors.append(f"VISUAL_FORMAT_MISSING: Heading '{heading_text}' implies a process or system. Use a Markdown Table or Bulleted List for clarity.")
 
@@ -1724,7 +1724,7 @@ class ValidationService:
                 state_obj = kwargs.get("state") if isinstance(kwargs.get("state"), dict) else {}
                 article_brand_name = (state_obj.get("brand_name") or "").lower()
                 is_scoped = bool(state_obj.get("brand_url") or article_brand_name or str(state_obj.get("content_type", "")).lower() == "brand_commercial")
-                
+
                 if not is_scoped:
                     # Look for specific keywords that might indicate a limited focus (e.g., project-specific marketing)
                     known_bias_points = []
@@ -1831,7 +1831,7 @@ class ValidationService:
 
             matches = sum(1 for token in tokens if re.search(rf'\b{re.escape(token)}\b', text_lower))
             return (matches / len(tokens)) >= threshold
-        
+
         # 1. Entity Coverage (Topical Signals)
         # Check whether the article shows clear topical signals covering the expected entities.
         covered_entities = []
@@ -1843,7 +1843,7 @@ class ValidationService:
         # Check whether the article meaningfully covers expected concepts using section content.
         covered_concepts = []
         missing_concepts = []
-        
+
         for concept in concepts:
             if has_topic_signal(content_lower, concept, threshold=0.5):
                 covered_concepts.append(concept)
@@ -1893,12 +1893,12 @@ class ValidationService:
             "comparison": False,
             "problem_solving": False
         }
-        
+
         if outline:
             for s in outline:
                 s_intent = s.get("section_intent", "").lower()
                 s_type = s.get("section_type", "").lower()
-                
+
                 if "info" in s_intent: intent_stats["informational"] = True
                 if "comm" in s_intent: intent_stats["commercial"] = True
                 if "comp" in s_type or "comp" in s_intent: intent_stats["comparison"] = True
@@ -1970,24 +1970,24 @@ class ValidationService:
         # which can push the conclusion's CTA out of the final characters.
         # Let's find the content after the last main heading (likely the conclusion)
         # or simply search the last 2000 characters to be safe.
-        
+
         # Split by H2 to try and find the last major section
         sections = re.split(r'\n##\s+', clean_text)
         last_section = sections[-1] if sections else clean_text
-        
+
         # If the last section is too short (e.g. just a heading), maybe look at the last 2000 chars anyway
         search_chunk = last_section
         if len(search_chunk) < 500:
             search_chunk = clean_text[-2000:]
-            
+
         # Look for markdown links in the target chunk
         links = re.findall(r"\[.*?\]\(https?://.*?\)", search_chunk)
-        
+
         # If no links found in the last section, try the last 2000 characters as a fallback
         if not links and search_chunk != last_section:
             fallback_chunk = clean_text[-2000:]
             links = re.findall(r"\[.*?\]\(https?://.*?\)", fallback_chunk)
-            
+
         return any(self.is_cta_link(l) for l in links)
 
     def repair_cutoff_cta(self, text: str) -> str:
@@ -2101,6 +2101,10 @@ class ValidationService:
 
         for concept, rules in coverage_rules.items():
             aliases = {a.lower().strip() for a in rules.get("section_types", set())}
+            expanded_aliases = set(aliases)
+            for alias in aliases:
+                expanded_aliases.update(self._section_type_aliases(alias))
+            aliases = expanded_aliases
             matched = []
             for item in normalized_sections:
                 sec_type = item["section_type"]
@@ -2116,12 +2120,32 @@ class ValidationService:
 
         return results
 
+    def _section_type_aliases(self, section_type: str) -> set[str]:
+        normalized = (section_type or "").lower().strip()
+        for aliases in self.COMMERCIAL_FLOW_SECTION_ALIASES.values():
+            if normalized in aliases:
+                return set(aliases)
+        return {normalized} if normalized else set()
+
+    def _missing_required_sections(self, present_types: set[str], required_types: set[str]) -> set[str]:
+        normalized_present = {
+            (section_type or "").lower().strip()
+            for section_type in present_types
+            if section_type
+        }
+        missing = set()
+        for required in required_types:
+            aliases = self._section_type_aliases(required)
+            if not normalized_present.intersection(aliases):
+                missing.add(required)
+        return missing
+
     def enforce_outline_structure(self, outline: List[Dict[str, Any]], content_type: str) -> List[Dict[str, Any]]:
         present_types = {(s.get("section_type") or "").lower().strip() for s in outline}
         rules = self.REQUIRED_STRUCTURE_BY_TYPE.get(content_type)
         if rules:
             required = rules.get("mandatory", set())
-            missing = required - present_types
+            missing = self._missing_required_sections(present_types, required)
             if missing:
                 logger.error(f"[outline_validate] Missing mandatory sections for {content_type}: {missing}")
 
@@ -2522,7 +2546,7 @@ class ValidationService:
         # --- PK 5-SLOT MAP VALIDATION ---
         h1_title = outline[0].get("heading_text", "") # Usually H1 is in title generator, but H2/Intro is first here
         pk_sections = [s for s in outline if s.get("requires_primary_keyword")]
-        
+
         # Rule 1: Intro (Slot 1) must require PK
         if outline and not outline[0].get("requires_primary_keyword"):
              # We allow a slight leniency if it's the very first section even if not index-0
@@ -2970,11 +2994,11 @@ class ValidationService:
                         break
                     if self._token_matches_area_hint(token, location_tokens):
                         break
-                    
+
                     if is_property_like:
                         # For properties (real estate), we stop at the head noun and don't include intent/location in the phrase
                         break
-                        
+
                     phrase_tokens.append(token)
                     if is_compound_service:
                         descriptor_tokens.append(token)
@@ -3002,14 +3026,14 @@ class ValidationService:
         text = text.strip().lower()
         words = text.split()
         if not words: return False
-        
+
         # Must start with a question word
         if words[0] in prefixes:
             return True
         # Or start with a prefix like 'ما هي'
         if len(words) > 1 and words[0] == "ما":
             return True
-            
+
         return False
 
     def _subheading_breaks_atomization(self, text: str, stage: str) -> bool:
@@ -3019,9 +3043,9 @@ class ValidationService:
         # Arabic 'and' (و) is often attached to the next word.
         normalized = self._normalize_heading_label(text)
         words = normalized.split()
-        
+
         if len(words) < 2: return False
-        
+
         for i in range(1, len(words)):
             word = words[i]
             if word.startswith("و") and len(word) > 2:
@@ -3029,10 +3053,10 @@ class ValidationService:
                 if word not in common_w_words:
                     if len(words) >= 3:
                         return True
-        
+
         if " مع " in f" {text} ":
             return True
-            
+
         return False
 
     def _faq_question_is_supported(self, question: str, profile: Dict[str, Any], support_blob: Dict[str, Any]) -> bool:
@@ -3116,10 +3140,10 @@ class ValidationService:
     def _heading_contains_exact_brand_name(self, text: str, brand_name: str) -> bool:
         normalized_brand = self._normalize_heading_label(brand_name)
         normalized_text = self._normalize_heading_label(text)
-        
+
         if bool(normalized_brand) and normalized_brand in normalized_text:
             return True
-            
+
         if len(brand_name) > 30:
             substitutes = ["المنصه", "المنصة", "الموقع", "الخدمه", "الخدمة", "منصة", "موقع", "خدمة"]
             if any(sub in normalized_text.split() for sub in substitutes):
@@ -3316,3 +3340,455 @@ class ValidationService:
     async def inject_commercial_ctas(self, markdown: str, language: str, brand_url: str = "", brand_name: str = "") -> str:
         """Legacy: Fallback is now handled by workflow_controller with a targeted regeneration pass."""
         return markdown
+
+    def audit_heading_outline_quality(
+        self,
+        outline: List[Dict[str, Any]],
+        content_type: str,
+        area: str,
+        primary_keyword: str,
+        brand_name: str,
+        display_brand_name: str,
+        content_strategy: Dict[str, Any],
+        seo_intelligence: Dict[str, Any],
+        entity_phrase: str = "",
+        service_phrase: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Pure diagnostic audit of the heading-only outline.
+        Does not mutate the outline. Returns structured warnings.
+        """
+        warnings = []
+        summary = {"total_warnings": 0, "high": 0, "medium": 0, "low": 0}
+
+        if not outline:
+            return {"mode": "audit_only", "passed": True, "warnings": [], "summary": summary}
+
+        def _norm(value: Any) -> str:
+            return self._normalize_heading_label(str(value or ""))
+
+        def _add_warning(
+            code: str,
+            section_id: str,
+            heading_text: str,
+            severity: str,
+            message: str,
+            suggested_action: str,
+        ) -> None:
+            warnings.append({
+                "code": code,
+                "section_id": section_id,
+                "heading_text": heading_text,
+                "severity": severity,
+                "message": message,
+                "suggested_action": suggested_action,
+            })
+
+        def _is_h2(section: Dict[str, Any]) -> bool:
+            return str(section.get("heading_level", "H2")).upper() == "H2"
+
+        def _section_type(section: Dict[str, Any]) -> str:
+            return str(section.get("section_type", "")).strip().lower()
+
+        def _strip_arabic_article(token: str) -> str:
+            token = _norm(token)
+            if token.startswith("ال") and len(token) > 3:
+                return token[2:]
+            return token
+
+        keyword_profile = self._derive_keyword_profile(primary_keyword, area)
+        pk_normalized = _norm(primary_keyword)
+        bp_normalized = _norm(display_brand_name) if display_brand_name else ""
+        ep_normalized = _norm(entity_phrase or keyword_profile.get("entity_phrase", ""))
+        sp_normalized = _norm(service_phrase or keyword_profile.get("service_phrase", ""))
+        if ep_normalized:
+            keyword_profile["entity_phrase"] = ep_normalized
+        if sp_normalized:
+            keyword_profile["service_phrase"] = sp_normalized
+
+        visible_h2s = [
+            s for s in outline
+            if _is_h2(s) and _section_type(s) != "introduction"
+        ]
+        core_h2s = [
+            s for s in visible_h2s
+            if _section_type(s) not in {"faq", "conclusion"}
+        ]
+
+        # --- Property / Listing Awareness ---
+        property_signals = {"شقق", "فلل", "عقارات", "وحدات", "اراضي", "مكاتب للايجار", "محلات للايجار", "بيع", "ايجار", "شراء", "استثمار"}
+        is_property_listing = False
+        if content_type in ["listing", "real_estate"]:
+            is_property_listing = True
+        elif any(sig in ep_normalized or sig in pk_normalized for sig in property_signals):
+            is_property_listing = True
+        elif any(sig in _norm(content_strategy.get("intent", "")) for sig in ["commercial", "listing", "transactional"]):
+            # Also check if it's a commercial intent with property words in the title
+            if any(sig in pk_normalized for sig in property_signals):
+                is_property_listing = True
+
+        property_bucket_terms = {
+            # Property type
+            "استوديو", "عائلية", "مفروشة", "مزدوجة", "بنتهاوس", "دوبلكس", "غرفة", "غرفتين",
+            # Audience
+            "للأفراد", "للعوائل", "للطلاب", "عزاب", "للعائلات",
+            # Furnishing / Status
+            "غير مفروشة", "جاهزة", "تشطيب", "تحت الانشاء", "مؤثثة",
+            # Rental / Sale Term
+            "شهري", "سنوي", "يومي", "أسبوعي", "للبيع", "للايجار",
+            # Location
+            "شمال", "شرق", "جنوب", "غرب", "وسط", "احياء", "مجمعات", "كمبوندات", "حي", "مركز",
+            # Price tier
+            "اقتصادي", "فاخر", "متوسط", "رخيص", "مخفض", "راقية"
+        }
+        property_bucket_terms_norm = {_norm(t) for t in property_bucket_terms}
+
+
+        provider_terms = {
+            _norm(term) for term in (
+                "شركة", "شركات", "مكتب", "مكاتب", "عيادة", "عيادات", "مركز",
+                "مراكز", "وكالة", "وكالات", "مؤسسة", "مؤسسات", "مزود", "مزودي",
+                "provider", "company", "agency", "office", "clinic", "firm"
+            )
+        }
+        quality_terms = {_norm(term) for term in ("أفضل", "افضل", "أحسن", "احسن", "best", "top")}
+        keyword_terms = set(keyword_profile.get("keyword_tokens", []))
+        keyword_terms.update(ep_normalized.split())
+        keyword_terms.update(sp_normalized.split())
+        is_service_provider_keyword = bool(keyword_terms.intersection(provider_terms))
+
+        def _contains_provider_term(text: str) -> bool:
+            terms = self._expanded_token_set(text)
+            normalized_text = _norm(text)
+            return any(term in terms or term in normalized_text for term in provider_terms if term)
+
+        def _contains_quality_term(text: str) -> bool:
+            terms = self._expanded_token_set(text)
+            normalized_text = _norm(text)
+            return any(term in terms or term in normalized_text for term in quality_terms if term)
+
+        def _collect_brand_aliases(value: Any) -> set[str]:
+            aliases: set[str] = set()
+            if isinstance(value, dict):
+                for key in (
+                    "brand_aliases", "brand_alias", "domain_brand_name", "domain_brand",
+                    "brand_domain_name", "domain_derived_brand", "wrong_brand_names",
+                ):
+                    aliases.update(_collect_brand_aliases(value.get(key)))
+                for nested_key in ("brand_context", "brand_discovery", "brand", "meta"):
+                    aliases.update(_collect_brand_aliases(value.get(nested_key)))
+            elif isinstance(value, (list, tuple, set)):
+                for item in value:
+                    aliases.update(_collect_brand_aliases(item))
+            elif isinstance(value, str):
+                normalized_alias = _norm(value)
+                if normalized_alias:
+                    aliases.add(normalized_alias)
+            return aliases
+
+        brand_aliases = _collect_brand_aliases(content_strategy)
+        brand_aliases.update(_collect_brand_aliases(seo_intelligence))
+        bn_normalized = _norm(brand_name) if brand_name else ""
+        if bn_normalized and bn_normalized != bp_normalized:
+            brand_aliases.add(bn_normalized)
+        brand_aliases.discard(bp_normalized)
+
+        generic_brand_leakage_terms = {
+            _norm(term) for term in (
+                "Web Development Company", "Digital Agency", "Best Web Solutions",
+                "Top Digital Experts", "شركة تصميم مواقع", "وكالة رقمية", "شركة خدمات رقمية"
+            )
+        }
+
+        def _matches_full_keyword_structure(text: str) -> bool:
+            normalized_text = _norm(text)
+
+            if is_property_listing:
+                # Exclusion signals for property variations
+                exclusion_signals = {"اسعار", "سعر", "متوسط", "تكلفه", "مقارنه", "بين", "خطوات", "دليل", "طريقه", "كيف", "نصائح"}
+                if any(ex in normalized_text for ex in exclusion_signals):
+                    return False
+
+            if pk_normalized and pk_normalized in normalized_text:
+                return True
+
+            pk_tokens = [
+                token for token in keyword_profile.get("keyword_tokens", [])
+                if len(token) > 2 and token not in {"في", "فى", "من", "عن", "الى", "إلى"}
+            ]
+            if len(pk_tokens) < 3:
+                return False
+            heading_terms = self._expanded_token_set(text)
+            heading_terms.update({_strip_arabic_article(token) for token in list(heading_terms)})
+            matched = 0
+            for token in pk_tokens:
+                token_variants = self._expand_token_variants(token)
+                token_variants.add(_strip_arabic_article(token))
+                if token_variants.intersection(heading_terms) or token in normalized_text:
+                    matched += 1
+
+            if is_property_listing:
+                # Requires near perfect match for property keywords without exclusions
+                return matched >= len(pk_tokens)
+            else:
+                return matched >= max(3, len(pk_tokens) - 1)
+
+        def _has_service_semantic_focus(text: str) -> bool:
+            normalized_text = _norm(text)
+            if self._heading_preserves_entity_focus(text, keyword_profile):
+                return True
+            if ep_normalized and ep_normalized in normalized_text:
+                return True
+            if sp_normalized and sp_normalized in normalized_text:
+                return True
+
+            heading_terms = self._expanded_token_set(text)
+            service_terms = set(sp_normalized.split()) | set(ep_normalized.split())
+            service_terms.update(keyword_profile.get("entity_descriptor_tokens", []))
+            service_terms = {term for term in service_terms if len(term) > 2 and term not in provider_terms}
+            if heading_terms.intersection(service_terms):
+                return True
+
+            # Small conservative Arabic semantic bridges; warning-only, not repair logic.
+            if any(term.startswith("تنظيف") for term in service_terms):
+                if any(term.startswith("نظاف") for term in heading_terms):
+                    return True
+            if any(term.startswith("تصميم") for term in service_terms):
+                if any(term.startswith(("موقع", "مواقع")) for term in heading_terms):
+                    return True
+
+            return False
+
+        def _prices_provider_phrase(text: str) -> bool:
+            normalized_text = _norm(text)
+            if not is_service_provider_keyword or not _contains_provider_term(text):
+                return False
+            if _contains_quality_term(text):
+                return True
+            provider_price_prefixes = (
+                "اسعار شركه", "اسعار شركات", "متوسط اسعار شركه", "متوسط اسعار شركات",
+                "تكلفه شركه", "تكلفه شركات", "سعر شركه", "سعر شركات",
+                "price of company", "company prices", "agency prices",
+            )
+            return any(normalized_text.startswith(_norm(prefix)) for prefix in provider_price_prefixes)
+
+        def _features_heading_lacks_decision_context(section: Dict[str, Any], text: str) -> bool:
+            if _section_type(section) != "features":
+                return False
+            normalized_text = _norm(text)
+            feature_formulas = (
+                "المزايا التي تساعدك",
+                "اهم المزايا",
+                "أهم المزايا",
+                "مواصفات عامة",
+                "المزايا والمواصفات",
+            )
+            if not any(_norm(phrase) in normalized_text for phrase in feature_formulas):
+                return False
+
+            heading_terms = self._expanded_token_set(text)
+            location_tokens = set(keyword_profile.get("location_tokens", []))
+            intent_tokens = set(keyword_profile.get("intent_tokens", []))
+            has_location = not location_tokens or bool(heading_terms.intersection(location_tokens))
+            has_intent = not intent_tokens or bool(heading_terms.intersection(intent_tokens))
+            return not (_has_service_semantic_focus(text) and has_location and has_intent)
+
+        def _location_heading_is_report_style(section: Dict[str, Any], text: str) -> bool:
+            if _section_type(section) != "location":
+                return False
+            normalized_text = _norm(text)
+            if not normalized_text.startswith(_norm("توزيع")):
+                return False
+            decision_terms = {
+                _norm(term) for term in (
+                    "البحث", "تبحث", "أين تجد", "اين تجد", "تختار", "اختيار",
+                    "حسب الميزانية", "حسب احتياجك", "للعائلات", "للعزاب"
+                )
+            }
+            return not any(term and term in normalized_text for term in decision_terms)
+
+        # 1. PK_REPETITION
+        pk_count = 0
+        pk_offenders = []
+        for s in core_h2s:
+            h_text = str(s.get("heading_text", ""))
+            if _matches_full_keyword_structure(h_text):
+                pk_count += 1
+                pk_offenders.append((s.get("section_id", "unknown"), h_text))
+
+        if pk_count >= 2:
+            severity = "medium" if pk_count >= 3 else "low"
+            for sec_id, h_text in pk_offenders:
+                _add_warning(
+                    "PK_REPETITION",
+                    sec_id,
+                    h_text,
+                    severity,
+                    f"Primary keyword repeated {pk_count} times in core H2 headings.",
+                    "Use semantic variants instead of near-exact primary keyword matches.",
+                )
+
+        drift_offenders: List[tuple[str, str]] = []
+        for idx, section in enumerate(visible_h2s):
+            heading_text = str(section.get("heading_text", ""))
+            norm_heading = _norm(heading_text)
+            section_id = section.get("section_id", f"sec_{idx}")
+
+            # 8. GENERIC_H2
+            if (
+                self._is_generic_visible_heading(heading_text)
+                or _features_heading_lacks_decision_context(section, heading_text)
+                or _location_heading_is_report_style(section, heading_text)
+            ):
+                _add_warning(
+                    "GENERIC_H2",
+                    section_id,
+                    heading_text,
+                    "medium",
+                    "H2 is generic and lacks specific context.",
+                    "Add entity or service context to the heading.",
+                )
+
+            # 7. ENTITY_DRIFT
+            if section in core_h2s and (ep_normalized or sp_normalized) and not _has_service_semantic_focus(heading_text):
+                drift_offenders.append((section_id, heading_text))
+
+            # 3. PRICING_PROVIDER_FOCUS
+            is_pricing = _section_type(section) in {"proof", "pricing"} or self._contains_any_signal(heading_text, self.PRICE_HEADING_SIGNALS)
+            if is_pricing and _prices_provider_phrase(heading_text):
+                _add_warning(
+                    "PRICING_PROVIDER_FOCUS",
+                    section_id,
+                    heading_text,
+                    "medium",
+                    "Pricing heading prices the provider phrase instead of the service/object phrase.",
+                    "Frame pricing around the service, deliverable, or object being bought.",
+                )
+
+            # 4. BRAND_MISMATCH
+            if display_brand_name:
+                is_title_or_diff = section.get("section_type") in ["differentiation", "introduction", "conclusion"]
+                leaked_alias = next((alias for alias in brand_aliases if alias and alias in norm_heading), "")
+                leaked_generic = ""
+                if is_title_or_diff:
+                    leaked_generic = next((term for term in generic_brand_leakage_terms if term and term in norm_heading), "")
+                if bp_normalized not in norm_heading and (leaked_alias or leaked_generic):
+                    _add_warning(
+                        "BRAND_MISMATCH",
+                        section_id,
+                        heading_text,
+                        "high" if is_title_or_diff else "medium",
+                        "Heading uses a brand alias, domain-derived name, or generic brand phrase instead of the display brand name.",
+                        f"Use '{display_brand_name}' instead.",
+                    )
+
+            # 2. BROKEN_ARABIC_PROCESS
+            broken_process_phrases = {_norm("اختيار وتعاقد"), _norm("خطوات اختيار وتعاقد مع")}
+            if _section_type(section) == "process" and any(phrase and phrase in norm_heading for phrase in broken_process_phrases):
+                _add_warning(
+                    "BROKEN_ARABIC_PROCESS",
+                    section_id,
+                    heading_text,
+                    "medium",
+                    "Obvious broken Arabic process phrasing detected.",
+                    "Use natural Arabic phrasing.",
+                )
+
+            # Subheadings checks
+            subs = section.get("subheadings", [])
+            if isinstance(subs, list):
+                is_parent_comparison = section.get("section_type") == "comparison" or any(s in norm_heading for s in self.COMPARISON_HEADING_SIGNALS)
+
+                for sub in subs:
+                    sub_text = str(sub).strip()
+                    if not sub_text:
+                        _add_warning(
+                            "WEAK_H3",
+                            section_id,
+                            sub_text,
+                            "medium",
+                            "H3 is empty.",
+                            "Remove the empty H3 or replace it with a specific subtopic.",
+                        )
+                        continue
+
+                    norm_sub = self._normalize_heading_label(sub_text)
+
+                    # 9. WEAK_H3
+                    word_count = len(re.findall(r'\b\w+\b', sub_text, re.UNICODE))
+                    is_generic = self._is_generic_visible_heading(sub_text)
+                    duplicates_parent = norm_sub == norm_heading
+                    is_granular = self._subheading_is_too_granular(sub_text, _section_type(section))
+                    is_atomized = self._subheading_breaks_atomization(sub_text, _section_type(section))
+
+                    is_weak = is_generic or duplicates_parent or word_count <= 2 or is_granular or is_atomized
+
+                    # FAQ Exemption
+                    if _section_type(section) == "faq":
+                        is_weak = duplicates_parent # Only duplicates trigger WEAK_H3 in FAQ
+
+                    # Property Exemption
+                    elif is_property_listing and is_weak and not duplicates_parent:
+                        sub_terms = set(norm_sub.split())
+                        # Bypass if the H3 contains a valid decision bucket term
+                        if sub_terms.intersection(property_bucket_terms_norm):
+                            is_weak = False
+
+                    if is_weak:
+                        weak_severity = "medium" if (is_generic or duplicates_parent) else "low"
+                        _add_warning(
+                            "WEAK_H3",
+                            section_id,
+                            sub_text,
+                            weak_severity,
+                            "H3 is weak, generic, duplicated, too granular, or atomized.",
+                            "Expand H3 into a useful subtopic or remove it.",
+                        )
+
+                    # 5. PROVIDER_H3
+                    is_provider = _contains_provider_term(sub_text)
+                    if is_service_provider_keyword and is_provider and not is_parent_comparison:
+                        _add_warning(
+                            "PROVIDER_H3",
+                            section_id,
+                            sub_text,
+                            "medium",
+                            "H3 is provider-categorized outside of a provider-comparison context.",
+                            "Focus H3 on deliverable/service instead of provider category.",
+                        )
+
+                    # 6. H3_PARENT_MISMATCH
+                    if not self._h3_supports_parent(heading_text, sub_text, keyword_profile):
+                        _add_warning(
+                            "H3_PARENT_MISMATCH",
+                            section_id,
+                            sub_text,
+                            "medium",
+                            "H3 scope does not safely match its parent H2.",
+                            "Align H3 with H2 context or remove it.",
+                        )
+
+        if drift_offenders:
+            drift_severity = "high" if len(drift_offenders) >= 2 else "medium"
+            for section_id, heading_text in drift_offenders:
+                _add_warning(
+                    "ENTITY_DRIFT",
+                    section_id,
+                    heading_text,
+                    drift_severity,
+                    "Heading clearly drifts from the core entity/service phrase.",
+                    "Anchor the heading back to the core entity, service, or a clear semantic variant.",
+                )
+
+        for w in warnings:
+            sev = w["severity"]
+            if sev in summary:
+                summary[sev] += 1
+        summary["total_warnings"] = len(warnings)
+
+        return {
+            "mode": "audit_only",
+            "passed": True,
+            "warnings": warnings,
+            "summary": summary
+        }

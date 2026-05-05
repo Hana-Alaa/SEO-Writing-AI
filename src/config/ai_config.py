@@ -19,8 +19,8 @@ OPENROUTER = {
     "models": {
         # "writing": "openai/gpt-5-mini",          #9
         # "writing": "anthropic/claude-opus-4.7",
-        "writing": "google/gemini-3-flash-preview",
-        # "writing": "openai/gpt-4.1",
+        # "writing": "google/gemini-3-flash-preview",
+        "writing": "openai/gpt-4.1",
         # "writing":"anthropic/claude-3-haiku",
         # "Writing": "qwen/qwen3.6-plus:free",
         # "Writing": "openai/gpt-5.4-nano",     #47
@@ -30,6 +30,16 @@ OPENROUTER = {
         # "image": "google/gemini-3-pro-image-preview"
         # "image": "google/gemini-2.5-flash-image-preview"
         "image": "google/gemini-3.1-flash-image-preview"
+    }
+}
+
+AGENTROUTER = {
+    "api_key": os.getenv("AGENTROUTER_API_KEY"),
+    "base_url": os.getenv("AGENTROUTER_BASE_URL", "https://agentrouter.org/v1"),
+    "site_url": "https://github.com/Start-SE/SEO-Writing-AI",
+    "site_name": "SEO Writing AI",
+    "models": {
+        "writing": os.getenv("AGENTROUTER_MODEL_WRITING", "claude-haiku-4-5-20251001")
     }
 }
 

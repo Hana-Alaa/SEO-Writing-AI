@@ -482,6 +482,29 @@ def test_strategy_contract_non_brand_types_keep_valid_shape():
     assert isinstance(comparison["section_role_map"], dict)
 
 
+def test_strategy_content_type_resolver_is_central_and_non_blind():
+    service = _make_service()
+
+    assert service.resolve_content_type(
+        intent="commercial",
+        brand_present=True,
+        requested_content_type=None,
+        primary_keyword="افضل شركة تصميم مواقع في السعودية",
+    ) == "brand_commercial"
+    assert service.resolve_content_type(
+        intent="informational",
+        brand_present=False,
+        requested_content_type=None,
+        primary_keyword="ما هو تصميم المواقع",
+    ) == "informational"
+    assert service.resolve_content_type(
+        intent="informational",
+        brand_present=False,
+        requested_content_type=None,
+        primary_keyword="أفضل أنواع الشقق في الرياض",
+    ) == "informational"
+
+
 def test_heading_only_detox_preserves_brand_contract():
     service = _make_service()
     controller = object.__new__(AsyncWorkflowController)
@@ -728,6 +751,170 @@ def test_research_service_extracts_explicit_brand_inputs_from_input_payload():
         }
     })
     assert extracted == ["Creative Minds"]
+
+
+def test_research_service_brand_discovery_populates_explicit_brand_fields():
+    service = ResearchService(ai_client=None, work_dir=os.getcwd())
+    state = {
+        "brand_url": "https://cems-it.com/",
+        "primary_keyword": "افضل شركة تصميم مواقع في السعودية",
+        "input_data": {
+            "urls": [
+                {"link": "https://cems-it.com/", "text": "Creative Minds", "is_brand": True}
+            ]
+        },
+    }
+
+    result = asyncio.run(service.run_brand_discovery(state))
+
+    assert result["brand_name"] == "Creative Minds"
+    assert result["display_brand_name"] == "Creative Minds"
+    assert result["official_brand_name"] == "Creative Minds"
+    assert result["domain_brand_name"] == "Cems It"
+    assert "Cems It" in result["brand_aliases"]
+
+
+def test_heading_only_final_title_prefers_display_brand_over_domain():
+    class DummyObserver:
+        def summarize_model_calls(self):
+            return {}
+
+    class DummyClient:
+        observer = DummyObserver()
+
+    controller = object.__new__(AsyncWorkflowController)
+    controller.ai_client = DummyClient()
+
+    state = {
+        "input_data": {"title": "Best website design companies in Saudi Arabia"},
+        "final_output": {},
+        "seo_meta": {"meta_title": "Best website design companies"},
+        "assets/images": [],
+        "seo_report": {},
+        "content_type": "brand_commercial",
+        "brand_url": "https://cems-it.com/",
+        "display_brand_name": "Creative Minds",
+        "brand_name": "Creative Minds",
+        "official_brand_name": "Creative Minds",
+        "heading_only_mode": True,
+        "outline": [],
+        "slug": "test",
+        "primary_keyword": "best website design company in saudi arabia",
+        "output_dir": "",
+    }
+
+    result = AsyncWorkflowController._assemble_final_output(controller, state)
+
+    assert result["title"].endswith("| Creative Minds")
+    assert "Cems It" not in result["title"]
+    assert result["heading_preview_markdown"].startswith(
+        "# Best website design companies in Saudi Arabia | Creative Minds"
+    )
+
+
+def test_brand_commercial_modern_section_aliases_satisfy_legacy_requirements():
+    validator = ValidationService()
+    outline = [
+        {"section_type": "introduction", "heading_text": "intro"},
+        {"section_type": "offer", "heading_text": "Available options"},
+        {"section_type": "features", "heading_text": "Buyer-facing features"},
+        {"section_type": "differentiation", "heading_text": "Why choose us"},
+        {"section_type": "proof", "heading_text": "Pricing proof"},
+        {"section_type": "process", "heading_text": "How it works"},
+        {"section_type": "faq", "heading_text": "FAQ"},
+        {"section_type": "conclusion", "heading_text": "Next step"},
+    ]
+    present_types = {(section.get("section_type") or "").lower().strip() for section in outline}
+    required = validator.REQUIRED_STRUCTURE_BY_TYPE["brand_commercial"]["mandatory"]
+    coverage = validator.evaluate_outline_coverage(outline, "brand_commercial")
+
+    assert validator._missing_required_sections(present_types, required) == set()
+    assert "offer_clarity" not in coverage["missing"]
+    assert "differentiators" not in coverage["missing"]
+
+
+def test_research_service_lsi_filter_removes_competitor_brand_leakage_only():
+    service = ResearchService(ai_client=None, work_dir=os.getcwd())
+    serp_data = {
+        "top_results": [{"url": "https://khelj.com/blogs/50", "title": "دليل اختيار أفضل شركة"}],
+        "lsi_keywords": [
+            "تصميم_مواقع",
+            "شركة_تصميم_مواقع",
+            "برمجة_مواقع",
+            "سيو_تقني",
+            "خليج_للبرمجيات",
+        ],
+    }
+
+    cleaned = service._sanitize_lsi_keywords(serp_data)
+
+    assert "خليج للبرمجيات" not in cleaned
+    assert "تصميم مواقع" in cleaned
+    assert "شركة تصميم مواقع" in cleaned
+    assert "برمجة مواقع" in cleaned
+    assert "سيو تقني" in cleaned
+
+
+def test_research_service_word_count_missing_is_flagged_not_trusted_as_zero():
+    service = ResearchService(ai_client=None, work_dir=os.getcwd())
+    serp_data = {
+        "top_results": [
+            {"estimated_word_count": 0, "headings": {"h2": ["A"], "h3": []}},
+            {"estimated_word_count": 0, "headings": {"h2": ["B"], "h3": ["C"]}},
+        ]
+    }
+
+    annotated = service._annotate_word_count_missing(serp_data)
+    stats = service._aggregate_serp_structural_stats(annotated)
+
+    assert all(result["word_count_data_missing"] for result in annotated["top_results"])
+    assert stats["avg_word_count"] is None
+    assert stats["word_count_data_missing"] is True
+    assert stats["avg_word_count_reliable"] is False
+
+
+class DummyWebResearchClient:
+    def __init__(self, responses):
+        self.responses = list(responses)
+
+    async def send_with_web(self, prompt, max_results):
+        content = self.responses.pop(0)
+        return {"content": content, "metadata": {"tokens": {}, "duration": 0}}
+
+
+def test_research_service_web_research_fallback_is_observable():
+    valid_response = json.dumps({
+        "top_results": [
+            {
+                "title": "أفضل شركة تصميم مواقع",
+                "url": "https://example.com",
+                "estimated_word_count": 0,
+                "headings": {"h1": "أفضل شركة تصميم مواقع", "h2": ["الخدمات"], "h3": []},
+            }
+        ],
+        "paa_questions": [],
+        "related_searches": [],
+        "autocomplete_suggestions": [],
+        "lsi_keywords": ["تصميم_مواقع"],
+    }, ensure_ascii=False)
+    service = ResearchService(
+        ai_client=DummyWebResearchClient(["not valid json", valid_response]),
+        work_dir=os.getcwd(),
+    )
+    state = {
+        "primary_keyword": "افضل شركة تصميم مواقع في السعودية",
+        "area": "السعودية",
+        "article_language": "ar",
+        "competitor_count": 3,
+        "workflow_logger": None,
+    }
+
+    result = asyncio.run(service.run_web_research(state))
+
+    assert result["fallback_search_used"] is True
+    assert len(result["web_research_attempts"]) == 2
+    assert result["web_research_attempts"][0]["reason"] == "primary_query"
+    assert result["web_research_attempts"][1]["reason"] == "fallback_after_empty_or_unparsed_results"
 
 
 def test_research_service_serp_intent_firewall_keeps_guide_page_type_for_provider_choice():
