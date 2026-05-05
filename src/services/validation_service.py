@@ -88,7 +88,9 @@ class ValidationService:
     }
 
     BRAND_ALLOWED_HEADING_SECTION_TYPES: ClassVar[set[str]] = {
-        "introduction", "conclusion", "differentiation", "brand_differentiation", "why_choose_us", "differentiators", "usp"
+        "introduction", "conclusion", "offer", "differentiation", "brand_differentiation",
+        "why_choose_us", "differentiators", "usp", "proof", "case_study",
+        "proof_authority", "validation"
     }
 
     COMMERCIAL_FLOW_SECTION_ALIASES: ClassVar[Dict[str, set[str]]] = {
@@ -3210,7 +3212,10 @@ class ValidationService:
         return self._heading_contains_exact_brand_name(text, brand_name)
 
     def _brand_heading_allowed(self, section_type: str) -> bool:
-        allowed = {"differentiation", "introduction", "conclusion"}
+        allowed = {
+            "differentiation", "introduction", "conclusion", "offer", "proof",
+            "case_study", "proof_authority", "validation"
+        }
         return section_type.lower() in allowed
 
     def _commercial_flow_stage(self, section: Dict[str, Any]) -> str:

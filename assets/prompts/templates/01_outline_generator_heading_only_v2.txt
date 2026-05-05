@@ -40,9 +40,14 @@ Your task is to generate only the heading structure layer of an article outline 
   - Do not create any intro subheadings.
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
-- If `content_type` is `brand_commercial`, create the commercial decision journey after the introduction in this order:
-  - `offer` -> `features` -> `proof` -> `process` -> `faq` -> `conclusion`
-  - If a dedicated brand section is needed, place one `differentiation` section after `proof`.
+- If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
+  - Default order: `offer` -> `features` -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
+  - For provider-selection or commercial investigation keywords (e.g., best company, agency, provider, افضل شركة, أفضل مكتب, مزود خدمة), do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
+  - In provider-selection outlines, any H2 about "how to choose", "how to evaluate", criteria, or decision filters MUST use `section_type: "features"` or another evaluation type, NOT `section_type: "offer"`.
+  - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
+  - If a dedicated brand section is needed, place one `differentiation` section after proof/pricing and before process.
+  - If the user needs confidence before choosing the brand, include one brand proof section after differentiation and before process using `section_type: "proof"` or `section_type: "case_study"`.
+  - The article should not become a pure brand page. It should help the reader evaluate the market first, then make the provided brand feel like the logical choice.
   - Comparison is NOT a mandatory standalone section. If comparison is useful, it may be embedded inside the most relevant section (offer, features, proof/pricing, or location) unless it deserves a dedicated standalone H2.
 - The first visible core H2 MUST be decision-useful and specific, but if it is an offer section, it MUST describe available options/types directly and MUST NOT use 'how to choose' phrasing.
   - Avoid: "أفضل مناطق شراء [entity] للبيع في [area]".
@@ -206,6 +211,18 @@ Good:
 Always return an empty `subheadings` array.
 Brand benefits should be written in the body, not as H3s.
 
+Brand proof sections are recommended for brand_commercial content when the reader needs evidence before choosing the provided brand.
+Use `section_type: "proof"` or `section_type: "case_study"` for this section.
+Place brand proof after differentiation and before process.
+The heading may mention the brand only when it clearly promises evidence, not promotion.
+Good brand proof H2 examples:
+- أمثلة من مشاريع ناجحة نفذتها [Brand]
+- كيف تثبت [Brand] جودة خدماتها؟
+- نتائج وتجارب عملاء تؤكد خبرة [Brand]
+- نماذج أعمال [Brand] في [service/product]
+Do NOT add a brand proof section if it would only repeat differentiation without evidence.
+Do NOT invent unsupported metrics, client names, guarantees, testimonials, or case studies. If evidence is not provided, phrase the heading around evidence types the article can discuss safely, such as portfolio, process quality, review signals, or measurable outcomes when available.
+
 5. Process H2:
 Usually return an empty `subheadings` array.
 Use H3s only when each step is a complex standalone phase.
@@ -254,9 +271,13 @@ H3s are allowed and should be real user questions.
 - **OFFER SECTION (section_type: offer)**:
   - The H2 MUST describe available concrete options/types directly (e.g., "أنواع [entity] المتوفرة").
   - It is FORBIDDEN to use "how to choose" phrasing or any decision-guide phrasing (e.g., Avoid: "كيفية اختيار...").
+  - If the H2 asks how to choose, compare, evaluate, or determine the best provider, it is NOT an offer section. Use a features/evaluation section instead.
+  - For brand_commercial provider-selection content, the offer H2 should name concrete services or deliverables the provided brand/company can execute (e.g., "خدمات تصميم المواقع التي تقدمها [Brand] حسب احتياج مشروعك").
   - If H3s exist, the H2 MUST be the category/type label, not advice.
   - H3s MUST include meaningful qualifiers when applicable (usage, target user, pricing level, or suitability), unless the base category is already inherently specific.
   - Avoid bare labels when a clearer, more decision-useful phrasing is possible.
+  - For service-based or agency queries, the offer section MUST include concrete service categories or deliverables (e.g., types of services provided).
+  - If the offer section does not clearly list services or solutions, the outline is INVALID.
 
 ---
 
@@ -337,9 +358,12 @@ H3s are allowed and should be real user questions.
 
 #### FEATURES VS COMPARISON SEPARATION RULE
 
+- If the offer section answers "how to choose" or overlaps with evaluation criteria, it is INVALID and must be rewritten as concrete services.
+- Offer sections define what services/deliverables/options are available.
 - Features sections MUST define evaluation criteria only (HOW to evaluate).
 - They MUST describe how the user evaluates or chooses between options.
 - They MUST NOT include direct comparisons (A vs B) or specific alternatives.
+- Offer and features MUST NOT answer the same question. If both headings are about choosing/evaluating the best provider, the offer section is missing and must be rewritten as concrete services/deliverables.
 
 - Comparison sections MUST compare specific options, types, or scenarios (WHAT to choose between).
 - They MUST apply real decision criteria to help the user choose.
