@@ -1,0 +1,484 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,model,estimated_cost,is_google,prompt_text,response_text
+2026-05-06T15:10:55.035027,STEP_TOTAL: brand_discovery,0.001,0,0,0,unknown,0.0,False,N/A,N/A
+2026-05-06T15:11:55.934880,web_research,60.893,23640,4785,28425,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: بوليفارد سيتي الرياض
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""الهيئة العامة للترفيه | بوليفارد سيتي"",""url"":""https://www.gea.gov.sa/ar/events/boulevard-riyadh-city/"",""meta_title"":""الهيئة العامة للترفيه | بوليفارد سيتي"",""meta_description"":""زورونا في بوليفارد رياض سيتي. واستمتعوا في مناطق فوق الخيال - تتميز كلّ منها بمجموعتها الخاصة من الفعاليات، المطاعم، المهرجانات، والمتاجر المصممة لجميع الأذواق والأعمار"",""estimated_word_count"":0,""headings"":{""h1"":""بوليفارد سيتي"",""h2"":[""بوليفارد سيتي"",""الفعاليات الكبرى"",""نظرة عامة"",""روابط هامة"",""الاتصال والدعم"",""تابعنا على"",""أدوات الاتاحة والوصول""],""h3"":[]},""has_faq"":false,""has_tables"":false,""has_lists"":false,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""بوليفارد سيتي | وجهة الترفيه الأولى | طيران الرياض"",""url"":""https://www.riyadhair.com/ar/discover-riyadh/blvd"",""meta_title"":""بوليفارد سيتي | وجهة الترفيه الأولى | طيران الرياض"",""meta_description"":""مستوحاة من أشهر الوجهات العالمية مثل تايمز سكوير وشارع كوفنتري، استطاع بوليفارد سيتي أن ينقل أجواء أشهر مناطق الترفيه في العالم إلى قلب الرياض عبر تسع مناطق ذات طابع خاص، لتُقدم تجارب غامرة في الموسيقى والرياضة وغيرها من الفعاليات التي لا تُنسى."",""estimated_word_count"":0,""headings"":{""h1"":""بوليفارد سيتي"",""h2"":[""مغامرة تنتظرك في كل زاوية"",""مطل حافة العالم"",""المتحف الوطني السعودي"",""مركز الملك عبدالله المالي""],""h3"":[""تجربة مصممة خصيصًا لك"",""عالم لا ينتهي من التجارب"",""استكشف معالم الرياض""]},""has_faq"":false,""has_tables"":false,""has_lists"":false,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""بوليفارد سيتي - ويكيبيديا"",""url"":""https://ar.wikipedia.org/wiki/بوليفارد_سيتي"",""meta_title"":""بوليفارد سيتي - ويكيبيديا"",""meta_description"":""بوليفارد سيتي أو جادّة المدينة هي إحدى مناطق فعاليات موسم الرياض الترفيهي العالمي الذي يقام في مدينة الرياض عاصمة المملكة العربية السعودية، وتشرف عليه الهيئة العامة للترفيه. تقع في حي حطين شمال الرياض، وهي أكبر مناطق فعاليات الموسم."",""estimated_word_count"":800,""headings"":{""h1"":""بوليفارد سيتي"",""h2"":[""الوصف"",""المناطق"",""الفعاليات"",""أوقات الزيارة"",""انظر أيضًا"",""مراجع""],""h3"":[]},""has_faq"":false,""has_tables"":true,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[],""content_gaps"":[],""common_patterns"":[""H1 tag with 'بوليفارد سيتي' on all pages""],""common_strengths"":[""use of images across all pages""],""common_weaknesses"":[""absence of FAQ sections on all pages""],""observed_notes"":[""Page 1 dominated by official government pages and commercial listings with limited purely informational articles""],""unsupported_data"":[],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""not_observed""}}"
+2026-05-06T15:11:56.259425,STEP_TOTAL: web_research,61.222,0,0,0,unknown,0.0,False,N/A,N/A
+2026-05-06T15:12:03.520211,STEP_TOTAL: serp_analysis,7.258,0,0,0,unknown,0.0,False,N/A,N/A
+2026-05-06T15:12:05.506136,intent_title,1.983,0,0,0,unknown,0.0,False,"You are a Practical User Intent & Title Advisor.
+
+Input:
+- Raw topic: بوليفارد سيتي الرياض
+- Primary keyword: بوليفارد سيتي الرياض
+- Language: ar
+- Current Year: 2026
+- Top SERP titles: [""\u0627\u0644\u0647\u064a\u0626\u0629 \u0627\u0644\u0639\u0627\u0645\u0629 \u0644\u0644\u062a\u0631\u0641\u064a\u0647 | \u0628\u0648\u0644\u064a\u0641\u0627\u0631\u062f \u0633\u064a\u062a\u064a"", ""\u0628\u0648\u0644\u064a\u0641\u0627\u0631\u062f \u0633\u064a\u062a\u064a | \u0648\u062c\u0647\u0629 \u0627\u0644\u062a\u0631\u0641\u064a\u0647 \u0627\u0644\u0623\u0648\u0644\u0649 | \u0637\u064a\u0631\u0627\u0646 \u0627\u0644\u0631\u064a\u0627\u0636"", ""\u0628\u0648\u0644\u064a\u0641\u0627\u0631\u062f \u0633\u064a\u062a\u064a - \u0648\u064a\u0643\u064a\u0628\u064a\u062f\u064a\u0627""]
+- SERP CTA styles: [""informational"", ""soft commercial"", ""informational""]
+- Target Area: الرياض
+- Brand Name: تيك ايفينت
+
+Task:
+1. Classify intent using the ""Practical Detection Hierarchy"":
+   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about ""Web Design"" becomes `commercial` if a Brand is present).
+   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.
+   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves ""Vs"", ""Comparison"", ""Better between X and Y"", or comparing different options, the intent is **comparative**.
+   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.
+
+Allowed intents:
+- informational → searching for knowledge, guides, or tutorials.
+- commercial → evaluating a specific service/product or ready to take action.
+- comparative → comparing different options with brand helpfulness as the preferred choice.
+
+Title rules:
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use a Helpful, Practical Advisor tone (e.g., ""Simplified"", ""Complete Guide"", ""Tips"", ""Top-Rated""). 
+- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
+- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.
+- BRANDING (FALLBACK): 
+    * If `Brand Name` is ""Not provided"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK): 
+    * If `Target Area` is ""Global"", ""General"", or ""International"", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.
+- No markdown, no extra text.
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": ""The Clear, Helpful, Brand-Focused H1""
+}","{
+  ""optimized_title"": ""بوليفارد سيتي الرياض: دليلك الشامل للترفيه مع تيك ايفينت 2026"",
+  ""intent"": ""commercial"",
+  ""metadata"": {
+    ""duration"": 1.9833383560180664,
+    ""model"": ""openai/gpt-4.1"",
+    ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: بوليفارد سيتي الرياض\n- Primary keyword: بوليفارد سيتي الرياض\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0627\\u0644\\u0647\\u064a\\u0626\\u0629 \\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 | \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a | \\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649 | \\u0637\\u064a\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a - \\u0648\\u064a\\u0643\\u064a\\u0628\\u064a\\u062f\\u064a\\u0627\""]\n- SERP CTA styles: [\""informational\"", \""soft commercial\"", \""informational\""]\n- Target Area: الرياض\n- Brand Name: تيك ايفينت\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""commercial\"",\n  \""confidence\"": 1.0,\n  \""optimized_title\"": \""بوليفارد سيتي الرياض: دليلك الشامل للترفيه مع تيك ايفينت 2026\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 1302,
+      ""completion_tokens"": 52,
+      ""reasoning_tokens"": 0,
+      ""total_tokens"": 1354
+    },
+    ""reasoning_details"": null
+  },
+  ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: بوليفارد سيتي الرياض\n- Primary keyword: بوليفارد سيتي الرياض\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0627\\u0644\\u0647\\u064a\\u0626\\u0629 \\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 | \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a | \\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649 | \\u0637\\u064a\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a - \\u0648\\u064a\\u0643\\u064a\\u0628\\u064a\\u062f\\u064a\\u0627\""]\n- SERP CTA styles: [\""informational\"", \""soft commercial\"", \""informational\""]\n- Target Area: الرياض\n- Brand Name: تيك ايفينت\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about \""Web Design\"" becomes `commercial` if a Brand is present).\n   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.\n   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.\n\nAllowed intents:\n- informational → searching for knowledge, guides, or tutorials.\n- commercial → evaluating a specific service/product or ready to take action.\n- comparative → comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\""). \n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK): \n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK): \n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful, Brand-Focused H1\""\n}""
+}"
+2026-05-06T15:12:07.509743,STEP_TOTAL: intent_title,3.989,605,103,708,openai/gpt-4.1,0.0,False,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""بوليفارد سيتي الرياض""
+Primary Keyword: ""بوليفارد سيتي الرياض""
+Brand Context: ""تيك ايفينت""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","{
+  ""reasoning"": ""The title and keyword 'بوليفارد سيتي الرياض' refer to a specific location or attraction in Riyadh. The presence of the brand context 'تيك ايفينت' suggests a potential commercial angle, as it may relate to event services or ticketing for this location. Users searching with this context are likely seeking solutions or services related to visiting or booking at بوليفارد سيتي الرياض, rather than just general information."",
+  ""intent"": ""Commercial""
+}"
+2026-05-06T15:12:07.512518,STEP_TOTAL: style_analysis,0.003,605,103,708,openai/gpt-4.1,0.0,False,"You are a Practical User Intent Analyst. 
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language. 
+
+INTENT DETECTION LOGIC:
+1. COMMERCIAL: The user is looking for a SOLUTION, a PROVIDER, or a TOOL. 
+   - Signs: Mentions of services, specific problems that need a professional (e.g., ""how to fix a pipe"" -> if Brand exists, it's Commercial), or looking for ""the best"" of anything.
+   - Multilingual: Detect synonyms for ""Agency"", ""Service"", ""Company"", ""Solution"" in any language.
+
+2. COMPARATIVE: The user is in the ""Decision Stage"".
+   - Signs: Comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+3. INFORMATIONAL: The user is looking for PURE KNOWLEDGE or CURIOSITY with no immediate buyer journey.
+   - Signs: Academic questions, historical facts, or general definitions where NO brand/service is provided.
+
+Input:
+Title: ""بوليفارد سيتي الرياض""
+Primary Keyword: ""بوليفارد سيتي الرياض""
+Brand Context: ""تيك ايفينت""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","{
+  ""reasoning"": ""The title and keyword 'بوليفارد سيتي الرياض' refer to a specific location or attraction in Riyadh. The presence of the brand context 'تيك ايفينت' suggests a potential commercial angle, as it may relate to event services or ticketing for this location. Users searching with this context are likely seeking solutions or services related to visiting or booking at بوليفارد سيتي الرياض, rather than just general information."",
+  ""intent"": ""Commercial""
+}"
+2026-05-06T15:12:22.125573,content_strategy,14.591,2374,852,3226,unknown,0.0,False,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: بوليفارد سيتي الرياض
+- Intent: commercial
+- Content Type: informational
+- Target Area: الرياض
+- SERP Market Insights: ""{\""content_gaps\"": [], \""brand_advantages\"": [], \""keyword_clusters\"": [\""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""\\u0627\\u0644\\u0647\\u064a\\u0626\\u0629 \\u0627\\u0644\\u0639\\u0627\\u0645\\u0629\"", \""\\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f\"", \""\\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f\"", \""\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""\\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""\\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649\"", \""\\u0627\\u0644\\u0623\\u0648\\u0644\\u0649 \\u0637\\u064a\\u0631\\u0627\\u0646\"", \""\\u0637\\u064a\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a \\u0648\\u062c\\u0647\\u0629\"", \""\\u0633\\u064a\\u062a\\u064a \\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""\\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649\"", \""\\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649 \\u0637\\u064a\\u0631\\u0627\\u0646\""], \""writing_guide\"": \""Observed content is structured as informational guides with moderate use of H2s and minimal H3s, average word count around 800, and focus on entertainment and destination-related topics.\"", \""differentiation_strategy\"": [], \""mandatory_serp_topics\"": [], \""market_data_signals\"": {\""avg_unit_price_range\"": \""\"", \""common_down_payment_or_fees\"": \""\"", \""typical_duration_or_terms\"": \""\"", \""notable_market_trends\"": []}, \""topic_observations\"": {\""core_recurring_topics\"": [{\""topic\"": \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""frequency\"": 1, \""confidence\"": \""low\""}], \""secondary_mentions\"": [{\""topic\"": \""\\u0627\\u0644\\u0647\\u064a\\u0626\\u0629 \\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""\\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""frequency\"": 1, \""confidence\"": \""low\""}], \""weak_signals\"": [{\""topic\"": \""\\u0637\\u064a\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""frequency\"": 1, \""confidence\"": \""low\""}]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Educate, empower, and help the reader (Building Practical Authority).
+- **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and advisor-like.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Foundation (Intro)**: Direct topic definition + context on why it matters. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed.
+2. **The Definition (What is)**: H2 with Primary Keyword. Clear, authoritative, and concise description.
+3. **The Relevance (Why it matters)**: Practical context building + Key Benefits for the reader.
+4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
+5. **The Action (Practical Tips)**: Actionable ""How-to"" examples or practical advice to maximize dwell time and utility.
+6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
+7. **The Clarity (FAQ)**: Minimum 4-5 questions targeting long-tail related queries in People may ask.
+8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., ""Learn more"" or ""Explore further"").
+","{
+  ""primary_angle"": ""تقديم دليل عملي شامل حول بوليفارد سيتي الرياض كوجهة ترفيهية متكاملة في قلب العاصمة، مع التركيز على ما يهم الزائر فعليًا."",
+  ""market_angle"": ""تسليط الضوء على مكانة بوليفارد سيتي الرياض كأبرز وجهة ترفيهية في الرياض، مع إبراز الفروق المحلية في تجربة الترفيه، التنظيم، وتنوع الفعاليات مقارنة بالمعايير العامة للسوق."",
+  ""target_reader_state"": ""قارئ لا يعرف شيئًا عن بوليفارد سيتي الرياض ويبحث عن معلومات موثوقة وعملية حول الوجهة، الأنشطة، وأهم النصائح للزيارة."",
+  ""pain_point_focus"": [
+    ""عدم وضوح ماهية بوليفارد سيتي الرياض"",
+    ""الحيرة في اختيار الأنشطة المناسبة للعائلة أو الأفراد"",
+    ""القلق من الزحام أو التنظيم"",
+    ""عدم معرفة أوقات العمل أو تفاصيل الدخول"",
+    ""الخوف من الوقوع في أخطاء شائعة أثناء الزيارة""
+  ],
+  ""emotional_trigger"": ""الفضول والرغبة في قضاء وقت ممتع وآمن مع العائلة أو الأصدقاء في مكان موثوق ومنظم."",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""الاعتماد على معلومات موثوقة من مصادر رسمية"",
+    ""تقديم تفاصيل عملية وتجارب واقعية للزوار"",
+    ""شرح التنظيم والإشراف من الهيئة العامة للترفيه""
+  ],
+  ""eeat_signals_to_include"": [
+    ""توضيح إشراف الهيئة العامة للترفيه"",
+    ""ذكر معايير الأمان والتنظيم"",
+    ""تقديم نصائح عملية مبنية على تجارب الزوار"",
+    ""تغطية شاملة للأنشطة والخدمات المتوفرة""
+  ],
+  ""differentiation_focus"": [
+    ""تنوع الفعاليات والأنشطة مقارنة بالوجهات التقليدية"",
+    ""تنظيم عالي المستوى وتجربة زائر سلسة"",
+    ""موقع استراتيجي في قلب الرياض"",
+    ""مناسب للعائلات والأفراد من جميع الأعمار""
+  ],
+  ""conversion_strategy"": ""تشجيع القارئ على استكشاف المزيد عن الفعاليات القادمة أو التخطيط لزيارة بوليفارد سيتي الرياض عبر مصادر رسمية أو منصات الحجز المعتمدة."",
+  ""cta_philosophy"": ""دعوة خفيفة للاستكشاف أو معرفة المزيد دون أي ضغط أو بيع مباشر."",
+  ""local_strategy"": ""توضيح كيف تلبي بوليفارد سيتي الرياض احتياجات سكان الرياض وزوارها من حيث الترفيه العصري، التنظيم، وتوفير بيئة آمنة ومتنوعة، مع الإشارة إلى سهولة الوصول والخيارات المحلية."",
+  ""tone_direction"": ""محايد، عملي، إرشادي، وباللغة العربية الفصحى الحديثة."",
+  ""section_role_map"": {
+    ""introduction"": ""تعريف مباشر لبوليفارد سيتي الرياض وأهميتها كوجهة ترفيهية في العاصمة، مع وضع القارئ في سياق الحاجة لهذه الوجهة."",
+    ""core_or_benefits"": ""شرح ماهية بوليفارد سيتي الرياض، مميزاتها، ولماذا تعتبر وجهة مفضلة للترفيه في الرياض."",
+    ""proof"": ""عرض أمثلة عملية على الفعاليات والأنشطة، مع إبراز إشراف الهيئة العامة للترفيه والتنظيم العالي."",
+    ""process_or_how"": ""تقديم نصائح عملية للزيارة، مثل أفضل أوقات الذهاب، كيفية الاستفادة القصوى من الأنشطة، وأهم ما يجب معرفته قبل الوصول."",
+    ""faq"": ""الإجابة على أسئلة شائعة مثل: ما هي أوقات العمل؟ هل هناك رسوم دخول؟ ما الأنشطة المناسبة للأطفال؟ كيف يمكن الوصول؟ هل توجد فعاليات موسمية؟"",
+    ""conclusion"": ""تلخيص النقاط الأساسية حول بوليفارد سيتي الرياض، مع دعوة خفيفة لاستكشاف المزيد أو متابعة الفعاليات القادمة.""
+  }
+}"
+2026-05-06T15:12:22.128823,STEP_TOTAL: content_strategy,14.614,2374,852,3226,openai/gpt-4.1,0.0,False,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: بوليفارد سيتي الرياض
+- Intent: commercial
+- Content Type: informational
+- Target Area: الرياض
+- SERP Market Insights: ""{\""content_gaps\"": [], \""brand_advantages\"": [], \""keyword_clusters\"": [\""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""\\u0627\\u0644\\u0647\\u064a\\u0626\\u0629 \\u0627\\u0644\\u0639\\u0627\\u0645\\u0629\"", \""\\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f\"", \""\\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f\"", \""\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""\\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""\\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649\"", \""\\u0627\\u0644\\u0623\\u0648\\u0644\\u0649 \\u0637\\u064a\\u0631\\u0627\\u0646\"", \""\\u0637\\u064a\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a \\u0648\\u062c\\u0647\\u0629\"", \""\\u0633\\u064a\\u062a\\u064a \\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""\\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649\"", \""\\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647 \\u0627\\u0644\\u0623\\u0648\\u0644\\u0649 \\u0637\\u064a\\u0631\\u0627\\u0646\""], \""writing_guide\"": \""Observed content is structured as informational guides with moderate use of H2s and minimal H3s, average word count around 800, and focus on entertainment and destination-related topics.\"", \""differentiation_strategy\"": [], \""mandatory_serp_topics\"": [], \""market_data_signals\"": {\""avg_unit_price_range\"": \""\"", \""common_down_payment_or_fees\"": \""\"", \""typical_duration_or_terms\"": \""\"", \""notable_market_trends\"": []}, \""topic_observations\"": {\""core_recurring_topics\"": [{\""topic\"": \""\\u0628\\u0648\\u0644\\u064a\\u0641\\u0627\\u0631\\u062f \\u0633\\u064a\\u062a\\u064a\"", \""frequency\"": 1, \""confidence\"": \""low\""}], \""secondary_mentions\"": [{\""topic\"": \""\\u0627\\u0644\\u0647\\u064a\\u0626\\u0629 \\u0627\\u0644\\u0639\\u0627\\u0645\\u0629 \\u0644\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""\\u0648\\u062c\\u0647\\u0629 \\u0627\\u0644\\u062a\\u0631\\u0641\\u064a\\u0647\"", \""frequency\"": 1, \""confidence\"": \""low\""}], \""weak_signals\"": [{\""topic\"": \""\\u0637\\u064a\\u0631\\u0627\\u0646 \\u0627\\u0644\\u0631\\u064a\\u0627\\u0636\"", \""frequency\"": 1, \""confidence\"": \""low\""}]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Educate, empower, and help the reader (Building Practical Authority).
+- **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and advisor-like.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Foundation (Intro)**: Direct topic definition + context on why it matters. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed.
+2. **The Definition (What is)**: H2 with Primary Keyword. Clear, authoritative, and concise description.
+3. **The Relevance (Why it matters)**: Practical context building + Key Benefits for the reader.
+4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
+5. **The Action (Practical Tips)**: Actionable ""How-to"" examples or practical advice to maximize dwell time and utility.
+6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
+7. **The Clarity (FAQ)**: Minimum 4-5 questions targeting long-tail related queries in People may ask.
+8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., ""Learn more"" or ""Explore further"").
+","{
+  ""primary_angle"": ""تقديم دليل عملي شامل حول بوليفارد سيتي الرياض كوجهة ترفيهية متكاملة في قلب العاصمة، مع التركيز على ما يهم الزائر فعليًا."",
+  ""market_angle"": ""تسليط الضوء على مكانة بوليفارد سيتي الرياض كأبرز وجهة ترفيهية في الرياض، مع إبراز الفروق المحلية في تجربة الترفيه، التنظيم، وتنوع الفعاليات مقارنة بالمعايير العامة للسوق."",
+  ""target_reader_state"": ""قارئ لا يعرف شيئًا عن بوليفارد سيتي الرياض ويبحث عن معلومات موثوقة وعملية حول الوجهة، الأنشطة، وأهم النصائح للزيارة."",
+  ""pain_point_focus"": [
+    ""عدم وضوح ماهية بوليفارد سيتي الرياض"",
+    ""الحيرة في اختيار الأنشطة المناسبة للعائلة أو الأفراد"",
+    ""القلق من الزحام أو التنظيم"",
+    ""عدم معرفة أوقات العمل أو تفاصيل الدخول"",
+    ""الخوف من الوقوع في أخطاء شائعة أثناء الزيارة""
+  ],
+  ""emotional_trigger"": ""الفضول والرغبة في قضاء وقت ممتع وآمن مع العائلة أو الأصدقاء في مكان موثوق ومنظم."",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""الاعتماد على معلومات موثوقة من مصادر رسمية"",
+    ""تقديم تفاصيل عملية وتجارب واقعية للزوار"",
+    ""شرح التنظيم والإشراف من الهيئة العامة للترفيه""
+  ],
+  ""eeat_signals_to_include"": [
+    ""توضيح إشراف الهيئة العامة للترفيه"",
+    ""ذكر معايير الأمان والتنظيم"",
+    ""تقديم نصائح عملية مبنية على تجارب الزوار"",
+    ""تغطية شاملة للأنشطة والخدمات المتوفرة""
+  ],
+  ""differentiation_focus"": [
+    ""تنوع الفعاليات والأنشطة مقارنة بالوجهات التقليدية"",
+    ""تنظيم عالي المستوى وتجربة زائر سلسة"",
+    ""موقع استراتيجي في قلب الرياض"",
+    ""مناسب للعائلات والأفراد من جميع الأعمار""
+  ],
+  ""conversion_strategy"": ""تشجيع القارئ على استكشاف المزيد عن الفعاليات القادمة أو التخطيط لزيارة بوليفارد سيتي الرياض عبر مصادر رسمية أو منصات الحجز المعتمدة."",
+  ""cta_philosophy"": ""دعوة خفيفة للاستكشاف أو معرفة المزيد دون أي ضغط أو بيع مباشر."",
+  ""local_strategy"": ""توضيح كيف تلبي بوليفارد سيتي الرياض احتياجات سكان الرياض وزوارها من حيث الترفيه العصري، التنظيم، وتوفير بيئة آمنة ومتنوعة، مع الإشارة إلى سهولة الوصول والخيارات المحلية."",
+  ""tone_direction"": ""محايد، عملي، إرشادي، وباللغة العربية الفصحى الحديثة."",
+  ""section_role_map"": {
+    ""introduction"": ""تعريف مباشر لبوليفارد سيتي الرياض وأهميتها كوجهة ترفيهية في العاصمة، مع وضع القارئ في سياق الحاجة لهذه الوجهة."",
+    ""core_or_benefits"": ""شرح ماهية بوليفارد سيتي الرياض، مميزاتها، ولماذا تعتبر وجهة مفضلة للترفيه في الرياض."",
+    ""proof"": ""عرض أمثلة عملية على الفعاليات والأنشطة، مع إبراز إشراف الهيئة العامة للترفيه والتنظيم العالي."",
+    ""process_or_how"": ""تقديم نصائح عملية للزيارة، مثل أفضل أوقات الذهاب، كيفية الاستفادة القصوى من الأنشطة، وأهم ما يجب معرفته قبل الوصول."",
+    ""faq"": ""الإجابة على أسئلة شائعة مثل: ما هي أوقات العمل؟ هل هناك رسوم دخول؟ ما الأنشطة المناسبة للأطفال؟ كيف يمكن الوصول؟ هل توجد فعاليات موسمية؟"",
+    ""conclusion"": ""تلخيص النقاط الأساسية حول بوليفارد سيتي الرياض، مع دعوة خفيفة لاستكشاف المزيد أو متابعة الفعاليات القادمة.""
+  }
+}"

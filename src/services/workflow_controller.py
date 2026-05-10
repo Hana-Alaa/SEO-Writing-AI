@@ -48,6 +48,7 @@ from src.services.research_service import ResearchService
 from src.services.strategy_service import StrategyService
 from src.services.validation_service import ValidationService
 from src.services.semantic_service import SemanticService
+from src.services.outline_repair_service import OutlineRepairService
 from src.utils.contract_safety import PipelineContractError, validate_service_call, is_signature_mismatch
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -205,6 +206,7 @@ class AsyncWorkflowController:
             intent_template=self.intent_template
         )
         self.validator = ValidationService(ai_client=self.ai_client, semantic_model=self.semantic_service)
+        self.outline_repair_service = OutlineRepairService()
 
         # Hardened Error Management: Essential steps that MUST succeed
         self.CRITICAL_STEPS = {
@@ -514,7 +516,10 @@ class AsyncWorkflowController:
 
     async def _step_serp_analysis_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Runs dedicated SERP analysis to extract intent and gaps."""
-        return await self.research_service.run_serp_analysis(state)
+        state = await self.research_service.run_serp_analysis(state)
+        # Build grounding brief for outline generator
+        state["serp_outline_brief"] = self.research_service.build_serp_outline_brief(state)
+        return state
 
     # Strategy methods migrated to StrategyService
 
@@ -617,7 +622,17 @@ class AsyncWorkflowController:
 
         for attempt in range(3):
             logger.info(f"Generating outline (Attempt {attempt + 1}/3)...")
+            # Runtime inspection for debugging
+            import inspect as _inspect
+            logger.error(
+                "ACTIVE GEN CLASS: %s | MODULE: %s | SIG: %s",
+                self.outline_gen.__class__,
+                self.outline_gen.__class__.__module__,
+                _inspect.signature(self.outline_gen.generate),
+            )
+
             # PREFLIGHT CONTRACT CHECK
+            _gen_params = _inspect.signature(self.outline_gen.generate).parameters
             validate_service_call(
                 self.outline_gen.generate,
                 title=title,
@@ -684,7 +699,8 @@ class AsyncWorkflowController:
                 )
 
             try:
-                outline_data = await self.outline_gen.generate(
+                # Defensive: only pass serp_outline_brief if the runtime signature supports it
+                _gen_kwargs = dict(
                     title=title,
                     keywords=keywords,
                     urls=urls_norm,
@@ -698,7 +714,6 @@ class AsyncWorkflowController:
                     feedback=feedback,
                     mandatory_section_types=list(mandatory),
                     prohibited_competitors=state.get("prohibited_competitors", []),
-                    # Advanced Customization
                     article_size=state.get("article_size", "1000"),
                     include_conclusion=state.get("include_conclusion", True),
                     include_faq=state.get("include_faq", True),
@@ -718,8 +733,18 @@ class AsyncWorkflowController:
                     heading_only_mode=state.get("heading_only_mode", False),
                     head_entity=head_entity,
                     entity_phrase=entity_phrase,
-                    service_phrase=service_phrase
+                    service_phrase=service_phrase,
                 )
+                if "serp_outline_brief" in _inspect.signature(self.outline_gen.generate).parameters:
+                    _gen_kwargs["serp_outline_brief"] = state.get("serp_outline_brief")
+                else:
+                    logger.error(
+                        "Runtime generate() does NOT support serp_outline_brief — skipping injection. "
+                        "Class: %s | Module: %s",
+                        self.outline_gen.__class__,
+                        self.outline_gen.__class__.__module__,
+                    )
+                outline_data = await self.outline_gen.generate(**_gen_kwargs)
             except (ContentGeneratorError, Exception) as e:
                 logger.warning(f"Outline generation failed on attempt {attempt + 1}: {e}")
                 if attempt < 2:
@@ -785,6 +810,31 @@ class AsyncWorkflowController:
                 outline, local_errors = self.validator.inject_local_seo(outline, area)
                 errors.extend(local_errors)
 
+                # TASK 2: Deterministic Repairs (Visitor Intent Promotion)
+                outline = self.outline_repair_service.promote_visitor_intents(
+                    outline,
+                    primary_keyword=state.get("primary_keyword", ""),
+                    entity_phrase=entity_phrase,
+                    serp_brief=state.get("serp_outline_brief")
+                )
+
+                # TASK 3: FAQ De-duplication
+                outline = self.outline_repair_service.dedupe_faq_against_h2(outline)
+
+                # TASK 3: Deterministic FAQ Enrichment (Brand Utility)
+                outline = self.outline_repair_service.enrich_brand_utility_faq(
+                    outline,
+                    serp_brief=state.get("serp_outline_brief", {}),
+                    brand_context=state.get("brand_context", ""),
+                    content_type=content_type
+                )
+
+                # TASK 4: Conclusion Cleanup
+                outline = self.outline_repair_service.clean_conclusion_heading(
+                    outline,
+                    entity_phrase=entity_phrase
+                )
+
                 # 3. Quality (Thin, Duplicates, CTAs)
                 if heading_only_mode:
                     quality_errors = self.validator.validate_heading_outline_quality(
@@ -800,6 +850,9 @@ class AsyncWorkflowController:
                     quality_errors = self.validator.validate_outline_quality(
                         outline,
                         content_type=content_type,
+                        primary_keyword=state.get("primary_keyword", ""),
+                        serp_brief=state.get("serp_outline_brief"),
+                        content_strategy=content_strategy,
                     )
                 errors.extend(quality_errors)
             else:
@@ -1018,7 +1071,6 @@ class AsyncWorkflowController:
                             primary_keyword=primary_keyword,
                             title=title,
                             outline=outline,
-                            content_type=content_type,
                             intent=intent,
                             area=area or "",
                             entity_phrase=entity_phrase or "",
@@ -1095,7 +1147,6 @@ class AsyncWorkflowController:
         fix_data = await self.outline_gen.fix_outline_headings(
             primary_keyword=primary_keyword,
             outline=outline,
-            content_type=content_type,
             area=area,
             entity_phrase=entity_phrase,
             service_phrase=service_phrase,
@@ -1577,7 +1628,6 @@ class AsyncWorkflowController:
             section=section,
             article_intent=article_intent,
             seo_intelligence=seo_intelligence,
-            content_type=content_type,
             link_strategy=link_strategy,
             brand_url=brand_url,
             brand_link_used=state.get("brand_link_used", False),
@@ -1633,7 +1683,6 @@ class AsyncWorkflowController:
             section=section,
             article_intent=article_intent,
             seo_intelligence=seo_intelligence,
-            content_type=content_type,
             link_strategy=link_strategy,
             brand_url=brand_url,
             brand_link_used=state.get("brand_link_used", False),
@@ -1833,7 +1882,6 @@ class AsyncWorkflowController:
                         section=section,
                         article_intent=article_intent,
                         seo_intelligence=seo_intelligence,
-                        content_type=content_type,
                         link_strategy=link_strategy,
                         brand_url=brand_url,
                         brand_link_used=state.get("brand_link_used", False),
@@ -1890,7 +1938,6 @@ class AsyncWorkflowController:
                         section=section,
                         article_intent=article_intent,
                         seo_intelligence=seo_intelligence,
-                        content_type=content_type,
                         link_strategy=link_strategy,
                         brand_url=brand_url,
                         brand_link_used=state.get("brand_link_used", False),
@@ -3009,7 +3056,16 @@ class AsyncWorkflowController:
         # 5. Sanitize section_role_map
         roles = sanitized_strategy.get("section_role_map", {})
         if "introduction" in roles:
-            roles["introduction"] = f"Define {primary_keyword} and address core search intent clearly without sales urgency or industry hooks."
+            if has_commercial:
+                roles["introduction"] = (
+                    f"Open with concise buyer context for {primary_keyword} and clarify the search need "
+                    "without sales urgency or generic market hooks."
+                )
+            else:
+                roles["introduction"] = (
+                    f"Open with a helpful hook and visitor/reader context for {primary_keyword}. "
+                    "Do not define the topic here; keep the definition for the first visible H2."
+                )
 
         if not has_investment:
             if "proof" in roles:

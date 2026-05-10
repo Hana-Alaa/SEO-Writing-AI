@@ -29,6 +29,7 @@ class TestValidationCalibration(unittest.TestCase):
         self.assertFalse(self.validator._is_valid_faq_question("تفاصيل الحجز"))
 
     def test_brand_heading_allowed_for_proof_sections(self):
+        self.assertTrue(self.validator._brand_heading_allowed("offer"))
         self.assertTrue(self.validator._brand_heading_allowed("proof"))
         self.assertTrue(self.validator._brand_heading_allowed("case_study"))
         self.assertFalse(self.validator._brand_heading_allowed("features"))

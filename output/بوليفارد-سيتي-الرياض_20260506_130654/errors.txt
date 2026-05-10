@@ -1,0 +1,15 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-05-06 13:10:31
+ERROR: OutlineGenerator.generate() got an unexpected keyword argument 'serp_outline_brief'
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 91, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 690, in _step_1_outline
+    try:
+         
+TypeError: OutlineGenerator.generate() got an unexpected keyword argument 'serp_outline_brief'
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

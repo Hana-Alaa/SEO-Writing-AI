@@ -256,6 +256,7 @@ class OutlineGenerator:
             writing_blueprint: str = "",
             market_angle: str = "",
             heading_only_mode: bool = False,
+            serp_outline_brief: Optional[Dict[str, Any]] = None,
             head_entity: str = "",
             entity_phrase: str = "",
             service_phrase: str = ""
@@ -301,6 +302,7 @@ class OutlineGenerator:
             article_language=article_language,
             intent=intent,
             seo_intelligence=seo_intelligence,
+            serp_outline_brief=serp_outline_brief,
             content_type=content_type,
             content_strategy=content_strategy,
             brand_context=brand_context,
@@ -383,6 +385,10 @@ class OutlineGenerator:
         for idx, section in enumerate(outline):
             self._normalize_section(section, idx, content_type, content_strategy, area)
 
+        if heading_only_mode and content_type == "informational":
+            outline = self._repair_heading_only_informational_outline(outline, primary_keyword, title)
+            for idx, section in enumerate(outline):
+                self._normalize_section(section, idx, content_type, content_strategy, area)
 
         total_min_words = sum(
             section.get("estimated_word_count_min", 0)
@@ -424,6 +430,177 @@ class OutlineGenerator:
             "intent_clusters": intent_clusters,
             "metadata": metadata
         }
+
+    def _repair_heading_only_informational_outline(
+        self,
+        outline: List[Dict[str, Any]],
+        primary_keyword: str,
+        title: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Small deterministic repairs for heading-only informational outlines.
+
+        Heading-only outlines are easy for the model to compress too much:
+        it may use the intro as a definition, or merge location, access,
+        timing, and ticketing into one broad visitor-info section. This
+        keeps those high-value visitor intents as separate sections before
+        the writer expands them.
+        """
+        if not outline:
+            return outline
+
+        def norm(value: Any) -> str:
+            return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+        def has_any(text: str, terms: List[str]) -> bool:
+            normalized = norm(text)
+            return any(term in normalized for term in terms)
+
+        def is_h2(section: Dict[str, Any]) -> bool:
+            return str(section.get("heading_level", "")).upper() == "H2"
+
+        def is_definition_heading(text: str) -> bool:
+            normalized = norm(text)
+            keyword = norm(primary_keyword)
+            if "definition" in normalized or "تعريف" in normalized or "ما المقصود" in normalized:
+                return True
+            if normalized.startswith("what is"):
+                return True
+            return normalized.startswith(f"ما هو {keyword}") or normalized.startswith(f"ما هي {keyword}")
+
+        def category_count(text: str) -> int:
+            return sum(
+                1
+                for terms in (location_terms, hours_terms, booking_terms)
+                if has_any(text, terms)
+            )
+
+        topic_blob = " ".join([title, primary_keyword] + [str(s.get("heading_text", "")) for s in outline])
+        experience_terms = [
+            "visit", "visitor", "venue", "destination", "attraction", "event", "tickets",
+            "mall", "museum", "park", "restaurant", "exhibition", "festival", "show", "city",
+            "زيارة", "زوار", "وجهة", "ترفيه", "أنشطة", "انشطة", "تجارب", "فعاليات",
+            "تذاكر", "حجز", "موسم", "مول", "متحف", "حديقة", "مطعم", "مطاعم",
+            "مدينة", "منطقة", "منتزه", "معرض", "مسرح", "حفلات", "عروض",
+            "الموقع", "الوصول", "أوقات", "اوقات", "مواعيد", "دخول", "رسوم",
+        ]
+        if not has_any(topic_blob, experience_terms):
+            return outline
+
+        intro = outline[0]
+        intro_was_definition = False
+        if norm(intro.get("section_type")) == "introduction":
+            intro_text = norm(intro.get("heading_text"))
+            if is_definition_heading(intro_text):
+                intro_was_definition = True
+                intro["heading_text"] = f"مدخل تمهيدي عن زيارة {primary_keyword}".strip()
+                intro["subheadings"] = []
+
+        location_terms = [
+            "location", "access", "directions", "parking", "transport",
+            "الموقع", "الوصول", "العنوان", "أين تقع", "اين تقع", "مواقف", "النقل",
+        ]
+        hours_terms = [
+            "opening hours", "hours", "timing", "schedule",
+            "أوقات", "اوقات", "مواعيد", "ساعات", "متى",
+        ]
+        booking_terms = [
+            "tickets", "ticket", "booking", "reservation", "entry", "pricing", "prices",
+            "تذاكر", "التذاكر", "حجز", "الحجز", "دخول", "رسوم", "أسعار", "اسعار",
+        ]
+
+        def h2_has_standalone(terms: List[str]) -> bool:
+            return any(
+                is_h2(s)
+                and has_any(str(s.get("heading_text", "")), terms)
+                and category_count(str(s.get("heading_text", ""))) <= 1
+                for s in outline
+            )
+
+        repaired: List[Dict[str, Any]] = []
+        inserted_hours = h2_has_standalone(hours_terms)
+        inserted_booking = h2_has_standalone(booking_terms)
+        has_definition_h2 = any(
+            is_h2(section)
+            and is_definition_heading(str(section.get("heading_text", "")))
+            for section in outline
+        )
+
+        for idx, section in enumerate(outline):
+            if idx == 1 and intro_was_definition and not has_definition_h2:
+                repaired.append({
+                    "heading_text": f"ما هو {primary_keyword}؟",
+                    "heading_level": "H2",
+                    "section_type": "core_or_benefits",
+                    "section_intent": "informational",
+                    "subheadings": [],
+                })
+                has_definition_h2 = True
+
+            heading = str(section.get("heading_text", ""))
+            cats = {
+                "location": has_any(heading, location_terms),
+                "hours": has_any(heading, hours_terms),
+                "booking": has_any(heading, booking_terms),
+            }
+
+            if is_h2(section) and sum(1 for value in cats.values() if value) >= 2:
+                if cats["location"]:
+                    section["heading_text"] = f"أين تقع {primary_keyword} وكيف تصل إليها؟"
+                    section["section_type"] = "location"
+                    section["subheadings"] = []
+                    repaired.append(section)
+                else:
+                    repaired.append(section)
+
+                if cats["hours"] and not inserted_hours:
+                    repaired.append({
+                        "heading_text": f"مواعيد عمل {primary_keyword} وأفضل أوقات الزيارة",
+                        "heading_level": "H2",
+                        "section_type": "process_or_how",
+                        "section_intent": "informational",
+                        "subheadings": [],
+                    })
+                    inserted_hours = True
+
+                if cats["booking"] and not inserted_booking:
+                    repaired.append({
+                        "heading_text": f"تذاكر {primary_keyword} وطريقة الحجز",
+                        "heading_level": "H2",
+                        "section_type": "process_or_how",
+                        "section_intent": "informational",
+                        "subheadings": [],
+                    })
+                    inserted_booking = True
+                continue
+
+            repaired.append(section)
+
+        faq_has_booking = any(
+            norm(s.get("section_type")) == "faq"
+            and any(has_any(str(sub), booking_terms) for sub in s.get("subheadings", []) or [])
+            for s in repaired
+        )
+        if faq_has_booking and not inserted_booking:
+            insert_at = next(
+                (
+                    idx for idx, section in enumerate(repaired)
+                    if norm(section.get("section_type")) in {"faq", "conclusion"}
+                ),
+                len(repaired),
+            )
+            repaired.insert(insert_at, {
+                "heading_text": f"تذاكر {primary_keyword} وطريقة الحجز",
+                "heading_level": "H2",
+                "section_type": "process_or_how",
+                "section_intent": "informational",
+                "subheadings": [],
+            })
+            inserted_booking = True
+
+        for idx, section in enumerate(repaired, start=1):
+            section["section_id"] = f"sec_{idx:02d}"
+
+        return repaired
 
 
     async def critique_outline(

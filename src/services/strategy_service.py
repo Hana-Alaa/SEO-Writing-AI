@@ -195,6 +195,46 @@ class StrategyService:
         has_service = bool(tokens & service_signals)
         return (has_quality and has_provider) or (has_provider and has_service)
 
+    def _normalize_intent_label(self, value: Optional[str]) -> str:
+        """Normalize free-form model intent labels into the internal enum."""
+        normalized = str(value or "").strip().lower()
+        if not normalized:
+            return ""
+        if any(term in normalized for term in ("comparison", "comparative")):
+            return "comparative"
+        if any(term in normalized for term in ("commercial", "transactional")):
+            return "commercial"
+        if any(term in normalized for term in ("informational", "information")):
+            return "informational"
+        return normalized
+
+    def _get_serp_intent_evidence(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Return SERP-derived intent and confidence when available."""
+        intent_layer = (
+            state.get("seo_intelligence", {})
+                .get("market_analysis", {})
+                .get("intent_analysis", {})
+        )
+        raw_intent = intent_layer.get("confirmed_intent", "")
+        try:
+            confidence = float(intent_layer.get("intent_confidence_score", 0) or 0)
+        except (TypeError, ValueError):
+            confidence = 0.0
+
+        return {
+            "raw_intent": raw_intent,
+            "intent": self._normalize_intent_label(raw_intent),
+            "confidence": confidence,
+        }
+
+    def _serp_intent_locks_resolution(self, serp_intent: str, confidence: float, primary_keyword: str) -> bool:
+        """Trust strong SERP intent unless the keyword has explicit provider/service signals."""
+        if confidence <= 0.6 or serp_intent not in {"informational", "commercial", "comparative"}:
+            return False
+        if serp_intent == "informational" and self._keyword_has_provider_service_commercial_signals(primary_keyword):
+            return False
+        return True
+
     def resolve_content_type(
         self,
         intent: Optional[str],
@@ -230,6 +270,7 @@ class StrategyService:
         article_language = state.get("article_language") or "en"
         area = state.get("area")
         serp_data = state.get("serp_data", {})
+        serp_evidence = self._get_serp_intent_evidence(state)
 
         top_titles = [
             r.get("title", "")
@@ -250,7 +291,9 @@ class StrategyService:
             serp_titles=top_titles,
             serp_cta_styles=cta_styles,
             area=area,
-            brand_name=state.get("brand_name", "")
+            brand_name=state.get("brand_name", ""),
+            serp_confirmed_intent=serp_evidence.get("raw_intent") or serp_evidence.get("intent"),
+            serp_intent_confidence=serp_evidence.get("confidence", 0.0),
         )
 
         if state.get("workflow_logger"):
@@ -265,37 +308,45 @@ class StrategyService:
         intent_raw = res.get("intent", "Informational")
         optimized_title = res.get("optimized_title", raw_title)
 
-        # Logic for local SEO intent refinement
-        serp_confirmed = (
-            state.get("seo_intelligence", {})
-                .get("market_analysis", {})
-                .get("intent_analysis", {})
-                .get("confirmed_intent")
-        )
-        confidence = (
-            state.get("seo_intelligence", {})
-                .get("market_analysis", {})
-                .get("intent_analysis", {})
-                .get("intent_confidence_score", 0)
+        serp_intent = serp_evidence.get("intent", "")
+        serp_confidence = serp_evidence.get("confidence", 0.0)
+        serp_locks_intent = self._serp_intent_locks_resolution(
+            serp_intent,
+            serp_confidence,
+            primary_keyword,
         )
 
-        if confidence > 0.6 and serp_confirmed:
-            intent_raw = serp_confirmed
-
-        intent_normalized = intent_raw.strip().lower()
+        intent_normalized = self._normalize_intent_label(intent_raw) or "informational"
+        if serp_locks_intent:
+            intent_normalized = serp_intent
         state["intent"] = intent_normalized
 
         # 1. Run Strategic AI Classifier (Universal Thinking)
         detected_intent = await self.detect_intent_ai(raw_title, primary_keyword, state=state)
+        detected_intent_normalized = self._normalize_intent_label(detected_intent)
 
         # 2. Reconcile Intents (Combining Title Intent and Strategic Logic)
-        # We look into both intent_normalized (from title) and detected_intent (from classifier)
-        all_intents = f"{intent_normalized} {detected_intent}"
+        # A strong observed SERP intent wins unless the keyword itself has explicit
+        # commercial provider/service signals. A brand name alone is not enough.
+        if serp_locks_intent:
+            final_intent = intent_normalized
+            resolver_intent = final_intent
+        else:
+            all_intents = f"{intent_normalized} {detected_intent_normalized}"
+            if "comparative" in all_intents or "comparison" in all_intents:
+                final_intent = "comparative"
+            elif "commercial" in all_intents or "transactional" in all_intents:
+                final_intent = "commercial"
+            else:
+                final_intent = "informational"
+            resolver_intent = all_intents
 
         brand_name = state.get("brand_name")
         brand_present = bool(brand_name and brand_name.lower() not in ["not provided", "none", ""])
+        state["intent"] = final_intent
+        state["detected_intent_ai"] = detected_intent_normalized
         state["content_type"] = self.resolve_content_type(
-            intent=f"{intent_normalized} {detected_intent}",
+            intent=resolver_intent,
             brand_present=brand_present,
             requested_content_type=state.get("article_type"),
             primary_keyword=primary_keyword,
@@ -499,13 +550,16 @@ class StrategyService:
         """AI classifier to detect intent (informational, commercial, etc.) using strategic JSON logic."""
         import re
 
-        if not hasattr(self, 'intent_template'):
+        if not getattr(self, 'intent_template', None):
             return "informational"
 
+        serp_evidence = self._get_serp_intent_evidence(state or {})
         prompt = self.intent_template.render(
             raw_title=raw_title,
             primary_keyword=primary_keyword,
             brand_name=state.get("brand_name", "Not provided") if state else "Not provided",
+            serp_confirmed_intent=serp_evidence.get("raw_intent", ""),
+            serp_intent_confidence=serp_evidence.get("confidence", 0.0),
             current_year=str(datetime.now().year)
         )
 

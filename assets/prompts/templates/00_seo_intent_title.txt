@@ -7,39 +7,43 @@ Input:
 - Current Year: {{ current_year | default('2026') }}
 - Top SERP titles: {{ (serp_titles | default([])) | tojson }}
 - SERP CTA styles: {{ (serp_cta_styles | default([])) | tojson }}
+- SERP confirmed intent: {{ serp_confirmed_intent | default("") }}
+- SERP intent confidence: {{ serp_intent_confidence | default(0.0) }}
 - Target Area: {{ area | default("Global") }}
 - Brand Name: {{ brand_name | default("Not provided") }}
 
 Task:
 1. Classify intent using the "Practical Detection Hierarchy":
-   - **STEP 1: BRAND DETECTION (THE PRIORITY)**: If a `Brand Name` is provided AND the topic relates to services or products, the intent is AUTOMATICALLY **commercial**. (e.g., A guide about "Web Design" becomes `commercial` if a Brand is present).
-   - **STEP 2: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like (Price, Service, Best, Company, Contact, Quote, Cheapest, Agency, Provider / سعر، شركة، خدمة، أفضل، تواصل، عرض سعر، ارخص، احسن، مكتب، نوفر), the intent is **commercial**.
-   - **STEP 3: COMPARISON (THE REASONING)**: If the topic involves "Vs", "Comparison", "Better between X and Y", or comparing different options, the intent is **comparative**.
-   - **STEP 4: PURE KNOWLEDGE (THE FALLBACK)**: If and ONLY IF no Brand exists and the topic is strictly educational (How to, What is, History of), the intent is **informational**.
+   - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.
+   - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.
+   - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.
+   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves "Vs", "Comparison", "Better between X and Y", or comparing different options, the intent is **comparative**.
+   - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.
 
 Allowed intents:
-- informational → searching for knowledge, guides, or tutorials.
-- commercial → evaluating a specific service/product or ready to take action.
-- comparative → comparing different options with brand helpfulness as the preferred choice.
+- informational -> searching for knowledge, guides, or tutorials.
+- commercial -> evaluating a specific service/product or ready to take action.
+- comparative -> comparing different options with brand helpfulness as the preferred choice.
 
 Title rules:
 - LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
 - KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
-- TONE: Use a Helpful, Practical Advisor tone (e.g., "Simplified", "Complete Guide", "Tips", "Top-Rated"). 
+- TONE: Use a Helpful, Practical Advisor tone (e.g., "Simplified", "Complete Guide", "Tips", "Top-Rated").
 - USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
 - FRESHNESS (YEAR): Include the current year ({{ current_year | default('2026') }}) to signal relevance.
-- BRANDING (FALLBACK): 
+- BRANDING (FALLBACK):
     * If `Brand Name` is "Not provided", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
-    * If `Brand Name` exists, integrate it naturally to build trust.
-- AREA (FALLBACK): 
+    * If the intent is informational, do NOT include the brand unless the primary keyword itself is the brand.
+    * If the intent is commercial or comparative and `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK):
     * If `Target Area` is "Global", "General", or "International", DO NOT mention any geographic area in the title.
     * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
-- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** service. Do NOT add industry fluff.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.
 - No markdown, no extra text.
 
 Return STRICT JSON only:
 {
   "intent": "commercial | informational | comparative",
   "confidence": 0.0,
-  "optimized_title": "The Clear, Helpful, Brand-Focused H1"
+  "optimized_title": "The Clear, Helpful H1"
 }

@@ -370,14 +370,6 @@ class ValidationService:
             text = text.replace(old, new)
         return text.lower()
 
-    def _normalize_heading_label(self, text: str) -> str:
-        if not text:
-            return ""
-        normalized = self._normalize_arabic(str(text).lower())
-        normalized = re.sub(r"[^\w\u0600-\u06FF\s]", " ", normalized)
-        normalized = normalized.replace("_", " ")
-        return re.sub(r"\s+", " ", normalized).strip()
-
     def _is_generic_visible_heading(self, text: str) -> bool:
         normalized = self._normalize_heading_label(text)
         if not normalized:
@@ -391,14 +383,6 @@ class ValidationService:
             for pattern in self.GENERIC_VISIBLE_HEADING_PATTERNS
         )
 
-    def _is_valid_faq_question(self, text: str) -> bool:
-        normalized = self._normalize_heading_label(text)
-        if not normalized:
-            return False
-        first_word = normalized.split()[0]
-        valid_starters = {"ما", "كيف", "هل", "كم", "لماذا", "متى", "اين", "أين", "ماذا", "بكم", "لمين", "من"}
-        return first_word in valid_starters
-
     def _tokenize_search_phrase(self, text: str) -> List[str]:
         normalized = self._normalize_heading_label(text)
         if not normalized:
@@ -407,213 +391,6 @@ class ValidationService:
             token for token in normalized.split()
             if token and token not in self.LIGHT_SEO_STOPWORDS and len(token) > 1
         ]
-
-    def _expand_token_variants(self, token: str) -> set[str]:
-        variants = {token}
-        if not token:
-            return variants
-
-        for prefix in ("وال", "بال", "كال", "فال", "لل", "ال", "و", "ب", "ل", "ف", "ك"):
-            if token.startswith(prefix) and len(token) - len(prefix) >= 2:
-                variants.add(token[len(prefix):])
-
-        if token.endswith("s") and len(token) > 3:
-            variants.add(token[:-1])
-
-        arab_pairs = {
-            "شقق": "شقه", "شقه": "شقق", "شقة": "شقق",
-            "فلل": "فيلا", "فيلا": "فلل",
-            "عيادات": "عياده", "عياده": "عيادات", "عيادة": "عيادات",
-            "سيارات": "سياره", "سياره": "سيارات", "سيارة": "سيارات",
-            "مكاتب": "مكتب", "مكتب": "مكاتب",
-            "محلات": "محل", "محل": "محلات",
-        }
-
-        bases = list(variants)
-        for base in bases:
-            if base in arab_pairs:
-                variants.add(arab_pairs[base])
-
-        return {variant for variant in variants if variant}
-
-    def _expanded_token_set(self, text: str) -> set[str]:
-        expanded = set()
-        for token in self._tokenize_search_phrase(text):
-            expanded.update(self._expand_token_variants(token))
-        return expanded
-
-    def _derive_keyword_profile(self, primary_keyword: str, area: str = "") -> Dict[str, Any]:
-        keyword_tokens = self._tokenize_search_phrase(primary_keyword)
-        area_tokens = self._tokenize_search_phrase(area)
-
-        head_entity = ""
-        for token in keyword_tokens:
-            if token not in self.ENTITY_SKIP_TOKENS:
-                head_entity = token
-                break
-        if not head_entity and keyword_tokens:
-            head_entity = keyword_tokens[0]
-
-        # Robust Location Extraction
-        location_tokens = []
-        if area_tokens:
-            location_tokens = [token for token in area_tokens if token in keyword_tokens]
-
-        if not location_tokens:
-            # Fallback heuristic: Try to find location in the primary keyword
-            # Usually after 'في' or just the last token if we have 3+ tokens
-            norm_pk = self._normalize_heading_label(primary_keyword)
-            words = norm_pk.split()
-            if "في" in words:
-                idx = words.index("في")
-                if idx + 1 < len(words):
-                    location_tokens = [words[idx + 1]]
-            elif len(keyword_tokens) >= 3:
-                last_token = keyword_tokens[-1]
-                if last_token != head_entity and last_token not in self.ENTITY_SKIP_TOKENS:
-                    location_tokens = [last_token]
-
-        # Intent is what's left after entity and location are removed
-        intent_tokens = [
-            token for token in keyword_tokens
-            if token != head_entity and token not in location_tokens
-        ]
-
-        return {
-            "primary_keyword": primary_keyword or "",
-            "normalized_keyword": self._normalize_heading_label(primary_keyword),
-            "keyword_tokens": keyword_tokens,
-            "head_entity": head_entity,
-            "location_tokens": location_tokens,
-            "intent_tokens": intent_tokens,
-        }
-
-    def _heading_contains_keyword_anchor(self, heading_text: str, keyword_profile: Dict[str, Any]) -> bool:
-        normalized_heading = self._normalize_heading_label(heading_text)
-        normalized_keyword = keyword_profile.get("normalized_keyword", "")
-        if normalized_keyword and normalized_keyword in normalized_heading:
-            return True
-
-        heading_tokens = self._expanded_token_set(heading_text)
-        keyword_tokens = keyword_profile.get("keyword_tokens", [])
-        head_entity = keyword_profile.get("head_entity", "")
-        location_tokens = keyword_profile.get("location_tokens", [])
-        intent_tokens = keyword_profile.get("intent_tokens", [])
-
-        overlap = sum(1 for token in keyword_tokens if token in heading_tokens)
-        if head_entity and head_entity in heading_tokens and overlap >= max(2, len(keyword_tokens) - 1):
-            return True
-
-        if head_entity and head_entity in heading_tokens:
-            has_intent = not intent_tokens or any(token in heading_tokens for token in intent_tokens)
-            has_location = not location_tokens or all(token in heading_tokens for token in location_tokens)
-            if has_intent and has_location:
-                return True
-
-        return False
-
-    def _heading_preserves_entity_focus(self, heading_text: str, keyword_profile: Dict[str, Any]) -> bool:
-        head_entity = keyword_profile.get("head_entity", "")
-        keyword_tokens = keyword_profile.get("keyword_tokens", [])
-        if not head_entity or not keyword_tokens:
-            return True
-
-        heading_tokens = self._expanded_token_set(heading_text)
-        head_entity_variants = self._expand_token_variants(head_entity)
-        if head_entity_variants.intersection(heading_tokens):
-            return True
-
-        location_tokens = keyword_profile.get("location_tokens", [])
-        intent_tokens = keyword_profile.get("intent_tokens", [])
-        overlap = sum(1 for token in keyword_tokens if token in heading_tokens)
-        has_location = not location_tokens or all(token in heading_tokens for token in location_tokens)
-        has_intent = not intent_tokens or any(token in heading_tokens for token in intent_tokens)
-
-        return overlap >= max(2, len(keyword_tokens) - 1) and has_location and has_intent
-
-    def _brand_appears_in_heading(self, text: str, brand_name: str) -> bool:
-        normalized_brand = self._normalize_heading_label(brand_name)
-        if not normalized_brand:
-            return False
-
-        normalized_text = self._normalize_heading_label(text)
-        if normalized_brand in normalized_text:
-            return True
-
-        brand_tokens = self._tokenize_search_phrase(brand_name)
-        if not brand_tokens:
-            return False
-
-        text_tokens = self._expanded_token_set(text)
-        return all(token in text_tokens for token in brand_tokens)
-
-    def _heading_contains_exact_brand_name(self, text: str, brand_name: str) -> bool:
-        normalized_brand = self._normalize_heading_label(brand_name)
-        normalized_text = self._normalize_heading_label(text)
-
-        if bool(normalized_brand) and normalized_brand in normalized_text:
-            return True
-
-        if len(brand_name) > 30:
-            substitutes = ["المنصه", "المنصة", "الموقع", "الخدمه", "الخدمة", "منصة", "موقع", "خدمة"]
-            if any(sub in normalized_text.split() for sub in substitutes):
-                return True
-
-        return False
-
-    def _brand_heading_allowed(self, section_type: str) -> bool:
-        return (section_type or "").lower() in self.BRAND_ALLOWED_HEADING_SECTION_TYPES
-
-    def _commercial_flow_stage(self, section: Dict[str, Any]) -> str:
-        section_type = (section.get("section_type") or "").lower().strip()
-        for stage, aliases in self.COMMERCIAL_FLOW_SECTION_ALIASES.items():
-            if section_type in aliases:
-                return stage
-        return ""
-
-    def _contains_any_signal(self, text: str, signals: tuple[str, ...]) -> bool:
-        normalized = self._normalize_heading_label(text)
-        return any(self._normalize_heading_label(signal) in normalized for signal in signals)
-
-    def _detect_optional_section_topics(self, text: str) -> set[str]:
-        normalized = self._normalize_heading_label(text)
-        hits = set()
-        for topic, signals in self.OPTIONAL_SECTION_SIGNALS.items():
-            if any(signal in normalized for signal in signals):
-                hits.add(topic)
-        return hits
-
-    def _build_outline_support_blob(
-        self,
-        primary_keyword: str = "",
-        content_strategy: Optional[Dict[str, Any]] = None,
-        seo_intelligence: Optional[Dict[str, Any]] = None,
-    ) -> str:
-        parts = [primary_keyword or ""]
-
-        if isinstance(content_strategy, dict) and content_strategy:
-            for key in ("primary_angle", "market_angle", "target_reader_state", "local_strategy"):
-                parts.append(str(content_strategy.get(key, "") or ""))
-            parts.append(str(content_strategy.get("section_role_map", {}) or {}))
-
-        market_analysis = (seo_intelligence or {}).get("market_analysis", {}) if isinstance(seo_intelligence, dict) else {}
-        semantic_assets = market_analysis.get("semantic_assets", {}) if isinstance(market_analysis, dict) else {}
-        market_insights = market_analysis.get("market_insights", {}) if isinstance(market_analysis, dict) else {}
-
-        parts.append(str(semantic_assets.get("paa_questions", []) or []))
-        parts.append(str(semantic_assets.get("related_searches", []) or []))
-        parts.append(str(market_insights.get("keyword_clusters", []) or []))
-        parts.append(str(market_insights.get("content_gaps", []) or []))
-
-        return self._normalize_heading_label(" ".join(parts))
-
-    def _optional_topic_is_justified(
-        self,
-        topic: str,
-        support_blob: str,
-    ) -> bool:
-        signals = self.OPTIONAL_SECTION_SIGNALS.get(topic, ())
-        return any(self._normalize_heading_label(signal) in support_blob for signal in signals)
 
     def prune_unsupported_optional_subheadings(
         self,
@@ -668,37 +445,6 @@ class ValidationService:
             cleaned_outline.append(cleaned_section)
 
         return cleaned_outline
-
-    def _faq_question_is_supported(self, question: str, keyword_profile: Dict[str, Any], support_blob: str) -> bool:
-        question_tokens = self._expanded_token_set(question)
-
-        # 1. Overlap with keyword intent or location
-        location_tokens = set(keyword_profile.get("location_tokens", []))
-        intent_tokens = set(keyword_profile.get("intent_tokens", []))
-        if question_tokens.intersection(location_tokens) or question_tokens.intersection(intent_tokens):
-            return True
-
-        # 2. Overlap with head entity
-        head_entity = keyword_profile.get("head_entity", "")
-        head_variants = self._expand_token_variants(head_entity) if head_entity else set()
-        if head_variants.intersection(question_tokens):
-            return True
-
-        # 3. Found in support blob (PAA, related searches)
-        normalized_q = self._normalize_heading_label(question)
-        # We check if any significant part of the question is in the support blob
-        # (simplified: just check if the normalized question or key tokens are there)
-        meaningful_tokens = [t for t in question_tokens if len(t) > 2]
-        if meaningful_tokens and sum(1 for t in meaningful_tokens if t in support_blob) >= max(1, len(meaningful_tokens) // 2):
-            return True
-
-        # 4. Safe buyer-facing commercial signals (Always acceptable)
-        # Normalized: سعر, اسعار, مساحه, مساحات, تشطيب, احياء, مناطق, حجز, معاينه, استلام
-        safe_buyer_signals = ("سعر", "اسعار", "مساحه", "مساحات", "تشطيب", "احياء", "مناطق", "حجز", "معاينه", "استلام")
-        if any(signal in question_tokens for signal in safe_buyer_signals):
-            return True
-
-        return False
 
     def _subheading_is_too_granular(self, text: str, stage: str = "") -> bool:
         normalized = self._normalize_heading_label(text)
@@ -2083,7 +1829,33 @@ class ValidationService:
             for k in ["heading_text", "content_goal", "content_angle", "localized_angle", "decision_layer"]
         ).lower()
 
-    def evaluate_outline_coverage(self, outline: List[Dict[str, Any]], content_type: str) -> Dict[str, Any]:
+    def _is_experience_based_topic(self, primary_keyword: str, serp_brief: Dict[str, Any], content_strategy: Dict[str, Any]) -> bool:
+        """Detects if the topic is a real-world location/place/venue/event."""
+        # 1. Check content strategy subtype
+        subtype = (content_strategy.get("subtype") or "").lower()
+        experience_subtypes = {"place", "destination", "attraction", "event", "venue", "mall", "restaurant", "hotel", "travel_guide", "visit"}
+        if subtype in experience_subtypes:
+            return True
+        
+        # 2. Check Primary Keyword signals
+        pk_lower = primary_keyword.lower()
+        experience_signals = {
+            "en": ["park", "city", "mall", "boulevard", "tower", "museum", "beach", "island", "resort", "hotel", "stadium", "festival", "boulevard city"],
+            "ar": ["حديقة", "منتزه", "مدينة", "مول", "بوليفارد", "برج", "متحف", "شاطئ", "جزيرة", "منتجع", "فندق", "ملعب", "مهرجان", "بوليفارد سيتي"]
+        }
+        lang = "ar" if any("\u0600" <= c <= "\u06FF" for c in pk_lower) else "en"
+        if any(signal in pk_lower for signal in experience_signals.get(lang, [])):
+            return True
+            
+        # 3. Check SERP brief observations
+        must_consider = serp_brief.get("must_consider_sections", [])
+        experience_keywords = {"location", "access", "tickets", "pricing", "hours", "booking", "events", "activities", "attractions", "visitor info"}
+        if any(any(kw in str(topic).lower() for kw in experience_keywords) for topic in must_consider):
+            return True
+
+        return False
+
+    def evaluate_outline_coverage(self, outline: List[Dict[str, Any]], content_type: str, primary_keyword: str = "", serp_brief: Optional[Dict[str, Any]] = None, content_strategy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         coverage_rules = self.REQUIRED_COVERAGE_BY_TYPE.get(content_type, {})
         results = {
             "covered": [],
@@ -2101,7 +1873,32 @@ class ValidationService:
                 "text_blob": self._section_text_blob(sec)
             })
 
+        # Detect experience-based subtype
+        is_experience = False
+        if serp_brief and content_strategy:
+            is_experience = self._is_experience_based_topic(primary_keyword, serp_brief, content_strategy)
+
         for concept, rules in coverage_rules.items():
+            # TASK A: Experience-based semantic mapping
+            if is_experience:
+                if concept == "why_it_matters":
+                    results["covered"].append(concept) # Auto-pass for experience topics
+                    continue
+                
+                # Expand aliases based on mapping
+                additional_types = set()
+                if concept == "common_mistakes":
+                    additional_types.update({"practical_advice", "visitor_tips", "tips", "warnings", "advice", "safety", "precautions"})
+                elif concept == "examples_or_tips":
+                    additional_types.update({"attractions", "activities", "experiences", "things_to_do", "what_to_do", "highlights", "events"})
+                
+                if additional_types:
+                    rules_copy = rules.copy()
+                    orig_types = rules_copy.get("section_types", set())
+                    if isinstance(orig_types, (set, list)):
+                        rules_copy["section_types"] = set(orig_types).union(additional_types)
+                    rules = rules_copy
+
             aliases = {a.lower().strip() for a in rules.get("section_types", set())}
             expanded_aliases = set(aliases)
             for alias in aliases:
@@ -2142,7 +1939,7 @@ class ValidationService:
                 missing.add(required)
         return missing
 
-    def enforce_outline_structure(self, outline: List[Dict[str, Any]], content_type: str) -> List[Dict[str, Any]]:
+    def enforce_outline_structure(self, outline: List[Dict[str, Any]], content_type: str, primary_keyword: str = "", serp_brief: Optional[Dict[str, Any]] = None, content_strategy: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         present_types = {(s.get("section_type") or "").lower().strip() for s in outline}
         rules = self.REQUIRED_STRUCTURE_BY_TYPE.get(content_type)
         if rules:
@@ -2151,7 +1948,7 @@ class ValidationService:
             if missing:
                 logger.error(f"[outline_validate] Missing mandatory sections for {content_type}: {missing}")
 
-        coverage = self.evaluate_outline_coverage(outline, content_type)
+        coverage = self.evaluate_outline_coverage(outline, content_type, primary_keyword=primary_keyword, serp_brief=serp_brief, content_strategy=content_strategy)
         if coverage.get("missing"):
             logger.error(f"[outline_validate] Missing required topic coverage for {content_type}: {coverage['missing']}")
 
@@ -2507,7 +2304,7 @@ class ValidationService:
 
         return errors
 
-    def validate_outline_quality(self, outline: List[Dict[str, Any]], content_type: str = "") -> List[str]:
+    def validate_outline_quality(self, outline: List[Dict[str, Any]], content_type: str = "", primary_keyword: str = "", serp_brief: Optional[Dict[str, Any]] = None, content_strategy: Optional[Dict[str, Any]] = None) -> List[str]:
         errors = []
 
         # --- MANDATORY SECTION BRIEF CONTRACT FIELDS ---
@@ -2566,7 +2363,7 @@ class ValidationService:
         if total_pk_reqs < 4:
              errors.append(f"Strategic Map Violation: Total PK assignment slots should be at least 4 (found {total_pk_reqs}).")
 
-        coverage = self.evaluate_outline_coverage(outline, content_type)
+        coverage = self.evaluate_outline_coverage(outline, content_type, primary_keyword=primary_keyword, serp_brief=serp_brief, content_strategy=content_strategy)
         if coverage.get("missing"):
             errors.append(
                 f"Outline coverage incomplete for {content_type or 'article'}: missing {', '.join(coverage['missing'])}."

@@ -18,6 +18,7 @@ Your task is to generate only the heading structure layer of an article outline 
 - Service/Object Phrase: "{{ service_phrase | default(entity_phrase | default('')) }}"
 - Content Strategy: {{ (content_strategy | default({})) | tojson }}
 - Style Blueprint: {{ (style_blueprint | default({})) | tojson }}
+- SERP Outline Brief: {{ (serp_outline_brief | default({})) | tojson }}
 
 1. JOB TO BE DONE
 - Generate ONLY the heading layer of the outline. Do not plan paragraphs, tables, CTAs, or body copy.
@@ -32,6 +33,28 @@ Your task is to generate only the heading structure layer of an article outline 
 - {{ rule }}
 {% endfor %}
 {% endif %}
+- **SERP & KEYWORD REFINEMENT**:
+  - When a natural search phrase exists inside `serp_outline_brief.secondary_keyword_phrases`, `heading_candidates`, or `observed_topics`, PREFER incorporating it directly into the relevant heading if it improves clarity, matches the section intent, reads naturally in the article language, and does not create keyword stuffing.
+  - Phrasing should:
+    - Clearly state what the section answers.
+    - Sound close to how users naturally search.
+    - Remain concise and specific.
+  - For practical visitor intents such as tickets, booking, pricing, or reservations, strongly prefer concrete search-native phrasing that preserves the entity and user task intent when natural.
+    Prefer patterns like:
+    - أسعار حجز تذاكر [entity]
+    - طريقة حجز تذاكر [entity]
+    - مواعيد [entity]
+    Avoid vague alternatives like:
+    - التذاكر والحجز
+    - خيارات الحجز
+    - معلومات التذاكر
+  - Do not replace clear search phrases with vague editorial wording.
+  - Do not shorten headings so aggressively that they lose important search phrasing, task intent, or entity clarity.
+  - **TRIMMING PRINCIPLE**:
+    - If a shorter, more search-natural heading communicates the same intent clearly, prefer the shorter version.
+    - Do not add decorative tails (e.g., "دليل شامل", "unique experience", "integrated experience", "overview", "key components", "المكونات الرئيسية", "التجربة المتكاملة") after a strong heading unless the added phrase introduces a genuinely distinct search intent.
+  - **CONTEXTUAL BRAND UTILITY**: If a practical task intent exists and brand_context is relevant, one utility-oriented FAQ question can naturally reference the brand/platform, without promotional wording.
+
 
 - H1 is the final article title. Do not include H1 inside the outline array.
 - The first outline item MUST be the introduction section:
@@ -39,98 +62,119 @@ Your task is to generate only the heading structure layer of an article outline 
   - `"heading_level": "INTRO"`
   - Treat this as an unheaded opening block, not as a visible H2 or H3.
   - `"heading_text"` is internal-use only. It will not be shown to the user, so keep it short and functional.
+  - The intro is a hook and orientation block, not a definition section.
+  - Do NOT use an intro label such as "definition", "what is", "تعريف", "ما هو", or anything that duplicates the first visible H2.
+  - Prefer internal labels like "Opening hook for [topic]" or "مدخل تمهيدي عن [topic]".
   - Do not create any intro subheadings.
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
+- For experience-based / destination / venue topics, create 6 to 10 visible H2 sections when needed. Do NOT compress independent visitor intents just to stay under 8 sections.
 
 - If `content_type` is `informational`:
   INFORMATIONAL ARTICLE LOGIC:
   Goal: educate the reader, build topical authority, and answer the search query fully.
-  The reader is learning. Every section must add new knowledge and must not repeat what was already explained.
   Use a knowledge-building funnel from broad understanding to specific application.
 
-Expected logical flow (strict unless context requires otherwise)
-  1. Definition/context: what the topic is, its scope, and what it is not.
-  2. Importance/relevance: why it matters and what impact it has.
-  3. Types/components/categories, if relevant.
-  4. How it works or how to apply it in practice.
-  5. Common mistakes or misconceptions to avoid. This section is mandatory for informational articles.
-  6. FAQ with real reader questions as H3s.
-  7. Conclusion with a useful takeaway and at most one soft, non-commercial next step.
+  INFORMATIONAL SUBTYPE RULE:
+  Before applying the default educational informational flow, detect whether the topic is a place, destination, venue, attraction, mall, restaurant, event, or real-world location.
+  - If yes, use EXPERIENCE-BASED informational flow.
+  - If no, use EDUCATIONAL informational flow.
 
-  Rules:
-  - The outline MUST start with a definition/context section unless the query is explicitly advanced or clearly assumes prior knowledge.
-  - Common mistakes/misconceptions section is mandatory in every informational article unless the topic is too narrow and no meaningful mistakes exist.
-  - If a meaningful "common mistakes/misconceptions" section is missing, the output is INVALID and must be regenerated.
-  - FAQ H3s must be phrased as real search-style questions.
-  - Each H2 must introduce knowledge not already covered in any previous section.
+  EDUCATIONAL informational flow:
+  1. Core Concept: What it is and who it's for.
+  2. Value: Key benefits or why it matters.
+  3. Types/Options: Common variants or categories.
+  4. Process/How-To: How it works or how to get started.
+  5. Practical advice: Common mistakes or things to know (Mandatory).
+  6. FAQ: Real reader questions.
+  7. Takeaway: Practical next step.
+
+  EXPERIENCE-BASED informational flow:
+  1. Definition / orientation:
+     The first visible H2 must define the place, experience, entity, or topic clearly in a search-natural way.
+     This H2 is separate from the INTRO hook.
+     The first visible definition H2 does not need differentiation, advantages, or uniqueness framing. Prefer simple search-natural definition phrasing.
+     It should explain what the entity is and what reader need it answers, without adding decorative tails.
+     Avoid jumping directly into benefits, comparisons, or “what makes it special”.
+     Avoid editorial framing such as “components”, “integrated experience”, “unique experience”, “what it includes”, or “key elements” unless that wording reflects a distinct search intent.
+  2. Attractions: Activities, facilities, or experiences.
+  3. Visitor Information:
+    Use separate focused H2 sections for practical visitor needs such as:
+    - location/access
+    - opening hours
+    - tickets, pricing, and booking details
+    - entry requirements
+
+    Parking or visitor-service details may become standalone H2s only when strongly supported by SERP prominence or clear standalone search intent.
+    Opening hours/timing and ticketing/booking are separate visitor intents.
+    When both are important to the visitor journey or commonly searched independently, they MUST become separate H2 sections rather than one combined heading.
+
+  4. Planning: Best timing, duration, suitability, route.
+  5. Practical advice: Tips before visiting / Things to know (Mandatory).
+  6. FAQ: Real visitor search intent.
+  7. Takeaway: Non-commercial next step.
+
+  #### INTENT OWNERSHIP RULE
+  Each practical visitor intent must have one primary section owner.
+  Avoid repeating the same visitor intent across opening hours, best time to visit, planning, tips, and FAQ.
+  - Opening hours belong to the working-hours section.
+  - Best time to visit belongs to planning.
+  - Visitor tips belong to the practical-advice section.
+  - Parking belongs to access/location unless strongly independent.
+  FAQ questions should not duplicate the core answer of an existing H2 unless they represent a distinct practical variation.
+
+  #### NON-COMMERCIAL INFORMATIONAL RULE
+  - Informational outlines must educate, clarify, and guide — not sell.
+  - Do NOT include promotional brand sections, “why choose [Brand]”, conversion-focused headings, commercial CTAs, or sales-driven comparisons/case studies.
+  - Brand mentions are allowed only when contextual, helpful, and naturally connected to the reader journey or implementation context.
+  - Any CTA must remain soft, non-promotional, and limited to the conclusion takeaway.
+
+  #### CONCLUSION BEHAVIOR RULE
+  - Avoid editorial or inspirational conclusion phrasing such as 'تجربة مثالية', 'استكشاف المزيد', 'خطواتك القادمة', or generic final-thought labels.
+  - The conclusion should summarize a practical reader takeaway, planning consideration, or next action directly tied to the topic itself.
+
+  #### STRUCTURAL DISTINCTIVENESS RULE
+  - Every H2 MUST introduce a distinct, practical reader need.
+  - Do not create overlapping sections or rephrase the same underlying question (e.g., merge 'Best Time to Visit' into 'Planning').
+
+  - The visible H2 flow MUST start with a definition/context section unless the query is explicitly advanced or clearly assumes prior knowledge.
+  - The INTRO item does not count as the definition/context H2.
+  - If a meaningful "common mistakes" or "visitor tips" section is missing, the output is weak and must be improved.
   - The article must be useful even if the reader never visits the brand’s website.
-  - Brand or platform mentions are allowed in maximum 1-2 places only, and only when contextual.
-  - The conclusion MAY include one soft, helpful next step. It MUST NOT include promotional, sales-driven, or conversion-focused language.
-  - Do not use generic conclusion headings like “Conclusion” or “Final Thoughts”; the final H2 must signal the takeaway.
-
-  Banned:
-  - Conversion-focused H2s.
-  - “Why choose [Brand]?” sections.
-  - CTA language in the middle of the article.
-  - Rewording the same section idea in multiple H2s.
-  - Skipping foundational explanation and jumping straight to advanced details.
-  - Generic H2s that do not signal section value.
-
-  - Do NOT include brand, promotion, differentiation, case_study, or process-with-brand sections unless explicitly required by input.
-  - The article should explain, organize, and clarify the topic, not persuade the reader to choose a provider.
   - Headings must remain specific, useful, and non-generic.
   - Use H3s only for meaningful informational buckets such as types, categories, stages, examples, mistakes, or questions.
-- **LEAKAGE PREVENTION RULE**:
-  - For informational content, the output is INVALID if it includes:
-    - brand persuasion
-    - “why choose [Brand]”
-    - commercial CTA
-    - service-selling sections
-    - unsupported proof/case-study sections
-  - Unless the input explicitly includes brand_commercial intent or asks for brand/service promotion.
+
 - The first visible core H2 MUST be decision-useful and specific, but if it is an offer section, it MUST describe available options/types directly and MUST NOT use 'how to choose' phrasing.
   - Avoid: "أفضل مناطق شراء [entity] للبيع في [area]".
   - Prefer: "أفضل مناطق شراء [entity] للبيع في [area] حسب ميزانيتك".
 - This first H2 must contain the full primary keyword exactly, or the closest natural phrasing that preserves the same full search intent.
 - **PRIMARY KEYWORD ANCHOR RULE**:
   - The exact full Primary Keyword may appear only in the designated anchor H2 (the first visible core H2).
-  - Later H2s MUST preserve intent through semantic variants, specific decision angles, or object/action wording.
-  - Vary headings by unique decision angles: criteria, pricing, service type, process, comparison, FAQ, or user next-steps.
-  - **UNIQUE ANGLE MANDATE**: Each H2 MUST introduce a NEW decision angle or data point. Avoid H2s that are just rephrased versions of each other.
+  - Later H2s MUST preserve intent through natural semantic variants.
+  - Vary headings naturally based on the reader's journey (e.g., costs, types, steps, tips).
   - **EXPAND, DON'T CHANGE (ANTI-DRIFT)**: Semantic variations must expand the core topic within its entity boundary, NOT change the topic (e.g., Avoid drifting from "Web Design" to generic "Tech Consulting").
-  - **REPETITION FAILURE**: Repeating the same phrase pattern (e.g., "Best [entity] in [area]") across 3+ H2s is a structural failure.
+
 - **ENTITY CONSISTENCY RULES**:
   - Treat **Entity Phrase** ("{{ entity_phrase }}") and **Service/Object Phrase** ("{{ service_phrase }}") as the main semantic topics, NOT phrases that must be copied into every heading.
-  - The entity does NOT have to appear explicitly in every heading. It may be implied through semantic context, object-level wording, or user-outcome phrasing.
+  - The entity does NOT have to appear explicitly in every heading. It may be implied through semantic context.
   - Semantic variation is allowed ONLY when the heading remains clearly anchored to the core entity domain.
-  - **LOCATION SECTION ANCHORING**: Location sections must remain entity-anchored. Do not describe areas generically. The H2 and H3s must connect each area/location to the main entity, service, product, or listing.
+  - **LOCATION SECTION ANCHORING**: Location sections must remain entity-anchored. Do not describe areas generically. The H2 and H3s must connect each area/location to the main entity.
   - Do NOT drift into broad abstract themes that lose connection to entity_phrase (e.g., Avoid: "How to improve results"; Prefer: "How [service/product] improves results").
-  - Outcome-focused headings must still mention or imply the concrete service/product/entity, not just a vague benefit.
-  - H2 headings may use:
-    - Natural variations
-    - Action-oriented phrasing
-    - Outcome-oriented phrasing
-    - Object-level phrasing (the product/service itself)
-  - Allow variation between:
-    - Provider-level wording (who offers it, e.g., "{{ entity_phrase }}")
-    - Service/product-level wording (what is delivered, e.g., "{{ service_phrase }}")
-    - User-outcome wording (what the user gets, e.g., "[outcome-oriented entity variant]")
-  - Headings must remain clearly interpretable as part of the same entity domain.
+  - Keep headings conversational and direct. Avoid abstract, analytical, or academic wording.
 - Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
 - If you create H3 subheadings, output the exact H3 strings in `subheadings`.
-- H3 Generation Strategy: Decision Buckets vs. Atomic Details:
-  1. The Taxonomy Principle: Use H3s ONLY for classifying the entity into distinct "standalone siblings" (Types, Categories, Services, Locations, User Segments, Pricing Models, or Comparison Options). Do NOT create H3s for "Anatomy" (internal parts, specs, room layout, finishing, speed, or minor attributes). These belong in the H2 body.
-  2. The Decision Bifurcation Rule: Generate H3s ONLY if the H2 contains multiple distinct decision paths where a reader must choose between options. Fallback: It is better to return an empty `subheadings` array than to generate weak or forced H3s.
-  3. The Non-Overlap Rule: Each H3 must be a distinct bucket. If two H3s could be merged without losing significant meaning, do not separate them.
-  4. The Strength & Expansion Test: Every H3 must pass this check: "Can this H3 be expanded into a 150+ word standalone section without repeating the parent H2?". If NO, do not generate it.
-  5. Searchability Hint: Prefer common user-facing terms and searchable phrasing over obscure or technical classifications.
-  6. Category Constraint (Taxonomy Framing): H3s MUST name standalone categories, types, methods, or components, NOT broad descriptive qualities or minor attributes.
-     - **TAXONOMY RULE**: H3 = a distinct variant, type, or category of the topic.
-     - **CRITICAL**: Do NOT generate H3s for atomic tasks or low-level details that belong in the H2 body.
-     - If no strong, standalone taxonomy buckets exist, return an empty `subheadings` array.
+- H3 Generation Strategy:
+  1. Use H3s ONLY for clear "Standalone Options" (Types, Categories, Services, Locations, Pricing Models). Do NOT create H3s for minor details, parts, or specifications. These belong in the H2 body.
+  - H2 PROMOTION OVERRIDE:
+    If a potential H3 represents a standalone high-search-intent need, it MUST be promoted to its own H2 instead of being nested.
+    For experience-based informational topics, visitor needs such as location/access, opening hours, tickets/pricing/booking, parking, or entry requirements must not be used as H3s under a generic visitor-information H2 when they can stand alone.
+  2. Generate H3s ONLY if the H2 contains multiple distinct paths where a reader must choose between options. Fallback: It is better to return an empty `subheadings` array than to generate weak or forced H3s.
+  3. The Non-Overlap Rule: Each H3 must be distinct. If two H3s could be merged, do not separate them.
+  4. The Expansion Test: Every H3 must be able to expand into a 150+ word standalone section without repeating the parent H2. If NO, do not generate it.
+  5. Prefer common user-facing terms and searchable phrasing.
+  6. H3s MUST name standalone categories, types, or methods, NOT broad descriptive qualities.
      - Bad: "[Topic] spec", "minor detail", "[Topic] advantage"
-     - Good: "[Topic Type]", "[Topic Category]", "[Method/Component]", "[Standalone Variant]"
+     - Good: "[Topic Type]", "[Topic Category]", "[Method]"
 
 ### H3 Permission Rule
 
@@ -191,147 +235,56 @@ If no clear comparison angle exists:
 H3s are allowed and should be real user questions.
 - FAQ Section: Obey the `section_role_map` for the FAQ H2. It MUST preserve the entity, intent, and location (if present). Every H3 under this section MUST be a real question starting with (ما / كيف / هل / كم). Use common buyer questions or PAA signals.
 - Legal FAQ Rule: Do not create legal, documentation, contract, or verification FAQ questions unless the primary keyword or observed SERP/PAA explicitly supports them. Do not infer legal FAQs from brand context alone.
-- Closing Section: If the article needs a closing section, place one conclusion-style H2 last using a useful next-step or takeaway angle, not the label "Conclusion".
+- FAQ questions should preferably cover unresolved practical actions, edge-case visitor concerns, or implementation details not already fully answered by major H2 sections.
+- Avoid repeating broad informational questions already answered directly by existing H2 headings.
+
+- Closing Section: If the article needs a closing section, place one takeaway-oriented H2 last using a useful next-step or recommendation angle.
 
 ### 3. GLOBAL HEADING RULE:
-- Every H2 MUST be decision-useful. A heading is INVALID if it is purely descriptive (e.g., "مميزات", "توزيع", "أنواع") or does not help the user choose, compare, or evaluate. A heading is VALID if it supports decision-making, adds clarity to user intent, or reduces ambiguity/choice friction.
-
+- Every H2 MUST be reader-useful.
+A heading is INVALID if it is generic, vague, or does not help the reader understand, evaluate, apply, or navigate the topic.
 ---
 
-- **OFFER SECTION (section_type: offer)**:
-  - The H2 MUST describe available concrete options/types directly (e.g., "أنواع [entity] المتوفرة").
-  - It is FORBIDDEN to use "how to choose" phrasing or any decision-guide phrasing (e.g., Avoid: "كيفية اختيار...").
-  - If the H2 asks how to choose, compare, evaluate, or determine the best provider, it is NOT an offer section. Use a features/evaluation section instead.
-  - If H3s exist, the H2 MUST be the category/type label, not advice.
-  - H3s MUST include meaningful qualifiers when applicable (usage, target user, pricing level, or suitability), unless the base category is already inherently specific.
-  - Avoid bare labels when a clearer, more decision-useful phrasing is possible.
-  - For informational content, offer/type sections should describe neutral categories, types, methods, components, or options when relevant.
-  - If the topic is not naturally split into types/categories/options, do not create an offer section.
+- **OFFER SECTION (section_type: offer)**: Focus on clear "Types/Options". Do not use abstract "How to choose" phrasing here.
+- **FEATURES SECTION (section_type: features)**: Focus on practical benefits or what to look for. Be specific. Do not use generic words like "أهم المزايا".
+- **LOCATION SECTION (section_type: location)**: Connect locations to user needs. Avoid pure geographic listing. Prefer descriptive context (e.g., "أفضل مناطق الرياض للعائلات").
 
----
-
-- **FEATURES SECTION (section_type: features)**:
-
-  Follow the GLOBAL RULE by expressing clear evaluation or comparison criteria relevant to the entity.
-
-  The H2 MUST:
-  - include real decision criteria (e.g., price, size, location, quality, performance, usage, suitability)
-  - be clearly tied to the entity/service/action
-  - help the user compare or evaluate before taking action
-
-  The H2 MUST NOT:
-  - be generic or purely descriptive (e.g., "أهم المزايا", "مواصفات عامة")
-  - rely on vague phrasing like "المزايا التي تساعدك..." without concrete criteria
-
-  H3s, if present, MUST expand the evaluation criteria into real decision buckets.
-  They MUST reflect domain-relevant criteria such as price, size, quality, performance, usage, suitability, location, service level, or similar criteria inferred from the topic.
-  Avoid generic or abstract H3s.
-  If no strong decision-bucket H3s exist, return an empty subheadings array.
-
----
-
-- **LOCATION SECTION (section_type: location)**:
-
-  Follow the GLOBAL RULE by linking locations to real user decisions.
-
-  The H2 MUST:
-  - include a clear decision angle (budget, lifestyle, proximity, suitability, use case)
-  - help the user choose between locations based on needs
-  - use natural decision language when possible (e.g., "لاختيار شقة" instead of overly formal phrasing like "لاستئجار الشقق")
-
-  The H2 MUST NOT:
-  - be purely descriptive of areas (e.g., "توزيع...", "أفضل مناطق..." without context)
-
-  Descriptive phrasing is allowed ONLY if:
-  - it is paired with a decision factor (budget, usage, lifestyle, suitability)
-  - it helps the user choose, not just list locations
-
-  Prefer broad city zones (e.g., north, east, west, south, central) over specific neighborhoods unless specific neighborhoods are clearly supported by search data or explicitly provided in the input.
-
-  H3s MUST:
-  - stay anchored to the entity/service/listing
-  - include BOTH location AND decision context
-  - explain why each location is suitable, not just name the area
-
-  Each H3 should answer:
-  "Why is this location relevant or suitable for this entity/action?"
-
-  Avoid pure geographic listing.
-
-  Bad:
-  - شمال الرياض
-  - شرق الرياض
-
-  Good:
-  - شقق للايجار في شمال الرياض: مناسبة للعائلات والمجمعات الحديثة
-  - شقق للايجار في شرق الرياض: خيارات اقتصادية ومساحات أكبر
-
----
 
 ### 5. HEADING QUALITY RULES
 
-#### FEATURES VS COMPARISON SEPARATION RULE
+- **Separate Intents Clearly**: Do not overlap sections. If 'Features' and 'Comparison' answer the same question, merge them or remove one. 
+- **Split High-Intent Needs**: Do not group standalone search needs (e.g., location, opening hours, tickets) into one generic H2 like "Visitor Information". Give each major practical need its own H2 if commonly searched independently.
 
-- Do not force service-selling, provider deliverables, brand services, or commercial offer sections in informational outlines.
-- Offer sections define what categories, types, methods, components, or options are available.
-- Features sections MUST define evaluation criteria only (HOW to evaluate).
-- They MUST describe how the user evaluates or chooses between options.
-- They MUST NOT include direct comparisons (A vs B) or specific alternatives.
-- Offer and features MUST NOT answer the same question. Ensure the "Offer" section (Types/Categories) is distinct from the "Features" section (Evaluation criteria).
 
-- Comparison sections MUST compare specific options, types, or scenarios (WHAT to choose between).
-- They MUST apply real decision criteria to help the user choose.
-- They MUST NOT restate general evaluation criteria in abstract form.
+#### INTRO VS FIRST H2 DISTINCTION RULE
+- The introduction provides hook, interest, and baseline framing only.
+- The introduction must not be the definition.
+- The first visible H2 must be the definition/context section for beginner and destination topics.
+- If the intro label or first H2 both perform the same definition role, rewrite the intro as a hook and keep the definition as H2.
 
-### CONFLICT PREVENTION
+#### CONCLUSION BEHAVIOR RULE
+- The final H2 should provide a clear takeaway, practical next step, recommendation, or application.
+- Avoid generic endings such as “Conclusion” or “Final Thoughts”. The final H2 must signal the takeaway.
+- The conclusion may contain one soft, helpful next step, but must remain non-promotional.
 
-- If comparison would only repeat the features or offer section, it MUST be embedded or omitted, not promoted to a standalone H2.
-- If Features and Comparison sections overlap conceptually, the output is INVALID and must be regenerated with clearer separation.
-#### SECTION ANGLE SEPARATION RULE
-
-- If multiple sections perform segmentation, each MUST use a different decision dimension.
-- Offer sections usually segment by type, category, deliverable, product/service option, or user segment.
-- Location sections segment by area, geography, proximity, accessibility, or local suitability.
-- Features sections define evaluation criteria, not option groups.
-
-If two H2s could be summarized with the same question, the output is weak.
-
-Examples:
-- Offer answers: "What options exist?"
-- Features answers: "How should I evaluate?"
-- Location answers: "Where is best for my need?"
-- FAQ answers: "What common questions remain?"
-
-If two sections use the same decision dimension or repeat the same conceptual role, the output is INVALID and must be regenerated with clearer separation.
-
-- Avoid repeating the same instruction across multiple sections.
-- Each section should follow the GLOBAL RULE instead of redefining it.
-- Each H2 must represent a unique decision angle:
-  - Criteria
-  - Comparison
-  - Segmentation
-  - FAQ
-  - Next step
+#### SERP GROUNDING RULE
+- When `serp_outline_brief` is provided, prioritize its observed topics and `heading_generation_guidance` over generic structural assumptions.
+- Use the `must_consider_sections` list as a mandatory baseline for essential reader info.
+- Do NOT invent data (PAA, related, facts) if the brief indicates they were not observed.
+- Ensure the outline reflects the `observed_page_type` (e.g., if SERP shows a "venue guide" pattern, stay closer to EXPERIENCE-BASED flow).
 
 ---
 
 ### 7. HEADING CALIBRATION EXAMPLES
-- **Generic vs. Decision-Focused (Features/Criteria):**
+- **Generic vs. Search-Native:**
   - Bad: "أهم المزايا والمواصفات"
-  - Bad: "المزايا التي تساعدك على اختيار [entity] مناسب"
-  - Good: "معايير اختيار [entity] المناسب لـ [action] في [area]"
-  - Good: "أهم المواصفات التي تحدد جودة [entity] قبل [action]"
+  - Good: "ما هي مميزات [entity]؟"
 
-- **Descriptive vs. Decision-Based (Location):**
-  - Bad: "توزيع [entity] في [area]"
-  - Bad: "أفضل مناطق [area] للبحث عن [entity]"
-  - Good: "أفضل مناطق [area] لاختيار [entity] حسب احتياجك"
-  - Good: "أفضل مناطق [area] لـ [action] [entity] بناءً على الميزانية ونمط الاستخدام"
-  - Good: "كيف تختار المنطقة الأنسب لـ [action] [entity] في [area]؟"
-
-- **Vague vs. Specific (FAQ):**
-  - Bad: "أسئلة شائعة حول [area]"
-  - Good: "أسئلة شائعة حول [entity + action + area]"
+- **Visitor Needs (Practical vs. Bloated):**
+  - Bad: "معلومات الزوار: الموقع، الوصول، وأوقات العمل"
+  - Good: "أين تقع [place] وكيف تصل إليها؟"
+  - Good: "أسعار تذاكر [place] وطريقة الحجز"
+  - Good: "مواعيد عمل [place] وأفضل أوقات الزيارة"
 
 ### 8. OUTPUT FORMAT
 Return ONLY valid JSON in the following format:
@@ -374,15 +327,46 @@ Follow these role-specific instructions for each section type:
 ### 10. SILENT SELF-CHECK BEFORE YOU ANSWER
 - Would a reader understand what each section gives them without reading the body?
 - Are any headings generic writer labels?
-- Do any two headings overlap too much?
+- Do any H2s answer the same underlying reader question (Structural Distinctiveness)?
 - Does the article move from definition/context to practical application?
-- Is there a common mistakes/misconceptions section?
+- Is the INTRO only a hook/orientation block, with the definition kept as the first visible H2?
+- Does the first visible H2 define the topic instead of repeating the intro label?
+- Does the final H2 provide a clear takeaway or application (Conclusion Behavior)?
+- Is any brand mention contextual and non-promotional (Non-Commercial Rule)?
+- For places/destinations, did the outline include practical visitor information?
+- For places/destinations, are location/access, opening hours, and booking/tickets separated when relevant?
+- Is any H2 overloaded with three or more independent visitor intents?
+- Did it avoid abstract importance for experience-based topics?
+- Are FAQ questions aligned with real search intent (booking, hours, location)?
+- Is there a mandatory practical advice section (mistakes/tips)?
 - Does every H2 add new knowledge?
 - Is any CTA limited to the conclusion and non-commercial?
-- Is the order logical: hook -> understanding -> evaluation -> objections/questions -> next step?
-- Are the H3s real subtopics rather than repeated versions of the H2?
+- Are the H3s real subtopics (Taxonomy) rather than anatomy/details?
+- Are any H3s actually standalone search intents that should be promoted to H2?
 
-### 11. OUTPUT CONSTRAINTS
+### 11. FINAL OUTLINE CLEANUP BEFORE JSON
+Before returning the JSON, revise the outline once:
+
+1. Remove FAQ questions that repeat an existing H2.
+- If there is an H2 about working hours, do not add an FAQ asking about working hours.
+- If there is an H2 about tickets/pricing/booking, do not add an FAQ asking the same basic ticket or booking question.
+- If there is an H2 about activities, do not add an FAQ asking what activities are available.
+- If there is an H2 about location/access, do not add an FAQ asking how to reach the place.
+FAQ must cover only edge cases, practical variations, or unanswered visitor concerns.
+
+2. Do not create both a planning H2 and a tips H2 if they answer the same visit-preparation need.
+- Planning = timing, duration, route, crowd avoidance.
+- Tips = preparation, rules, what to bring, common mistakes.
+If they overlap, merge or rewrite one.
+
+3. If `brand_context` is provided and the article includes a booking/ticketing section, include one non-promotional FAQ about completing the booking through the brand/platform.
+Example pattern: "هل يمكن حجز تذاكر [entity] عبر [brand_context]؟"
+
+4. The conclusion H2 must be practical, not editorial.
+Avoid: "تجربة زيارة", "استكشاف المزيد", "خطواتك القادمة", "خلاصة وتجربة".
+Prefer: "نصائح أخيرة قبل زيارة [entity]", "ما الذي يجب معرفته قبل زيارة [entity]؟", "كيف تستعد لزيارة [entity]؟"
+
+### 12. OUTPUT CONSTRAINTS
 - Valid JSON only.
 - No markdown fences.
 - No explanation before or after the JSON.

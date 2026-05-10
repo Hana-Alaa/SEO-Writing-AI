@@ -16,6 +16,7 @@ Your task is to generate only the heading structure layer of an article outline 
 - Service/Object Phrase: "{{ service_phrase | default(entity_phrase | default('')) }}"
 - Content Strategy: {{ (content_strategy | default({})) | tojson }}
 - Style Blueprint: {{ (style_blueprint | default({})) | tojson }}
+- SERP Outline Brief: {{ (serp_outline_brief | default({})) | tojson }}
 
 1. JOB TO BE DONE
 - Generate ONLY the heading layer of the outline. Do not plan paragraphs, tables, CTAs, or body copy.
@@ -30,6 +31,10 @@ Your task is to generate only the heading structure layer of an article outline 
 - {{ rule }}
 {% endfor %}
 {% endif %}
+- **SERP & KEYWORD REFINEMENT**:
+  - When `serp_outline_brief.heading_candidates`, `secondary_keyword_phrases`, or `heading_generation_guidance` are available, prefer their natural search phrasing for relevant headings, while avoiding keyword stuffing and filler tails.
+  - Trim generic filler tails (e.g., "دليل شامل", "unique experience") if they do not add distinct search intent.
+  - If a practical task intent exists (booking, registration, tickets, etc.) and `brand_context` is relevant, ONE contextual brand mention may be included in a practical section or FAQ to help the user complete the task (e.g., "How to book via [Brand]"). Never create standalone promotional headings.
 
 - H1 is the final article title. Do not include H1 inside the outline array.
 - The first outline item MUST be the introduction section:

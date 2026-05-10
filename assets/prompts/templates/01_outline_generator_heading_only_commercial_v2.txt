@@ -18,6 +18,7 @@ Your task is to generate only the heading structure layer of an article outline 
 - Service/Object Phrase: "{{ service_phrase | default(entity_phrase | default('')) }}"
 - Content Strategy: {{ (content_strategy | default({})) | tojson }}
 - Style Blueprint: {{ (style_blueprint | default({})) | tojson }}
+- SERP Outline Brief: {{ (serp_outline_brief | default({})) | tojson }}
 
 1. JOB TO BE DONE
 - Generate ONLY the heading layer of the outline. Do not plan paragraphs, tables, CTAs, or body copy.
@@ -44,6 +45,7 @@ Your task is to generate only the heading structure layer of an article outline 
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
 - If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
   - Default order: `offer` -> `features` -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
+  - If `serp_outline_brief` indicates an informational, destination, attraction, venue guide, or experience-based SERP, keep the outline primarily informational/visitor-first. Use the brand as a soft support for booking, tickets, or next steps only when relevant; do NOT force a provider-selection or service-company journey.
   - For provider-selection or commercial investigation keywords (e.g., best company, agency, provider, افضل شركة, أفضل مكتب, مزود خدمة), do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
   - In provider-selection outlines, any H2 about "how to choose", "how to evaluate", criteria, or decision filters MUST use `section_type: "features"` or another evaluation type, NOT `section_type: "offer"`.
   - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
@@ -375,6 +377,13 @@ H3s are allowed and should be real user questions.
 
 - If comparison would only repeat the features or offer section, it MUST be embedded or omitted, not promoted to a standalone H2.
 - If Features and Comparison sections overlap conceptually, the output is INVALID and must be regenerated with clearer separation.
+
+#### SERP GROUNDING RULE
+- When `serp_outline_brief` is provided, prioritize its observed topics and `heading_generation_guidance` over generic commercial assumptions.
+- Use the `must_consider_sections` list as a mandatory baseline for essential reader information.
+- Do NOT invent data (PAA, related searches, exact prices, schedules, facts, case studies, or testimonials) if the brief indicates they were not observed or provided.
+- Ensure the outline reflects the `observed_page_type`. If SERP shows a venue guide, destination, attraction, event, or informational page pattern, keep the heading flow experience-based and visitor-first even when `content_type` is `brand_commercial`.
+- In these informational destination cases, brand sections should be soft and practical (tickets, booking help, planning support, next step), not provider-selection, company comparison, or brand proof/case-study sections.
 #### SECTION ANGLE SEPARATION RULE
 
 - If multiple sections perform segmentation, each MUST use a different decision dimension.

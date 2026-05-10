@@ -1,0 +1,140 @@
+{
+  "mining_results": {
+    "topics": [
+      {
+        "topic": "Boulevard City Riyadh Tickets and Pricing",
+        "type": "visitor_info",
+        "source_signal": "tickets",
+        "relevance": "high"
+      },
+      {
+        "topic": "Opening Hours and Best Time to Visit",
+        "type": "visitor_info",
+        "source_signal": "hours",
+        "relevance": "high"
+      },
+      {
+        "topic": "Parking at Boulevard City",
+        "type": "visitor_info",
+        "source_signal": "parking",
+        "relevance": "high"
+      },
+      {
+        "topic": "Boulevard City Riyadh: Tickets, Hours, and Guide 2024",
+        "type": "visitor_info",
+        "source_signal": "hours",
+        "relevance": "high"
+      },
+      {
+        "topic": "Main Attractions and Activities",
+        "type": "activity",
+        "source_signal": "activities",
+        "relevance": "high"
+      },
+      {
+        "topic": "بوليفارد سيتي",
+        "type": "attribute",
+        "frequency": 6
+      },
+      {
+        "topic": "Boulevard City",
+        "type": "attribute",
+        "frequency": 5
+      },
+      {
+        "topic": "سيتي الرياض",
+        "type": "attribute",
+        "frequency": 3
+      },
+      {
+        "topic": "بوليفارد سيتي الرياض",
+        "type": "attribute",
+        "frequency": 3
+      },
+      {
+        "topic": "City Riyadh",
+        "type": "attribute",
+        "frequency": 2
+      },
+      {
+        "topic": "Riyadh Tickets",
+        "type": "attribute",
+        "frequency": 2
+      },
+      {
+        "topic": "City Riyadh Tickets",
+        "type": "attribute",
+        "frequency": 2
+      },
+      {
+        "topic": "Hours And",
+        "type": "attribute",
+        "frequency": 2
+      }
+    ],
+    "secondary_keyword_phrases": [
+      "Boulevard City events",
+      "Riyadh Season Boulevard",
+      "حجز تذاكر بوليفارد",
+      "موسم الرياض",
+      "Opening Hours",
+      "Book your"
+    ],
+    "heading_candidates": [
+      "Boulevard City Riyadh Tickets and Pricing",
+      "How to Get to Boulevard City",
+      "Parking at Boulevard City"
+    ],
+    "guidance": [
+      "Trim filler tail from 'How to Get to Boulevard City - complete guide' -> prefer 'How to Get to Boulevard City' if intent is preserved."
+    ]
+  },
+  "brief": {
+    "observed_page_type": "guide",
+    "dominant_search_intent": "informational",
+    "observed_heading_patterns": [
+      "Guide structure"
+    ],
+    "observed_topics": [
+      "Boulevard City Riyadh Tickets and Pricing",
+      "Opening Hours and Best Time to Visit",
+      "Parking at Boulevard City",
+      "Boulevard City Riyadh: Tickets, Hours, and Guide 2024",
+      "Main Attractions and Activities",
+      "بوليفارد سيتي",
+      "Boulevard City",
+      "سيتي الرياض",
+      "بوليفارد سيتي الرياض",
+      "City Riyadh",
+      "Riyadh Tickets",
+      "City Riyadh Tickets",
+      "Hours And"
+    ],
+    "secondary_keyword_phrases": [
+      "Boulevard City events",
+      "Riyadh Season Boulevard",
+      "حجز تذاكر بوليفارد",
+      "موسم الرياض",
+      "Opening Hours",
+      "Book your"
+    ],
+    "heading_candidates": [
+      "Boulevard City Riyadh Tickets and Pricing",
+      "How to Get to Boulevard City",
+      "Parking at Boulevard City"
+    ],
+    "must_consider_sections": [],
+    "avoid_sections": [
+      "Gallery"
+    ],
+    "faq_source_status": {
+      "paa_observed": true,
+      "related_observed": true,
+      "autocomplete_observed": false
+    },
+    "heading_generation_guidance": [
+      "Write a clear guide.",
+      "Trim filler tail from 'How to Get to Boulevard City - complete guide' -> prefer 'How to Get to Boulevard City' if intent is preserved."
+    ]
+  }
+}

@@ -19,6 +19,7 @@ from jinja2 import Template
 from src.utils.link_manager import LinkManager
 from src.utils.json_utils import recover_json
 from src.utils.scraper_utils import ScraperUtils
+from src.services.serp_topic_miner import SERPTopicMiner
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class ResearchService:
         self.work_dir = work_dir
         self.upload_dir = os.path.join(work_dir, "uploads")
         os.makedirs(self.upload_dir, exist_ok=True)
+        self.topic_miner = SERPTopicMiner()
 
     def _compose_search_query(self, primary_keyword: str, area: Optional[str], lang: str) -> str:
         """Build a clean search query without duplicating the area phrase."""
@@ -751,6 +753,93 @@ class ResearchService:
         serp_insights["serp_enrichment_sources"] = serp_data.get("serp_enrichment_sources", {})
         state["seo_intelligence"] = {"serp_raw": serp_data, "market_analysis": serp_insights, "competitor_structures": competitor_headers}
         return state
+
+    def build_serp_outline_brief(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Converts observed SERP data into a compact structural brief for heading generation."""
+        seo_intelligence = state.get("seo_intelligence", {})
+        serp_data = seo_intelligence.get("serp_raw", {})
+        market_analysis = seo_intelligence.get("market_analysis", {})
+        lang = state.get("article_language", "ar")
+        
+        intent_analysis = market_analysis.get("intent_analysis", {})
+        structural = market_analysis.get("structural_intelligence", {})
+        market_insights = market_analysis.get("market_insights", {})
+        topic_obs = market_insights.get("topic_observations", {})
+        
+        # 1. Observed Topics
+        core_topics = [t.get("topic") for t in topic_obs.get("core_recurring_topics", []) if t.get("topic")]
+        secondary_topics = [t.get("topic") for t in topic_obs.get("secondary_mentions", []) if t.get("topic")]
+
+        # TASK 1: Enrich with SERP Topic Mining
+        primary_keyword = state.get("primary_keyword", "")
+        brand_name = state.get("brand_name")
+        mining_results = self.topic_miner.mine_topics(serp_data, primary_keyword, brand_name)
+        
+        mined_topics = mining_results.get("topics", [])
+        mined_labels = [t["topic"] for t in mined_topics]
+        secondary_phrases = mining_results.get("secondary_keyword_phrases", [])
+        heading_candidates = mining_results.get("heading_candidates", [])
+        mining_guidance = mining_results.get("guidance", [])
+        
+        # Merge topics, keeping core first, then mined, then secondary
+        combined_topics = list(dict.fromkeys(core_topics + mined_labels + secondary_topics))
+        
+        # 2. Page Type and Intent
+        observed_page_type = structural.get("dominant_page_type") or intent_analysis.get("dominant_page_type", "")
+        dominant_intent = intent_analysis.get("confirmed_intent", "")
+        
+        # 3. Must Consider Sections (Structural grounded)
+        must_consider = []
+        # If it's a place/destination topic and we see practical signals in core topics
+        experience_keywords = {"location", "access", "tickets", "pricing", "hours", "booking", "events", "activities", "attractions", "visitor info"}
+        for topic in core_topics:
+            if any(kw in topic.lower() for kw in experience_keywords):
+                must_consider.append(topic)
+        
+        # 4. Heading Patterns
+        patterns = []
+        if structural.get("dominant_heading_pattern"):
+            patterns.append(structural["dominant_heading_pattern"])
+        
+        # 5. FAQ Source Status
+        paa = serp_data.get("paa_questions", [])
+        related = serp_data.get("related_searches", [])
+        auto = serp_data.get("autocomplete_suggestions", [])
+        
+        faq_status = {
+            "paa_observed": bool(paa),
+            "related_observed": bool(related),
+            "autocomplete_observed": bool(auto)
+        }
+        
+        # 6. Brand Utility Candidates
+        brand_utility_candidates = []
+        if dominant_intent == "informational" and state.get("brand_context") and brand_name:
+            brand_utility_candidates = self.topic_miner.generate_brand_utility_candidates(mining_results.get("topics", []), brand_name, lang)
+
+        # 7. Generation Guidance
+        guidance = market_insights.get("writing_guide", "")
+        guidance_list = [guidance] if guidance else []
+        guidance_list.extend(mining_guidance)
+        
+        logger.debug(f"[ResearchService] Raw mining results: {mining_results}")
+        
+        brief = {
+            "observed_page_type": observed_page_type,
+            "dominant_search_intent": dominant_intent,
+            "observed_heading_patterns": patterns,
+            "observed_topics": combined_topics[:25],
+            "secondary_keyword_phrases": secondary_phrases,
+            "heading_candidates": heading_candidates,
+            "brand_utility_candidates": brand_utility_candidates,
+            "must_consider_sections": list(dict.fromkeys(must_consider)),
+            "avoid_sections": market_insights.get("avoid_sections", []),
+            "faq_source_status": faq_status,
+            "heading_generation_guidance": list(dict.fromkeys(guidance_list))
+        }
+        
+        logger.debug(f"[ResearchService] Final SERP Outline Brief: {brief}")
+        return brief
 
     async def _discover_logo_and_colors(self, url: str, state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return None

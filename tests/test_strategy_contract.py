@@ -142,6 +142,11 @@ class DummyTitleGenerator:
         }
 
 
+class DummyIntentTemplate:
+    def render(self, **kwargs):
+        return "intent prompt"
+
+
 class DummyOutlineGenerator:
     def __init__(self, outline_payload):
         self.outline_payload = outline_payload
@@ -503,6 +508,57 @@ def test_strategy_content_type_resolver_is_central_and_non_blind():
         requested_content_type=None,
         primary_keyword="أفضل أنواع الشقق في الرياض",
     ) == "informational"
+
+
+def test_strategy_intent_title_trusts_strong_informational_serp_over_brand():
+    env = Environment(
+        loader=FileSystemLoader("assets/prompts/templates"),
+        undefined=StrictUndefined,
+    )
+    service = StrategyService(
+        ai_client=DummyAIClient([
+            {
+                "reasoning": "Brand context exists, but this should not win over observed SERP.",
+                "intent": "Commercial",
+            }
+        ]),
+        title_generator=DummyTitleGenerator(),
+        jinja_env=env,
+        intent_template=DummyIntentTemplate(),
+    )
+    state = {
+        "raw_title": "Boulevard City Riyadh",
+        "primary_keyword": "Boulevard City Riyadh",
+        "article_language": "en",
+        "area": "Riyadh",
+        "brand_name": "Tikevent",
+        "workflow_mode": "core",
+        "article_type": None,
+        "input_data": {"title": "Boulevard City Riyadh"},
+        "serp_data": {
+            "top_results": [
+                {"title": "Official guide", "cta_style": "informational"},
+                {"title": "Destination overview", "cta_style": "informational"},
+            ]
+        },
+        "seo_intelligence": {
+            "market_analysis": {
+                "intent_analysis": {
+                    "confirmed_intent": "informational",
+                    "intent_confidence_score": 0.8,
+                    "commercial_signal_strength": 0.0,
+                    "informational_signal_strength": 1.0,
+                }
+            }
+        },
+        "workflow_logger": None,
+    }
+
+    asyncio.run(service.run_intent_title(state))
+
+    assert state["intent"] == "informational"
+    assert state["content_type"] == "informational"
+    assert state["detected_intent_ai"] == "commercial"
 
 
 def test_heading_only_detox_preserves_brand_contract():
