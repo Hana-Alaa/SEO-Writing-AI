@@ -286,12 +286,146 @@ class OutlineRepairService:
         
         return outline
 
+    def refill_faq_after_dedupe(
+        self,
+        outline: List[Dict[str, Any]],
+        entity_phrase: str = "",
+        min_faq_count: int = 4
+    ) -> List[Dict[str, Any]]:
+        """
+        If FAQ count dropped below min_faq_count after deduplication,
+        appends deterministic practical FAQs covering unresolved visitor topics.
+        Does NOT re-add any intent already covered by an H2.
+        """
+        if not outline:
+            return outline
+
+        # Locate FAQ section
+        faq_section_idx = -1
+        for i, section in enumerate(outline):
+            s_type = section.get("section_type", "").lower()
+            h_text = section.get("heading_text", "").lower()
+            if s_type == "faq" or "أسئلة شائعة" in h_text or "faq" in h_text:
+                faq_section_idx = i
+                break
+
+        if faq_section_idx == -1:
+            return outline
+
+        faq_section = outline[faq_section_idx]
+        subheadings = faq_section.get("subheadings", [])
+        if not isinstance(subheadings, list):
+            subheadings = []
+
+        current_count = len(subheadings)
+        if current_count >= min_faq_count:
+            return outline  # Already sufficient
+
+        # Collect existing H2 text for guard-checking
+        h2_texts_combined = " ".join(
+            s.get("heading_text", "").lower()
+            for s in outline
+            if s.get("heading_level") == "H2"
+        )
+        # Collect existing FAQ text for dedup guard
+        existing_faq_text = " ".join(
+            (s.get("heading_text", "") if isinstance(s, dict) else str(s)).lower()
+            for s in subheadings
+        )
+
+        entity = entity_phrase.strip() if entity_phrase else ""
+
+        # Ordered pool of practical recovery candidates.
+        # Each entry: (topic_guard_keywords, arabic_question, english_question)
+        # topic_guard_keywords: if ANY appear in h2_texts_combined, skip this candidate.
+        recovery_pool = [
+            (
+                ["موقف", "مواقف", "parking"],
+                f"هل تتوفر مواقف سيارات بالقرب من {entity or 'المكان'}؟",
+                f"Is parking available near {entity or 'the venue'}?"
+            ),
+            (
+                ["نقل", "مواصلات", "transport", "metro", "مترو"],
+                f"كيف يمكن الوصول إلى {entity or 'الوجهة'} بالمواصلات العامة؟",
+                f"How can I reach {entity or 'the venue'} by public transport?"
+            ),
+            (
+                ["أطفال", "عائل", "children", "family"],
+                f"هل {entity or 'المكان'} مناسب للعائلات والأطفال؟",
+                f"Is {entity or 'the venue'} suitable for families with children?"
+            ),
+            (
+                ["إمكانية الوصول", "ذوي الاحتياجات", "accessibility", "wheelchair"],
+                f"هل {entity or 'المكان'} مناسب لذوي الاحتياجات الخاصة؟",
+                f"Is {entity or 'the venue'} accessible for people with disabilities?"
+            ),
+            (
+                ["دفع", "payment", "بطاقة", "كاش", "نقد"],
+                f"ما هي طرق الدفع المتاحة في {entity or 'المكان'}؟",
+                f"What payment methods are accepted at {entity or 'the venue'}?"
+            ),
+            (
+                ["مدة", "duration", "وقت الزيارة", "كم من الوقت"],
+                f"كم يستغرق الوقت المناسب لزيارة {entity or 'المكان'}؟",
+                f"How long does a typical visit to {entity or 'the venue'} take?"
+            ),
+            (
+                ["زحام", "crowd", "ازدحام"],
+                f"ما هي أوقات الذروة والزحام في {entity or 'المكان'}؟",
+                f"What are the peak/busy hours at {entity or 'the venue'}?"
+            ),
+            (
+                ["طعام", "food", "أكل", "مأكولات", "مطعم"],
+                f"هل يُسمح بإحضار الطعام إلى {entity or 'المكان'}؟",
+                f"Is outside food allowed at {entity or 'the venue'}?"
+            ),
+        ]
+
+        added = 0
+        needed = min_faq_count - current_count
+
+        for guard_keywords, arabic_q, _ in recovery_pool:
+            if added >= needed:
+                break
+
+            # Skip if the topic is already covered by an H2
+            if any(kw in h2_texts_combined for kw in guard_keywords):
+                continue
+
+            # Skip if already present in FAQ
+            if any(kw in existing_faq_text for kw in guard_keywords):
+                continue
+
+            new_sub = {
+                "heading_text": arabic_q,
+                "heading_level": "H3",
+                "section_type": "faq",
+                "section_id": f"faq_recovery_{added + 1}"
+            }
+            subheadings.append(new_sub)
+            existing_faq_text += " " + arabic_q.lower()
+            added += 1
+            logger.info(f"[OutlineRepairService] FAQ refill: appended '{arabic_q}'")
+
+        if added > 0:
+            logger.info(
+                f"[OutlineRepairService] refill_faq_after_dedupe: added {added} question(s). "
+                f"Final FAQ count: {len(subheadings)}"
+            )
+
+        faq_section["subheadings"] = subheadings
+        outline[faq_section_idx] = faq_section
+        return outline
+
+
+
     def enrich_brand_utility_faq(
         self, 
         outline: List[Dict[str, Any]], 
         serp_brief: Dict[str, Any], 
         brand_context: str, 
-        content_type: str
+        content_type: str,
+        entity_phrase: str = ""
     ) -> List[Dict[str, Any]]:
         """
         Deterministically appends ONE utility-oriented brand FAQ if conditions are met.
@@ -305,15 +439,32 @@ class OutlineRepairService:
         if content_type != "informational":
             logger.info(f"[OutlineRepairService] enrich_brand_utility_faq: content_type is '{content_type}', skipped.")
             return outline
-            
-        candidates = serp_brief.get("brand_utility_candidates", [])
-        if not candidates or not isinstance(candidates, list):
-            logger.info("[OutlineRepairService] enrich_brand_utility_faq: brand_utility_candidates empty, skipped.")
+
+        # Task-Oriented Safety Filter: Only insert brand FAQ if the outline contains 
+        # practical task-oriented sections (visitor info, pricing, ticketing, booking, etc.)
+        task_section_types = {"visitor_information", "pricing", "ticketing", "booking", "offer", "process"}
+        has_task_section = any(s.get("section_type") in task_section_types for s in outline)
+        
+        if not has_task_section:
+            logger.info("[OutlineRepairService] enrich_brand_utility_faq: No task-oriented sections found. Skipping brand FAQ for educational/conceptual topic.")
             return outline
             
-        candidate = str(candidates[0]).strip()
+        candidates = serp_brief.get("brand_utility_candidates", [])
+        candidate = ""
+        if candidates and isinstance(candidates, list):
+            candidate = str(candidates[0]).strip()
+        
+        # Deterministic fallback: synthesize from brand_context + entity_phrase
         if not candidate:
-            logger.info("[OutlineRepairService] enrich_brand_utility_faq: candidate is blank, skipped.")
+            entity_label = entity_phrase.strip() if entity_phrase else ""
+            if entity_label:
+                candidate = f"هل يمكن حجز تذاكر {entity_label} عبر {brand_context}؟"
+            else:
+                candidate = f"هل يمكن الحجز عبر {brand_context}؟"
+            logger.info(f"[OutlineRepairService] enrich_brand_utility_faq: synthesized candidate '{candidate}'")
+        
+        if not candidate:
+            logger.info("[OutlineRepairService] enrich_brand_utility_faq: no candidate available, skipped.")
             return outline
             
         # Safety Filter
@@ -340,51 +491,77 @@ class OutlineRepairService:
         if not isinstance(subheadings, list):
             subheadings = []
             
-        # Check if brand is already in the outline (at least in FAQ)
-        # To be safe, we check if ANY subheading in FAQ mentions the brand (or generic candidate words)
-        brand_match = re.search(r"Official brand:\s*([^.]+)", brand_context)
-        brand_name = brand_match.group(1).strip() if brand_match else ""
+        # brand_context is now the raw brand name (e.g. "تيك ايفينت")
+        brand_name = brand_context.strip()
+
+        # Generic placeholder phrases the LLM may have used instead of the real brand name
+        generic_booking_phrases = [
+            "المنصة الرسمية", "منصة الحجز", "الموقع الرسمي",
+            "الموقع الإلكتروني الرسمي", "الموقع الالكتروني الرسمي",
+            "booking platform", "official platform", "official website",
+            "المنصة"
+        ]
+
+        # Check if the exact brand name is already present → skip entirely
         if brand_name and brand_name.lower() in str(subheadings).lower():
+            logger.info(f"[OutlineRepairService] Brand '{brand_name}' already present in FAQ, skipped.")
             return outline
-            
-        # We also check if the exact candidate or similar is already there
+
+        # Detect generic booking placeholder in existing FAQ → replace it with exact brand name
+        for idx, sub in enumerate(subheadings):
+            sub_text = sub.get("heading_text", "") if isinstance(sub, dict) else str(sub)
+            sub_lower = sub_text.lower()
+            if any(ph.lower() in sub_lower for ph in generic_booking_phrases):
+                corrected_text = sub_text
+                for ph in generic_booking_phrases:
+                    if ph.lower() in sub_lower:
+                        corrected_text = sub_text.replace(ph, brand_name)
+                        break
+                logger.info(
+                    "[OutlineRepairService] Replaced generic brand placeholder with exact brand: %s",
+                    brand_name,
+                )
+                if isinstance(subheadings[idx], dict):
+                    subheadings[idx]["heading_text"] = corrected_text
+                else:
+                    subheadings[idx] = corrected_text
+                faq_section["subheadings"] = subheadings
+                outline[faq_section_idx] = faq_section
+                return outline
+
+        # Check if the exact synthesized candidate is already there
         for sub in subheadings:
             if isinstance(sub, dict) and candidate.lower() in sub.get("heading_text", "").lower():
                 return outline
             elif isinstance(sub, str) and candidate.lower() in sub.lower():
                 return outline
-                
-        # Append the candidate
+
+        # Append / replace weakest
         new_sub = {
             "heading_text": candidate,
             "heading_level": "H3",
             "section_type": "faq",
             "section_id": f"faq_brand_utility_{re.sub(r'\W+', '_', candidate)[:15]}"
         }
-        
+
         # If FAQ exceeds 5, replace the weakest one to prevent bloating
         if len(subheadings) >= 5:
-            # Strong intents that shouldn't be replaced
             strong_keywords = ["price", "ticket", "book", "cost", "fee", "location", "access", "hour", "time", "child", "family", "kids", "سعر", "تذكر", "حجز", "رسوم", "موقع", "وصول", "ساع", "مواعيد", "وقت", "طفل", "أطفال", "عائل"]
-            
             weakest_idx = -1
-            # Search backwards to replace the last weak one
             for idx in range(len(subheadings)-1, -1, -1):
                 sub = subheadings[idx]
                 text = sub.get("heading_text", "").lower() if isinstance(sub, dict) else str(sub).lower()
                 if not any(kw in text for kw in strong_keywords):
                     weakest_idx = idx
                     break
-            
             if weakest_idx != -1:
                 subheadings[weakest_idx] = new_sub
             else:
-                # If all are strong, do not insert
                 logger.info(f"[OutlineRepairService] FAQ is full and all questions are strong. Brand utility FAQ skipped.")
                 return outline
         else:
             subheadings.append(new_sub)
-            
+
         faq_section["subheadings"] = subheadings
         outline[faq_section_idx] = faq_section
         

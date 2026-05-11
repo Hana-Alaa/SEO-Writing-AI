@@ -200,6 +200,10 @@ class StrategyService:
         normalized = str(value or "").strip().lower()
         if not normalized:
             return ""
+        if "educational_comparative" in normalized:
+            return "educational_comparative"
+        if "commercial_comparative" in normalized:
+            return "commercial_comparative"
         if any(term in normalized for term in ("comparison", "comparative")):
             return "comparative"
         if any(term in normalized for term in ("commercial", "transactional")):
@@ -255,7 +259,11 @@ class StrategyService:
         normalized_intent = (intent or "").strip().lower()
         keyword_commercial = self._keyword_has_provider_service_commercial_signals(primary_keyword)
 
-        if any(value in normalized_intent for value in ("comparison", "comparative")):
+        # Educational Comparative inherits Informational behavior but keeps Comparative layout instructions
+        if normalized_intent == "educational_comparative":
+            return "informational"
+
+        if any(value in normalized_intent for value in ("comparison", "comparative", "commercial_comparative")):
             return "comparison"
         if any(value in normalized_intent for value in ("commercial", "transactional")) or keyword_commercial:
             return "brand_commercial"

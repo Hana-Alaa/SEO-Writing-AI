@@ -634,12 +634,44 @@ class ResearchService:
 
         serp_data = await _do_serp_call(search_query, "primary_query")
         fallback_used = False
-        if not serp_data.get("top_results") and area:
-            fallback_used = True
-            serp_data = await _do_serp_call(primary_keyword, "fallback_after_empty_or_unparsed_results")
         
+        # If primary search failed, try normalized fallback variants
         if not serp_data.get("top_results"):
-            raise RuntimeError("SERP returned no top results")
+            fallback_queries = []
+            
+            # Variant 1: Primary keyword without area/lang padding
+            if area and primary_keyword != search_query:
+                fallback_queries.append((primary_keyword, "primary_keyword_only"))
+            
+            # Variant 2: Arabic expanded (if ar) - e.g. "الفرق بين X و Y" -> "ما الفرق بين X و Y"
+            if lang == "ar" and not primary_keyword.startswith(("ما ", "كيف ", "لماذا ")):
+                fallback_queries.append((f"ما {primary_keyword}", "arabic_expanded_query"))
+            
+            # Variant 3: English variant attempt for technical/comparison topics
+            english_tokens = re.findall(r'[a-zA-Z]{2,}', primary_keyword)
+            if len(english_tokens) >= 2:
+                # e.g. "الفرق بين SEO و SEM" -> "SEO vs SEM difference"
+                fallback_queries.append((" vs ".join(english_tokens) + " difference", "english_comparison_fallback"))
+            elif len(english_tokens) == 1:
+                # e.g. "تعريف الـ SEO" -> "SEO definition guide"
+                fallback_queries.append((english_tokens[0] + " definition guide", "english_topic_fallback"))
+
+            for q_text, reason in fallback_queries:
+                if serp_data.get("top_results"):
+                    break
+                fallback_used = True
+                logger.info(f"[ResearchService] Primary search failed. Retrying with variant: '{q_text}' ({reason})")
+                serp_data = await _do_serp_call(q_text, reason)
+
+        # FINAL FAIL-SAFE: Graceful Fallback instead of crash
+        if not serp_data.get("top_results"):
+            logger.warning(f"[ResearchService] SERP returned no top results for '{search_query}' after retries. Using minimal informational fallback brief.")
+            serp_data = {
+                "top_results": [],
+                "serp_data_unavailable": True,
+                "serp_fallback_reason": "SERP returned no top results",
+                "intent": "informational"
+            }
 
         # Aggregate stats and enrich
         serp_data = self._annotate_word_count_missing(serp_data)
@@ -758,6 +790,43 @@ class ResearchService:
         """Converts observed SERP data into a compact structural brief for heading generation."""
         seo_intelligence = state.get("seo_intelligence", {})
         serp_data = seo_intelligence.get("serp_raw", {})
+        primary_keyword = state.get("primary_keyword", "")
+        lang = state.get("article_language", "ar")
+
+        # Graceful Fallback if SERP failed
+        if serp_data.get("serp_data_unavailable"):
+            is_comparison = any(kw in primary_keyword.lower() for kw in ["الفرق", "vs", "versus", "comparison", "مقارنة"])
+            
+            # Synthesize basic topics and phrases from the keyword
+            topics = [primary_keyword]
+            # Split keyword into tokens for secondary phrases if it's long
+            tokens = [t.strip() for t in re.split(r'[^\w\u0600-\u06FF]+', primary_keyword) if len(t.strip()) > 2]
+            phrases = list(dict.fromkeys([primary_keyword] + tokens))[:5]
+
+            guidance = "Informational guide. Cover key definitions, practical steps, and common concerns."
+            if is_comparison:
+                guidance = "Educational comparison guide. Explain definitions, differences, use cases, costs, timing, and when to use each."
+
+            return {
+                "dominant_search_intent": "informational",
+                "observed_page_type": "guide",
+                "observed_topics": topics,
+                "secondary_keyword_phrases": phrases,
+                "heading_candidates": [],
+                "brand_utility_candidates": [],
+                "must_consider_sections": [],
+                "avoid_sections": [],
+                "observed_heading_patterns": [],
+                "faq_source_status": {
+                    "paa_observed": False,
+                    "related_observed": False,
+                    "autocomplete_observed": False
+                },
+                "heading_generation_guidance": [guidance],
+                "serp_data_unavailable": True,
+                "serp_fallback_reason": serp_data.get("serp_fallback_reason", "Unknown")
+            }
+
         market_analysis = seo_intelligence.get("market_analysis", {})
         lang = state.get("article_language", "ar")
         

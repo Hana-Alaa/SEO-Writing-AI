@@ -1,0 +1,616 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,model,estimated_cost,is_google,prompt_text,response_text
+2026-05-11T12:05:18.638207,STEP_TOTAL: brand_discovery,0.003,0,0,0,unknown,0.0,False,N/A,N/A
+2026-05-11T12:06:36.017906,web_research,77.376,35027,6270,41297,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: الفرق بين seo و sem في السعودية
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""ما هو الفرق بين SEO و SEM؟"",""url"":""https://www.techmadar.com/2025/04/SEO%20SEM%20.html"",""meta_title"":""ما هو الفرق بين SEO و SEM؟"",""meta_description"":""سنغوص في تعريف كل من SEO (سيو) و SEM (اس اي ام)، ونستكشف مكوناتهما الرئيسية، ونوضح الفرق بين SEO و SEM بشكل مفصل، ونناقش كيف يمكن لهاتين الاستراتيجيتين العمل معًا بتناغم لتحقيق أقصى استفادة من قوة محركات البحث في رحلتك نحو النجاح الرقمي."",""estimated_word_count"":1200,""headings"":{""h1"":""ما هو الفرق بين SEO و SEM؟"",""h2"":[""الفرق الجوهري بين SEO و SEM"",""ما هو تحسين محركات البحث (SEO)؟"",""ما هو التسويق عبر محركات البحث (SEM)؟"",""الاختلافات الرئيسية بين SEO و SEM"",""SEO و SEM قوة التكامل والتآزر"",""أهمية التحديث المستمر ومواكبة التغييرات"",""الخاتمة: فهم الفرق يقود إلى استراتيجية أفضل""],""h3"":[""ركائز SEO الأساسية"",""فوائد SEO"",""تحديات SEO""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""url"":""https://www.learnwebseo.com/difference-between-seo-sem-smm/"",""meta_title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""meta_description"":""difference between seo sem smm والفرق بينهما , والفرق بينهما ،ماهو SEO ، تعريف SEM , كلها أشياء يتسائل عنها أصحاب المواقع أو صاحب موقع مبتدىء فلابد أن تكون لدينا فكره عن تعريفهم والفرق بينهم وأهمية كل جزء ومتى يستخدم."",""estimated_word_count"":1000,""headings"":{""h1"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""h2"":[""1-ما الفرق بين difference between seo sem smm ؟"",""1-ماهو Seo أو Search Engine Optimization ؟"",""2-ماهو Sem أو Search Engine Marketing ؟"",""3-ماهو SMM أو Social Media Marketing ؟"",""عن مدير الموقع"",""مقالات أنصحك بقرائتها:-""],""h3"":[""1-ماهو Seo أو Search Engine Optimization ؟"",""2-ماهو Sem أو Search Engine Marketing ؟"",""3-ماهو SMM أو Social Media Marketing ?""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""url"":""https://www.rabeh.org/ar/blog-show/%D8%A7%D9%84%D9%81%D8%B1%D9%82-%D8%A8%D9%8A%D9%86-SEO-%D9%88-SEM"",""meta_title"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""meta_description"":""في هذا المقال، سنرشدك إلى الطريقة التي تجعل موقعك حاضرًا في اللحظة الصحيحة، قبل أن يبدأ العميل بالمقارنة، عبر فهم عملي وواضح لـ الفرق بين SEO و SEM."",""estimated_word_count"":1500,""headings"":{""h1"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""h2"":[""الفرق بين SEO و SEM: دليل شامل للمبتدئين"",""تعرف على: ماهي محركات البحث seo"",""كيف تختار بين تحسين محركات البحث والإعلانات المدفوعة؟"",""SEO مقابل SEM أيهما الأنسب لنمو موقعك؟"",""حقيقة عن (الصفحة الأولى): كثير من الصفحات التي تحتل التوب 10"",""استراتيجيات فعالة مع رابح لزيادة الزيارات باستخدام SEO و SEM"",""للمزيد حول: أنواع إعلانات جوجل"",""تعلم الفرق بين SEO و SEM لتحقيق أعلى CTR""],""h3"":[""يصبح الفرق بين SEO و SEM قرارًا واضحًا عندما تربطه بهدفك “هذا الشهر” مقابل “هذا العام”"",""اختر SEM أولًا إذا:"",""اختر SEO أولًا إذا:""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""تحسين محركات البحث"",""التسويق عبر محركات البحث"",""إعلانات الدفع لكل نقرة""],""content_gaps"":[],""common_patterns"":[""استخدام القوائم النقطية لعرض الفروقات الرئيسية""],""common_strengths"":[""هيكلية واضحة للرؤوس والعناوين"",""استخدام القوائم لتنظيم المعلومات""],""common_weaknesses"":[""وجود دعوات إلى إجراءات تجارية تشتت الانتباه عن المحتوى الرئيسي""],""observed_notes"":[""صفحة النتائج تحتوي على مقالات إرشادية تعريفية كمصادر معلوماتية رئيسية في الصفحة الأولى""],""unsupported_data"":[],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""page_content""}}"
+2026-05-11T12:12:31.371683,web_research,355.025,54882,6269,61151,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: الفرق بين seo و sem
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""SEO vs. SEM: What's the difference?"",""url"":""https://www.techtarget.com/searchcontentmanagement/answer/SEO-vs-SEM-Whats-the-difference"",""meta_title"":""SEO vs. SEM: What's the difference? | TechTarget"",""meta_description"":"""",""estimated_word_count"":1000,""headings"":{""h1"":""SEO vs. SEM: What's the difference?"",""h2"":[""SEO and SEM strategies help marketers put digital content in front of the right audience. However, SEO strategies focus on organic search, whereas SEM generates paid traffic."",""What is SEO?"",""What is SEM?"",""3 key differences between SEO and SEM"",""Should marketers use SEO or SEM?""],""h3"":[""1. SEO and SEM target different search results"",""2. SEO takes longer to deliver results than SEM"",""3. SEO costs more than SEM in the short-term""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""SEO vs. SEM: What’s the Difference & Which Should You Use?"",""url"":""https://www.seo.com/blog/seo-vs-sem/"",""meta_title"":""SEO vs. SEM: What’s the Difference & Which Should You Use?"",""meta_description"":""Learn the distinctions between SEO and SEM, including their target traffic, timelines for results, and costs, and discover how a combination of both can yield optimal outcomes."",""estimated_word_count"":900,""headings"":{""h1"":""SEO vs. SEM: What’s the Difference & Which Should You Use?"",""h2"":[""What is SEO?"",""What is SEM?"",""What’s the difference: SEM vs. SEO"",""SEO vs. SEM: Which is better"",""Use cases for SEO and SEM"",""Do I need both? When to choose SEO vs. SEM"",""Discover more about SEO and SEM""],""h3"":[""1. They target different types of traffic"",""2. They have different timelines"",""3. They have different costs""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""},{""title"":""SEO vs. SEM: Differences in Tactics, Costs, and Results"",""url"":""https://www.semrush.com/blog/seo-vs-sem/"",""meta_title"":""SEO vs. SEM: Differences in Tactics, Costs, and Results"",""meta_description"":""The main difference between search engine optimization (SEO) and search engine marketing (SEM) is that SEO focuses on attracting unpaid traffic from search engines, while SEM focuses on both unpaid and paid search traffic."",""estimated_word_count"":1500,""headings"":{""h1"":""SEO vs. SEM: Differences in Tactics, Costs, and Results"",""h2"":[""SEO vs. SEM: What's the Difference?"",""What Is SEO?"",""What Is SEM?"",""SEO vs. SEM: How Much Do They Cost?"",""SEO vs. SEM: How Long Does It Take to See Results?"",""SEO vs. SEM: Which Practice Is Right for You?"",""Build an Integrated SEM Strategy"",""More on this""],""h3"":[""SEO Basics: How to Do SEO for Beginners"",""What Is PPC? A Starter Guide to Pay-Per-Click Marketing"",""Search Engine Marketing (SEM): What It Is & How to Do It""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""search engine optimization"",""search engine marketing"",""organic search"",""paid search"",""pay-per-click""],""content_gaps"":[],""common_patterns"":[""Defines SEO and SEM separately under clear H2 headings"",""Uses numbered H3 sections to list key differences"",""Employs bullet and numbered lists to enumerate features and differences""],""common_strengths"":[""Clear definitions of SEO and SEM"",""Use of structured headings and lists""],""common_weaknesses"":[""Absence of FAQ sections across the sampled pages""],""observed_notes"":[""Page 1 results for Arabic query are predominantly English-language informational articles""],""unsupported_data"":[],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""page_content""}}"
+2026-05-11T12:12:31.750688,STEP_TOTAL: web_research,433.11,0,0,0,unknown,0.0,False,N/A,N/A
+2026-05-11T12:12:43.011255,STEP_TOTAL: serp_analysis,11.259,0,0,0,unknown,0.0,False,N/A,N/A
+2026-05-11T12:12:44.175078,intent_title,1.156,0,0,0,unknown,0.0,False,"You are a Practical User Intent & Title Advisor.
+
+Input:
+- Raw topic: الفرق بين seo و sem
+- Primary keyword: الفرق بين seo و sem
+- Language: ar
+- Current Year: 2026
+- Top SERP titles: [""SEO vs. SEM: What\u0027s the difference?"", ""SEO vs. SEM: What\u0027s the Difference \u0026 Which Should You Use?"", ""SEO vs. SEM: Differences in Tactics, Costs, and Results""]
+- SERP CTA styles: [""informational"", ""aggressive"", ""soft commercial""]
+- SERP confirmed intent: informational_comparative
+- SERP intent confidence: 1.0
+- Target Area: السعودية
+- Brand Name: Creative Minds
+
+Task:
+1. Classify intent using the ""Practical Detection Hierarchy"":
+   - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.
+   - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.
+   - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.
+   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves ""Vs"", ""Comparison"", ""Better between X and Y"", or comparing different options, the intent is **comparative**.
+   - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.
+
+Allowed intents:
+- informational -> searching for knowledge, guides, or tutorials.
+- commercial -> evaluating a specific service/product or ready to take action.
+- comparative -> comparing different options with brand helpfulness as the preferred choice.
+
+Title rules:
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use a Helpful, Practical Advisor tone (e.g., ""Simplified"", ""Complete Guide"", ""Tips"", ""Top-Rated"").
+- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
+- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.
+- BRANDING (FALLBACK):
+    * If `Brand Name` is ""Not provided"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If the intent is informational, do NOT include the brand unless the primary keyword itself is the brand.
+    * If the intent is commercial or comparative and `Brand Name` exists, integrate it naturally to build trust.
+- AREA (FALLBACK):
+    * If `Target Area` is ""Global"", ""General"", or ""International"", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.
+- No markdown, no extra text.
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": ""The Clear, Helpful H1""
+}","{
+  ""optimized_title"": ""الفرق بين SEO و SEM: دليل عملي شامل 2026 في السعودية من Creative Minds"",
+  ""intent"": ""comparative"",
+  ""metadata"": {
+    ""duration"": 1.1558635234832764,
+    ""model"": ""openai/gpt-4.1"",
+    ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: الفرق بين seo و sem\n- Primary keyword: الفرق بين seo و sem\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""SEO vs. SEM: What\\u0027s the difference?\"", \""SEO vs. SEM: What\\u0027s the Difference \\u0026 Which Should You Use?\"", \""SEO vs. SEM: Differences in Tactics, Costs, and Results\""]\n- SERP CTA styles: [\""informational\"", \""aggressive\"", \""soft commercial\""]\n- SERP confirmed intent: informational_comparative\n- SERP intent confidence: 1.0\n- Target Area: السعودية\n- Brand Name: Creative Minds\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.\n   - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.\n   - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.\n   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.\n\nAllowed intents:\n- informational -> searching for knowledge, guides, or tutorials.\n- commercial -> evaluating a specific service/product or ready to take action.\n- comparative -> comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\"").\n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK):\n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If the intent is informational, do NOT include the brand unless the primary keyword itself is the brand.\n    * If the intent is commercial or comparative and `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK):\n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful H1\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""comparative\"",\n  \""confidence\"": 1.0,\n  \""optimized_title\"": \""الفرق بين SEO و SEM: دليل عملي شامل 2026 في السعودية من Creative Minds\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 1117,
+      ""completion_tokens"": 45,
+      ""reasoning_tokens"": 0,
+      ""total_tokens"": 1162
+    },
+    ""reasoning_details"": null
+  },
+  ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: الفرق بين seo و sem\n- Primary keyword: الفرق بين seo و sem\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""SEO vs. SEM: What\\u0027s the difference?\"", \""SEO vs. SEM: What\\u0027s the Difference \\u0026 Which Should You Use?\"", \""SEO vs. SEM: Differences in Tactics, Costs, and Results\""]\n- SERP CTA styles: [\""informational\"", \""aggressive\"", \""soft commercial\""]\n- SERP confirmed intent: informational_comparative\n- SERP intent confidence: 1.0\n- Target Area: السعودية\n- Brand Name: Creative Minds\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.\n   - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.\n   - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.\n   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**.\n   - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.\n\nAllowed intents:\n- informational -> searching for knowledge, guides, or tutorials.\n- commercial -> evaluating a specific service/product or ready to take action.\n- comparative -> comparing different options with brand helpfulness as the preferred choice.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\"").\n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK):\n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If the intent is informational, do NOT include the brand unless the primary keyword itself is the brand.\n    * If the intent is commercial or comparative and `Brand Name` exists, integrate it naturally to build trust.\n- AREA (FALLBACK):\n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful H1\""\n}""
+}"
+2026-05-11T12:12:48.267503,STEP_TOTAL: intent_title,5.255,644,86,730,openai/gpt-4.1,0.0,False,"You are a Practical User Intent Analyst.
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language.
+
+INTENT DETECTION LOGIC:
+1. OBSERVED SERP INTENT:
+   - If SERP confirmed intent is provided with confidence >= 0.6, use it unless the query itself has explicit commercial/provider words.
+
+2. COMMERCIAL:
+   - The user is looking for a solution, provider, tool, purchase, booking, ticket, quote, price, or service.
+   - Signs: service/provider terms, buying or booking terms, price/quote/cost terms, or ""best company/provider/agency"" style terms.
+   - A Brand Context alone is not a commercial signal.
+
+3. COMPARATIVE:
+   - The user is comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+4. INFORMATIONAL:
+   - The user is looking for knowledge, a guide, an entity explanation, a destination overview, historical facts, or practical advice with no direct buying/provider wording.
+   - Informational remains informational even when a brand is provided as supporting context.
+
+Input:
+Title: ""الفرق بين seo و sem""
+Primary Keyword: ""الفرق بين seo و sem""
+Brand Context: ""Creative Minds""
+SERP confirmed intent: ""informational_comparative""
+SERP intent confidence: ""1.0""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","{
+  ""reasoning"": ""The query explicitly asks for the difference between SEO and SEM, which is a direct comparison of two concepts. The SERP confirmed intent is 'informational_comparative' with maximum confidence, and there are no commercial or provider-related terms present. Therefore, the practical purpose is to compare and understand distinctions, not to buy or choose a provider."",
+  ""intent"": ""Comparative""
+}"
+2026-05-11T12:12:48.273246,STEP_TOTAL: style_analysis,0.005,644,86,730,openai/gpt-4.1,0.0,False,"You are a Practical User Intent Analyst.
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language.
+
+INTENT DETECTION LOGIC:
+1. OBSERVED SERP INTENT:
+   - If SERP confirmed intent is provided with confidence >= 0.6, use it unless the query itself has explicit commercial/provider words.
+
+2. COMMERCIAL:
+   - The user is looking for a solution, provider, tool, purchase, booking, ticket, quote, price, or service.
+   - Signs: service/provider terms, buying or booking terms, price/quote/cost terms, or ""best company/provider/agency"" style terms.
+   - A Brand Context alone is not a commercial signal.
+
+3. COMPARATIVE:
+   - The user is comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+4. INFORMATIONAL:
+   - The user is looking for knowledge, a guide, an entity explanation, a destination overview, historical facts, or practical advice with no direct buying/provider wording.
+   - Informational remains informational even when a brand is provided as supporting context.
+
+Input:
+Title: ""الفرق بين seo و sem""
+Primary Keyword: ""الفرق بين seo و sem""
+Brand Context: ""Creative Minds""
+SERP confirmed intent: ""informational_comparative""
+SERP intent confidence: ""1.0""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}","{
+  ""reasoning"": ""The query explicitly asks for the difference between SEO and SEM, which is a direct comparison of two concepts. The SERP confirmed intent is 'informational_comparative' with maximum confidence, and there are no commercial or provider-related terms present. Therefore, the practical purpose is to compare and understand distinctions, not to buy or choose a provider."",
+  ""intent"": ""Comparative""
+}"
+2026-05-11T12:12:58.718906,content_strategy,10.326,1435,749,2184,unknown,0.0,False,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: الفرق بين seo و sem
+- Intent: comparative
+- Content Type: comparison
+- Target Area: السعودية
+- SERP Market Insights: ""{\""content_gaps\"": [], \""brand_advantages\"": [], \""keyword_clusters\"": [\""search engine optimization\"", \""search engine marketing\"", \""organic search\"", \""paid search\"", \""pay per click\""], \""writing_guide\"": \""Use a comparison-focused structure with clear H2s for definitions, differences, and decision guidance. Include lists for differences and use cases. End with a soft CTA or summary.\"", \""differentiation_strategy\"": [], \""mandatory_serp_topics\"": [], \""market_data_signals\"": {\""avg_unit_price_range\"": \""\"", \""common_down_payment_or_fees\"": \""\"", \""typical_duration_or_terms\"": \""\"", \""notable_market_trends\"": []}, \""topic_observations\"": {\""core_recurring_topics\"": [{\""topic\"": \""What is SEO?\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""What is SEM?\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""Differences between SEO and SEM\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""Which to use: SEO or SEM\"", \""frequency\"": 2, \""confidence\"": \""medium\""}], \""secondary_mentions\"": [{\""topic\"": \""SEO vs. SEM: Cost comparison\"", \""frequency\"": 2, \""confidence\"": \""medium\""}, {\""topic\"": \""SEO vs. SEM: Timeline to results\"", \""frequency\"": 2, \""confidence\"": \""medium\""}, {\""topic\"": \""Use cases for SEO and SEM\"", \""frequency\"": 1, \""confidence\"": \""low\""}], \""weak_signals\"": [{\""topic\"": \""Keyword Research (SEO and SEM)\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""On-Page SEO\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Off-Page SEO\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Technical SEO\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Audience Targeting (SEM)\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Ad Creation (SEM)\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Build an Integrated SEM Strategy\"", \""frequency\"": 1, \""confidence\"": \""low\""}]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### COMPARISON STRATEGY ARCHITECTURE (STRICT)
+Comparison Articles (Review/Versus/Tiered)
+The goal is to help the reader decide between options.
+STRUCTURE:
+1. Intro: Context of the comparison. No CTA.
+2. The Protagonist (What is): Clear definition of the main subject.
+3. Feature-by-Feature Comparison: Multi-section body comparing specific attributes.
+4. Comparison Table: Summary of tiers or features (MANDATORY).
+5. Pros & Cons: Balanced view to build authority.
+6. FAQ: Pricing, compatibility, or decision-making questions.
+7. Conclusion: Final verdict + strong CTA based on tiers.","{
+  ""primary_angle"": ""مقارنة عملية بين SEO و SEM لفهم الفروق الجوهرية واختيار الأنسب للأعمال في السعودية"",
+  ""market_angle"": ""توضيح كيف تختلف استراتيجيات تحسين محركات البحث (SEO) والتسويق عبر محركات البحث (SEM) في السوق السعودي من حيث النتائج، التكلفة، وسرعة الوصول للجمهور المستهدف"",
+  ""target_reader_state"": ""قارئ مبتدئ لا يعرف الفرق بين SEO و SEM ويبحث عن قرار عملي يناسب نشاطه التجاري في السعودية"",
+  ""pain_point_focus"": [
+    ""الحيرة بين الاستثمار في SEO أو SEM"",
+    ""عدم وضوح النتائج المتوقعة من كل خيار"",
+    ""القلق من التكاليف أو الوقت اللازم لتحقيق نتائج"",
+    ""صعوبة فهم المصطلحات التقنية""
+  ],
+  ""emotional_trigger"": ""الاطمئنان لاتخاذ قرار تسويقي مدروس يوفر الوقت والمال ويحقق نتائج ملموسة"",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""شرح مبسط مع أمثلة واقعية من السوق السعودي"",
+    ""توضيح الفروق بالأرقام والحقائق المتعارف عليها محلياً"",
+    ""استخدام لغة واضحة بعيدة عن التعقيد""
+  ],
+  ""eeat_signals_to_include"": [
+    ""تقديم خبرة عملية في السوق السعودي"",
+    ""توضيح مصادر المعلومات بناءً على تجارب واقعية"",
+    ""شرح مبني على معرفة دقيقة بسلوك المستخدم المحلي""
+  ],
+  ""differentiation_focus"": [
+    ""تسليط الضوء على متى يكون SEO أو SEM الخيار الأمثل حسب نوع النشاط وحجم الميزانية"",
+    ""توضيح الفروق في سرعة النتائج والتكلفة والملاءمة للسوق السعودي""
+  ],
+  ""conversion_strategy"": ""تشجيع القارئ على تقييم احتياجاته واختيار الاستراتيجية الأنسب بناءً على أهدافه وميزانيته، مع دعوة ختامية للتواصل مع خبير محلي لمزيد من التوضيح"",
+  ""cta_philosophy"": ""دعوة هادئة للتواصل أو الاستشارة، تركز على تقديم قيمة عملية وليس البيع المباشر"",
+  ""local_strategy"": ""تضمين إشارات لسلوك المستخدم السعودي، تفضيلات الدفع، وأهمية بناء الثقة في السوق المحلي"",
+  ""tone_direction"": ""عملي، واضح، موجه للمبتدئين، يركز على إزالة الغموض وبناء الثقة"",
+  ""section_role_map"": {
+    ""introduction"": ""تقديم سريع لأهمية فهم الفرق بين SEO و SEM في السوق السعودي ولماذا يؤثر ذلك على نجاح الأعمال"",
+    ""core_or_benefits"": ""تعريف كل من SEO و SEM بشكل مبسط مع إبراز الفوائد الرئيسية لكل منهما في السعودية"",
+    ""proof"": ""عرض مقارنة تفصيلية بين الجانبين (النتائج، التكلفة، الوقت، سهولة التنفيذ) مع أمثلة واقعية أو سيناريوهات محلية"",
+    ""process_or_how"": ""جدول مقارنة واضح يوضح الفروق الأساسية، ثم قائمة مختصرة بمتى يُفضل استخدام كل خيار حسب نوع النشاط أو الهدف"",
+    ""faq"": ""إجابات مباشرة على أسئلة شائعة: أيهما أسرع؟ أيهما أقل تكلفة؟ هل يمكن الجمع بينهما؟ كيف أختار الأنسب لنشاطي في السعودية؟"",
+    ""conclusion"": ""خلاصة عملية مع نصيحة نهائية حول كيفية اتخاذ القرار، ودعوة للتواصل مع خبير محلي لمناقشة الخيارات الأنسب""
+  }
+}"
+2026-05-11T12:12:58.725495,STEP_TOTAL: content_strategy,10.448,1435,749,2184,openai/gpt-4.1,0.0,False,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: الفرق بين seo و sem
+- Intent: comparative
+- Content Type: comparison
+- Target Area: السعودية
+- SERP Market Insights: ""{\""content_gaps\"": [], \""brand_advantages\"": [], \""keyword_clusters\"": [\""search engine optimization\"", \""search engine marketing\"", \""organic search\"", \""paid search\"", \""pay per click\""], \""writing_guide\"": \""Use a comparison-focused structure with clear H2s for definitions, differences, and decision guidance. Include lists for differences and use cases. End with a soft CTA or summary.\"", \""differentiation_strategy\"": [], \""mandatory_serp_topics\"": [], \""market_data_signals\"": {\""avg_unit_price_range\"": \""\"", \""common_down_payment_or_fees\"": \""\"", \""typical_duration_or_terms\"": \""\"", \""notable_market_trends\"": []}, \""topic_observations\"": {\""core_recurring_topics\"": [{\""topic\"": \""What is SEO?\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""What is SEM?\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""Differences between SEO and SEM\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""Which to use: SEO or SEM\"", \""frequency\"": 2, \""confidence\"": \""medium\""}], \""secondary_mentions\"": [{\""topic\"": \""SEO vs. SEM: Cost comparison\"", \""frequency\"": 2, \""confidence\"": \""medium\""}, {\""topic\"": \""SEO vs. SEM: Timeline to results\"", \""frequency\"": 2, \""confidence\"": \""medium\""}, {\""topic\"": \""Use cases for SEO and SEM\"", \""frequency\"": 1, \""confidence\"": \""low\""}], \""weak_signals\"": [{\""topic\"": \""Keyword Research (SEO and SEM)\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""On-Page SEO\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Off-Page SEO\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Technical SEO\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Audience Targeting (SEM)\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Ad Creation (SEM)\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""Build an Integrated SEM Strategy\"", \""frequency\"": 1, \""confidence\"": \""low\""}]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### COMPARISON STRATEGY ARCHITECTURE (STRICT)
+Comparison Articles (Review/Versus/Tiered)
+The goal is to help the reader decide between options.
+STRUCTURE:
+1. Intro: Context of the comparison. No CTA.
+2. The Protagonist (What is): Clear definition of the main subject.
+3. Feature-by-Feature Comparison: Multi-section body comparing specific attributes.
+4. Comparison Table: Summary of tiers or features (MANDATORY).
+5. Pros & Cons: Balanced view to build authority.
+6. FAQ: Pricing, compatibility, or decision-making questions.
+7. Conclusion: Final verdict + strong CTA based on tiers.","{
+  ""primary_angle"": ""مقارنة عملية بين SEO و SEM لفهم الفروق الجوهرية واختيار الأنسب للأعمال في السعودية"",
+  ""market_angle"": ""توضيح كيف تختلف استراتيجيات تحسين محركات البحث (SEO) والتسويق عبر محركات البحث (SEM) في السوق السعودي من حيث النتائج، التكلفة، وسرعة الوصول للجمهور المستهدف"",
+  ""target_reader_state"": ""قارئ مبتدئ لا يعرف الفرق بين SEO و SEM ويبحث عن قرار عملي يناسب نشاطه التجاري في السعودية"",
+  ""pain_point_focus"": [
+    ""الحيرة بين الاستثمار في SEO أو SEM"",
+    ""عدم وضوح النتائج المتوقعة من كل خيار"",
+    ""القلق من التكاليف أو الوقت اللازم لتحقيق نتائج"",
+    ""صعوبة فهم المصطلحات التقنية""
+  ],
+  ""emotional_trigger"": ""الاطمئنان لاتخاذ قرار تسويقي مدروس يوفر الوقت والمال ويحقق نتائج ملموسة"",
+  ""depth_level"": ""intermediate"",
+  ""authority_strategy"": [
+    ""شرح مبسط مع أمثلة واقعية من السوق السعودي"",
+    ""توضيح الفروق بالأرقام والحقائق المتعارف عليها محلياً"",
+    ""استخدام لغة واضحة بعيدة عن التعقيد""
+  ],
+  ""eeat_signals_to_include"": [
+    ""تقديم خبرة عملية في السوق السعودي"",
+    ""توضيح مصادر المعلومات بناءً على تجارب واقعية"",
+    ""شرح مبني على معرفة دقيقة بسلوك المستخدم المحلي""
+  ],
+  ""differentiation_focus"": [
+    ""تسليط الضوء على متى يكون SEO أو SEM الخيار الأمثل حسب نوع النشاط وحجم الميزانية"",
+    ""توضيح الفروق في سرعة النتائج والتكلفة والملاءمة للسوق السعودي""
+  ],
+  ""conversion_strategy"": ""تشجيع القارئ على تقييم احتياجاته واختيار الاستراتيجية الأنسب بناءً على أهدافه وميزانيته، مع دعوة ختامية للتواصل مع خبير محلي لمزيد من التوضيح"",
+  ""cta_philosophy"": ""دعوة هادئة للتواصل أو الاستشارة، تركز على تقديم قيمة عملية وليس البيع المباشر"",
+  ""local_strategy"": ""تضمين إشارات لسلوك المستخدم السعودي، تفضيلات الدفع، وأهمية بناء الثقة في السوق المحلي"",
+  ""tone_direction"": ""عملي، واضح، موجه للمبتدئين، يركز على إزالة الغموض وبناء الثقة"",
+  ""section_role_map"": {
+    ""introduction"": ""تقديم سريع لأهمية فهم الفرق بين SEO و SEM في السوق السعودي ولماذا يؤثر ذلك على نجاح الأعمال"",
+    ""core_or_benefits"": ""تعريف كل من SEO و SEM بشكل مبسط مع إبراز الفوائد الرئيسية لكل منهما في السعودية"",
+    ""proof"": ""عرض مقارنة تفصيلية بين الجانبين (النتائج، التكلفة، الوقت، سهولة التنفيذ) مع أمثلة واقعية أو سيناريوهات محلية"",
+    ""process_or_how"": ""جدول مقارنة واضح يوضح الفروق الأساسية، ثم قائمة مختصرة بمتى يُفضل استخدام كل خيار حسب نوع النشاط أو الهدف"",
+    ""faq"": ""إجابات مباشرة على أسئلة شائعة: أيهما أسرع؟ أيهما أقل تكلفة؟ هل يمكن الجمع بينهما؟ كيف أختار الأنسب لنشاطي في السعودية؟"",
+    ""conclusion"": ""خلاصة عملية مع نصيحة نهائية حول كيفية اتخاذ القرار، ودعوة للتواصل مع خبير محلي لمناقشة الخيارات الأنسب""
+  }
+}"

@@ -56,7 +56,9 @@ Your task is to generate only the heading structure layer of an article outline 
   - Comparison is NOT a mandatory standalone section. If comparison is useful, it may be embedded inside the most relevant section (offer, features, proof/pricing, or location) unless it deserves a dedicated standalone H2.
 - If `content_type` is `informational`:
   - Build an understanding-first article structure.
-  - Preferred flow:
+  - If the intent is `educational_comparative` or `comparative` for concepts/terms, use the COMPARATIVE flow:
+    Core Orientation -> The Key Differences -> Feature/Capability Comparison (Tables/Lists) -> Pros & Cons -> Use Cases -> FAQ -> Final Verdict
+  - Otherwise, use the standard EDUCATIONAL flow:
     context/definition -> types/categories/components -> how it works / key criteria -> practical uses/examples -> common mistakes or misconceptions -> optional comparison -> FAQ -> conclusion
   - Do NOT include brand, promotion, differentiation, case_study, or process-with-brand sections unless explicitly required by input.
   - The article should explain, organize, and clarify the topic, not persuade the reader to choose a provider.

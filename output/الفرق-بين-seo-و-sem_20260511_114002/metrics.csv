@@ -1,0 +1,522 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,model,estimated_cost,is_google,prompt_text,response_text
+2026-05-11T11:40:02.208781,STEP_TOTAL: brand_discovery,0.0,0,0,0,unknown,0.0,False,N/A,N/A
+2026-05-11T11:41:13.389724,web_research,71.142,41119,7567,48686,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: الفرق بين seo و sem في السعودية
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""ما هو الفرق بين SEO و SEM؟"",""url"":""https://www.techmadar.com/2025/04/SEO%20SEM%20.html"",""meta_title"":""ما هو الفرق بين SEO و SEM؟"",""meta_description"":""سنغوص في تعريف كل من SEO (سيو) و SEM (اس اي ام)، ونستكشف مكوناتهما الرئيسية، ونوضح الفرق بين SEO و SEM بشكل مفصل، ونناقش كيف يمكن لهاتين الاستراتيجيتين العمل معًا بتناغم لتحقيق أقصى استفادة من قوة محركات البحث في رحلتك نحو النجاح الرقمي. ... الهدف من SEM هو استخدام مزيج من هاتين الاستراتيجيتين (أو إحداهما) لجذب أكبر عدد ممكن من الزيارات المؤهلة والمستهدفة من محركات البحث إلى موقعك الإلكتروني. ... عندما يبحث المستخدم عن هذه الكلمات، تظهر الإعلانات ذات صلة، ويدفع المعلن مبلغًا معينًا فقط عندما ينقر المستخدم على إعلانه (ومن هنا جاءت تسمية \""الدفع لكل نقرة\""). ... الخاتمة: في النهاية، يمكن القول بأن فهم الفرق بين SEO و SEM ليس مجرد تفصيل تقني، بل هو أساس لبناء استراتيجية تسويق رقمي ناجحة."",""estimated_word_count"":2000,""headings"":{""h1"":""ما هو الفرق بين SEO و SEM؟"",""h2"":[""أقسام الوصول السريع (مربع البحث)""],""h3"":[""الفرق الجوهري بين SEO و SEM"",""ما هو تحسين محركات البحث (SEO)؟ الغوص في عالم النتائج العضوية"",""ما هو التسويق عبر محركات البحث (SEM)؟ المظلة الشاملة""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""url"":""https://www.learnwebseo.com/difference-between-seo-sem-smm/"",""meta_title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""meta_description"":""difference between seo sem smm والفرق بينهما , والفرق بينهما ،ماهو SEO ، تعريف SEM , كلها أشياء يتسائل عنها أصحاب المواقع أو صاحب موقع مبتدىء فلابد أن تكون لدينا فكره عن تعريفهم والفرق بينهم وأهمية كل جزء ومتى يستخدم ."",""estimated_word_count"":800,""headings"":{""h1"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""h2"":[""1-ما الفرق بين difference between seo sem smm ؟""],""h3"":[""1-ماهو Seo أو Search Engine Optimization ؟"",""2-ماهو Sem أو Search Engine Marketing ؟"",""3-ماهو SMM أو Social Media Marketing ؟""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""url"":""https://www.rabeh.org/ar/blog-show/%D8%A7%D9%84%D9%81%D8%B1%D9%82-%D8%A8%D9%8A%D9%86-SEO-%D9%88-SEM"",""meta_title"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""meta_description"":""في هذا المقال، سنرشدك إلى الطريقة التي تجعل موقعك حاضرًا في اللحظة الصحيحة، قبل أن يبدأ العميل بالمقارنة، عبر فهم عملي وواضح لـ الفرق بين SEO و SEM."",""estimated_word_count"":1500,""headings"":{""h1"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""h2"":[""الفرق بين SEO و SEM: دليل شامل للمبتدئين"",""تعرف على: ماهي محركات البحث seo"",""كيف تختار بين تحسين محركات البحث والإعلانات المدفوعة؟"",""اكتشف: طريقة عمل اعلان على جوجل"",""SEO مقابل SEM أيهما الأنسب لنمو موقعك؟"",""حقيقة عن (الصفحة الأولى)"",""استراتيجيات فعالة مع رابح لزيادة الزيارات باستخدام SEO و SEM"",""للمزيد حول: أنواع إعلانات جوجل""],""h3"":[""يصبح الفرق بين SEO و SEM قرارًا واضحًا عندما تربطه بهدفك “هذا الشهر” مقابل “هذا العام”، إن كنت تحتاج نتائج سريعة (حجز/اتصال/طلبات فورية) فSEM منطقي، وإن كنت تريد تقليل تكلفة الاستحواذ على المدى الطويل وبناء مصدر زيارات مستقر فSEO لا غنى عنه،"",""يظهر الفرق بين SEO و SEM بأوضح صورة عندما تقيس (نوع النمو) لا (كمية الزيارات)، SEO ممتاز لنمو قاعدة زيارات ثابتة وتخفيض الاعتماد على الميزانيات الشهرية، بينما SEM ممتاز لنمو سريع قابل للتوسيع والاختبار،"",""لا يُشرح هنا الفرق بين SEO و SEM… بل يُطبَّق، فنجاح هذه الاستراتيجيات يعتمد على خبرة شركة سيو محترفة مثل رابح، تُجيد قراءة نية البحث وتوقيت التنفيذ، لتحويل الظهور في نتائج البحث إلى زيارات ذات قيمة حقيقية،""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":false,""has_charts"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[],""content_gaps"":[],""common_patterns"":[""استخدام القوائم النقطية لشرح مميزات SEO و SEM""],""common_strengths"":[""تعريف واضح ومفصل لكل من SEO و SEM""],""common_weaknesses"":[""غياب قسم الأسئلة الشائعة في الصفحتين الأولى والثانية""],""observed_notes"":[""النتيجة الثانية تضيف محتوى عن SMM وهو خارج نطاق الفرق بين SEO و SEM""],""unsupported_data"":[],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""not_observed""}}"
+2026-05-11T11:44:12.925346,web_research,179.217,35308,6487,41795,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: الفرق بين seo و sem
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""SEO vs. SEM: What's the difference?"",""url"":""https://www.techtarget.com/searchcontentmanagement/answer/SEO-vs-SEM-Whats-the-difference"",""meta_title"":""SEO vs. SEM: What's the difference? | TechTarget"",""meta_description"":"""",""estimated_word_count"":850,""headings"":{""h1"":""SEO vs. SEM: What's the difference?"",""h2"":[""SEO and SEM strategies help marketers put digital content in front of the right audience. However, SEO strategies focus on organic search, whereas SEM generates paid traffic."",""What is SEO?"",""What is SEM?"",""3 key differences between SEO and SEM"",""Should marketers use SEO or SEM?""],""h3"":[""1. SEO and SEM target different search results"",""2. SEO takes longer to deliver results than SEM"",""3. SEO costs more than SEM in the short-term""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""SEO vs. SEM: What’s the Difference & Which Should You Use?"",""url"":""https://www.seo.com/blog/seo-vs-sem/"",""meta_title"":""SEO vs. SEM: What’s the Difference & Which Should You Use?"",""meta_description"":""Learn the distinctions between SEO and SEM, including their target traffic, timelines for results, and costs, and discover how a combination of both can yield optimal outcomes."",""estimated_word_count"":1000,""headings"":{""h1"":""SEO vs. SEM: What’s the Difference & Which Should You Use?"",""h2"":[""What is SEO?"",""What is SEM?"",""What’s the difference: SEM vs. SEO"",""SEO vs. SEM: Which is better"",""Use cases for SEO and SEM"",""Do I need both? When to choose SEO vs. SEM"",""Discover more about SEO and SEM""],""h3"":[""1. They target different types of traffic"",""2. They have different timelines"",""3. They have different costs""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""},{""title"":""SEO vs. SEM: Differences in Tactics, Costs, and Results"",""url"":""https://www.semrush.com/blog/seo-vs-sem/"",""meta_title"":""SEO vs. SEM: Differences in Tactics, Costs, and Results"",""meta_description"":""The main difference between search engine optimization (SEO) and search engine marketing (SEM) is that SEO focuses on attracting unpaid traffic from search engines, while SEM focuses on both unpaid and paid search traffic."",""estimated_word_count"":2500,""headings"":{""h1"":""SEO vs. SEM: Differences in Tactics, Costs, and Results"",""h2"":[""SEO vs. SEM: What's the Difference?"",""What Is SEO?"",""What Is SEM?"",""SEO vs. SEM: How Much Do They Cost?"",""SEO vs. SEM: How Long Does It Take to See Results?"",""SEO vs. SEM: Which Practice Is Right for You?"",""Build an Integrated SEM Strategy"",""More on this""],""h3"":[""Keyword Research"",""On-Page SEO"",""Off-Page SEO""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[],""content_gaps"":[],""common_patterns"":[""Use of clear definition sections explaining the main difference at the top"",""Presentation of key differences in numbered lists"",""Inclusion of a Table of Contents for navigation in two results""],""common_strengths"":[""Consistent H2 headings separating “What is SEO?” and “What is SEM?”"",""Frequent use of bullet lists to organize information""],""common_weaknesses"":[""Absence of FAQ modules across all sampled pages""],""observed_notes"":[""Top SERP results are English-language informational blog posts; no Arabic-language pages observed on page 1 despite an Arabic query.""],""unsupported_data"":[""TechTarget meta_description"",""seo.com meta_title not explicitly observed"",""semrush.com meta_title not explicitly observed""],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""not_observed""}}"
+2026-05-11T11:45:21.665339,web_research,68.611,35986,6581,42567,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: الفرق بين seo و sem في السعودية
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""ما هو الفرق بين SEO و SEM؟"",""url"":""https://www.techmadar.com/2025/04/SEO%20SEM%20.html"",""meta_title"":"""",""meta_description"":""سنغوص في تعريف كل من SEO (سيو) و SEM (اس اي ام)، ونستكشف مكوناتهما الرئيسية، ونوضح الفرق بين SEO و SEM بشكل مفصل، ونناقش كيف يمكن لهاتين الاستراتيجيتين العمل معًا بتناغم لتحقيق أقصى استفادة من قوة محركات البحث في رحلتك نحو النجاح الرقمي."",""estimated_word_count"":1800,""headings"":{""h1"":""ما هو الفرق بين SEO و SEM؟"",""h2"":[""الفرق الجوهري بين SEO و SEM"",""ما هو تحسين محركات البحث (SEO)؟ الغوص في عالم النتائج العضوية"",""ما هو التسويق عبر محركات البحث (SEM)؟ المظلة الشاملة"",""الاختلافات الرئيسية بين SEO و SEM"",""SEO و SEM قوة التكامل والتآزر"",""أيهما تختار؟ SEO أم SEM؟ (أم كلاهما؟)"",""أهمية التحديث المستمر ومواكبة التغييرات"",""الخاتمة فهم الفرق يقود إلى استراتيجية أفضل""],""h3"":[""ركائز SEO الأساسية"",""فوائد SEO"",""تحديات SEO""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""url"":""https://www.learnwebseo.com/difference-between-seo-sem-smm/"",""meta_title"":"""",""meta_description"":""difference between seo sem smm والفرق بينهما , والفرق بينهما ،ماهو SEO ، تعريف SEM , كلها أشياء يتسائل عنها أصحاب المواقع أو صاحب موقع مبتدىء فلابد أن تكون لدينا فكره عن تعريفهم والفرق بينهم وأهمية كل جزء ومتى يستخدم."",""estimated_word_count"":1200,""headings"":{""h1"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""h2"":[""1-ما الفرق بين difference between seo sem smm ؟""],""h3"":[""1-ماهو Seo أو Search Engine Optimization ؟"",""2-ماهو Sem أو Search Engine Marketing ؟"",""3-ماهو SMM أو Social Media Marketing ؟""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""},{""title"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""url"":""https://www.rabeh.org/ar/blog-show/%D8%A7%D9%84%D9%81%D8%B1%D9%82-%D8%A8%D9%8A%D9%86-SEO-%D9%88-SEM"",""meta_title"":"""",""meta_description"":""في هذا المقال، سنرشدك إلى الطريقة التي تجعل موقعك حاضرًا في اللحظة الصحيحة، قبل أن يبدأ العميل بالمقارنة، عبر فهم عملي وواضح لـ الفرق بين SEO و SEM."",""estimated_word_count"":1500,""headings"":{""h1"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""h2"":[""الفرق بين SEO و SEM: دليل شامل للمبتدئين"",""كيف تختار بين تحسين محركات البحث والإعلانات المدفوعة؟"",""SEO مقابل SEM أيهما الأنسب لنمو موقعك؟"",""استراتيجيات فعالة مع رابح لزيادة الزيارات باستخدام SEO و SEM"",""للمزيد حول: أنواع إعلانات جوجل"",""الأسئلة الشائعة""],""h3"":[""يصبح الفرق بين SEO و SEM قرارًا واضحًا عندما تربطه بهدفك “هذا الشهر” مقابل “هذا العام”"",""اختر SEM أولًا إذا:"",""اختر SEO أولًا إذا:""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":false,""has_charts"":false,""cta_style"":""soft commercial""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[],""content_gaps"":[],""common_patterns"":[""Use of H2 headings for definition sections"",""Use of H3 subheadings for subtopic delineation"",""Bullet lists to enumerate features or steps""],""common_strengths"":[""Well-organized content with clear H2 and H3 headings"",""Use of bullet lists to present information""],""common_weaknesses"":[""Lack of tabular data for comparison"",""Limited use of infographics for visualization""],""observed_notes"":[""SERP page 1 is dominated by informational guide articles on SEO vs SEM.""],""unsupported_data"":[""meta_title""],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""not_observed""}}"
+2026-05-11T11:50:48.532244,web_research,326.864,40330,8412,48742,unknown,0.0,False,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: الفرق بين seo و sem
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.","{""top_results"":[{""title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""url"":""https://www.learnwebseo.com/difference-between-seo-sem-smm/"",""meta_title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""h2"":[""جدول المحتويات إظهار"",""1-ما الفرق بين difference between seo sem smm ؟""],""h3"":[""1-ماهو Seo أو Search Engine Optimization ؟"",""2-ماهو Sem أو Search Engine Marketing ؟"",""3-ماهو SMM أو Social Media Marketing ؟""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""ما هو الفرق بين SEO و SEM؟"",""url"":""https://www.techmadar.com/2025/04/SEO%20SEM%20.html"",""meta_title"":""ما هو الفرق بين SEO و SEM؟"",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""ما هو الفرق بين SEO و SEM؟"",""h2"":[""أقسام الوصول السريع (مربع البحث)"",""المدار للمعلومات | TechMadar""],""h3"":[""الفرق الجوهري بين SEO و SEM"",""ما هو تحسين محركات البحث (SEO)؟ الغوص في عالم النتائج العضوية"",""ما هو التسويق عبر محركات البحث (SEM)؟ المظلة الشاملة""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""url"":""https://www.rabeh.org/ar/blog-show/%D8%A7%D9%84%D9%81%D8%B1%D9%82-%D8%A8%D9%8A%D9%86-SEO-%D9%88-SEM"",""meta_title"":""الفرق بين SEO و SEM | شركة رابح للتسويق الالكتروني"",""meta_description"":"""",""estimated_word_count"":0,""headings"":{""h1"":""الفرق بين SEO و SEM: السر الذي يحدد من يظهر أولًا"",""h2"":[""الفرق بين SEO و SEM: دليل شامل للمبتدئين"",""تعرف على: ماهي محركات البحث seo"",""كيف تختار بين تحسين محركات البحث والإعلانات المدفوعة؟"",""SEO مقابل SEM أيهما الأنسب لنمو موقعك؟"",""حقيقة عن (الصفحة الأولى): كثير من الصفحات التي تحتل التوب 10 تكون قديمة نسبيًا، وهذا يعني أن المنافسة ليست (كتابة مقال) بل (بناء ثقة بمرور الوقت)."",""استراتيجيات فعالة مع رابح لزيادة الزيارات باستخدام SEO و SEM"",""للمزيد حول: أنواع إعلانات جوجل"",""إذا كنت تريد نتائج تُرى سريعًا دون أن تُهدر ميزانيتك، وفي الوقت نفسه تريد أصلًا رقميًا يشتغل لصالحك كل شهر…""],""h3"":[""يصبح الفرق بين SEO و SEM قرارًا واضحًا عندما تربطه بهدفك “هذا الشهر” مقابل “هذا العام”، إن كنت تحتاج نتائج سريعة (حجز/اتصال/طلبات فورية) فSEM منطقي، وإن كنت تريد تقليل تكلفة الاستحواذ على المدى الطويل وبناء مصدر زيارات مستقر فSEO لا غنى عنه، فالقرار الاحترافي لا يكون “إما/أو”، بل: ما الذي يجب أن يبدأ الآن… وما الذي يجب أن يُبنى بالتوازي؟، إليك أهم النقاط الرئيسية للاختيار بينهما:"",""اختر SEO أولًا إذا:"",""يظهر الفرق بين SEO و SEM بأوضح صورة عندما تقيس (نوع النمو) لا (كمية الزيارات)، SEO ممتاز لنمو قاعدة زيارات ثابتة وتخفيض الاعتماد على الميزانيات الشهرية، بينما SEM ممتاز لنمو سريع قابل للتوسيع والاختبار، خصوصًا في العروض الموسمية وإطلاق المنتجات، فالأفضل لنمو موقعك غالبًا ليس اختيارًا واحدًا، بل هندسة دور لكل قناة ضمن رحلة العميل: من بحث تعليمي → بحث مقارن → بحث شرائي.""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":false,""has_charts"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""تحسين محركات البحث"",""التسويق عبر محركات البحث""],""content_gaps"":[],""common_patterns"":[""استخدام عناوين مرقمة وقوائم نقطية""],""common_strengths"":[""هيكلة المحتوى باستخدام تعريفات واضحة وقوائم منظمة"",""استخدام صور توضيحية ودعم المحتوى بعناوين فرعية""],""common_weaknesses"":[""غياب جداول مقارنة لتلخيص الفروقات""],""observed_notes"":[""Page 1 results include mixture of English and Arabic pages; prioritized Arabic informational guides.""],""unsupported_data"":[],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""page_content""}}"

@@ -1,0 +1,2 @@
+﻿timestamp,step_name,duration_sec,prompt_tokens,completion_tokens,total_tokens,model,estimated_cost,is_google,prompt_text,response_text
+2026-05-11T01:15:23.582564,STEP_TOTAL: brand_discovery,0.0,0,0,0,unknown,0.0,False,N/A,N/A

@@ -323,12 +323,20 @@ class AsyncWorkflowController:
                 print(f"[TRACER_V1] SUCCESS: Triggered Heading-Only early stop for step '{name}'.")
                 break
 
+        final_output = self._assemble_final_output(state)
+
         # Final Export
         if state.get("workflow_logger"):
+            if state.get("heading_only_mode"):
+                state["workflow_logger"].log_step_details(
+                    "final_heading_response",
+                    0,
+                    output_data=final_output,
+                )
             state["workflow_logger"].export_csv()
             state["workflow_logger"].export_diagnostic_report(state)
 
-        return self._assemble_final_output(state)
+        return final_output
 
     # ---------------- COORDINATION STEPS (ASYNC) ----------------
     async def _step_0_init(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -821,12 +829,19 @@ class AsyncWorkflowController:
                 # TASK 3: FAQ De-duplication
                 outline = self.outline_repair_service.dedupe_faq_against_h2(outline)
 
-                # TASK 3: Deterministic FAQ Enrichment (Brand Utility)
+                # TASK 3b: FAQ Refill (restore minimum 4 FAQs after dedupe)
+                outline = self.outline_repair_service.refill_faq_after_dedupe(
+                    outline,
+                    entity_phrase=entity_phrase
+                )
+
+                # TASK 3c: Deterministic FAQ Enrichment (Brand Utility)
                 outline = self.outline_repair_service.enrich_brand_utility_faq(
                     outline,
                     serp_brief=state.get("serp_outline_brief", {}),
-                    brand_context=state.get("brand_context", ""),
-                    content_type=content_type
+                    brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
+                    content_type=content_type,
+                    entity_phrase=entity_phrase
                 )
 
                 # TASK 4: Conclusion Cleanup
@@ -857,6 +872,23 @@ class AsyncWorkflowController:
                 errors.extend(quality_errors)
             else:
                 logger.info("Heading-only mode: Heavy quality validation and deterministic repairs bypassed.")
+
+            if heading_only_mode:
+                # Keep lightweight, deterministic heading-only fixes active even when
+                # heavy validation is relaxed. These do not force a regeneration and
+                # protect practical visitor intents such as brand-assisted booking.
+                outline = self.outline_repair_service.dedupe_faq_against_h2(outline)
+                outline = self.outline_repair_service.enrich_brand_utility_faq(
+                    outline,
+                    serp_brief=state.get("serp_outline_brief", {}),
+                    brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
+                    content_type=content_type,
+                    entity_phrase=entity_phrase,
+                )
+                outline = self.outline_repair_service.clean_conclusion_heading(
+                    outline,
+                    entity_phrase=entity_phrase,
+                )
 
             last_validation_errors = list(errors)
 
@@ -2771,6 +2803,14 @@ class AsyncWorkflowController:
 
         if state.get("heading_only_mode"):
             outline = state.get("outline", [])
+            outline = self.outline_repair_service.enrich_brand_utility_faq(
+                outline,
+                serp_brief=state.get("serp_outline_brief", {}),
+                brand_context=state.get("display_brand_name", "") or state.get("brand_name", ""),
+                content_type=state.get("content_type", ""),
+                entity_phrase=state.get("entity_phrase", "") or state.get("primary_keyword", ""),
+            )
+            state["outline"] = outline
             heading_map = []
 
             # Build a clear structural map for review

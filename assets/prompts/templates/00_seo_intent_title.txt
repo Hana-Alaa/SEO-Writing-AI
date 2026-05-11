@@ -17,13 +17,16 @@ Task:
    - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.
    - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.
    - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.
-   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves "Vs", "Comparison", "Better between X and Y", or comparing different options, the intent is **comparative**.
+   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves "Vs", "Comparison", "Better between X and Y", or comparing different options, the intent is **comparative**. 
+     - **SUB-TYPE 1: EDUCATIONAL COMPARISON**: If the comparison is between concepts, methods, strategies, channels, terms, features, or educational categories (e.g., "SEO vs SEM", "SQL vs NoSQL"), classify as **educational_comparative**.
+     - **SUB-TYPE 2: COMMERCIAL COMPARISON**: If the comparison is between brands, providers, tools, SaaS, products, or services (e.g., "HubSpot vs Salesforce"), classify as **commercial_comparative**.
    - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.
 
 Allowed intents:
 - informational -> searching for knowledge, guides, or tutorials.
 - commercial -> evaluating a specific service/product or ready to take action.
-- comparative -> comparing different options with brand helpfulness as the preferred choice.
+- educational_comparative -> educational comparison between concepts/terms (behavior = informational).
+- commercial_comparative -> commercial comparison between brands/products.
 
 Title rules:
 - LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
@@ -33,8 +36,10 @@ Title rules:
 - FRESHNESS (YEAR): Include the current year ({{ current_year | default('2026') }}) to signal relevance.
 - BRANDING (FALLBACK):
     * If `Brand Name` is "Not provided", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
-    * If the intent is informational, do NOT include the brand unless the primary keyword itself is the brand.
-    * If the intent is commercial or comparative and `Brand Name` exists, integrate it naturally to build trust.
+    * If the intent is informational, do NOT include the brand name unless the primary keyword itself contains the brand.
+    * If the intent is commercial, Brand Name may be integrated only when the query has service/provider/buying intent.
+    * If the intent is comparative, include Brand Name only when the comparison is between brands/providers/tools/services and the Brand Name is one of the compared entities.
+    * For educational comparisons between concepts, methods, strategies, or terms (e.g. SEO vs SEM), treat branding exactly like informational: do NOT include Brand Name unless the keyword itself contains the brand.
 - AREA (FALLBACK):
     * If `Target Area` is "Global", "General", or "International", DO NOT mention any geographic area in the title.
     * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
