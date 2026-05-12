@@ -33,22 +33,25 @@ Title rules:
 - KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
 - TONE: Use a Helpful, Practical Advisor tone (e.g., "Simplified", "Complete Guide", "Tips", "Top-Rated").
 - USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
-- FRESHNESS (YEAR): Include the current year ({{ current_year | default('2026') }}) to signal relevance.
+- FRESHNESS (YEAR): Include the current year ({{ current_year | default('2026') }}) only when the topic is a destination, venue, event, product review, or time-sensitive guide. Do NOT add the year to pure conceptual, term-based, or theoretical topics (e.g., "SEO vs SEM") unless the keyword explicitly demands it.
 - BRANDING (FALLBACK):
     * If `Brand Name` is "Not provided", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
     * If the intent is informational, do NOT include the brand name unless the primary keyword itself contains the brand.
     * If the intent is commercial, Brand Name may be integrated only when the query has service/provider/buying intent.
     * If the intent is comparative, include Brand Name only when the comparison is between brands/providers/tools/services and the Brand Name is one of the compared entities.
     * For educational comparisons between concepts, methods, strategies, or terms (e.g. SEO vs SEM), treat branding exactly like informational: do NOT include Brand Name unless the keyword itself contains the brand.
-- AREA (FALLBACK):
-    * If `Target Area` is "Global", "General", or "International", DO NOT mention any geographic area in the title.
-    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- AREA / LOCATION RULE:
+    * For commercial or location-driven queries, preserve the area when it matches the search intent.
+    * For generic informational, conceptual, or educational-comparative queries, treat `area` as metadata only.
+    * Do NOT inject area/location into the title unless the keyword or SERP explicitly supports local intent.
+    * Never convert a generic educational/comparative keyword into a localized title just because `area` exists.
+    * This restriction applies only to informational and educational_comparative titles. It must NOT remove valid location modifiers from commercial or commercial_comparative titles.
 - **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.
 - No markdown, no extra text.
 
 Return STRICT JSON only:
 {
-  "intent": "commercial | informational | comparative",
+  "intent": "commercial | informational | educational_comparative | commercial_comparative",
   "confidence": 0.0,
   "optimized_title": "The Clear, Helpful H1"
 }

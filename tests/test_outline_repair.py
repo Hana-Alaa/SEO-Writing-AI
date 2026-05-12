@@ -52,7 +52,7 @@ class TestOutlineRepairService(unittest.TestCase):
         repaired = self.repair_service.enrich_brand_utility_faq(outline, serp_brief, "BrandX", "informational")
         # FAQ is now index 1
         self.assertEqual(len(repaired[1]["subheadings"]), 2)
-        self.assertEqual(repaired[1]["subheadings"][1]["heading_text"], "How to book via BrandX")
+        self.assertEqual(repaired[1]["subheadings"][1], "How to book via BrandX")
 
     def test_enrich_brand_utility_faq_duplicate(self):
         outline = [
@@ -114,9 +114,69 @@ class TestOutlineRepairService(unittest.TestCase):
         repaired = self.repair_service.enrich_brand_utility_faq(outline, serp_brief, "BrandX", "informational")
         self.assertEqual(len(repaired[1]["subheadings"]), 5)
         # The last one should be replaced since it's weak
-        replaced = repaired[1]["subheadings"][4]
-        replaced_text = replaced["heading_text"] if isinstance(replaced, dict) else str(replaced)
-        self.assertEqual(replaced_text, "How to book via BrandX")
+        self.assertEqual(repaired[1]["subheadings"][4], "How to book via BrandX")
+
+    def test_enrich_brand_utility_faq_uses_implementation_for_strategy_topic(self):
+        outline = [
+            {
+                "section_type": "core_or_benefits",
+                "heading_text": "\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 SEO \u0648 SEM: \u0627\u0644\u062a\u0639\u0631\u064a\u0641 \u0648\u0627\u0644\u0645\u0641\u0627\u0647\u064a\u0645 \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629",
+            },
+            {
+                "section_type": "faq",
+                "heading_text": "\u0623\u0633\u0626\u0644\u0629 \u0634\u0627\u0626\u0639\u0629",
+                "subheadings": [
+                    "\u0623\u064a \u0627\u0644\u0627\u0633\u062a\u0631\u0627\u062a\u064a\u062c\u064a\u062a\u064a\u0646 \u0623\u0633\u0631\u0639 \u0641\u064a \u062a\u062d\u0642\u064a\u0642 \u0627\u0644\u0646\u062a\u0627\u0626\u062c\u061f",
+                    "\u0647\u0644 \u064a\u0645\u0643\u0646 \u0627\u0644\u062c\u0645\u0639 \u0628\u064a\u0646 SEO \u0648 SEM\u061f",
+                    "\u0645\u0627 \u0647\u064a \u0627\u0644\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0629\u061f",
+                    "\u0643\u064a\u0641 \u0623\u062e\u062a\u0627\u0631 \u0627\u0644\u0623\u0646\u0633\u0628 \u0644\u0645\u0634\u0631\u0648\u0639\u064a\u061f",
+                ],
+            },
+        ]
+        repaired = self.repair_service.enrich_brand_utility_faq(
+            outline,
+            {},
+            "Creative Minds",
+            "informational",
+            "\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 seo \u0648 sem",
+        )
+        faq_text = " ".join(repaired[1]["subheadings"])
+        self.assertIn("Creative Minds", faq_text)
+        self.assertIn("\u062a\u0646\u0641\u064a\u0630 \u0627\u0633\u062a\u0631\u0627\u062a\u064a\u062c\u064a\u0629 SEO \u0648 SEM", faq_text)
+        self.assertNotIn("\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631", faq_text)
+        self.assertTrue(all(isinstance(item, str) for item in repaired[1]["subheadings"]))
+
+    def test_enrich_brand_utility_faq_skips_pure_knowledge_topic(self):
+        outline = [
+            {
+                "section_type": "core_or_benefits",
+                "heading_text": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062f\u0648\u0644\u0629 \u0627\u0644\u0639\u0628\u0627\u0633\u064a\u0629",
+            },
+            {
+                "section_type": "faq",
+                "heading_text": "\u0623\u0633\u0626\u0644\u0629 \u0634\u0627\u0626\u0639\u0629",
+                "subheadings": ["\u0645\u062a\u0649 \u0628\u062f\u0623\u062a \u0627\u0644\u062f\u0648\u0644\u0629 \u0627\u0644\u0639\u0628\u0627\u0633\u064a\u0629\u061f"],
+            },
+        ]
+        repaired = self.repair_service.enrich_brand_utility_faq(
+            outline,
+            {},
+            "BrandX",
+            "informational",
+            "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062f\u0648\u0644\u0629 \u0627\u0644\u0639\u0628\u0627\u0633\u064a\u0629",
+        )
+        self.assertEqual(repaired[1]["subheadings"], ["\u0645\u062a\u0649 \u0628\u062f\u0623\u062a \u0627\u0644\u062f\u0648\u0644\u0629 \u0627\u0644\u0639\u0628\u0627\u0633\u064a\u0629\u061f"])
+
+    def test_normalize_heading_only_section_types_definition_not_offer(self):
+        outline = [
+            {
+                "section_type": "offer",
+                "heading_level": "H2",
+                "heading_text": "\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 SEO \u0648 SEM: \u0627\u0644\u062a\u0639\u0631\u064a\u0641 \u0648\u0627\u0644\u0645\u0641\u0627\u0647\u064a\u0645 \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629",
+            }
+        ]
+        repaired = self.repair_service.normalize_heading_only_section_types(outline)
+        self.assertEqual(repaired[0]["section_type"], "core_or_benefits")
 
     def test_enrich_brand_utility_faq_skips_when_full_and_strong(self):
         outline = [

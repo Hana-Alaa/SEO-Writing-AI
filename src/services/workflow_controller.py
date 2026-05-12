@@ -843,7 +843,8 @@ class AsyncWorkflowController:
                     content_type=content_type,
                     entity_phrase=entity_phrase
                 )
-
+                outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
+                
                 # TASK 4: Conclusion Cleanup
                 outline = self.outline_repair_service.clean_conclusion_heading(
                     outline,
@@ -885,6 +886,7 @@ class AsyncWorkflowController:
                     content_type=content_type,
                     entity_phrase=entity_phrase,
                 )
+                outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
                 outline = self.outline_repair_service.clean_conclusion_heading(
                     outline,
                     entity_phrase=entity_phrase,
@@ -2810,6 +2812,7 @@ class AsyncWorkflowController:
                 content_type=state.get("content_type", ""),
                 entity_phrase=state.get("entity_phrase", "") or state.get("primary_keyword", ""),
             )
+            outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
             state["outline"] = outline
             heading_map = []
 
@@ -2849,7 +2852,8 @@ class AsyncWorkflowController:
 
                     # Add H3 subheadings if present
                     for sub in sec.get("subheadings", []):
-                        preview_lines.append(f"### {sub}")
+                        sub_text = sub.get("heading_text", "") if isinstance(sub, dict) else str(sub)
+                        preview_lines.append(f"### {sub_text}")
 
                     preview_lines.append("")
 

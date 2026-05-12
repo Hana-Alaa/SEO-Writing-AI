@@ -55,7 +55,10 @@ Your task is to generate only the heading structure layer of an article outline 
     - If a shorter, more search-natural heading communicates the same intent clearly, prefer the shorter version.
     - Do not add decorative tails (e.g., "دليل شامل", "unique experience", "integrated experience", "overview", "key components", "المكونات الرئيسية", "التجربة المتكاملة") after a strong heading unless the added phrase introduces a genuinely distinct search intent.
   - **CONTEXTUAL BRAND UTILITY**:
-    - If `brand_name` is provided and the article contains a practical task section such as booking, ticketing, pricing, reservation, registration, setup, or access, the exact brand/platform name may be used naturally where it helps the reader complete that task.
+    - If `brand_name` is provided, first decide whether the topic actually supports a brand utility mention. Brand presence alone is not enough.
+    - Use booking/ticketing wording ONLY for place, event, venue, visit, travel, reservation, or ticket topics.
+    - For educational strategy, service, or implementation topics, use implementation-support wording instead of booking wording.
+    - For pure knowledge topics with no task, service, implementation, booking, setup, or decision action, do not insert a brand mention.
     - Prefer placing the brand inside the most task-relevant section, not as a standalone promotional section.
     - Acceptable placements:
       - a practical H3 under the relevant task H2
@@ -64,9 +67,36 @@ Your task is to generate only the heading structure layer of an article outline 
     - Do NOT create standalone brand H2s.
     - Do NOT use promotional wording such as “why choose [brand]”, “best platform”, “book now”, or sales CTA language.
     - Do NOT replace the exact brand name with generic wording such as “المنصة الرسمية”, “منصة الحجز”, or “الموقع الرسمي”.
-    - Good Arabic patterns:
+    - Good Arabic patterns for event/venue/ticket topics:
       - "طريقة حجز تذاكر [entity] عبر [brand_name]"
       - "هل يمكن حجز تذاكر [entity] عبر [brand_name]؟"
+    - Good Arabic patterns for strategy/service/implementation topics:
+      - "كيف تساعدك [brand_name] في تنفيذ استراتيجية [topic] متكاملة؟"
+      - "متى تحتاج إلى دعم متخصص لتطبيق [topic]؟"
+    - Bad pattern outside event/venue/ticket topics:
+      - "هل يمكن حجز تذاكر [educational topic] عبر [brand_name]؟"
+
+  - **LOCATION INTENT RULE**:
+    - Treat `area` as contextual metadata, not a required modifier.
+    - Do NOT inject country names, cities, market references, or year/location modifiers (e.g., "in Egypt", "Egyptian market", "2026", "في مصر", "السوق المصري") into the title, H1, headings, FAQs, examples, or conclusions unless:
+      - the primary keyword explicitly contains a location
+      - OR the observed SERP clearly reflects local/commercial intent
+      - OR localization is necessary to preserve the actual search intent.
+    - Generic educational, conceptual, and comparison topics should remain geographically neutral by default.
+    - Do NOT localize conceptual topics simply because an `area` value exists in context.
+    - Good: "SEO vs SEM", "How content marketing works"
+    - Bad: "SEO vs SEM in Egypt", "Content marketing in the Egyptian market"
+
+  - **TITLE/H2 ANTI-ECHO RULE**:
+    - The first visible H2 must define or orient the reader, but it must NOT repeat the H1/title structure with a colon-style generic suffix.
+    - Avoid first H2 patterns like: "[primary keyword]: التعريف والمفاهيم الأساسية", "[primary keyword]: دليل مبسط", "[primary keyword]: كل ما تحتاج معرفته", or "مقدمة عن [primary keyword]".
+    - For educational comparison topics (SEO vs SEM), the first visible H2 should define both concepts naturally without echoing the title.
+    - Preferred first H2 patterns: "ما هو SEO وما هو SEM؟", "ما معنى SEO و SEM في التسويق الرقمي؟".
+    - Avoid using both "الفرق بين SEO و SEM" and "مقارنة بين SEO و SEM" too close together unless each has a distinct job.
+
+  - **HEADING REPETITION RULE**:
+    - Do NOT repeat the exact primary keyword phrase in more than 2 visible H2 headings.
+    - FAQ H2 should use a lighter variant (e.g., "أسئلة شائعة عن SEO و SEM") instead of echoing the full comparison phrase ("الأسئلة الشائعة حول الفرق بين SEO و SEM").
 
 - H1 is the final article title. Do not include H1 inside the outline array.
 - The first outline item MUST be the introduction section:
@@ -87,9 +117,34 @@ Your task is to generate only the heading structure layer of an article outline 
   Goal: educate the reader, build topical authority, and answer the search query fully.
   Use a knowledge-building funnel from broad understanding to specific application.
 
+  INFORMATIONAL DEPTH EXPANSION RULE:
+  Before generating the H2 structure, identify the depth needs of the topic.
+
+  For educational, strategic, technical, or comparison topics, do not stop at a surface overview.
+  Expand the outline to cover the naturally relevant depth angles needed for full reader understanding.
+
+  Consider whether the topic needs sections for:
+  - core definitions and context
+  - main components or elements
+  - how it works
+  - advantages and benefits
+  - limitations, risks, or common challenges
+  - practical use cases or scenarios
+  - cost, timing, effort, or resource considerations
+  - comparison factors or decision criteria
+  - implementation steps or how to apply it
+  - measurement, success indicators, or evaluation
+  - common mistakes
+  - when to choose each option
+  - when combining options is useful
+
+  Use only the angles that are naturally relevant to the topic and search intent.
+  Do not add filler sections just to increase length.
+  Prefer comprehensive topical coverage over generic overview headings.
+
   INFORMATIONAL SUBTYPE RULE:
   Before applying the default educational informational flow, detect the article subtype:
-  - If the topic compares concepts, methods, or terms (e.g., SEO vs SEM) AND `intent` is `educational_comparative` or `comparative`, use COMPARATIVE informational flow.
+  - If the topic compares concepts, methods, strategies, channels, or terms (e.g., SEO vs SEM), use COMPARATIVE informational flow even when the normalized `intent` is informational.
   - Else if the topic is a place, destination, venue, attraction, mall, restaurant, event, or real-world location, use EXPERIENCE-BASED informational flow.
   - Else, use EDUCATIONAL informational flow.
 
@@ -102,14 +157,19 @@ Your task is to generate only the heading structure layer of an article outline 
   6. FAQ: Real reader questions.
   7. Takeaway: Practical next step.
 
-  COMPARATIVE informational flow (For educational comparisons like "SEO vs SEM"):
-  1. Core Orientation: Brief definition of both concepts/terms.
-  2. The Key Differences: High-level comparison of methods/approaches.
-  3. Feature/Capability Comparison: Use tables or lists for direct side-by-side analysis.
-  4. Pros & Cons: For both entities being compared.
-  5. Use Cases: When to use X vs when to use Y.
-  6. FAQ: Common misconceptions and choosing advice.
-  7. Final Verdict: Educational summary of the best fit for different needs.
+  COMPARATIVE informational flow:
+  1. Core Orientation: Define both concepts/terms naturally and independently before comparing them. Focus on understanding each entity's role, and why they are being compared. Avoid comparison-first phrasing in the first H2 even if the primary keyword itself is phrased as a comparison query.
+  The first H2 should orient the reader around the compared concepts before introducing direct trade-off framing.
+  2. Components/How Each Works: Explain the main parts, mechanisms, or operating model of each side when relevant.
+  3. Key Differences: This is the dedicated comparison section. Compare timing, cost, effort, sustainability, control, risk, and expected outcomes when relevant. Use comparison framing here only.
+  4. Pros & Cons: Cover advantages and limitations of each side separately when the topic requires it.
+  5. Use Cases & Scenarios: Explain when to use X alone, when to use Y alone, and when both can work together.
+  6. Hybrid Strategy: Cover how the two options can support each other when the comparison topic naturally involves combining them.
+  7. Implementation or Application: Show how a reader can apply, start, combine, or evaluate the options.
+  8. Measurement or Success Indicators: Include metrics, evaluation criteria, or signs of success when relevant.
+  9. Mistakes: Include common mistakes in choosing, combining, or measuring the compared options.
+  10. FAQ: Common misconceptions and choosing advice.
+  11. Final Verdict: Practical summary of the best fit for different needs.
 
   EXPERIENCE-BASED informational flow:
   1. Definition / orientation:
@@ -170,6 +230,7 @@ Your task is to generate only the heading structure layer of an article outline 
   - Avoid: "أفضل مناطق شراء [entity] للبيع في [area]".
   - Prefer: "أفضل مناطق شراء [entity] للبيع في [area] حسب ميزانيتك".
 - This first H2 must contain the full primary keyword exactly, or the closest natural phrasing that preserves the same full search intent.
+- A definition/context H2 must use `section_type: "core_or_benefits"` or another non-commercial informational type. Do NOT label definition or basic-concepts sections as `offer`.
 - **PRIMARY KEYWORD ANCHOR RULE**:
   - The exact full Primary Keyword may appear only in the designated anchor H2 (the first visible core H2).
   - Later H2s MUST preserve intent through natural semantic variants.
@@ -268,6 +329,7 @@ A heading is INVALID if it is generic, vague, or does not help the reader unders
 ---
 
 - **OFFER SECTION (section_type: offer)**: Focus on clear "Types/Options". Do not use abstract "How to choose" phrasing here.
+- Do NOT use `section_type: offer` for headings about definitions, basic concepts, meaning, or "what is". Those are `core_or_benefits`.
 - **FEATURES SECTION (section_type: features)**: Focus on practical benefits or what to look for. Be specific. Do not use generic words like "أهم المزايا".
 - **LOCATION SECTION (section_type: location)**: Connect locations to user needs. Avoid pure geographic listing. Prefer descriptive context (e.g., "أفضل مناطق الرياض للعائلات").
 
@@ -327,7 +389,7 @@ Return ONLY valid JSON in the following format:
       "section_id": "sec_02",
       "heading_text": "Reader-facing H2 heading",
       "heading_level": "H2",
-      "section_type": "offer",
+      "section_type": "core_or_benefits",
       "section_intent": "informational",
       "subheadings": ["Optional reader-facing H3", "Optional reader-facing H3"]
     }
@@ -386,16 +448,21 @@ FAQ must cover only edge cases, practical variations, or unanswered visitor conc
 - Tips = preparation, rules, what to bring, common mistakes.
 If they overlap, merge or rewrite one.
 
-3. If `brand_name` is provided and the article includes a booking/ticketing/pricing/access section, include exactly one utility-oriented brand mention using the exact brand name.
+3. If `brand_name` is provided, include exactly one contextual brand mention only when the topic supports it.
+- For event/venue/ticket/access topics, the brand mention may be a booking, ticketing, pricing, or access utility.
+- For strategy/service/implementation topics, the brand mention must be about applying or implementing the strategy, not booking.
+- For pure knowledge topics with no practical action or implementation angle, do not include a brand mention.
 - Prefer placing it as a practical H3 under the most relevant task H2 when that H2 naturally supports subheadings.
 - If no suitable H3 placement exists, include it as one non-promotional FAQ question.
 - Do not create a standalone brand H2.
 - Do not use promotional wording.
 - Do not use “why choose [brand]”, “best platform”, “book now”, or sales CTA language.
 - Do not replace the exact brand name with generic wording such as "المنصة الرسمية", "منصة الحجز", or "الموقع الرسمي".
-- If FAQ count is limited, replace the weakest generic booking/access question with the brand FAQ instead of adding a duplicate.
-Preferred Arabic H3 pattern: "طريقة حجز تذاكر [entity] عبر [brand_name]"
-Preferred Arabic FAQ pattern: "هل يمكن حجز تذاكر [entity] عبر [brand_name]؟"
+- If FAQ count is limited, replace the weakest generic question with the contextual brand FAQ instead of adding a duplicate.
+Preferred Arabic event/venue H3 pattern: "طريقة حجز تذاكر [entity] عبر [brand_name]"
+Preferred Arabic event/venue FAQ pattern: "هل يمكن حجز تذاكر [entity] عبر [brand_name]؟"
+Preferred Arabic strategy FAQ pattern: "كيف تساعدك [brand_name] في تنفيذ استراتيجية [topic] متكاملة؟"
+Forbidden outside event/venue/ticket topics: "هل يمكن حجز تذاكر [educational topic] عبر [brand_name]؟"
 
 4. The conclusion H2 must be practical, not editorial.
 Avoid: "تجربة زيارة", "استكشاف المزيد", "خطواتك القادمة", "خلاصة وتجربة".

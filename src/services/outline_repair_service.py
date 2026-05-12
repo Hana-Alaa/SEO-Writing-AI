@@ -321,6 +321,18 @@ class OutlineRepairService:
         if current_count >= min_faq_count:
             return outline  # Already sufficient
 
+        experience_signals = [
+            "visit", "visitor", "venue", "destination", "attraction", "event",
+            "ticket", "tickets", "booking", "mall", "museum", "park", "restaurant",
+            "زيارة", "زوار", "وجهة", "فعالية", "فعاليات", "تذاكر", "حجز",
+            "مول", "متحف", "حديقة", "مطعم", "بوليفارد", "سيتي",
+        ]
+        if not self._topic_has_any_signal(outline, {}, entity_phrase, experience_signals):
+            logger.info(
+                "[OutlineRepairService] refill_faq_after_dedupe: skipped visitor FAQ refill for non-experience topic."
+            )
+            return outline
+
         # Collect existing H2 text for guard-checking
         h2_texts_combined = " ".join(
             s.get("heading_text", "").lower()
@@ -396,13 +408,7 @@ class OutlineRepairService:
             if any(kw in existing_faq_text for kw in guard_keywords):
                 continue
 
-            new_sub = {
-                "heading_text": arabic_q,
-                "heading_level": "H3",
-                "section_type": "faq",
-                "section_id": f"faq_recovery_{added + 1}"
-            }
-            subheadings.append(new_sub)
+            subheadings.append(arabic_q)
             existing_faq_text += " " + arabic_q.lower()
             added += 1
             logger.info(f"[OutlineRepairService] FAQ refill: appended '{arabic_q}'")
@@ -418,6 +424,222 @@ class OutlineRepairService:
         return outline
 
 
+
+    def _subheading_text(self, subheading: Any) -> str:
+        if isinstance(subheading, dict):
+            return str(subheading.get("heading_text", "") or "").strip()
+        return str(subheading or "").strip()
+
+    def _collect_outline_context(
+        self,
+        outline: List[Dict[str, Any]],
+        serp_brief: Optional[Dict[str, Any]] = None,
+        entity_phrase: str = "",
+    ) -> str:
+        parts: List[str] = [entity_phrase or ""]
+        for section in outline or []:
+            parts.append(str(section.get("heading_text", "") or ""))
+            parts.append(str(section.get("section_type", "") or ""))
+            for subheading in section.get("subheadings", []) or []:
+                parts.append(self._subheading_text(subheading))
+
+        serp_brief = serp_brief or {}
+        for key in (
+            "observed_topics",
+            "secondary_keyword_phrases",
+            "heading_candidates",
+            "must_consider_sections",
+        ):
+            for item in serp_brief.get(key, []) or []:
+                if isinstance(item, dict):
+                    parts.append(str(item.get("topic") or item.get("heading") or item.get("text") or ""))
+                else:
+                    parts.append(str(item or ""))
+        return " ".join(parts).lower()
+
+    def _topic_has_any_signal(
+        self,
+        outline: List[Dict[str, Any]],
+        serp_brief: Optional[Dict[str, Any]],
+        entity_phrase: str,
+        signals: List[str],
+    ) -> bool:
+        context = self._collect_outline_context(outline, serp_brief, entity_phrase)
+        return any(signal.lower() in context for signal in signals)
+
+    def _brand_utility_mode(
+        self,
+        outline: List[Dict[str, Any]],
+        serp_brief: Optional[Dict[str, Any]],
+        entity_phrase: str,
+    ) -> str:
+        strong_booking_signals = [
+            "ticket", "tickets", "booking", "reservation", "entry fee", "venue",
+            "destination", "attraction", "event", "visit", "visitor", "mall",
+            "museum", "park", "restaurant", "festival", "show", "boulevard",
+            "تذكرة", "تذاكر", "حجز", "دخول", "زيارة", "زوار", "وجهة",
+            "فعالية", "فعاليات", "حفل", "حفلات", "موسم", "بوليفارد", "سيتي",
+            "مول", "متحف", "حديقة", "مطعم", "مسرح", "معرض", "أوقات", "مواعيد",
+            "موقع", "الوصول",
+        ]
+        price_signals = [
+            "pricing", "price", "prices", "cost", "fee",
+            "أسعار", "اسعار", "تكلفة", "تكاليف", "رسوم",
+        ]
+        implementation_signals = [
+            "seo", "sem", "ppc", "marketing", "strategy", "campaign", "digital",
+            "ads", "google ads", "content marketing", "implementation", "setup",
+            "service", "services", "agency", "company", "سيو", "تحسين محركات البحث",
+            "التسويق عبر محركات البحث", "تسويق", "استراتيجية", "استراتيجيات",
+            "حملات", "إعلانات", "اعلانات", "تنفيذ", "تطبيق", "إدارة", "خدمات",
+            "شركة", "وكالة", "ميزانية", "مشروع",
+        ]
+
+        has_strong_booking = self._topic_has_any_signal(outline, serp_brief, entity_phrase, strong_booking_signals)
+        has_price = self._topic_has_any_signal(outline, serp_brief, entity_phrase, price_signals)
+        has_implementation = self._topic_has_any_signal(outline, serp_brief, entity_phrase, implementation_signals)
+
+        if has_strong_booking:
+            return "booking"
+        if has_implementation:
+            return "implementation"
+        if has_price:
+            return "booking"
+        return ""
+
+    def _brand_implementation_label(self, entity_phrase: str) -> str:
+        label = re.sub(r"\s+", " ", str(entity_phrase or "").strip())
+        cleanup_prefixes = [
+            r"^الفرق\s+بين\s+",
+            r"^مقارنة\s+بين\s+",
+            r"^difference\s+between\s+",
+            r"^comparison\s+between\s+",
+            r"^compare\s+",
+        ]
+        for pattern in cleanup_prefixes:
+            label = re.sub(pattern, "", label, flags=re.IGNORECASE).strip()
+        label = re.sub(r"\bseo\b", "SEO", label, flags=re.IGNORECASE)
+        label = re.sub(r"\bsem\b", "SEM", label, flags=re.IGNORECASE)
+        label = re.sub(r"\bppc\b", "PPC", label, flags=re.IGNORECASE)
+        return label or "هذه الاستراتيجية"
+
+    def _candidate_matches_brand_mode(self, candidate: str, mode: str) -> bool:
+        candidate_lower = candidate.lower()
+        booking_terms = ["ticket", "tickets", "book", "booking", "reservation", "حجز", "تذاكر", "تذكرة"]
+        implementation_terms = ["implement", "implementation", "strategy", "تنفيذ", "استراتيجية", "استراتيجيات"]
+        if mode == "implementation":
+            return not any(term in candidate_lower for term in booking_terms)
+        if mode == "booking":
+            return any(term in candidate_lower for term in booking_terms) or not any(term in candidate_lower for term in implementation_terms)
+        return False
+
+    def normalize_heading_only_section_types(self, outline: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Fix model-selected section_type labels that conflict with the heading role."""
+        if not outline:
+            return outline
+
+        definition_terms = [
+            "definition", "basic concepts", "what is", "تعريف", "المفاهيم الأساسية",
+            "ما هو", "ما هي", "المقصود",
+        ]
+        for section in outline:
+            heading = str(section.get("heading_text", "") or "").lower()
+            if str(section.get("heading_level", "")).upper() != "H2":
+                continue
+            if any(term in heading for term in definition_terms):
+                if str(section.get("section_type", "")).lower() == "offer":
+                    logger.info(
+                        "[OutlineRepairService] Normalized definition section_type from offer to core_or_benefits: %s",
+                        section.get("heading_text", ""),
+                    )
+                section["section_type"] = "core_or_benefits"
+        return outline
+
+    def clean_echo_and_repetition(self, outline: List[Dict[str, Any]], title: str, primary_keyword: str) -> List[Dict[str, Any]]:
+        """
+        Removes H1 echo from the first H2 and reduces primary keyword repetition across headings.
+        """
+        if not outline:
+            return outline
+
+        title_lower = title.lower()
+        keyword_lower = primary_keyword.lower()
+        
+        # Step 1: Anti-Echo Rule for the first visible H2
+        first_visible_h2 = None
+        for section in outline:
+            if str(section.get("heading_level", "")).upper() == "H2":
+                first_visible_h2 = section
+                break
+        
+        if first_visible_h2:
+            h2_text = first_visible_h2.get("heading_text", "")
+            h2_text_lower = h2_text.lower()
+            
+            # Detect echo patterns: "[keyword]: suffix" or "[title]: suffix"
+            echo_pattern = False
+            if h2_text_lower.startswith(keyword_lower) or h2_text_lower.startswith(title_lower):
+                # Check for colon or dash suffix
+                if ":" in h2_text or "-" in h2_text or "–" in h2_text:
+                    echo_pattern = True
+            
+            # Also detect generic "Introduction to [topic]"
+            if any(p in h2_text_lower for p in ["مقدمة عن", "تعريف بـ", "introduction to", "overview of"]):
+                echo_pattern = True
+                
+            if echo_pattern:
+                # Attempt to transform into a natural orientation question if it's a comparison
+                if " vs " in keyword_lower or " و " in keyword_lower or "الفرق بين" in keyword_lower:
+                    # Try to extract entities
+                    entities = []
+                    if "الفرق بين" in keyword_lower:
+                        # Simple split for "الفرق بين X و Y"
+                        parts = re.split(r"\s+و\s+", keyword_lower.replace("الفرق بين", "").strip())
+                        entities = [p.strip() for p in parts if p.strip()]
+                    elif " vs " in keyword_lower:
+                        entities = [p.strip() for p in keyword_lower.split(" vs ") if p.strip()]
+                    
+                    if len(entities) >= 2:
+                        # Transform to "What is X and what is Y?"
+                        if any("\u0600" <= c <= "\u06FF" for c in h2_text):
+                            e1 = entities[0].upper() if entities[0].lower() in ["seo", "sem", "ppc"] else entities[0]
+                            e2 = entities[1].upper() if entities[1].lower() in ["seo", "sem", "ppc"] else entities[1]
+                            first_visible_h2["heading_text"] = f"ما هو {e1} وما هو {e2}؟"
+                            logger.info(f"[OutlineRepairService] Anti-Echo: Transformed '{h2_text}' to '{first_visible_h2['heading_text']}'")
+                        else:
+                            first_visible_h2["heading_text"] = f"What is {entities[0]} and {entities[1]}?"
+                            logger.info(f"[OutlineRepairService] Anti-Echo: Transformed '{h2_text}' to '{first_visible_h2['heading_text']}'")
+
+        # Step 2: Repetition Reduction
+        keyword_usage_count = 0
+        for section in outline:
+            if str(section.get("heading_level", "")).upper() != "H2":
+                continue
+                
+            heading = section.get("heading_text", "")
+            heading_lower = heading.lower()
+            
+            if keyword_lower in heading_lower:
+                keyword_usage_count += 1
+                
+                # If we've already used the keyword too many times, try to simplify
+                if keyword_usage_count > 2:
+                    # Check if it's the FAQ
+                    s_type = section.get("section_type", "").lower()
+                    if s_type == "faq" or "أسئلة شائعة" in heading_lower or "faq" in heading_lower:
+                        if any("\u0600" <= c <= "\u06FF" for c in heading):
+                            # Try to extract entities for a lighter variant
+                            entities = [p.strip() for p in re.split(r"\s+و\s+| vs ", keyword_lower.replace("الفرق بين", "").strip()) if p.strip()]
+                            if len(entities) >= 2:
+                                e1 = entities[0].upper() if entities[0].lower() in ["seo", "sem", "ppc"] else entities[0]
+                                e2 = entities[1].upper() if entities[1].lower() in ["seo", "sem", "ppc"] else entities[1]
+                                section["heading_text"] = f"أسئلة شائعة عن {e1} و {e2}"
+                                logger.info(f"[OutlineRepairService] Repetition Guard: Simplified FAQ heading to '{section['heading_text']}'")
+                        else:
+                            section["heading_text"] = "Frequently Asked Questions"
+                            logger.info(f"[OutlineRepairService] Repetition Guard: Simplified FAQ heading to '{section['heading_text']}'")
+
+        return outline
 
     def enrich_brand_utility_faq(
         self, 
@@ -440,24 +662,32 @@ class OutlineRepairService:
             logger.info(f"[OutlineRepairService] enrich_brand_utility_faq: content_type is '{content_type}', skipped.")
             return outline
 
-        # Task-Oriented Safety Filter: Only insert brand FAQ if the outline contains 
-        # practical task-oriented sections (visitor info, pricing, ticketing, booking, etc.)
-        task_section_types = {"visitor_information", "pricing", "ticketing", "booking", "offer", "process"}
-        has_task_section = any(s.get("section_type") in task_section_types for s in outline)
-        
-        if not has_task_section:
-            logger.info("[OutlineRepairService] enrich_brand_utility_faq: No task-oriented sections found. Skipping brand FAQ for educational/conceptual topic.")
+        brand_mode = self._brand_utility_mode(outline, serp_brief, entity_phrase)
+        if not brand_mode:
+            logger.info(
+                "[OutlineRepairService] enrich_brand_utility_faq: no eligible brand utility mode for topic, skipped."
+            )
             return outline
-            
+
         candidates = serp_brief.get("brand_utility_candidates", [])
         candidate = ""
         if candidates and isinstance(candidates, list):
             candidate = str(candidates[0]).strip()
+            if candidate and not self._candidate_matches_brand_mode(candidate, brand_mode):
+                logger.info(
+                    "[OutlineRepairService] Suppressed brand candidate that does not match topic mode '%s': %s",
+                    brand_mode,
+                    candidate,
+                )
+                candidate = ""
         
         # Deterministic fallback: synthesize from brand_context + entity_phrase
         if not candidate:
             entity_label = entity_phrase.strip() if entity_phrase else ""
-            if entity_label:
+            if brand_mode == "implementation":
+                topic_label = self._brand_implementation_label(entity_label)
+                candidate = f"كيف تساعدك {brand_context} في تنفيذ استراتيجية {topic_label} متكاملة؟"
+            elif entity_label:
                 candidate = f"هل يمكن حجز تذاكر {entity_label} عبر {brand_context}؟"
             else:
                 candidate = f"هل يمكن الحجز عبر {brand_context}؟"
@@ -490,6 +720,13 @@ class OutlineRepairService:
         subheadings = faq_section.get("subheadings", [])
         if not isinstance(subheadings, list):
             subheadings = []
+        subheadings = [
+            self._subheading_text(subheading)
+            for subheading in subheadings
+            if self._subheading_text(subheading)
+        ]
+        faq_section["subheadings"] = subheadings
+        outline[faq_section_idx] = faq_section
             
         # brand_context is now the raw brand name (e.g. "تيك ايفينت")
         brand_name = brand_context.strip()
@@ -509,7 +746,7 @@ class OutlineRepairService:
 
         # Detect generic booking placeholder in existing FAQ → replace it with exact brand name
         for idx, sub in enumerate(subheadings):
-            sub_text = sub.get("heading_text", "") if isinstance(sub, dict) else str(sub)
+            sub_text = self._subheading_text(sub)
             sub_lower = sub_text.lower()
             if any(ph.lower() in sub_lower for ph in generic_booking_phrases):
                 corrected_text = sub_text
@@ -521,36 +758,32 @@ class OutlineRepairService:
                     "[OutlineRepairService] Replaced generic brand placeholder with exact brand: %s",
                     brand_name,
                 )
-                if isinstance(subheadings[idx], dict):
-                    subheadings[idx]["heading_text"] = corrected_text
-                else:
-                    subheadings[idx] = corrected_text
+                subheadings[idx] = corrected_text
                 faq_section["subheadings"] = subheadings
                 outline[faq_section_idx] = faq_section
                 return outline
 
         # Check if the exact synthesized candidate is already there
         for sub in subheadings:
-            if isinstance(sub, dict) and candidate.lower() in sub.get("heading_text", "").lower():
-                return outline
-            elif isinstance(sub, str) and candidate.lower() in sub.lower():
+            if candidate.lower() in self._subheading_text(sub).lower():
                 return outline
 
         # Append / replace weakest
-        new_sub = {
-            "heading_text": candidate,
-            "heading_level": "H3",
-            "section_type": "faq",
-            "section_id": f"faq_brand_utility_{re.sub(r'\W+', '_', candidate)[:15]}"
-        }
+        new_sub = candidate
 
         # If FAQ exceeds 5, replace the weakest one to prevent bloating
         if len(subheadings) >= 5:
-            strong_keywords = ["price", "ticket", "book", "cost", "fee", "location", "access", "hour", "time", "child", "family", "kids", "سعر", "تذكر", "حجز", "رسوم", "موقع", "وصول", "ساع", "مواعيد", "وقت", "طفل", "أطفال", "عائل"]
+            strong_keywords = [
+                "price", "ticket", "book", "cost", "fee", "location", "access",
+                "hour", "time", "child", "family", "kids", "strategy", "implement",
+                "combine", "measure", "سعر", "تذكر", "حجز", "رسوم", "موقع", "وصول",
+                "ساع", "مواعيد", "وقت", "طفل", "أطفال", "عائل", "استراتيجية",
+                "تنفيذ", "جمع", "قياس", "تكاليف",
+            ]
             weakest_idx = -1
             for idx in range(len(subheadings)-1, -1, -1):
                 sub = subheadings[idx]
-                text = sub.get("heading_text", "").lower() if isinstance(sub, dict) else str(sub).lower()
+                text = self._subheading_text(sub).lower()
                 if not any(kw in text for kw in strong_keywords):
                     weakest_idx = idx
                     break

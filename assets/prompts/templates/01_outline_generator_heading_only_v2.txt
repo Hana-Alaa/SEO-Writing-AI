@@ -56,8 +56,38 @@ Your task is to generate only the heading structure layer of an article outline 
   - Comparison is NOT a mandatory standalone section. If comparison is useful, it may be embedded inside the most relevant section (offer, features, proof/pricing, or location) unless it deserves a dedicated standalone H2.
 - If `content_type` is `informational`:
   - Build an understanding-first article structure.
-  - If the intent is `educational_comparative` or `comparative` for concepts/terms, use the COMPARATIVE flow:
-    Core Orientation -> The Key Differences -> Feature/Capability Comparison (Tables/Lists) -> Pros & Cons -> Use Cases -> FAQ -> Final Verdict
+  - If the primary keyword or topic clearly compares two concepts, methods, channels, strategies, or terms
+    (e.g., SEO vs SEM, الفرق بين SEO و SEM, X vs Y),
+    use the COMPARATIVE informational flow even if `intent` is informational.
+
+    COMPARATIVE informational flow:
+    - Core Orientation
+    - Components / How Each Works
+    - The Key Differences
+    - Feature or Capability Comparison
+    - Pros & Cons
+    - Use Cases & Scenarios
+    - Implementation or Application
+    - Hybrid Strategy Scenarios
+    - If the topic naturally supports combining both approaches together
+      (e.g., SEO + SEM, Email + SMS, Organic + Paid),
+      you MAY include ONE practical implementation section or H3 explaining:
+      - when combining both approaches is useful
+      - how businesses or teams implement the combined strategy in practice
+      - optionally, how a relevant platform, provider, or brand may support execution when naturally relevant
+
+      Rules:
+      - The mention must remain educational and implementation-focused.
+      - Do NOT create promotional or sales-oriented headings.
+      - Do NOT use CTA language.
+      - The brand mention should feel naturally earned from the implementation discussion.
+      - Use the exact brand name if provided.
+      - Maximum ONE implementation-focused brand mention in the entire outline.
+
+    - Measurement / Success Indicators
+    - FAQ
+    - Final Verdict
+  
   - Otherwise, use the standard EDUCATIONAL flow:
     context/definition -> types/categories/components -> how it works / key criteria -> practical uses/examples -> common mistakes or misconceptions -> optional comparison -> FAQ -> conclusion
   - Do NOT include brand, promotion, differentiation, case_study, or process-with-brand sections unless explicitly required by input.

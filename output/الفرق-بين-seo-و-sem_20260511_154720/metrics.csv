@@ -1,0 +1,1051 @@
+﻿completion_tokens,duration_sec,estimated_cost,is_google,model,prompt_text,prompt_tokens,response_text,step_name,timestamp,total_tokens
+0,0,0.0,False,N/A,N/A,0,"{'title': 'الفرق بين seo و sem', 'language': 'ar', 'primary_keyword': 'الفرق بين seo و sem', 'output_dir': 'F:\\SEO-Writing-AI\\output\\الفرق-بين-seo-و-sem_20260511_154720'}",EVENT: Initialization,2026-05-11T15:47:20.383692,0
+0,0.002,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: brand_discovery,2026-05-11T15:47:20.386725,0
+8009,107.756,0.0,False,unknown,"You are an advanced SEO SERP intelligence agent performing real-world web research.
+
+You MUST perform live web search in the language of the primary keyword.
+If web search is not used, the answer is invalid.
+
+Primary Keyword: الفرق بين seo و sem في مصر
+
+STRICT FACTUAL RULES:
+1. Do NOT generate, infer, synthesize, or hallucinate any data.
+2. Do NOT create PAA questions, related searches, autocomplete suggestions, or LSI keywords unless they are explicitly observed.
+3. Extract only actual headings, actual questions, and actual phrases used in the observed SERP pages or SERP modules.
+4. If data is missing, return an empty value. Never fill gaps with assumptions.
+5. Clearly separate observed data from unsupported or unavailable data.
+6. Prefer informational pages, guides, and articles when they actually appear on page 1.
+7. Avoid relying only on listing pages, filter pages, or search result pages when better informational sources are present on page 1.
+8. If page 1 is dominated by listings, filters, or search pages, report that reality. Do not replace them with imagined guide pages.
+9. **STRICT ENRICHMENT RULE**: You MUST extract PAA, related searches, and autocomplete ONLY if they are explicitly visible as distinct Google SERP modules. 
+10. **NO SYNTHESIS**: Do NOT convert page titles into PAA questions. Do NOT imagine related searches. If not seen, return [].
+11. Output must reflect reality, not completeness.
+
+Your task has TWO INTERNAL PHASES.
+Do NOT explain them.
+Return STRICT JSON only.
+
+PHASE 1 - SERP EXTRACTION (OBSERVED DATA ONLY)
+From page 1 of Google, extract:
+
+A. Up to 3 observed ranking results from page 1.
+- Prioritize informational pages, guides, and articles when they exist on page 1.
+- If page 1 does not contain enough informational pages, include the highest-ranking observed listing/filter/search pages and reflect that in `observed_notes`.
+
+For each selected result extract only what is explicitly observable:
+- title
+- url
+- meta_title
+- meta_description
+- estimated_word_count (rough estimate only if the page content can be observed; otherwise 0)
+- H1
+- Top 8 H2 headings only
+- Top 3 H3 headings only
+- has_faq (true/false)
+- has_tables (true/false)
+- has_lists (true/false)
+- has_images (true/false)
+- has_charts_or_infographics (true/false)
+- CTA style (informational / soft commercial / aggressive / none)
+
+B. Extract real enrichment elements ONLY if explicitly observed:
+
+- **People Also Ask (PAA)**: Extract exact questions from the Google PAA module only.
+- **Related Searches**: Extract exact phrases from the Google related searches module only.
+- **Autocomplete Suggestions**: Extract real autocomplete predictions only if explicitly observed.
+- **LSI Keywords**: Extract repeated semantic phrases only if they are explicitly observed in ranking page headings, snippets, meta titles/descriptions, or SERP modules.
+
+Rules:
+- Do NOT convert page titles or headings into PAA questions.
+- Do NOT generate questions based on the topic.
+- Do NOT invent related searches.
+- Do NOT infer autocomplete suggestions.
+- If PAA, Related Searches, or Autocomplete are not observed, return an empty array `[]`.
+- LSI keywords may come from page content only when the phrase is directly observed.
+- Do not invent missing headings, questions, or phrases.
+
+PHASE 2 - LIGHT OBSERVATION SUMMARY
+Based ONLY on observed data above:
+- Identify common strengths only if directly visible in the sampled pages.
+- Identify common weaknesses only if directly visible in the sampled pages.
+- Identify overused patterns only if directly visible in the sampled pages.
+- If something cannot be supported from observed data, leave it empty.
+- Do not infer content gaps from missing data.
+
+For `serp_enrichment_sources`, use only these values:
+- google_serp
+- google_autocomplete
+- page_content
+- not_observed
+- scraping_failed
+- parser_not_available
+
+Rules:
+- paa_questions source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- related_searches source can only be: google_serp, not_observed, scraping_failed, parser_not_available
+- autocomplete_suggestions source can only be: google_autocomplete, not_observed, scraping_failed, parser_not_available
+- lsi_keywords source can be: google_serp, page_content, not_observed
+
+Return STRICT JSON only in this format:
+
+{
+  ""top_results"": [
+    {
+      ""title"": """",
+      ""url"": """",
+      ""meta_title"": """",
+      ""meta_description"": """",
+      ""estimated_word_count"": 0,
+      ""headings"": {
+        ""h1"": """",
+        ""h2"": [],
+        ""h3"": []
+      },
+      ""has_faq"": false,
+      ""has_tables"": false,
+      ""has_lists"": false,
+      ""has_images"": false,
+      ""has_charts"": false,
+      ""cta_style"": """"
+    }
+  ],
+  ""paa_questions"": [],
+  ""related_searches"": [],
+  ""autocomplete_suggestions"": [],
+  ""lsi_keywords"": [],
+  ""content_gaps"": [],
+  ""common_patterns"": [],
+  ""common_strengths"": [],
+  ""common_weaknesses"": [],
+  ""observed_notes"": [],
+  ""unsupported_data"": [],
+  ""serp_enrichment_sources"": {
+    ""paa_questions"": """",
+    ""related_searches"": """",
+    ""autocomplete_suggestions"": """",
+    ""lsi_keywords"": """"
+  }
+}
+
+Return JSON only.
+- No markdown.
+- No commentary.
+- If a field cannot be determined from observed data, return an empty value.",52649,"{""top_results"":[{""title"":""ما هو الفرق بين SEO و SEM؟"",""url"":""https://www.techmadar.com/2025/04/SEO%20SEM%20.html"",""meta_title"":""الفرق الجوهري بين SEO و SEM: دليلك الشامل للتسويق عبر محركات البحث 2024"",""meta_description"":"""",""estimated_word_count"":1500,""headings"":{""h1"":""ما هو الفرق بين SEO و SEM؟"",""h2"":[""الفرق الجوهري بين SEO و SEM"",""ما هو تحسين محركات البحث (SEO)؟ الغوص في عالم النتائج العضوية"",""ما هو التسويق عبر محركات البحث (SEM)؟ المظلة الشاملة"",""الاختلافات الرئيسية بين SEO و SEM"",""SEO و SEM قوة التكامل والتآزر"",""أهمية التحديث المستمر ومواكبة التغييرات"",""الخاتمة فهم الفرق يقود إلى استراتيجية أفضل""],""h3"":[""ركائز SEO الأساسية:"",""فوائد SEO:"",""تحديات SEO:""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""informational""},{""title"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""url"":""https://www.learnwebseo.com/difference-between-seo-sem-smm/"",""meta_title"":"""",""meta_description"":"""",""estimated_word_count"":800,""headings"":{""h1"":""الفرق بين SEO و SEM | تعريف SEM | ماهو SEO"",""h2"":[""1-ما الفرق بين difference between seo sem smm ؟"",""عن مدير الموقع"",""مقالات أنصحك بقرائتها:-"",""مقال مميز"",""عن مدونة: الدويغري SEO"",""قوائم التنقل"",""تعلم سيو مجاناً"",""تسريع موقع ووردبريس""],""h3"":[""1-ماهو Seo أو Search Engine Optimization ؟"",""2-ماهو Sem أو Search Engine Marketing ؟"",""3-ماهو SMM أو Social Media Marketing ؟""]},""has_faq"":false,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""soft commercial""},{""title"":""SEO مقارنة بـ SEM: ما الفرق بينهما SEO وماذا عن المجهر الإلكتروني الماسح (SEM)؟"",""url"":""https://indeedseo.com/ar/blog/seo-vs-sem-what-is-the-difference-between-seo-and-sem/"",""meta_title"":""SEO مقارنة بـ SEM: ما الفرق بينهما SEO وماذا عن المجهر الإلكتروني الماسح (SEM)؟"",""meta_description"":"""",""estimated_word_count"":3000,""headings"":{""h1"":""SEO مقارنة بـ SEM: ما الفرق بينهما SEO وماذا عن المجهر الإلكتروني الماسح (SEM)؟"",""h2"":[""SEO مقارنة بنظرة عامة على المجهر الإلكتروني الماسح"",""SEO مقارنة مع المجهر الإلكتروني الماسح"",""ماهو الفرق بين SEO وماذا عن المجهر الإلكتروني الماسح (SEM)؟"",""SEO مقارنة مع SEM: نظرة عامة والخصائص الرئيسية"",""SEO مقارنة بـ SEM: كم من الوقت يستغرق ظهور النتائج؟"",""SEO مقارنة بـ SEM: كم تكلفتها؟"",""كيف SEO وهل يُعدّ المجهر الإلكتروني الماسح مكملاً؟"",""SEO مقارنة بين SEM و SEM: أيهما يجب عليك استخدامه؟""],""h3"":[""SEO"",""ووزارة شؤون المرأة"",""احدث المقالات""]},""has_faq"":true,""has_tables"":false,""has_lists"":true,""has_images"":true,""has_charts"":false,""cta_style"":""aggressive""}],""paa_questions"":[],""related_searches"":[],""autocomplete_suggestions"":[],""lsi_keywords"":[""تحسين محركات البحث"",""التسويق عبر محركات البحث"",""الدفع لكل نقرة"",""النتائج العضوية"",""النتائج المدفوعة""],""content_gaps"":[],""common_patterns"":[""تعتمد المقالات على هيكل مقارن يتضمن تعريف، فوائد، تحديات لكل من SEO و SEM""],""common_strengths"":[""استخدام القوائم النقطية لتوضيح الفوائد والتحديات"",""توفر تعريفات واضحة لكل من SEO و SEM""],""common_weaknesses"":[""غياب وسوم التعريف الوصفي (meta description) في بعض الصفحات""],""observed_notes"":[],""unsupported_data"":[],""serp_enrichment_sources"":{""paa_questions"":""not_observed"",""related_searches"":""not_observed"",""autocomplete_suggestions"":""not_observed"",""lsi_keywords"":""page_content""}}",web_research,2026-05-11T15:49:08.168060,60658
+0,108.11,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: web_research,2026-05-11T15:49:08.498613,0
+0,10.504,0.0,False,unknown,N/A,0,N/A,STEP_TOTAL: serp_analysis,2026-05-11T15:49:19.002929,0
+0,1.64,0.0,False,unknown,"You are a Practical User Intent & Title Advisor.
+
+Input:
+- Raw topic: الفرق بين seo و sem
+- Primary keyword: الفرق بين seo و sem
+- Language: ar
+- Current Year: 2026
+- Top SERP titles: [""\u0645\u0627 \u0647\u0648 \u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 SEO \u0648 SEM\u061f"", ""\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 SEO \u0648 SEM | \u062a\u0639\u0631\u064a\u0641 SEM | \u0645\u0627\u0647\u0648 SEO"", ""SEO \u0645\u0642\u0627\u0631\u0646\u0629 \u0628\u0640 SEM: \u0645\u0627 \u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646\u0647\u0645\u0627 SEO \u0648\u0645\u0627\u0630\u0627 \u0639\u0646 \u0627\u0644\u0645\u062c\u0647\u0631 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0627\u0644\u0645\u0627\u0633\u062d (SEM)\u061f""]
+- SERP CTA styles: [""informational"", ""soft commercial"", ""aggressive""]
+- SERP confirmed intent: informational
+- SERP intent confidence: 1.0
+- Target Area: مصر
+- Brand Name: Creative Minds
+
+Task:
+1. Classify intent using the ""Practical Detection Hierarchy"":
+   - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.
+   - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.
+   - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.
+   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves ""Vs"", ""Comparison"", ""Better between X and Y"", or comparing different options, the intent is **comparative**. 
+     - **SUB-TYPE 1: EDUCATIONAL COMPARISON**: If the comparison is between concepts, methods, strategies, channels, terms, features, or educational categories (e.g., ""SEO vs SEM"", ""SQL vs NoSQL""), classify as **educational_comparative**.
+     - **SUB-TYPE 2: COMMERCIAL COMPARISON**: If the comparison is between brands, providers, tools, SaaS, products, or services (e.g., ""HubSpot vs Salesforce""), classify as **commercial_comparative**.
+   - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.
+
+Allowed intents:
+- informational -> searching for knowledge, guides, or tutorials.
+- commercial -> evaluating a specific service/product or ready to take action.
+- educational_comparative -> educational comparison between concepts/terms (behavior = informational).
+- commercial_comparative -> commercial comparison between brands/products.
+
+Title rules:
+- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.
+- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.
+- TONE: Use a Helpful, Practical Advisor tone (e.g., ""Simplified"", ""Complete Guide"", ""Tips"", ""Top-Rated"").
+- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.
+- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.
+- BRANDING (FALLBACK):
+    * If `Brand Name` is ""Not provided"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.
+    * If the intent is informational, do NOT include the brand name unless the primary keyword itself contains the brand.
+    * If the intent is commercial, Brand Name may be integrated only when the query has service/provider/buying intent.
+    * If the intent is comparative, include Brand Name only when the comparison is between brands/providers/tools/services and the Brand Name is one of the compared entities.
+    * For educational comparisons between concepts, methods, strategies, or terms (e.g. SEO vs SEM), treat branding exactly like informational: do NOT include Brand Name unless the keyword itself contains the brand.
+- AREA (FALLBACK):
+    * If `Target Area` is ""Global"", ""General"", or ""International"", DO NOT mention any geographic area in the title.
+    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.
+- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.
+- No markdown, no extra text.
+
+Return STRICT JSON only:
+{
+  ""intent"": ""commercial | informational | comparative"",
+  ""confidence"": 0.0,
+  ""optimized_title"": ""The Clear, Helpful H1""
+}",0,"{
+  ""optimized_title"": ""الفرق بين SEO و SEM: دليل مبسط لفهم التسويق الرقمي 2026 في مصر"",
+  ""intent"": ""educational_comparative"",
+  ""metadata"": {
+    ""duration"": 1.6403257846832275,
+    ""model"": ""openai/gpt-4.1"",
+    ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: الفرق بين seo و sem\n- Primary keyword: الفرق بين seo و sem\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0645\\u0627 \\u0647\\u0648 \\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\\u061f\"", \""\\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM | \\u062a\\u0639\\u0631\\u064a\\u0641 SEM | \\u0645\\u0627\\u0647\\u0648 SEO\"", \""SEO \\u0645\\u0642\\u0627\\u0631\\u0646\\u0629 \\u0628\\u0640 SEM: \\u0645\\u0627 \\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646\\u0647\\u0645\\u0627 SEO \\u0648\\u0645\\u0627\\u0630\\u0627 \\u0639\\u0646 \\u0627\\u0644\\u0645\\u062c\\u0647\\u0631 \\u0627\\u0644\\u0625\\u0644\\u0643\\u062a\\u0631\\u0648\\u0646\\u064a \\u0627\\u0644\\u0645\\u0627\\u0633\\u062d (SEM)\\u061f\""]\n- SERP CTA styles: [\""informational\"", \""soft commercial\"", \""aggressive\""]\n- SERP confirmed intent: informational\n- SERP intent confidence: 1.0\n- Target Area: مصر\n- Brand Name: Creative Minds\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.\n   - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.\n   - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.\n   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**. \n     - **SUB-TYPE 1: EDUCATIONAL COMPARISON**: If the comparison is between concepts, methods, strategies, channels, terms, features, or educational categories (e.g., \""SEO vs SEM\"", \""SQL vs NoSQL\""), classify as **educational_comparative**.\n     - **SUB-TYPE 2: COMMERCIAL COMPARISON**: If the comparison is between brands, providers, tools, SaaS, products, or services (e.g., \""HubSpot vs Salesforce\""), classify as **commercial_comparative**.\n   - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.\n\nAllowed intents:\n- informational -> searching for knowledge, guides, or tutorials.\n- commercial -> evaluating a specific service/product or ready to take action.\n- educational_comparative -> educational comparison between concepts/terms (behavior = informational).\n- commercial_comparative -> commercial comparison between brands/products.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\"").\n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK):\n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If the intent is informational, do NOT include the brand name unless the primary keyword itself contains the brand.\n    * If the intent is commercial, Brand Name may be integrated only when the query has service/provider/buying intent.\n    * If the intent is comparative, include Brand Name only when the comparison is between brands/providers/tools/services and the Brand Name is one of the compared entities.\n    * For educational comparisons between concepts, methods, strategies, or terms (e.g. SEO vs SEM), treat branding exactly like informational: do NOT include Brand Name unless the keyword itself contains the brand.\n- AREA (FALLBACK):\n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful H1\""\n}"",
+    ""response"": ""{\n  \""intent\"": \""educational_comparative\"",\n  \""confidence\"": 1.0,\n  \""optimized_title\"": \""الفرق بين SEO و SEM: دليل مبسط لفهم التسويق الرقمي 2026 في مصر\""\n}"",
+    ""tokens"": {
+      ""prompt_tokens"": 1556,
+      ""completion_tokens"": 51,
+      ""reasoning_tokens"": 0,
+      ""total_tokens"": 1607
+    },
+    ""reasoning_details"": null
+  },
+  ""prompt"": ""You are a Practical User Intent & Title Advisor.\n\nInput:\n- Raw topic: الفرق بين seo و sem\n- Primary keyword: الفرق بين seo و sem\n- Language: ar\n- Current Year: 2026\n- Top SERP titles: [\""\\u0645\\u0627 \\u0647\\u0648 \\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\\u061f\"", \""\\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM | \\u062a\\u0639\\u0631\\u064a\\u0641 SEM | \\u0645\\u0627\\u0647\\u0648 SEO\"", \""SEO \\u0645\\u0642\\u0627\\u0631\\u0646\\u0629 \\u0628\\u0640 SEM: \\u0645\\u0627 \\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646\\u0647\\u0645\\u0627 SEO \\u0648\\u0645\\u0627\\u0630\\u0627 \\u0639\\u0646 \\u0627\\u0644\\u0645\\u062c\\u0647\\u0631 \\u0627\\u0644\\u0625\\u0644\\u0643\\u062a\\u0631\\u0648\\u0646\\u064a \\u0627\\u0644\\u0645\\u0627\\u0633\\u062d (SEM)\\u061f\""]\n- SERP CTA styles: [\""informational\"", \""soft commercial\"", \""aggressive\""]\n- SERP confirmed intent: informational\n- SERP intent confidence: 1.0\n- Target Area: مصر\n- Brand Name: Creative Minds\n\nTask:\n1. Classify intent using the \""Practical Detection Hierarchy\"":\n   - **STEP 1: OBSERVED SERP INTENT (THE PRIORITY)**: If `SERP confirmed intent` is provided with confidence >= 0.6, follow it unless the query itself contains explicit commercial/provider terms.\n   - **STEP 2: BRAND SUPPORT (NOT A COMMERCIAL SIGNAL)**: A `Brand Name` alone must NEVER convert an informational query into commercial. Use the brand only as supporting context.\n   - **STEP 3: SERVICE SEARCH (THE SIGNAL)**: If the query contains terms like Price, Service, Best Company, Contact, Quote, Cheapest, Agency, Provider, Book, Ticket, Buy, or equivalent Arabic terms, the intent is **commercial**.\n   - **STEP 4: COMPARISON (THE REASONING)**: If the topic involves \""Vs\"", \""Comparison\"", \""Better between X and Y\"", or comparing different options, the intent is **comparative**. \n     - **SUB-TYPE 1: EDUCATIONAL COMPARISON**: If the comparison is between concepts, methods, strategies, channels, terms, features, or educational categories (e.g., \""SEO vs SEM\"", \""SQL vs NoSQL\""), classify as **educational_comparative**.\n     - **SUB-TYPE 2: COMMERCIAL COMPARISON**: If the comparison is between brands, providers, tools, SaaS, products, or services (e.g., \""HubSpot vs Salesforce\""), classify as **commercial_comparative**.\n   - **STEP 5: PURE KNOWLEDGE (THE FALLBACK)**: If the topic is a guide, entity explanation, destination overview, how-to, what-is, history, or practical educational query with no explicit buying/provider wording, the intent is **informational**, even when a brand is present as context.\n\nAllowed intents:\n- informational -> searching for knowledge, guides, or tutorials.\n- commercial -> evaluating a specific service/product or ready to take action.\n- educational_comparative -> educational comparison between concepts/terms (behavior = informational).\n- commercial_comparative -> commercial comparison between brands/products.\n\nTitle rules:\n- LENGTH: Exactly **60 to 70 characters** for maximum SEO real estate.\n- KEYWORD POSITION: The **primary keyword** MUST appear within the first 40 characters of the title for maximum visibility.\n- TONE: Use a Helpful, Practical Advisor tone (e.g., \""Simplified\"", \""Complete Guide\"", \""Tips\"", \""Top-Rated\"").\n- USEFULNESS: The title MUST be helpful and clearly state the specific benefit or practical value.\n- FRESHNESS (YEAR): Include the current year (2026) to signal relevance.\n- BRANDING (FALLBACK):\n    * If `Brand Name` is \""Not provided\"", you are STRICTLY FORBIDDEN from including it in the title. Focus 100% on the Primary Keyword.\n    * If the intent is informational, do NOT include the brand name unless the primary keyword itself contains the brand.\n    * If the intent is commercial, Brand Name may be integrated only when the query has service/provider/buying intent.\n    * If the intent is comparative, include Brand Name only when the comparison is between brands/providers/tools/services and the Brand Name is one of the compared entities.\n    * For educational comparisons between concepts, methods, strategies, or terms (e.g. SEO vs SEM), treat branding exactly like informational: do NOT include Brand Name unless the keyword itself contains the brand.\n- AREA (FALLBACK):\n    * If `Target Area` is \""Global\"", \""General\"", or \""International\"", DO NOT mention any geographic area in the title.\n    * If a specific `Target Area` is provided (e.g. Riyadh, Dubai), it MUST be integrated into the title.\n- **TOPIC BOUNDARY**: 100% focus on the **Primary keyword** topic. Do NOT add industry fluff.\n- No markdown, no extra text.\n\nReturn STRICT JSON only:\n{\n  \""intent\"": \""commercial | informational | comparative\"",\n  \""confidence\"": 0.0,\n  \""optimized_title\"": \""The Clear, Helpful H1\""\n}""
+}",intent_title,2026-05-11T15:49:20.646457,0
+71,3.915,0.0,False,openai/gpt-4.1,"You are a Practical User Intent Analyst.
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language.
+
+INTENT DETECTION LOGIC:
+1. OBSERVED SERP INTENT:
+   - If SERP confirmed intent is provided with confidence >= 0.6, use it unless the query itself has explicit commercial/provider words.
+
+2. COMMERCIAL:
+   - The user is looking for a solution, provider, tool, purchase, booking, ticket, quote, price, or service.
+   - Signs: service/provider terms, buying or booking terms, price/quote/cost terms, or ""best company/provider/agency"" style terms.
+   - A Brand Context alone is not a commercial signal.
+
+3. COMPARATIVE:
+   - The user is comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+4. INFORMATIONAL:
+   - The user is looking for knowledge, a guide, an entity explanation, a destination overview, historical facts, or practical advice with no direct buying/provider wording.
+   - Informational remains informational even when a brand is provided as supporting context.
+
+Input:
+Title: ""الفرق بين seo و sem""
+Primary Keyword: ""الفرق بين seo و sem""
+Brand Context: ""Creative Minds""
+SERP confirmed intent: ""informational""
+SERP intent confidence: ""1.0""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}",641,"{
+  ""reasoning"": ""The query asks for the difference between SEO and SEM, which is a request for an explanation or comparison of concepts without any buying, provider, or service-related terms. The SERP confirmed intent is informational with maximum confidence, and there are no commercial signals in the query."",
+  ""intent"": ""Informational""
+}",STEP_TOTAL: intent_title,2026-05-11T15:49:22.919627,712
+71,0.002,0.0,False,openai/gpt-4.1,"You are a Practical User Intent Analyst.
+
+YOUR TASK:
+Analyze the ""User Journey Stage"" and ""Practical Purpose"" of the following input, regardless of the language.
+
+INTENT DETECTION LOGIC:
+1. OBSERVED SERP INTENT:
+   - If SERP confirmed intent is provided with confidence >= 0.6, use it unless the query itself has explicit commercial/provider words.
+
+2. COMMERCIAL:
+   - The user is looking for a solution, provider, tool, purchase, booking, ticket, quote, price, or service.
+   - Signs: service/provider terms, buying or booking terms, price/quote/cost terms, or ""best company/provider/agency"" style terms.
+   - A Brand Context alone is not a commercial signal.
+
+3. COMPARATIVE:
+   - The user is comparing A vs B, looking for alternatives, or weighing pros and cons of specific entities.
+
+4. INFORMATIONAL:
+   - The user is looking for knowledge, a guide, an entity explanation, a destination overview, historical facts, or practical advice with no direct buying/provider wording.
+   - Informational remains informational even when a brand is provided as supporting context.
+
+Input:
+Title: ""الفرق بين seo و sem""
+Primary Keyword: ""الفرق بين seo و sem""
+Brand Context: ""Creative Minds""
+SERP confirmed intent: ""informational""
+SERP intent confidence: ""1.0""
+
+Output:
+Return only one of:
+- Informational
+- Commercial
+- Comparative
+
+Strict JSON only:
+{
+  ""reasoning"": ""Briefly explain the practical intent logic"",
+  ""intent"": ""Informational | Commercial | Comparative""
+}",641,"{
+  ""reasoning"": ""The query asks for the difference between SEO and SEM, which is a request for an explanation or comparison of concepts without any buying, provider, or service-related terms. The SERP confirmed intent is informational with maximum confidence, and there are no commercial signals in the query."",
+  ""intent"": ""Informational""
+}",STEP_TOTAL: style_analysis,2026-05-11T15:49:22.923749,712
+907,11.683,0.0,False,unknown,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: الفرق بين seo و sem
+- Intent: informational
+- Content Type: informational
+- Target Area: مصر
+- SERP Market Insights: ""{\""content_gaps\"": [], \""brand_advantages\"": [], \""keyword_clusters\"": [\""\\u062a\\u062d\\u0633\\u064a\\u0646 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b\"", \""\\u0627\\u0644\\u062a\\u0633\\u0648\\u064a\\u0642 \\u0639\\u0628\\u0631 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b\"", \""\\u0627\\u0644\\u062f\\u0641\\u0639 \\u0644\\u0643\\u0644 \\u0646\\u0642\\u0631\\u0629\"", \""\\u0627\\u0644\\u0646\\u062a\\u0627\\u0626\\u062c \\u0627\\u0644\\u0639\\u0636\\u0648\\u064a\\u0629\"", \""\\u0627\\u0644\\u0646\\u062a\\u0627\\u0626\\u062c \\u0627\\u0644\\u0645\\u062f\\u0641\\u0648\\u0639\\u0629\""], \""writing_guide\"": \""\\u0645\\u0642\\u0627\\u0644\\u0627\\u062a \\u0634\\u0627\\u0645\\u0644\\u0629 \\u062a\\u0634\\u0631\\u062d \\u0627\\u0644\\u0641\\u0631\\u0648\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\\u060c \\u0645\\u0639 \\u062a\\u0642\\u0633\\u064a\\u0645 \\u0648\\u0627\\u0636\\u062d \\u0644\\u0644\\u0639\\u0646\\u0627\\u0648\\u064a\\u0646 \\u0627\\u0644\\u0641\\u0631\\u0639\\u064a\\u0629\\u060c \\u0648\\u0627\\u0633\\u062a\\u062e\\u062f\\u0627\\u0645 \\u0623\\u0645\\u062b\\u0644\\u0629 \\u0648\\u062a\\u0648\\u0636\\u064a\\u062d\\u0627\\u062a\\u060c \\u0648\\u062e\\u0627\\u062a\\u0645\\u0629 \\u062a\\u0644\\u062e\\u0635 \\u0627\\u0644\\u0641\\u0631\\u0648\\u0642\\u0627\\u062a \\u0648\\u062a\\u0648\\u062c\\u0647 \\u0627\\u0644\\u0642\\u0627\\u0631\\u0626.\"", \""differentiation_strategy\"": [], \""mandatory_serp_topics\"": [], \""market_data_signals\"": {\""avg_unit_price_range\"": \""\"", \""common_down_payment_or_fees\"": \""\"", \""typical_duration_or_terms\"": \""\"", \""notable_market_trends\"": []}, \""topic_observations\"": {\""core_recurring_topics\"": [{\""topic\"": \""\\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""\\u062a\\u0639\\u0631\\u064a\\u0641 SEO (\\u062a\\u062d\\u0633\\u064a\\u0646 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b)\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""\\u062a\\u0639\\u0631\\u064a\\u0641 SEM (\\u0627\\u0644\\u062a\\u0633\\u0648\\u064a\\u0642 \\u0639\\u0628\\u0631 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b)\"", \""frequency\"": 3, \""confidence\"": \""high\""}], \""secondary_mentions\"": [{\""topic\"": \""\\u0627\\u0644\\u0627\\u062e\\u062a\\u0644\\u0627\\u0641\\u0627\\u062a \\u0627\\u0644\\u0631\\u0626\\u064a\\u0633\\u064a\\u0629 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\"", \""frequency\"": 2, \""confidence\"": \""medium\""}, {\""topic\"": \""\\u062a\\u0643\\u0627\\u0645\\u0644 \\u0623\\u0648 \\u062a\\u0622\\u0632\\u0631 SEO \\u0648 SEM\"", \""frequency\"": 2, \""confidence\"": \""medium\""}], \""weak_signals\"": [{\""topic\"": \""SMM \\u0623\\u0648 \\u0627\\u0644\\u062a\\u0633\\u0648\\u064a\\u0642 \\u0639\\u0628\\u0631 \\u0648\\u0633\\u0627\\u0626\\u0644 \\u0627\\u0644\\u062a\\u0648\\u0627\\u0635\\u0644 \\u0627\\u0644\\u0627\\u062c\\u062a\\u0645\\u0627\\u0639\\u064a\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""\\u0623\\u0647\\u0645\\u064a\\u0629 \\u0627\\u0644\\u062a\\u062d\\u062f\\u064a\\u062b \\u0627\\u0644\\u0645\\u0633\\u062a\\u0645\\u0631 \\u0648\\u0645\\u0648\\u0627\\u0643\\u0628\\u0629 \\u0627\\u0644\\u062a\\u063a\\u064a\\u064a\\u0631\\u0627\\u062a\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""\\u0643\\u064a\\u0641\\u064a\\u0629 \\u0627\\u062e\\u062a\\u064a\\u0627\\u0631 \\u0627\\u0644\\u0623\\u0646\\u0633\\u0628 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\"", \""frequency\"": 1, \""confidence\"": \""low\""}]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Educate, empower, and help the reader (Building Practical Authority).
+- **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and advisor-like.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Foundation (Intro)**: Hook + reader context + why the topic matters now. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed. Do NOT make the intro a definition section.
+2. **The Definition (What is)**: First visible H2 with Primary Keyword. Clear, authoritative, and concise description. This must be separate from the intro.
+3. **The Relevance (Why it matters)**: Practical context building + Key Benefits for the reader.
+4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
+5. **The Action (Practical Tips)**: Actionable ""How-to"" examples or practical advice to maximize dwell time and utility.
+6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
+7. **The Clarity (FAQ)**: Minimum 4-5 questions targeting long-tail related queries in People may ask.
+8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., ""Learn more"" or ""Explore further"").
+
+### EXPERIENCE / DESTINATION TOPICS
+If the primary keyword is a place, venue, destination, attraction, event area, mall, restaurant, or real-world visitor experience:
+- The intro must create interest and orient the visitor, but the first visible H2 must still define what the place is.
+- Do NOT group independent visitor needs into one broad section.
+- Location/access, opening hours/timing, tickets/pricing/booking, parking/transport, and visitor tips are separate intents when relevant.
+- Prefer more focused H2 sections over compressed headings. It is better to have 9-10 clean sections than 7 overloaded sections.
+",2986,"{
+  ""primary_angle"": ""شرح عملي وواضح للفرق بين seo و sem للمبتدئين في مصر، مع التركيز على الفروق الجوهرية والتطبيقات العملية لكل منهما."",
+  ""market_angle"": ""توضيح كيف ينعكس الفرق بين seo و sem على السوق المصري، مع إبراز سلوك المستخدمين المحليين، وتوقعاتهم، والعوامل المؤثرة في اختيار كل استراتيجية."",
+  ""target_reader_state"": ""قارئ لا يمتلك أي معرفة مسبقة بمجال التسويق الرقمي أو تحسين محركات البحث، ويبحث عن فهم واضح وبسيط للفرق بين seo و sem لاتخاذ قرار مناسب لمشروعه أو عمله."",
+  ""pain_point_focus"": [
+    ""الحيرة بين اختيار seo أو sem"",
+    ""عدم وضوح النتائج المتوقعة من كل طريقة"",
+    ""الخوف من إهدار الميزانية أو الوقت"",
+    ""صعوبة فهم المصطلحات التقنية"",
+    ""القلق من عدم ملاءمة الاستراتيجية للسوق المصري""
+  ],
+  ""emotional_trigger"": ""الطمأنينة والثقة في اتخاذ قرار تسويقي صحيح وفعّال دون تعقيد أو مخاطرة."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""استخدام أمثلة عملية من السوق المصري"",
+    ""توضيح المفاهيم بمصطلحات بسيطة"",
+    ""الاستناد إلى تجارب واقعية وبيانات موثوقة"",
+    ""تقديم نصائح عملية قابلة للتطبيق""
+  ],
+  ""eeat_signals_to_include"": [
+    ""شرح مبني على خبرة عملية في السوق المصري"",
+    ""توضيح الفروق بناءً على تجارب حقيقية"",
+    ""استخدام لغة واضحة وموثوقة"",
+    ""تقديم تحذيرات من الأخطاء الشائعة""
+  ],
+  ""differentiation_focus"": [
+    ""تسليط الضوء على الفروق الجوهرية بين seo و sem في مصر"",
+    ""توضيح متى يكون كل خيار هو الأنسب حسب الأهداف والميزانية"",
+    ""ربط الشرح بسلوك المستخدم المصري واحتياجاته""
+  ],
+  ""conversion_strategy"": ""تشجيع القارئ على الاستمرار في التعلم واستكشاف المزيد حول التسويق الرقمي، مع توجيهه لمصادر موثوقة أو مقالات متخصصة دون أي بيع مباشر."",
+  ""cta_philosophy"": ""دعوة خفيفة للاستكشاف والتعمق، مثل: 'اكتشف المزيد حول استراتيجيات التسويق الرقمي الفعّالة في مصر'."",
+  ""local_strategy"": ""تكييف الأمثلة والنصائح مع واقع السوق المصري، مع الإشارة إلى العوامل المحلية مثل سلوك البحث، وتفضيلات المستخدمين، والميزانيات المعتادة، وأهمية الثقة في التعاملات الرقمية."",
+  ""tone_direction"": ""محايد، توضيحي، ودود، وبسيط باللغة العربية الفصحى الحديثة، مع الحرص على إزالة أي تعقيد أو مصطلحات تقنية غير ضرورية."",
+  ""section_role_map"": {
+    ""introduction"": ""جذب انتباه القارئ من خلال طرح تساؤل عملي حول الفرق بين seo و sem، وشرح أهمية فهم هذا الفرق في ظل المنافسة الرقمية المتزايدة في مصر."",
+    ""core_or_benefits"": ""توضيح تعريف كل من seo و sem بشكل منفصل، مع إبراز الفوائد العملية لكل منهما للقارئ المصري."",
+    ""proof"": ""عرض أمثلة واقعية أو سيناريوهات تطبيقية توضح كيف يمكن أن ينعكس اختيار seo أو sem على نتائج الأعمال في مصر."",
+    ""process_or_how"": ""تقديم خطوات عملية أو نصائح واضحة حول كيفية اختيار الاستراتيجية الأنسب، مع أمثلة تطبيقية على كيفية البدء بكل طريقة."",
+    ""faq"": ""الإجابة على أكثر الأسئلة شيوعاً حول الفرق بين seo و sem، مثل: أيهما أسرع في النتائج؟ هل يمكن الجمع بينهما؟ ما هي التكاليف المتوقعة؟ كيف أختار الأنسب لمشروعي؟ هل هناك اختلاف في النتائج حسب نوع النشاط؟"",
+    ""conclusion"": ""تلخيص الفروق الأساسية بين seo و sem، وتوجيه القارئ لاستكشاف المزيد حول التسويق الرقمي، مع دعوة خفيفة لمتابعة القراءة أو التعلم.""
+  }
+}",content_strategy,2026-05-11T15:49:34.725497,3893
+907,11.805,0.0,False,openai/gpt-4.1,"You are a Practical Market Advisor and Clarity Expert.
+
+Inputs:
+- Primary Keyword: الفرق بين seo و sem
+- Intent: informational
+- Content Type: informational
+- Target Area: مصر
+- SERP Market Insights: ""{\""content_gaps\"": [], \""brand_advantages\"": [], \""keyword_clusters\"": [\""\\u062a\\u062d\\u0633\\u064a\\u0646 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b\"", \""\\u0627\\u0644\\u062a\\u0633\\u0648\\u064a\\u0642 \\u0639\\u0628\\u0631 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b\"", \""\\u0627\\u0644\\u062f\\u0641\\u0639 \\u0644\\u0643\\u0644 \\u0646\\u0642\\u0631\\u0629\"", \""\\u0627\\u0644\\u0646\\u062a\\u0627\\u0626\\u062c \\u0627\\u0644\\u0639\\u0636\\u0648\\u064a\\u0629\"", \""\\u0627\\u0644\\u0646\\u062a\\u0627\\u0626\\u062c \\u0627\\u0644\\u0645\\u062f\\u0641\\u0648\\u0639\\u0629\""], \""writing_guide\"": \""\\u0645\\u0642\\u0627\\u0644\\u0627\\u062a \\u0634\\u0627\\u0645\\u0644\\u0629 \\u062a\\u0634\\u0631\\u062d \\u0627\\u0644\\u0641\\u0631\\u0648\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\\u060c \\u0645\\u0639 \\u062a\\u0642\\u0633\\u064a\\u0645 \\u0648\\u0627\\u0636\\u062d \\u0644\\u0644\\u0639\\u0646\\u0627\\u0648\\u064a\\u0646 \\u0627\\u0644\\u0641\\u0631\\u0639\\u064a\\u0629\\u060c \\u0648\\u0627\\u0633\\u062a\\u062e\\u062f\\u0627\\u0645 \\u0623\\u0645\\u062b\\u0644\\u0629 \\u0648\\u062a\\u0648\\u0636\\u064a\\u062d\\u0627\\u062a\\u060c \\u0648\\u062e\\u0627\\u062a\\u0645\\u0629 \\u062a\\u0644\\u062e\\u0635 \\u0627\\u0644\\u0641\\u0631\\u0648\\u0642\\u0627\\u062a \\u0648\\u062a\\u0648\\u062c\\u0647 \\u0627\\u0644\\u0642\\u0627\\u0631\\u0626.\"", \""differentiation_strategy\"": [], \""mandatory_serp_topics\"": [], \""market_data_signals\"": {\""avg_unit_price_range\"": \""\"", \""common_down_payment_or_fees\"": \""\"", \""typical_duration_or_terms\"": \""\"", \""notable_market_trends\"": []}, \""topic_observations\"": {\""core_recurring_topics\"": [{\""topic\"": \""\\u0627\\u0644\\u0641\\u0631\\u0642 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""\\u062a\\u0639\\u0631\\u064a\\u0641 SEO (\\u062a\\u062d\\u0633\\u064a\\u0646 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b)\"", \""frequency\"": 3, \""confidence\"": \""high\""}, {\""topic\"": \""\\u062a\\u0639\\u0631\\u064a\\u0641 SEM (\\u0627\\u0644\\u062a\\u0633\\u0648\\u064a\\u0642 \\u0639\\u0628\\u0631 \\u0645\\u062d\\u0631\\u0643\\u0627\\u062a \\u0627\\u0644\\u0628\\u062d\\u062b)\"", \""frequency\"": 3, \""confidence\"": \""high\""}], \""secondary_mentions\"": [{\""topic\"": \""\\u0627\\u0644\\u0627\\u062e\\u062a\\u0644\\u0627\\u0641\\u0627\\u062a \\u0627\\u0644\\u0631\\u0626\\u064a\\u0633\\u064a\\u0629 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\"", \""frequency\"": 2, \""confidence\"": \""medium\""}, {\""topic\"": \""\\u062a\\u0643\\u0627\\u0645\\u0644 \\u0623\\u0648 \\u062a\\u0622\\u0632\\u0631 SEO \\u0648 SEM\"", \""frequency\"": 2, \""confidence\"": \""medium\""}], \""weak_signals\"": [{\""topic\"": \""SMM \\u0623\\u0648 \\u0627\\u0644\\u062a\\u0633\\u0648\\u064a\\u0642 \\u0639\\u0628\\u0631 \\u0648\\u0633\\u0627\\u0626\\u0644 \\u0627\\u0644\\u062a\\u0648\\u0627\\u0635\\u0644 \\u0627\\u0644\\u0627\\u062c\\u062a\\u0645\\u0627\\u0639\\u064a\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""\\u0623\\u0647\\u0645\\u064a\\u0629 \\u0627\\u0644\\u062a\\u062d\\u062f\\u064a\\u062b \\u0627\\u0644\\u0645\\u0633\\u062a\\u0645\\u0631 \\u0648\\u0645\\u0648\\u0627\\u0643\\u0628\\u0629 \\u0627\\u0644\\u062a\\u063a\\u064a\\u064a\\u0631\\u0627\\u062a\"", \""frequency\"": 1, \""confidence\"": \""low\""}, {\""topic\"": \""\\u0643\\u064a\\u0641\\u064a\\u0629 \\u0627\\u062e\\u062a\\u064a\\u0627\\u0631 \\u0627\\u0644\\u0623\\u0646\\u0633\\u0628 \\u0628\\u064a\\u0646 SEO \\u0648 SEM\"", \""frequency\"": 1, \""confidence\"": \""low\""}]}}""
+
+Task:
+Create a practical content strategy for a zero-knowledge reader that can be directly translated into an outline.
+No elite theory, no consultant jargon, no academic frameworks, no outline generation.
+
+Rules:
+- Stay strictly on primary keyword topic.
+- **NO TOPIC HIJACKING**: Do not let secondary features or supporting technologies become the main focus. The **Primary Keyword** is the absolute protagonist. All other concepts must strictly serve the main topic.
+- **NO SERVICE HALLUCINATION**: Ignore any data from the brand context that belongs to a different service. Do NOT list the company as a ""full-service agency"" if the keyword is about a specific niche. 
+- **STRICT RELEVANCE**: Every single angle, pain point, and section role MUST connect directly to the primary keyword. If it's not about the primary keyword, drop it entirely.
+- Use SERP evidence only
+- If area exists:
+  - Include local differentiation (market behavior, trust factors, payment/regulatory context)
+- **NO COMPETITOR MENTIONS (CRITICAL)**: Never name or reference specific competitor brands. Always speak about the protagonist brand's unique advantages vs. generic ""market standards"" or ""alternative methods"".
+- PROHIBITED NAMES: 
+
+OUTPUT FORMAT:
+You MUST return the output EXACTLY as a valid JSON object. 
+Do NOT include any explanations, markdown formatting (like ```json), or introductory text.
+Return ONLY this JSON structure:
+{
+  ""primary_angle"": """",
+  ""market_angle"": """",
+  ""target_reader_state"": """",
+  ""pain_point_focus"": [],
+  ""emotional_trigger"": """",
+  ""depth_level"": ""intermediate | advanced | comprehensive"",
+  ""authority_strategy"": [],
+  ""eeat_signals_to_include"": [],
+  ""differentiation_focus"": [],
+  ""conversion_strategy"": """",
+  ""cta_philosophy"": """",
+  ""local_strategy"": """",
+  ""tone_direction"": """",
+  ""section_role_map"": {
+    ""introduction"": """",
+    ""core_or_benefits"": """",
+    ""proof"": """",
+    ""process_or_how"": """",
+    ""faq"": """",
+    ""conclusion"": """"
+  }
+}
+
+### INFORMATIONAL STRATEGY ARCHITECTURE (STRICT)
+- **Primary Objective**: Educate, empower, and help the reader (Building Practical Authority).
+- **Core Philosophy**: 100% Educational / 0% Direct Selling. No Promotional fluff.
+- **Tone**: Helpfully neutral, conversational (Modern Standard Arabic), and advisor-like.
+
+### MANDATORY SECTION MAPPING (IN ORDER):
+1. **The Foundation (Intro)**: Hook + reader context + why the topic matters now. Primary Keyword integrated naturally. 0% Selling. NO CTA allowed. Do NOT make the intro a definition section.
+2. **The Definition (What is)**: First visible H2 with Primary Keyword. Clear, authoritative, and concise description. This must be separate from the intro.
+3. **The Relevance (Why it matters)**: Practical context building + Key Benefits for the reader.
+4. **The Knowledge (Main Body)**: Diverse sub-topic exploration. Each H2/H3 must cover a specific step or sub-theme using LSI keywords as primary signals.
+5. **The Action (Practical Tips)**: Actionable ""How-to"" examples or practical advice to maximize dwell time and utility.
+6. **The Caution (Mistakes)**: High-value section addressing common pitfalls. Builds high trust and handles silent objections.
+7. **The Clarity (FAQ)**: Minimum 4-5 questions targeting long-tail related queries in People may ask.
+8. **The Summary (Conclusion)**: Summary of key takeaways + ONE soft CTA at most (e.g., ""Learn more"" or ""Explore further"").
+
+### EXPERIENCE / DESTINATION TOPICS
+If the primary keyword is a place, venue, destination, attraction, event area, mall, restaurant, or real-world visitor experience:
+- The intro must create interest and orient the visitor, but the first visible H2 must still define what the place is.
+- Do NOT group independent visitor needs into one broad section.
+- Location/access, opening hours/timing, tickets/pricing/booking, parking/transport, and visitor tips are separate intents when relevant.
+- Prefer more focused H2 sections over compressed headings. It is better to have 9-10 clean sections than 7 overloaded sections.
+",2986,"{
+  ""primary_angle"": ""شرح عملي وواضح للفرق بين seo و sem للمبتدئين في مصر، مع التركيز على الفروق الجوهرية والتطبيقات العملية لكل منهما."",
+  ""market_angle"": ""توضيح كيف ينعكس الفرق بين seo و sem على السوق المصري، مع إبراز سلوك المستخدمين المحليين، وتوقعاتهم، والعوامل المؤثرة في اختيار كل استراتيجية."",
+  ""target_reader_state"": ""قارئ لا يمتلك أي معرفة مسبقة بمجال التسويق الرقمي أو تحسين محركات البحث، ويبحث عن فهم واضح وبسيط للفرق بين seo و sem لاتخاذ قرار مناسب لمشروعه أو عمله."",
+  ""pain_point_focus"": [
+    ""الحيرة بين اختيار seo أو sem"",
+    ""عدم وضوح النتائج المتوقعة من كل طريقة"",
+    ""الخوف من إهدار الميزانية أو الوقت"",
+    ""صعوبة فهم المصطلحات التقنية"",
+    ""القلق من عدم ملاءمة الاستراتيجية للسوق المصري""
+  ],
+  ""emotional_trigger"": ""الطمأنينة والثقة في اتخاذ قرار تسويقي صحيح وفعّال دون تعقيد أو مخاطرة."",
+  ""depth_level"": ""comprehensive"",
+  ""authority_strategy"": [
+    ""استخدام أمثلة عملية من السوق المصري"",
+    ""توضيح المفاهيم بمصطلحات بسيطة"",
+    ""الاستناد إلى تجارب واقعية وبيانات موثوقة"",
+    ""تقديم نصائح عملية قابلة للتطبيق""
+  ],
+  ""eeat_signals_to_include"": [
+    ""شرح مبني على خبرة عملية في السوق المصري"",
+    ""توضيح الفروق بناءً على تجارب حقيقية"",
+    ""استخدام لغة واضحة وموثوقة"",
+    ""تقديم تحذيرات من الأخطاء الشائعة""
+  ],
+  ""differentiation_focus"": [
+    ""تسليط الضوء على الفروق الجوهرية بين seo و sem في مصر"",
+    ""توضيح متى يكون كل خيار هو الأنسب حسب الأهداف والميزانية"",
+    ""ربط الشرح بسلوك المستخدم المصري واحتياجاته""
+  ],
+  ""conversion_strategy"": ""تشجيع القارئ على الاستمرار في التعلم واستكشاف المزيد حول التسويق الرقمي، مع توجيهه لمصادر موثوقة أو مقالات متخصصة دون أي بيع مباشر."",
+  ""cta_philosophy"": ""دعوة خفيفة للاستكشاف والتعمق، مثل: 'اكتشف المزيد حول استراتيجيات التسويق الرقمي الفعّالة في مصر'."",
+  ""local_strategy"": ""تكييف الأمثلة والنصائح مع واقع السوق المصري، مع الإشارة إلى العوامل المحلية مثل سلوك البحث، وتفضيلات المستخدمين، والميزانيات المعتادة، وأهمية الثقة في التعاملات الرقمية."",
+  ""tone_direction"": ""محايد، توضيحي، ودود، وبسيط باللغة العربية الفصحى الحديثة، مع الحرص على إزالة أي تعقيد أو مصطلحات تقنية غير ضرورية."",
+  ""section_role_map"": {
+    ""introduction"": ""جذب انتباه القارئ من خلال طرح تساؤل عملي حول الفرق بين seo و sem، وشرح أهمية فهم هذا الفرق في ظل المنافسة الرقمية المتزايدة في مصر."",
+    ""core_or_benefits"": ""توضيح تعريف كل من seo و sem بشكل منفصل، مع إبراز الفوائد العملية لكل منهما للقارئ المصري."",
+    ""proof"": ""عرض أمثلة واقعية أو سيناريوهات تطبيقية توضح كيف يمكن أن ينعكس اختيار seo أو sem على نتائج الأعمال في مصر."",
+    ""process_or_how"": ""تقديم خطوات عملية أو نصائح واضحة حول كيفية اختيار الاستراتيجية الأنسب، مع أمثلة تطبيقية على كيفية البدء بكل طريقة."",
+    ""faq"": ""الإجابة على أكثر الأسئلة شيوعاً حول الفرق بين seo و sem، مثل: أيهما أسرع في النتائج؟ هل يمكن الجمع بينهما؟ ما هي التكاليف المتوقعة؟ كيف أختار الأنسب لمشروعي؟ هل هناك اختلاف في النتائج حسب نوع النشاط؟"",
+    ""conclusion"": ""تلخيص الفروق الأساسية بين seo و sem، وتوجيه القارئ لاستكشاف المزيد حول التسويق الرقمي، مع دعوة خفيفة لمتابعة القراءة أو التعلم.""
+  }
+}",STEP_TOTAL: content_strategy,2026-05-11T15:49:34.729218,3893
+0,0,0.0,False,N/A,N/A,0,"{'mode': 'audit_only', 'passed': True, 'warnings': [{'code': 'PK_REPETITION', 'section_id': 'sec_02', 'heading_text': 'الفرق بين SEO و SEM: التعريف والمفاهيم الأساسية', 'severity': 'low', 'message': 'Primary keyword repeated 2 times in core H2 headings.', 'suggested_action': 'Use semantic variants instead of near-exact primary keyword matches.'}, {'code': 'PK_REPETITION', 'section_id': 'sec_04', 'heading_text': 'مقارنة بين SEO و SEM: الفروقات الجوهرية والتطبيقات العملية', 'severity': 'low', 'message': 'Primary keyword repeated 2 times in core H2 headings.', 'suggested_action': 'Use semantic variants instead of near-exact primary keyword matches.'}, {'code': 'H3_PARENT_MISMATCH', 'section_id': 'sec_04', 'heading_text': 'النتائج العضوية مقابل النتائج المدفوعة', 'severity': 'medium', 'message': 'H3 scope does not safely match its parent H2.', 'suggested_action': 'Align H3 with H2 context or remove it.'}, {'code': 'WEAK_H3', 'section_id': 'sec_04', 'heading_text': 'السرعة والتكلفة والجهد', 'severity': 'low', 'message': 'H3 is weak, generic, duplicated, too granular, or atomized.', 'suggested_action': 'Expand H3 into a useful subtopic or remove it.'}, {'code': 'H3_PARENT_MISMATCH', 'section_id': 'sec_04', 'heading_text': 'السرعة والتكلفة والجهد', 'severity': 'medium', 'message': 'H3 scope does not safely match its parent H2.', 'suggested_action': 'Align H3 with H2 context or remove it.'}, {'code': 'WEAK_H3', 'section_id': 'sec_04', 'heading_text': 'الاستدامة والتحكم في النتائج', 'severity': 'low', 'message': 'H3 is weak, generic, duplicated, too granular, or atomized.', 'suggested_action': 'Expand H3 into a useful subtopic or remove it.'}, {'code': 'H3_PARENT_MISMATCH', 'section_id': 'sec_04', 'heading_text': 'الاستدامة والتحكم في النتائج', 'severity': 'medium', 'message': 'H3 scope does not safely match its parent H2.', 'suggested_action': 'Align H3 with H2 context or remove it.'}, {'code': 'H3_PARENT_MISMATCH', 'section_id': 'sec_07', 'heading_text': 'كيف أختار الأنسب لمشروعي أو نشاطي التجاري؟', 'severity': 'medium', 'message': 'H3 scope does not safely match its parent H2.', 'suggested_action': 'Align H3 with H2 context or remove it.'}, {'code': 'ENTITY_DRIFT', 'section_id': 'sec_06', 'heading_text': 'أخطاء شائعة يجب تجنبها عند اختيار استراتيجية التسويق الرقمي', 'severity': 'medium', 'message': 'Heading clearly drifts from the core entity/service phrase.', 'suggested_action': 'Anchor the heading back to the core entity, service, or a clear semantic variant.'}], 'summary': {'total_warnings': 9, 'high': 0, 'medium': 5, 'low': 4}}",EVENT: heading_quality_audit,2026-05-11T15:49:43.969369,0
+786,9.246,0.0,False,openai/gpt-4.1,"Informational outline heading prompt derived from 01_outline_generator_heading_only_v2.txt
+
+You are a Helpful, Clear Content Planner.
+Your task is to generate only the heading structure layer of an article outline in JSON format.
+
+0. CONTEXT
+- Feedback: ""None""
+- Article Title: ""الفرق بين SEO و SEM: دليل مبسط لفهم التسويق الرقمي 2026 في مصر""
+- Primary Keyword: ""الفرق بين seo و sem""
+- Core Keywords: [""\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 seo \u0648 sem""]
+- Article Language: ""ar""
+- Intent: ""informational""
+- Content Type: ""informational""
+- Area: ""مصر""
+- Brand Context: ""Provide objective structural guidance. Brand differentiation should be secondary and used only in conclusion or for unique value-adds, never for pricing or FAQ headings.""
+- Brand Name: ""Creative Minds""
+- Head Entity: ""الفرق""
+- Entity Phrase: ""الفرق بين seo و sem""
+- Service/Object Phrase: ""الفرق بين seo و sem""
+- Content Strategy: {""authority_strategy"": [""\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0623\u0645\u062b\u0644\u0629 \u0639\u0645\u0644\u064a\u0629 \u0645\u0646 \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u0635\u0631\u064a"", ""\u062a\u0648\u0636\u064a\u062d \u0627\u0644\u0645\u0641\u0627\u0647\u064a\u0645 \u0628\u0645\u0635\u0637\u0644\u062d\u0627\u062a \u0628\u0633\u064a\u0637\u0629"", ""\u0627\u0644\u0627\u0633\u062a\u0646\u0627\u062f \u0625\u0644\u0649 \u062a\u062c\u0627\u0631\u0628 \u0648\u0627\u0642\u0639\u064a\u0629 \u0648\u0628\u064a\u0627\u0646\u0627\u062a \u0645\u0648\u062b\u0648\u0642\u0629"", ""\u062a\u0642\u062f\u064a\u0645 \u0646\u0635\u0627\u0626\u062d \u0639\u0645\u0644\u064a\u0629 \u0642\u0627\u0628\u0644\u0629 \u0644\u0644\u062a\u0637\u0628\u064a\u0642""], ""conversion_strategy"": ""\u062a\u0634\u062c\u064a\u0639 \u0627\u0644\u0642\u0627\u0631\u0626 \u0639\u0644\u0649 \u0627\u0644\u0627\u0633\u062a\u0645\u0631\u0627\u0631 \u0641\u064a \u0627\u0644\u062a\u0639\u0644\u0645 \u0648\u0627\u0633\u062a\u0643\u0634\u0627\u0641 \u0627\u0644\u0645\u0632\u064a\u062f \u062d\u0648\u0644 \u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0627\u0644\u0631\u0642\u0645\u064a\u060c \u0645\u0639 \u062a\u0648\u062c\u064a\u0647\u0647 \u0644\u0645\u0635\u0627\u062f\u0631 \u0645\u0648\u062b\u0648\u0642\u0629 \u0623\u0648 \u0645\u0642\u0627\u0644\u0627\u062a \u0645\u062a\u062e\u0635\u0635\u0629 \u062f\u0648\u0646 \u0623\u064a \u0628\u064a\u0639 \u0645\u0628\u0627\u0634\u0631."", ""cta_philosophy"": ""\u062f\u0639\u0648\u0629 \u062e\u0641\u064a\u0641\u0629 \u0644\u0644\u0627\u0633\u062a\u0643\u0634\u0627\u0641 \u0648\u0627\u0644\u062a\u0639\u0645\u0642\u060c \u0645\u062b\u0644: \u0027\u0627\u0643\u062a\u0634\u0641 \u0627\u0644\u0645\u0632\u064a\u062f \u062d\u0648\u0644 \u0627\u0633\u062a\u0631\u0627\u062a\u064a\u062c\u064a\u0627\u062a \u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0627\u0644\u0631\u0642\u0645\u064a \u0627\u0644\u0641\u0639\u0651\u0627\u0644\u0629 \u0641\u064a \u0645\u0635\u0631\u0027."", ""cultural_peer_areas"": [], ""depth_level"": ""comprehensive"", ""differentiation_focus"": [""\u062a\u0633\u0644\u064a\u0637 \u0627\u0644\u0636\u0648\u0621 \u0639\u0644\u0649 \u0627\u0644\u0641\u0631\u0648\u0642 \u0627\u0644\u062c\u0648\u0647\u0631\u064a\u0629 \u0628\u064a\u0646 seo \u0648 sem \u0641\u064a \u0645\u0635\u0631"", ""\u062a\u0648\u0636\u064a\u062d \u0645\u062a\u0649 \u064a\u0643\u0648\u0646 \u0643\u0644 \u062e\u064a\u0627\u0631 \u0647\u0648 \u0627\u0644\u0623\u0646\u0633\u0628 \u062d\u0633\u0628 \u0627\u0644\u0623\u0647\u062f\u0627\u0641 \u0648\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0629"", ""\u0631\u0628\u0637 \u0627\u0644\u0634\u0631\u062d \u0628\u0633\u0644\u0648\u0643 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u0645\u0635\u0631\u064a \u0648\u0627\u062d\u062a\u064a\u0627\u062c\u0627\u062a\u0647""], ""eeat_signals_to_include"": [""\u0634\u0631\u062d \u0645\u0628\u0646\u064a \u0639\u0644\u0649 \u062e\u0628\u0631\u0629 \u0639\u0645\u0644\u064a\u0629 \u0641\u064a \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u0635\u0631\u064a"", ""\u062a\u0648\u0636\u064a\u062d \u0627\u0644\u0641\u0631\u0648\u0642 \u0628\u0646\u0627\u0621\u064b \u0639\u0644\u0649 \u062a\u062c\u0627\u0631\u0628 \u062d\u0642\u064a\u0642\u064a\u0629"", ""\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0644\u063a\u0629 \u0648\u0627\u0636\u062d\u0629 \u0648\u0645\u0648\u062b\u0648\u0642\u0629"", ""\u062a\u0642\u062f\u064a\u0645 \u062a\u062d\u0630\u064a\u0631\u0627\u062a \u0645\u0646 \u0627\u0644\u0623\u062e\u0637\u0627\u0621 \u0627\u0644\u0634\u0627\u0626\u0639\u0629""], ""emotional_trigger"": ""\u0627\u0644\u0637\u0645\u0623\u0646\u064a\u0646\u0629 \u0648\u0627\u0644\u062b\u0642\u0629 \u0641\u064a \u0627\u062a\u062e\u0627\u0630 \u0642\u0631\u0627\u0631 \u062a\u0633\u0648\u064a\u0642\u064a \u0635\u062d\u064a\u062d \u0648\u0641\u0639\u0651\u0627\u0644 \u062f\u0648\u0646 \u062a\u0639\u0642\u064a\u062f \u0623\u0648 \u0645\u062e\u0627\u0637\u0631\u0629."", ""local_strategy"": ""\u062a\u0643\u064a\u064a\u0641 \u0627\u0644\u0623\u0645\u062b\u0644\u0629 \u0648\u0627\u0644\u0646\u0635\u0627\u0626\u062d \u0645\u0639 \u0648\u0627\u0642\u0639 \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u0635\u0631\u064a\u060c \u0645\u0639 \u0627\u0644\u0625\u0634\u0627\u0631\u0629 \u0625\u0644\u0649 \u0627\u0644\u0639\u0648\u0627\u0645\u0644 \u0627\u0644\u0645\u062d\u0644\u064a\u0629 \u0645\u062b\u0644 \u0633\u0644\u0648\u0643 \u0627\u0644\u0628\u062d\u062b\u060c \u0648\u062a\u0641\u0636\u064a\u0644\u0627\u062a \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u064a\u0646\u060c \u0648\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0627\u062a \u0627\u0644\u0645\u0639\u062a\u0627\u062f\u0629\u060c \u0648\u0623\u0647\u0645\u064a\u0629 \u0627\u0644\u062b\u0642\u0629 \u0641\u064a \u0627\u0644\u062a\u0639\u0627\u0645\u0644\u0627\u062a \u0627\u0644\u0631\u0642\u0645\u064a\u0629."", ""market_angle"": ""\u062a\u0648\u0636\u064a\u062d \u0643\u064a\u0641 \u064a\u0646\u0639\u0643\u0633 \u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 seo \u0648 sem \u0639\u0644\u0649 \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u0635\u0631\u064a\u060c \u0645\u0639 \u0625\u0628\u0631\u0627\u0632 \u0633\u0644\u0648\u0643 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u064a\u0646 \u0627\u0644\u0645\u062d\u0644\u064a\u064a\u0646\u060c \u0648\u062a\u0648\u0642\u0639\u0627\u062a\u0647\u0645\u060c \u0648\u0627\u0644\u0639\u0648\u0627\u0645\u0644 \u0627\u0644\u0645\u0624\u062b\u0631\u0629 \u0641\u064a \u0627\u062e\u062a\u064a\u0627\u0631 \u0643\u0644 \u0627\u0633\u062a\u0631\u0627\u062a\u064a\u062c\u064a\u0629."", ""pain_point_focus"": [""\u0627\u0644\u062d\u064a\u0631\u0629 \u0628\u064a\u0646 \u0627\u062e\u062a\u064a\u0627\u0631 seo \u0623\u0648 sem"", ""\u0639\u062f\u0645 \u0648\u0636\u0648\u062d \u0627\u0644\u0646\u062a\u0627\u0626\u062c \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0629 \u0645\u0646 \u0643\u0644 \u0637\u0631\u064a\u0642\u0629"", ""\u0627\u0644\u062e\u0648\u0641 \u0645\u0646 \u0625\u0647\u062f\u0627\u0631 \u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0629 \u0623\u0648 \u0627\u0644\u0648\u0642\u062a"", ""\u0635\u0639\u0648\u0628\u0629 \u0641\u0647\u0645 \u0627\u0644\u0645\u0635\u0637\u0644\u062d\u0627\u062a \u0627\u0644\u062a\u0642\u0646\u064a\u0629"", ""\u0627\u0644\u0642\u0644\u0642 \u0645\u0646 \u0639\u062f\u0645 \u0645\u0644\u0627\u0621\u0645\u0629 \u0627\u0644\u0627\u0633\u062a\u0631\u0627\u062a\u064a\u062c\u064a\u0629 \u0644\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u0635\u0631\u064a""], ""primary_angle"": ""Help the reader understand \u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 seo \u0648 sem clearly and answer the main search question."", ""section_role_map"": {""conclusion"": ""\u062a\u0644\u062e\u064a\u0635 \u0627\u0644\u0641\u0631\u0648\u0642 \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629 \u0628\u064a\u0646 seo \u0648 sem\u060c \u0648\u062a\u0648\u062c\u064a\u0647 \u0627\u0644\u0642\u0627\u0631\u0626 \u0644\u0627\u0633\u062a\u0643\u0634\u0627\u0641 \u0627\u0644\u0645\u0632\u064a\u062f \u062d\u0648\u0644 \u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0627\u0644\u0631\u0642\u0645\u064a\u060c \u0645\u0639 \u062f\u0639\u0648\u0629 \u062e\u0641\u064a\u0641\u0629 \u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0627\u0644\u0642\u0631\u0627\u0621\u0629 \u0623\u0648 \u0627\u0644\u062a\u0639\u0644\u0645."", ""core_or_benefits"": ""\u062a\u0648\u0636\u064a\u062d \u062a\u0639\u0631\u064a\u0641 \u0643\u0644 \u0645\u0646 seo \u0648 sem \u0628\u0634\u0643\u0644 \u0645\u0646\u0641\u0635\u0644\u060c \u0645\u0639 \u0625\u0628\u0631\u0627\u0632 \u0627\u0644\u0641\u0648\u0627\u0626\u062f \u0627\u0644\u0639\u0645\u0644\u064a\u0629 \u0644\u0643\u0644 \u0645\u0646\u0647\u0645\u0627 \u0644\u0644\u0642\u0627\u0631\u0626 \u0627\u0644\u0645\u0635\u0631\u064a."", ""faq"": ""\u0627\u0644\u0625\u062c\u0627\u0628\u0629 \u0639\u0644\u0649 \u0623\u0643\u062b\u0631 \u0627\u0644\u0623\u0633\u0626\u0644\u0629 \u0634\u064a\u0648\u0639\u0627\u064b \u062d\u0648\u0644 \u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 seo \u0648 sem\u060c \u0645\u062b\u0644: \u0623\u064a\u0647\u0645\u0627 \u0623\u0633\u0631\u0639 \u0641\u064a \u0627\u0644\u0646\u062a\u0627\u0626\u062c\u061f \u0647\u0644 \u064a\u0645\u0643\u0646 \u0627\u0644\u062c\u0645\u0639 \u0628\u064a\u0646\u0647\u0645\u0627\u061f \u0645\u0627 \u0647\u064a \u0627\u0644\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0629\u061f \u0643\u064a\u0641 \u0623\u062e\u062a\u0627\u0631 \u0627\u0644\u0623\u0646\u0633\u0628 \u0644\u0645\u0634\u0631\u0648\u0639\u064a\u061f \u0647\u0644 \u0647\u0646\u0627\u0643 \u0627\u062e\u062a\u0644\u0627\u0641 \u0641\u064a \u0627\u0644\u0646\u062a\u0627\u0626\u062c \u062d\u0633\u0628 \u0646\u0648\u0639 \u0627\u0644\u0646\u0634\u0627\u0637\u061f"", ""introduction"": ""Open with a helpful hook and visitor/reader context for \u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 seo \u0648 sem. Do not define the topic here; keep the definition for the first visible H2."", ""process_or_how"": ""Explain the standard practical steps simply, omitting legal or technical compliance checklists."", ""proof"": ""Show general evidence of quality or standard benefits, avoiding ROI or financial growth metrics.""}, ""target_reader_state"": ""\u0642\u0627\u0631\u0626 \u0644\u0627 \u064a\u0645\u062a\u0644\u0643 \u0623\u064a \u0645\u0639\u0631\u0641\u0629 \u0645\u0633\u0628\u0642\u0629 \u0628\u0645\u062c\u0627\u0644 \u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0627\u0644\u0631\u0642\u0645\u064a \u0623\u0648 \u062a\u062d\u0633\u064a\u0646 \u0645\u062d\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u062d\u062b\u060c \u0648\u064a\u0628\u062d\u062b \u0639\u0646 \u0641\u0647\u0645 \u0648\u0627\u0636\u062d \u0648\u0628\u0633\u064a\u0637 \u0644\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 seo \u0648 sem \u0644\u0627\u062a\u062e\u0627\u0630 \u0642\u0631\u0627\u0631 \u0645\u0646\u0627\u0633\u0628 \u0644\u0645\u0634\u0631\u0648\u0639\u0647 \u0623\u0648 \u0639\u0645\u0644\u0647."", ""tone_direction"": ""\u0645\u062d\u0627\u064a\u062f\u060c \u062a\u0648\u0636\u064a\u062d\u064a\u060c \u0648\u062f\u0648\u062f\u060c \u0648\u0628\u0633\u064a\u0637 \u0628\u0627\u0644\u0644\u063a\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0641\u0635\u062d\u0649 \u0627\u0644\u062d\u062f\u064a\u062b\u0629\u060c \u0645\u0639 \u0627\u0644\u062d\u0631\u0635 \u0639\u0644\u0649 \u0625\u0632\u0627\u0644\u0629 \u0623\u064a \u062a\u0639\u0642\u064a\u062f \u0623\u0648 \u0645\u0635\u0637\u0644\u062d\u0627\u062a \u062a\u0642\u0646\u064a\u0629 \u063a\u064a\u0631 \u0636\u0631\u0648\u0631\u064a\u0629.""}
+- Style Blueprint: {""cta_strategy"": {""density"": ""Balanced"", ""total_ideal_count"": 3, ""wording_patterns"": []}, ""formatting_blueprint"": {""bolding_frequency"": ""Standard""}, ""structural_skeleton"": [], ""tonal_dna"": {""audience_level"": ""General"", ""forbidden_jargon"": [], ""persona"": ""Professional"", ""sentence_rhythm"": ""Balanced""}}
+- SERP Outline Brief: {""avoid_sections"": [], ""brand_utility_candidates"": [], ""dominant_search_intent"": ""informational"", ""faq_source_status"": {""autocomplete_observed"": false, ""paa_observed"": false, ""related_observed"": false}, ""heading_candidates"": [""\u0627\u0644\u0641\u0631\u0642 \u0627\u0644\u062c\u0648\u0647\u0631\u064a \u0628\u064a\u0646 SEO \u0648 SEM"", ""\u0627\u0644\u0627\u062e\u062a\u0644\u0627\u0641\u0627\u062a \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0628\u064a\u0646 SEO \u0648 SEM"", ""SEO \u0648 SEM \u0642\u0648\u0629 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0648\u0627\u0644\u062a\u0622\u0632\u0631"", ""\u0623\u0647\u0645\u064a\u0629 \u0627\u0644\u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0645\u0633\u062a\u0645\u0631 \u0648\u0645\u0648\u0627\u0643\u0628\u0629 \u0627\u0644\u062a\u063a\u064a\u064a\u0631\u0627\u062a"", ""\u0627\u0644\u062e\u0627\u062a\u0645\u0629 \u0641\u0647\u0645 \u0627\u0644\u0641\u0631\u0642 \u064a\u0642\u0648\u062f \u0625\u0644\u0649 \u0627\u0633\u062a\u0631\u0627\u062a\u064a\u062c\u064a\u0629 \u0623\u0641\u0636\u0644"", ""\u0631\u0643\u0627\u0626\u0632 SEO \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629:"", ""\u0641\u0648\u0627\u0626\u062f SEO:"", ""\u062a\u062d\u062f\u064a\u0627\u062a SEO:"", ""\u0639\u0646 \u0645\u062f\u064a\u0631 \u0627\u0644\u0645\u0648\u0642\u0639"", ""\u0639\u0646 \u0645\u062f\u0648\u0646\u0629: \u0627\u0644\u062f\u0648\u064a\u063a\u0631\u064a SEO""], ""heading_generation_guidance"": [""\u0645\u0642\u0627\u0644\u0627\u062a \u0634\u0627\u0645\u0644\u0629 \u062a\u0634\u0631\u062d \u0627\u0644\u0641\u0631\u0648\u0642 \u0628\u064a\u0646 SEO \u0648 SEM\u060c \u0645\u0639 \u062a\u0642\u0633\u064a\u0645 \u0648\u0627\u0636\u062d \u0644\u0644\u0639\u0646\u0627\u0648\u064a\u0646 \u0627\u0644\u0641\u0631\u0639\u064a\u0629\u060c \u0648\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0623\u0645\u062b\u0644\u0629 \u0648\u062a\u0648\u0636\u064a\u062d\u0627\u062a\u060c \u0648\u062e\u0627\u062a\u0645\u0629 \u062a\u0644\u062e\u0635 \u0627\u0644\u0641\u0631\u0648\u0642\u0627\u062a \u0648\u062a\u0648\u062c\u0647 \u0627\u0644\u0642\u0627\u0631\u0626.""], ""must_consider_sections"": [], ""observed_heading_patterns"": [""H2 with nested H3s, topic-focused""], ""observed_page_type"": ""guide"", ""observed_topics"": [""\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646 SEO \u0648 SEM"", ""\u062a\u0639\u0631\u064a\u0641 SEO (\u062a\u062d\u0633\u064a\u0646 \u0645\u062d\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u062d\u062b)"", ""\u062a\u0639\u0631\u064a\u0641 SEM (\u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0639\u0628\u0631 \u0645\u062d\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u062d\u062b)"", ""\u0639\u0646 \u0645\u062f\u064a\u0631 \u0627\u0644\u0645\u0648\u0642\u0639"", ""\u062a\u0633\u0631\u064a\u0639 \u0645\u0648\u0642\u0639 \u0648\u0648\u0631\u062f\u0628\u0631\u064a\u0633"", ""seo \u0645\u0642\u0627\u0631\u0646\u0629"", ""\u0628\u064a\u0646 seo"", ""seo sem"", ""\u0627\u0644\u0645\u062c\u0647\u0631 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a"", ""\u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0627\u0644\u0645\u0627\u0633\u062d"", ""\u0627\u0644\u0645\u062c\u0647\u0631 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0627\u0644\u0645\u0627\u0633\u062d"", ""\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646"", ""\u0645\u0642\u0627\u0631\u0646\u0629 sem"", ""seo \u0645\u0642\u0627\u0631\u0646\u0629 sem"", ""\u0628\u064a\u0646 seo sem"", ""\u0627\u0644\u0627\u062e\u062a\u0644\u0627\u0641\u0627\u062a \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0628\u064a\u0646 SEO \u0648 SEM"", ""\u062a\u0643\u0627\u0645\u0644 \u0623\u0648 \u062a\u0622\u0632\u0631 SEO \u0648 SEM""], ""secondary_keyword_phrases"": [""\u062a\u062d\u0633\u064a\u0646 \u0645\u062d\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u062d\u062b"", ""\u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0639\u0628\u0631 \u0645\u062d\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u062d\u062b"", ""\u0627\u0644\u062f\u0641\u0639 \u0644\u0643\u0644 \u0646\u0642\u0631\u0629"", ""\u0627\u0644\u0646\u062a\u0627\u0626\u062c \u0627\u0644\u0639\u0636\u0648\u064a\u0629"", ""\u0627\u0644\u0646\u062a\u0627\u0626\u062c \u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0629"", ""\u0645\u0648\u0642\u0639 \u0648\u0648\u0631\u062f\u0628\u0631\u064a\u0633""]}
+
+1. JOB TO BE DONE
+- Generate ONLY the heading layer of the outline. Do not plan paragraphs, tables, CTAs, or body copy.
+- Build a structure that is useful for the reader, strong for SEO, and easy to expand later into the full outline.
+- Every visible heading must represent a distinct search need, evaluation angle, or decision question.
+- Use natural language in the article language. Do not sound robotic, academic, or generic.
+
+2. STRUCTURE RULES
+
+- **SERP & KEYWORD REFINEMENT**:
+  - When a natural search phrase exists inside `serp_outline_brief.secondary_keyword_phrases`, `heading_candidates`, or `observed_topics`, PREFER incorporating it directly into the relevant heading if it improves clarity, matches the section intent, reads naturally in the article language, and does not create keyword stuffing.
+  - Phrasing should:
+    - Clearly state what the section answers.
+    - Sound close to how users naturally search.
+    - Remain concise and specific.
+  - For practical visitor intents such as tickets, booking, pricing, or reservations, strongly prefer concrete search-native phrasing that preserves the entity and user task intent when natural.
+    Prefer patterns like:
+    - أسعار حجز تذاكر [entity]
+    - طريقة حجز تذاكر [entity]
+    - مواعيد [entity]
+    Avoid vague alternatives like:
+    - التذاكر والحجز
+    - خيارات الحجز
+    - معلومات التذاكر
+  - Do not replace clear search phrases with vague editorial wording.
+  - Do not shorten headings so aggressively that they lose important search phrasing, task intent, or entity clarity.
+  - **TRIMMING PRINCIPLE**:
+    - If a shorter, more search-natural heading communicates the same intent clearly, prefer the shorter version.
+    - Do not add decorative tails (e.g., ""دليل شامل"", ""unique experience"", ""integrated experience"", ""overview"", ""key components"", ""المكونات الرئيسية"", ""التجربة المتكاملة"") after a strong heading unless the added phrase introduces a genuinely distinct search intent.
+  - **CONTEXTUAL BRAND UTILITY**:
+    - If `brand_name` is provided and the article contains a practical task section such as booking, ticketing, pricing, reservation, registration, setup, or access, the exact brand/platform name may be used naturally where it helps the reader complete that task.
+    - Prefer placing the brand inside the most task-relevant section, not as a standalone promotional section.
+    - Acceptable placements:
+      - a practical H3 under the relevant task H2
+      - or one FAQ question if no suitable H3 exists
+    - The brand mention must remain informational, task-oriented, and non-promotional.
+    - Do NOT create standalone brand H2s.
+    - Do NOT use promotional wording such as “why choose [brand]”, “best platform”, “book now”, or sales CTA language.
+    - Do NOT replace the exact brand name with generic wording such as “المنصة الرسمية”, “منصة الحجز”, or “الموقع الرسمي”.
+    - Good Arabic patterns:
+      - ""طريقة حجز تذاكر [entity] عبر [brand_name]""
+      - ""هل يمكن حجز تذاكر [entity] عبر [brand_name]؟""
+
+- H1 is the final article title. Do not include H1 inside the outline array.
+- The first outline item MUST be the introduction section:
+  - `""section_type"": ""introduction""`
+  - `""heading_level"": ""INTRO""`
+  - Treat this as an unheaded opening block, not as a visible H2 or H3.
+  - `""heading_text""` is internal-use only. It will not be shown to the user, so keep it short and functional.
+  - The intro is a hook and orientation block, not a definition section.
+  - Do NOT use an intro label such as ""definition"", ""what is"", ""تعريف"", ""ما هو"", or anything that duplicates the first visible H2.
+  - Prefer internal labels like ""Opening hook for [topic]"" or ""مدخل تمهيدي عن [topic]"".
+  - Do not create any intro subheadings.
+  - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
+- After the introduction, create 4 to 8 visible H2 sections for a normal article.
+- For experience-based / destination / venue topics, create 6 to 10 visible H2 sections when needed. Do NOT compress independent visitor intents just to stay under 8 sections.
+
+- If `content_type` is `informational`:
+  INFORMATIONAL ARTICLE LOGIC:
+  Goal: educate the reader, build topical authority, and answer the search query fully.
+  Use a knowledge-building funnel from broad understanding to specific application.
+
+  INFORMATIONAL DEPTH EXPANSION RULE:
+  Before generating the H2 structure, identify the depth needs of the topic.
+
+  For educational, strategic, technical, or comparison topics, do not stop at a surface overview.
+  Expand the outline to cover the naturally relevant depth angles needed for full reader understanding.
+
+  Consider whether the topic needs sections for:
+  - core definitions and context
+  - main components or elements
+  - how it works
+  - advantages and benefits
+  - limitations, risks, or common challenges
+  - practical use cases or scenarios
+  - cost, timing, effort, or resource considerations
+  - comparison factors or decision criteria
+  - implementation steps or how to apply it
+  - measurement, success indicators, or evaluation
+  - common mistakes
+  - when to choose each option
+  - when combining options is useful
+
+  Use only the angles that are naturally relevant to the topic and search intent.
+  Do not add filler sections just to increase length.
+  Prefer comprehensive topical coverage over generic overview headings.
+
+  INFORMATIONAL SUBTYPE RULE:
+  Before applying the default educational informational flow, detect the article subtype:
+  - If the topic compares concepts, methods, or terms (e.g., SEO vs SEM) AND `intent` is `educational_comparative`, use COMPARATIVE informational flow.
+  - Else if the topic is a place, destination, venue, attraction, mall, restaurant, event, or real-world location, use EXPERIENCE-BASED informational flow.
+  - Else, use EDUCATIONAL informational flow.
+
+  EDUCATIONAL informational flow:
+  1. Core Concept: What it is and who it's for.
+  2. Value: Key benefits or why it matters.
+  3. Types/Options: Common variants or categories.
+  4. Process/How-To: How it works or how to get started.
+  5. Practical advice: Common mistakes or things to know (Mandatory).
+  6. FAQ: Real reader questions.
+  7. Takeaway: Practical next step.
+
+  COMPARATIVE informational flow (For educational comparisons like ""SEO vs SEM""):
+  1. Core Orientation: Define both concepts/terms clearly.
+  2. Components/How Each Works: Explain the main parts, mechanisms, or operating model of each side when relevant.
+  3. Key Differences: Compare timing, cost, effort, sustainability, control, risk, and expected outcomes when relevant.
+  4. Pros & Cons: Cover advantages and limitations of each side separately when the topic requires it.
+  5. Use Cases & Scenarios: Explain when to use X, when to use Y, and when both can work together.
+  6. Implementation or Application: Show how a reader can apply, start, combine, or evaluate the options.
+  7. Measurement or Success Indicators: Include metrics, evaluation criteria, or signs of success when relevant.
+  8. FAQ: Common misconceptions and choosing advice.
+  9. Final Verdict: Practical summary of the best fit for different needs.
+
+  EXPERIENCE-BASED informational flow:
+  1. Definition / orientation:
+     The first visible H2 must define the place, experience, entity, or topic clearly in a search-natural way.
+     This H2 is separate from the INTRO hook.
+     The first visible definition H2 does not need differentiation, advantages, or uniqueness framing. Prefer simple search-natural definition phrasing.
+     It should explain what the entity is and what reader need it answers, without adding decorative tails.
+     Avoid jumping directly into benefits, comparisons, or “what makes it special”.
+     Avoid editorial framing such as “components”, “integrated experience”, “unique experience”, “what it includes”, or “key elements” unless that wording reflects a distinct search intent.
+  2. Attractions: Activities, facilities, or experiences.
+  3. Visitor Information:
+    Use separate focused H2 sections for practical visitor needs such as:
+    - location/access
+    - opening hours
+    - tickets, pricing, and booking details
+    - entry requirements
+
+    Parking or visitor-service details may become standalone H2s only when strongly supported by SERP prominence or clear standalone search intent.
+    Opening hours/timing and ticketing/booking are separate visitor intents.
+    When both are important to the visitor journey or commonly searched independently, they MUST become separate H2 sections rather than one combined heading.
+
+  4. Planning: Best timing, duration, suitability, route.
+  5. Practical advice: Tips before visiting / Things to know (Mandatory).
+  6. FAQ: Real visitor search intent.
+  7. Takeaway: Non-commercial next step.
+
+  #### INTENT OWNERSHIP RULE
+  Each practical visitor intent must have one primary section owner.
+  Avoid repeating the same visitor intent across opening hours, best time to visit, planning, tips, and FAQ.
+  - Opening hours belong to the working-hours section.
+  - Best time to visit belongs to planning.
+  - Visitor tips belong to the practical-advice section.
+  - Parking belongs to access/location unless strongly independent.
+  FAQ questions should not duplicate the core answer of an existing H2 unless they represent a distinct practical variation.
+
+  #### NON-COMMERCIAL INFORMATIONAL RULE
+  - Informational outlines must educate, clarify, and guide — not sell.
+  - Do NOT include promotional brand sections, “why choose [Brand]”, conversion-focused headings, commercial CTAs, or sales-driven comparisons/case studies.
+  - Brand mentions are allowed only when contextual, helpful, and naturally connected to the reader journey or implementation context.
+  - Any CTA must remain soft, non-promotional, and limited to the conclusion takeaway.
+
+  #### CONCLUSION BEHAVIOR RULE
+  - Avoid editorial or inspirational conclusion phrasing such as 'تجربة مثالية', 'استكشاف المزيد', 'خطواتك القادمة', or generic final-thought labels.
+  - The conclusion should summarize a practical reader takeaway, planning consideration, or next action directly tied to the topic itself.
+
+  #### STRUCTURAL DISTINCTIVENESS RULE
+  - Every H2 MUST introduce a distinct, practical reader need.
+  - Do not create overlapping sections or rephrase the same underlying question (e.g., merge 'Best Time to Visit' into 'Planning').
+
+  - The visible H2 flow MUST start with a definition/context section unless the query is explicitly advanced or clearly assumes prior knowledge.
+  - The INTRO item does not count as the definition/context H2.
+  - If a meaningful ""common mistakes"" or ""visitor tips"" section is missing, the output is weak and must be improved.
+  - The article must be useful even if the reader never visits the brand’s website.
+  - Headings must remain specific, useful, and non-generic.
+  - Use H3s only for meaningful informational buckets such as types, categories, stages, examples, mistakes, or questions.
+
+- The first visible core H2 MUST be decision-useful and specific, but if it is an offer section, it MUST describe available options/types directly and MUST NOT use 'how to choose' phrasing.
+  - Avoid: ""أفضل مناطق شراء [entity] للبيع في [area]"".
+  - Prefer: ""أفضل مناطق شراء [entity] للبيع في [area] حسب ميزانيتك"".
+- This first H2 must contain the full primary keyword exactly, or the closest natural phrasing that preserves the same full search intent.
+- **PRIMARY KEYWORD ANCHOR RULE**:
+  - The exact full Primary Keyword may appear only in the designated anchor H2 (the first visible core H2).
+  - Later H2s MUST preserve intent through natural semantic variants.
+  - Vary headings naturally based on the reader's journey (e.g., costs, types, steps, tips).
+  - **EXPAND, DON'T CHANGE (ANTI-DRIFT)**: Semantic variations must expand the core topic within its entity boundary, NOT change the topic (e.g., Avoid drifting from ""Web Design"" to generic ""Tech Consulting"").
+
+- **ENTITY CONSISTENCY RULES**:
+  - Treat **Entity Phrase** (""الفرق بين seo و sem"") and **Service/Object Phrase** (""الفرق بين seo و sem"") as the main semantic topics, NOT phrases that must be copied into every heading.
+  - The entity does NOT have to appear explicitly in every heading. It may be implied through semantic context.
+  - Semantic variation is allowed ONLY when the heading remains clearly anchored to the core entity domain.
+  - **LOCATION SECTION ANCHORING**: Location sections must remain entity-anchored. Do not describe areas generically. The H2 and H3s must connect each area/location to the main entity.
+  - Do NOT drift into broad abstract themes that lose connection to entity_phrase (e.g., Avoid: ""How to improve results""; Prefer: ""How [service/product] improves results"").
+  - Keep headings conversational and direct. Avoid abstract, analytical, or academic wording.
+- Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
+- If you create H3 subheadings, output the exact H3 strings in `subheadings`.
+- H3 Generation Strategy:
+  1. Use H3s ONLY for clear ""Standalone Options"" (Types, Categories, Services, Locations, Pricing Models). Do NOT create H3s for minor details, parts, or specifications. These belong in the H2 body.
+  - H2 PROMOTION OVERRIDE:
+    If a potential H3 represents a standalone high-search-intent need, it MUST be promoted to its own H2 instead of being nested.
+    For experience-based informational topics, visitor needs such as location/access, opening hours, tickets/pricing/booking, parking, or entry requirements must not be used as H3s under a generic visitor-information H2 when they can stand alone.
+  2. Generate H3s ONLY if the H2 contains multiple distinct paths where a reader must choose between options. Fallback: It is better to return an empty `subheadings` array than to generate weak or forced H3s.
+  3. The Non-Overlap Rule: Each H3 must be distinct. If two H3s could be merged, do not separate them.
+  4. The Expansion Test: Every H3 must be able to expand into a 150+ word standalone section without repeating the parent H2. If NO, do not generate it.
+  5. Prefer common user-facing terms and searchable phrasing.
+  6. H3s MUST name standalone categories, types, or methods, NOT broad descriptive qualities.
+     - Bad: ""[Topic] spec"", ""minor detail"", ""[Topic] advantage""
+     - Good: ""[Topic Type]"", ""[Topic Category]"", ""[Method]""
+
+### H3 Permission Rule
+
+Not every H2 needs H3 subheadings.
+
+Generate H3s only when the parent H2 naturally contains clear standalone buckets that the reader can choose, compare, or evaluate.
+
+Return an empty `subheadings` array when the H2 is:
+- a guidance/advice section
+- a proof/explanation section
+- a differentiation/brand trust section
+- a simple process section
+- a conclusion/CTA section
+
+Section-specific behavior:
+**CRITICAL:** You MUST strictly follow the `section_role_map` provided in the Content Strategy for the roles of each section. The dynamic role instructions provided there override the general defaults below.
+
+1. Offer H2:
+If H3s represent actual options or deliverables, the H2 MUST describe those options/types directly.
+Do NOT use ""how to choose"" or decision-only phrasing for the Offer H2 if it contains concrete options.
+
+2. Features H2:
+Use H3s only for product/service variants or deliverables.
+Do NOT use H3s for attributes, technical features, quality claims, or minor details.ِ
+
+---
+
+6. Comparison H2:
+Comparison sections are OPTIONAL.
+
+Comparison is a decision pattern, not always a section.
+
+Use a standalone comparison H2 ONLY if:
+- there are clear, specific alternatives the user must choose between
+- the comparison itself is a major decision step
+- the H2 names the compared options explicitly
+
+Good standalone comparison H2 examples:
+- مقارنة بين [option A] و[option B] في [area]
+- [option A] أم [option B]: أيهما أنسب لك؟
+- [area A] أم [area B]: أيهما أفضل حسب الميزانية والخدمات؟
+
+Bad standalone comparison H2 examples:
+- مقارنة بين خيارات [entity]
+- مقارنة بين البدائل المتاحة
+- كيف تحدد الأنسب لك؟
+
+If comparison is useful but not strong enough for a standalone H2:
+- embed it naturally inside the most relevant section (offer, features, pricing/proof, or location)
+- ensure that at least one section reflects real decision trade-offs or alternatives when such choices exist
+- do NOT create a dedicated comparison section
+
+If no clear comparison angle exists:
+- do NOT create a comparison section
+- use a more useful section instead
+
+7. FAQ H2:
+H3s are allowed and should be real user questions.
+- FAQ Section: Obey the `section_role_map` for the FAQ H2. It MUST preserve the entity, intent, and location (if present). Every H3 under this section MUST be a real question starting with (ما / كيف / هل / كم). Use common buyer questions or PAA signals.
+- Legal FAQ Rule: Do not create legal, documentation, contract, or verification FAQ questions unless the primary keyword or observed SERP/PAA explicitly supports them. Do not infer legal FAQs from brand context alone.
+- FAQ questions should preferably cover unresolved practical actions, edge-case visitor concerns, or implementation details not already fully answered by major H2 sections.
+- Avoid repeating broad informational questions already answered directly by existing H2 headings.
+
+- Closing Section: If the article needs a closing section, place one takeaway-oriented H2 last using a useful next-step or recommendation angle.
+
+### 3. GLOBAL HEADING RULE:
+- Every H2 MUST be reader-useful.
+A heading is INVALID if it is generic, vague, or does not help the reader understand, evaluate, apply, or navigate the topic.
+---
+
+- **OFFER SECTION (section_type: offer)**: Focus on clear ""Types/Options"". Do not use abstract ""How to choose"" phrasing here.
+- **FEATURES SECTION (section_type: features)**: Focus on practical benefits or what to look for. Be specific. Do not use generic words like ""أهم المزايا"".
+- **LOCATION SECTION (section_type: location)**: Connect locations to user needs. Avoid pure geographic listing. Prefer descriptive context (e.g., ""أفضل مناطق الرياض للعائلات"").
+
+
+### 5. HEADING QUALITY RULES
+
+- **Separate Intents Clearly**: Do not overlap sections. If 'Features' and 'Comparison' answer the same question, merge them or remove one. 
+- **Split High-Intent Needs**: Do not group standalone search needs (e.g., location, opening hours, tickets) into one generic H2 like ""Visitor Information"". Give each major practical need its own H2 if commonly searched independently.
+- Prefer single-purpose headings.
+- Avoid combining practical informational intent with editorial enrichment such as ""تجارب الزوار"", ""تجربة مميزة"", or ""تجربة متكاملة"" unless it reflects a real search intent.
+
+#### INTRO VS FIRST H2 DISTINCTION RULE
+- The introduction provides hook, interest, and baseline framing only.
+- The introduction must not be the definition.
+- The first visible H2 must be the definition/context section for beginner and destination topics.
+- If the intro label or first H2 both perform the same definition role, rewrite the intro as a hook and keep the definition as H2.
+
+#### CONCLUSION BEHAVIOR RULE
+- The final H2 should provide a clear takeaway, practical next step, recommendation, or application.
+- Avoid generic endings such as “Conclusion” or “Final Thoughts”. The final H2 must signal the takeaway.
+- The conclusion may contain one soft, helpful next step, but must remain non-promotional.
+
+#### SERP GROUNDING RULE
+- When `serp_outline_brief` is provided, prioritize its observed topics and `heading_generation_guidance` over generic structural assumptions.
+- Use the `must_consider_sections` list as a mandatory baseline for essential reader info.
+- Do NOT invent data (PAA, related, facts) if the brief indicates they were not observed.
+- Ensure the outline reflects the `observed_page_type` (e.g., if SERP shows a ""venue guide"" pattern, stay closer to EXPERIENCE-BASED flow).
+
+---
+
+### 7. HEADING CALIBRATION EXAMPLES
+- **Generic vs. Search-Native:**
+  - Bad: ""أهم المزايا والمواصفات""
+  - Good: ""ما هي مميزات [entity]؟""
+
+- **Visitor Needs (Practical vs. Bloated):**
+  - Bad: ""معلومات الزوار: الموقع، الوصول، وأوقات العمل""
+  - Good: ""أين تقع [place] وكيف تصل إليها؟""
+  - Good: ""أسعار تذاكر [place] وطريقة الحجز""
+  - Good: ""مواعيد عمل [place] وأفضل أوقات الزيارة""
+
+### 8. OUTPUT FORMAT
+Return ONLY valid JSON in the following format:
+```json
+{
+  ""title"": ""Final H1 title"",
+  ""outline"": [
+    {
+      ""section_id"": ""sec_01"",
+      ""heading_text"": ""Internal opening label"",
+      ""heading_level"": ""INTRO"",
+      ""section_type"": ""introduction"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_02"",
+      ""heading_text"": ""Reader-facing H2 heading"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""offer"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [""Optional reader-facing H3"", ""Optional reader-facing H3""]
+    }
+  ]
+}
+```
+
+### 9. DETAILED SECTION INSTRUCTIONS
+
+Follow these role-specific instructions for each section type:
+
+- **introduction**: Open with a helpful hook and visitor/reader context for الفرق بين seo و sem. Do not define the topic here; keep the definition for the first visible H2.
+
+- **core_or_benefits**: توضيح تعريف كل من seo و sem بشكل منفصل، مع إبراز الفوائد العملية لكل منهما للقارئ المصري.
+
+- **proof**: Show general evidence of quality or standard benefits, avoiding ROI or financial growth metrics.
+
+- **process_or_how**: Explain the standard practical steps simply, omitting legal or technical compliance checklists.
+
+- **faq**: الإجابة على أكثر الأسئلة شيوعاً حول الفرق بين seo و sem، مثل: أيهما أسرع في النتائج؟ هل يمكن الجمع بينهما؟ ما هي التكاليف المتوقعة؟ كيف أختار الأنسب لمشروعي؟ هل هناك اختلاف في النتائج حسب نوع النشاط؟
+
+- **conclusion**: تلخيص الفروق الأساسية بين seo و sem، وتوجيه القارئ لاستكشاف المزيد حول التسويق الرقمي، مع دعوة خفيفة لمتابعة القراءة أو التعلم.
+
+
+
+- **ARABIC QUALITY RULE**: In Arabic process headings, avoid broken noun coordination (e.g., Avoid: ""اختيار وتعاقد مع"").
+- Use natural phrasing: ""خطوات اختيار [الكيان] والتعاقد معه"" or ""كيف تختار [الكيان] وتتعاقد معه"".
+- All headings must be grammatically natural and professional in `ar`.
+
+### 10. SILENT SELF-CHECK BEFORE YOU ANSWER
+- Would a reader understand what each section gives them without reading the body?
+- Are any headings generic writer labels?
+- Do any H2s answer the same underlying reader question (Structural Distinctiveness)?
+- Does the article move from definition/context to practical application?
+- Is the INTRO only a hook/orientation block, with the definition kept as the first visible H2?
+- Does the first visible H2 define the topic instead of repeating the intro label?
+- Does the final H2 provide a clear takeaway or application (Conclusion Behavior)?
+- Is any brand mention contextual and non-promotional (Non-Commercial Rule)?
+- For places/destinations, did the outline include practical visitor information?
+- For places/destinations, are location/access, opening hours, and booking/tickets separated when relevant?
+- Is any H2 overloaded with three or more independent visitor intents?
+- Did it avoid abstract importance for experience-based topics?
+- Are FAQ questions aligned with real search intent (booking, hours, location)?
+- Is there a mandatory practical advice section (mistakes/tips)?
+- Does every H2 add new knowledge?
+- Is any CTA limited to the conclusion and non-commercial?
+- Are the H3s real subtopics (Taxonomy) rather than anatomy/details?
+- Are any H3s actually standalone search intents that should be promoted to H2?
+
+### 11. FINAL OUTLINE CLEANUP BEFORE JSON
+Before returning the JSON, revise the outline once:
+
+1. Remove FAQ questions that repeat an existing H2.
+- If there is an H2 about working hours, do not add an FAQ asking about working hours.
+- If there is an H2 about tickets/pricing/booking, do not add an FAQ asking the same basic ticket or booking question.
+- If there is an H2 about activities, do not add an FAQ asking what activities are available.
+- If there is an H2 about location/access, do not add an FAQ asking how to reach the place.
+FAQ must cover only edge cases, practical variations, or unanswered visitor concerns.
+
+2. Do not create both a working-hours H2 and a best-time/planning H2 unless they answer clearly different needs.
+- Working hours = official opening/closing times only.
+- Best time/planning = crowd avoidance, ideal days, visit duration, route, or suitability.
+- If the best-time section only repeats timing information, remove it or merge it into the working-hours section.
+- Do not create both a planning H2 and a tips H2 if they answer the same visit-preparation need.
+- Planning = timing strategy, duration, route, crowd avoidance.
+- Tips = preparation, rules, what to bring, common mistakes.
+If they overlap, merge or rewrite one.
+
+3. If `brand_name` is provided and the article includes a booking/ticketing/pricing/access section, include exactly one utility-oriented brand mention using the exact brand name.
+- Prefer placing it as a practical H3 under the most relevant task H2 when that H2 naturally supports subheadings.
+- If no suitable H3 placement exists, include it as one non-promotional FAQ question.
+- Do not create a standalone brand H2.
+- Do not use promotional wording.
+- Do not use “why choose [brand]”, “best platform”, “book now”, or sales CTA language.
+- Do not replace the exact brand name with generic wording such as ""المنصة الرسمية"", ""منصة الحجز"", or ""الموقع الرسمي"".
+- If FAQ count is limited, replace the weakest generic booking/access question with the brand FAQ instead of adding a duplicate.
+Preferred Arabic H3 pattern: ""طريقة حجز تذاكر [entity] عبر [brand_name]""
+Preferred Arabic FAQ pattern: ""هل يمكن حجز تذاكر [entity] عبر [brand_name]؟""
+
+4. The conclusion H2 must be practical, not editorial.
+Avoid: ""تجربة زيارة"", ""استكشاف المزيد"", ""خطواتك القادمة"", ""خلاصة وتجربة"".
+Prefer: ""نصائح أخيرة قبل زيارة [entity]"", ""ما الذي يجب معرفته قبل زيارة [entity]؟"", ""كيف تستعد لزيارة [entity]؟""
+
+### 12. OUTPUT CONSTRAINTS
+- Valid JSON only.
+- No markdown fences.
+- No explanation before or after the JSON.
+- Do not include body content.
+- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `subheadings`.",13862,"```json
+{
+  ""title"": ""الفرق بين SEO و SEM: دليل مبسط لفهم التسويق الرقمي 2026 في مصر"",
+  ""outline"": [
+    {
+      ""section_id"": ""sec_01"",
+      ""heading_text"": ""مدخل تمهيدي عن الفرق بين SEO و SEM"",
+      ""heading_level"": ""INTRO"",
+      ""section_type"": ""introduction"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_02"",
+      ""heading_text"": ""الفرق بين SEO و SEM: التعريف والمفاهيم الأساسية"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""offer"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [
+        ""ما هو SEO (تحسين محركات البحث)؟"",
+        ""ما هو SEM (التسويق عبر محركات البحث)؟""
+      ]
+    },
+    {
+      ""section_id"": ""sec_03"",
+      ""heading_text"": ""كيف يعمل كل من SEO و SEM في السوق المصري؟"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""core_or_benefits"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_04"",
+      ""heading_text"": ""مقارنة بين SEO و SEM: الفروقات الجوهرية والتطبيقات العملية"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""proof"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [
+        ""النتائج العضوية مقابل النتائج المدفوعة"",
+        ""السرعة والتكلفة والجهد"",
+        ""الاستدامة والتحكم في النتائج""
+      ]
+    },
+    {
+      ""section_id"": ""sec_05"",
+      ""heading_text"": ""متى تختار SEO أو SEM لمشروعك في مصر؟"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""process_or_how"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [
+        ""حالات يفضل فيها استخدام SEO"",
+        ""حالات يفضل فيها استخدام SEM"",
+        ""متى يكون الجمع بينهما هو الحل الأمثل؟""
+      ]
+    },
+    {
+      ""section_id"": ""sec_06"",
+      ""heading_text"": ""أخطاء شائعة يجب تجنبها عند اختيار استراتيجية التسويق الرقمي"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""process_or_how"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    },
+    {
+      ""section_id"": ""sec_07"",
+      ""heading_text"": ""أسئلة شائعة حول الفرق بين SEO و SEM في مصر"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""faq"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": [
+        ""أي الاستراتيجيتين أسرع في تحقيق النتائج؟"",
+        ""هل يمكن الجمع بين SEO و SEM في نفس الوقت؟"",
+        ""ما هي التكاليف المتوقعة لكل من SEO و SEM؟"",
+        ""كيف أختار الأنسب لمشروعي أو نشاطي التجاري؟"",
+        ""هل تختلف النتائج حسب نوع النشاط أو السوق؟""
+      ]
+    },
+    {
+      ""section_id"": ""sec_08"",
+      ""heading_text"": ""تلخيص الفروق الأساسية ونصائح عملية لاستكشاف التسويق الرقمي"",
+      ""heading_level"": ""H2"",
+      ""section_type"": ""conclusion"",
+      ""section_intent"": ""informational"",
+      ""subheadings"": []
+    }
+  ]
+}
+```",STEP_TOTAL: outline_generation,2026-05-11T15:49:43.975610,14648
