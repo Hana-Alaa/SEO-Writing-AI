@@ -66,6 +66,107 @@ LOCKED_BRAND_SECTION_ROLE_MAP = {
     ),
 }
 
+SEMANTIC_EXECUTION_LAYER = {
+    "market_practical": {
+        "execution_mode": "market_practical",
+        "semantic_goal": "realistic cost and value expectations",
+        "decision_frame": "budget vs quality vs location",
+        "content_behavior": "Focus on data-driven tiers, relative pricing logic, and value-for-money trade-offs."
+    },
+    "taxonomy_breakdown": {
+        "execution_mode": "taxonomy_breakdown",
+        "semantic_goal": "clear categorization of options",
+        "decision_frame": "choosing the right type for the need",
+        "content_behavior": "Define distinct categories based on functional or structural differences. Avoid overlap."
+    },
+    "locality_analysis": {
+        "execution_mode": "locality_analysis",
+        "semantic_goal": "match area to resident lifestyle",
+        "decision_frame": "accessibility vs quietness vs services",
+        "content_behavior": "Analyze specific neighborhood vibes, proximity to key infrastructure, and resident profiles."
+    },
+    "buyer_guidance": {
+        "execution_mode": "buyer_guidance",
+        "semantic_goal": "actionable decision support",
+        "decision_frame": "step-by-step readiness",
+        "content_behavior": "Walk the reader through a specific process or checklist. Reduce friction and ambiguity."
+    },
+    "comparison_decision": {
+        "execution_mode": "comparison_decision",
+        "semantic_goal": "evaluate specific trade-offs",
+        "decision_frame": "suitability differences between options",
+        "content_behavior": "Directly compare A vs B vs C based on user-centric criteria. Highlight the 'winner' for each persona."
+    },
+    "trust_proof": {
+        "execution_mode": "trust_proof",
+        "semantic_goal": "establish reliability and safety",
+        "decision_frame": "risk reduction",
+        "content_behavior": "Showcase concrete evidence, signals, or process transparency that validates the entity's claims."
+    },
+    "onboarding_context": {
+        "execution_mode": "onboarding_context",
+        "semantic_goal": "establish the reader's orientation",
+        "decision_frame": "problem awareness to solution path",
+        "content_behavior": "Hook the reader by validating their current situation and promising a clear resolution path."
+    }
+}
+
+WRITER_MODE_PROFILES = {
+    "market_practical": (
+        "- **REASONING STYLE**: Focus on budget trade-offs and realistic value. Emphasize why price variations occur.\n"
+        "- **EVIDENCE**: Use relative pricing tiers and observed data carefully. Explain the logic of 'Value for Money'.\n"
+        "- **PRIORITY**: Avoid generic definitions. Focus on actionable budget expectations and cost drivers."
+    ),
+    "locality_analysis": (
+        "- **REASONING STYLE**: Connect geography to resident lifestyle and daily needs (accessibility, services).\n"
+        "- **EVIDENCE**: Highlight local anchors and specific neighborhood 'vibes'.\n"
+        "- **PRIORITY**: Avoid dry geographic summaries. Focus on what it's actually like to live in the area."
+    ),
+    "taxonomy_breakdown": (
+        "- **REASONING STYLE**: Use clear classification logic based on functional or structural differences.\n"
+        "- **EVIDENCE**: Match category features directly to specific user situations or personas.\n"
+        "- **PRIORITY**: Avoid overlap. Ensure each category feels distinct and purposeful."
+    ),
+    "comparison_decision": (
+        "- **REASONING STYLE**: Evaluate direct trade-offs between options. Explain 'when A wins' vs 'when B wins'.\n"
+        "- **EVIDENCE**: Use side-by-side suitability criteria rather than serial descriptions.\n"
+        "- **PRIORITY**: Help the reader choose. Avoid summarizing without taking a stance on suitability."
+    ),
+    "buyer_guidance": (
+        "- **REASONING STYLE**: Adopt a step-by-step advisory tone. Focus on readiness and selection criteria.\n"
+        "- **EVIDENCE**: Use checklists, 'if-then' mappings, and practical tips to reduce buyer friction.\n"
+        "- **PRIORITY**: Reduce confusion. Avoid encyclopedic or overly academic explanations."
+    ),
+    "trust_proof": (
+        "- **REASONING STYLE**: Emphasize verification and signals. Use validation-oriented language.\n"
+        "- **EVIDENCE**: Focus on process transparency, concrete signals, and reliability indicators.\n"
+        "- **PRIORITY**: Build confidence. Avoid aggressive promotion; let the evidence speak for itself."
+    ),
+    "onboarding_context": (
+        "- **REASONING STYLE**: Orient the reader quickly by validating their problem and outlining the solution path.\n"
+        "- **EVIDENCE**: High-level landscape overview without deep technical data.\n"
+        "- **PRIORITY**: Establish why the topic matters now. Save details for body sections."
+    )
+}
+
+REGIONAL_ARABIC_PROFILES = {
+    "egypt": (
+        "- **VOCABULARY**: Prefer 'مواصلات', 'شقق', 'مناطق حيوية', 'إيجار شهري', 'مرافق'.\n"
+        "- **CONTEXT**: Anchor logic to city-wide movement and service density.\n"
+        "- **AVOID**: Spoken dialect like 'هتلاقي', 'لو عايز', 'بتدور', 'بتاع', 'عشان'."
+    ),
+    "saudi": (
+        "- **VOCABULARY**: Prefer 'عوائل', 'الدوام', 'الإيجار السنوي', 'المجمعات', 'أفراد'.\n"
+        "- **CONTEXT**: Anchor logic to family needs, commute (الدوام), and neighborhood centers.\n"
+        "- **AVOID**: Spoken dialect like 'ودك', 'بتلقى', 'مرة ممتاز', 'شلون', 'وشو'."
+    ),
+    "uae": (
+        "- **VOCABULARY**: Prefer 'مجمعات سكنية', 'سهولة التنقل', 'المترو', 'خيارات سكن', 'وجهات'.\n"
+        "- **CONTEXT**: Anchor logic to global connectivity, modern infrastructure, and diverse housing options.\n"
+        "- **AVOID**: Dialect-heavy prose or informal slang."
+    )
+}
+
 STRATEGY_UNSAFE_PHRASES = [
     "performance-first execution",
     "comparing providers",
@@ -366,12 +467,6 @@ class StrategyService:
         state["input_data"]["title"] = optimized_title
         return state
 
-        # Skip the redundant classifier step if we already deterministically mapped the type via Advanced Mode
-        if not (state.get("workflow_mode") == "advanced" and user_article_type):
-            await self.detect_intent_ai(raw_title, primary_keyword, state=state)
-
-        return state
-
     async def run_style_analysis(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyzes the reference article/image to determine the brand's style."""
         input_data = state.get("input_data", {})
@@ -404,6 +499,7 @@ class StrategyService:
 
     async def run_content_strategy(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Step 0: Develop the content strategy based on SERP analysis and intent."""
+
         primary_keyword = state.get("primary_keyword")
         intent = state.get("intent")
         seo_intelligence = state.get("seo_intelligence", {})

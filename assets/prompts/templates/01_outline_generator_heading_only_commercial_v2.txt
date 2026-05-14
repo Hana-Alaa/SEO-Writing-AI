@@ -51,6 +51,19 @@ Your task is to generate only the heading structure layer of an article outline 
   - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
   - If a dedicated brand section is needed, place one `differentiation` section after proof/pricing and before process.
   - If the user needs confidence before choosing the brand, include one brand proof section after differentiation and before process using `section_type: "proof"` or `section_type: "case_study"`.
+  - **FORBIDDEN**: You are strictly forbidden from using `section_type: "body"` for any section in a `brand_commercial` outline.
+  - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field:
+    - `offer_clarity`: For the core service/product definition and options.
+    - `features_or_included`: For technical specs, amenities, or what's included.
+    - `differentiators`: For unique selling points and brand strengths.
+    - `proof`: For pricing, availability, case studies, or trust signals.
+    - `comparison`: For comparing options, scenarios, or alternatives.
+    - `process_or_how`: For the buying journey, steps, or how to get started.
+    - `faq`: For the FAQ section.
+    - `conclusion`: For the final wrap-up and call to action.
+  - **PRIMARY KEYWORD FIELDS**:
+    - `contains_exact_primary_keyword`: Set to `true` ONLY if the heading text itself includes the exact Primary Keyword. This MUST be `true` for exactly ONE visible H2 heading and `false` for everything else (including Intro and H3s).
+    - `requires_primary_keyword`: Set to `true` if the section body copy should naturally include the Primary Keyword. This is an instruction for the writer, not a heading rule.
   - The article should not become a pure brand page. It should help the reader evaluate the market first, then make the provided brand feel like the logical choice.
   - Comparison is NOT a mandatory standalone section. If comparison is useful, it may be embedded inside the most relevant section (offer, features, proof/pricing, or location) unless it deserves a dedicated standalone H2.
 - The first visible core H2 MUST be decision-useful and specific, but if it is an offer section, it MUST describe available options/types directly and MUST NOT use 'how to choose' phrasing.
@@ -264,6 +277,7 @@ If no clear comparison angle exists:
 7. FAQ H2:
 H3s are allowed and should be real user questions.
 - FAQ Section: Obey the `section_role_map` for the FAQ H2. It MUST preserve the entity, intent, and location (if present). Every H3 under this section MUST be a real question starting with (ما / كيف / هل / كم). Use common buyer questions or PAA signals.
+- **RENTAL/LISTING FAQ PRIORITY**: For real estate rental topics, prioritize questions about: monthly vs yearly rent, furnished vs unfurnished differences, best areas/neighborhoods, average prices or price factors, viewing before contract, payment methods (installments vs full), and family vs individual suitability. Avoid generic paperwork questions unless strongly supported by SERP.
 - Legal FAQ Rule: Do not create legal, documentation, contract, or verification FAQ questions unless the primary keyword or observed SERP/PAA explicitly supports them. Do not infer legal FAQs from brand context alone.
 - Closing Section: If the article needs a closing section, place one conclusion-style H2 last using a useful next-step or takeaway angle, not the label "Conclusion".
 
@@ -459,6 +473,9 @@ Return ONLY valid JSON in the following format:
       "heading_text": "Reader-facing H2 heading",
       "heading_level": "H2",
       "section_type": "offer",
+      "coverage_role": "offer_clarity",
+      "contains_exact_primary_keyword": true,
+      "requires_primary_keyword": true,
       "section_intent": "informational",
       "subheadings": ["Optional reader-facing H3", "Optional reader-facing H3"]
     }

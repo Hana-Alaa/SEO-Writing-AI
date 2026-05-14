@@ -95,12 +95,12 @@ class ValidationService:
 
     COMMERCIAL_FLOW_SECTION_ALIASES: ClassVar[Dict[str, set[str]]] = {
         "introduction": {"introduction"},
-        "offer": {"offer", "core", "service_definition", "what_is", "definition", "offer_overview"},
-        "features": {"features", "key_features", "included", "features_benefits", "key_benefits"},
+        "offer": {"offer", "core", "service_definition", "what_is", "definition", "offer_overview", "offer_clarity"},
+        "features": {"features", "key_features", "included", "features_benefits", "key_benefits", "features_or_included"},
         "differentiation": {"differentiation", "brand_differentiation", "why_choose_us", "differentiators", "usp"},
         "proof": {"proof", "authority", "case_study", "proof_authority", "validation", "pricing"},
         "comparison": {"comparison", "comparison_logic", "comparison_utility", "alternatives", "options", "criteria"},
-        "process": {"process", "how_it_works", "implementation", "workflow", "process_workflow", "steps"},
+        "process": {"process", "how_it_works", "implementation", "workflow", "process_workflow", "steps", "process_or_how"},
         "faq": {"faq"},
         "conclusion": {"conclusion", "final_verdict"},
     }
@@ -224,7 +224,7 @@ class ValidationService:
 
         jargon_list = list(found_jargon.keys())
         msg = f"PLAIN_LANGUAGE_REQUIRED: Content feels too abstract, prestige-heavy, or uses expert-only framing (Intensity {intensity:.1f}, Score {cumulative_jargon_score:.1f}). Found: {', '.join(jargon_list)}. "
-        msg += "You MUST write for a zero-knowledge reader. Do NOT do shallow synonym replacement. You must fully reconstruct the sentence in simple everyday language. Preserve the meaning, but explain the practical outcome using concrete actions or results. Do not keep the original investor-style sentence structure."
+        msg += "You MUST write for a zero-knowledge reader. Do NOT do shallow synonym replacement. You must fully reconstruct the sentence in simple professional Modern Standard Arabic (MSA), not colloquial spoken dialect. Preserve the meaning, but explain the practical outcome using concrete actions or results. Do not keep the original investor-style sentence structure."
 
         if cumulative_jargon_score >= 3.0 and (intensity > 5.0 or max_rep > 3):
             return {
@@ -1445,7 +1445,13 @@ class ValidationService:
                 # Supports Arabic and English numbers/punctuation
                 generic_numeric_pattern = re.compile(r"(\d[\d,\.\s]*)\s*[%/ \w\u0600-\u06FF]*", re.UNICODE)
                 if not generic_numeric_pattern.search(content):
-                    errors.append(f"METRIC_DATA_MISSING: Heading '{heading_text}' promises data/metrics, but the section contains no numeric values. Provide realistic estimates or ranges.")
+                    observed_metric_mentions = section.get("observed_data_mentions") or []
+                    if observed_metric_mentions:
+                        errors.append(
+                            f"METRIC_DATA_OMITTED: Heading '{heading_text}' promises data/metrics, "
+                            "and observed numeric signals were provided but not used. Use only the provided "
+                            "observed_data_mentions; do not invent estimates or ranges."
+                        )
         except re.error:
             pass
 
@@ -1773,14 +1779,14 @@ class ValidationService:
     REQUIRED_STRUCTURE_BY_TYPE = {
         "brand_commercial": {
             "mandatory": {
-                "introduction", "what_is", "key_features", "why_choose_us",
+                "introduction", "offer", "features", "differentiation",
                 "proof", "process", "faq", "conclusion"
             }
         },
         "informational": {
             "mandatory": {
                 "introduction", "definition", "key_benefits", "core",
-                "examples_or_use_cases", "common_mistakes", "faq", "conclusion"
+                "examples_or_tips", "common_mistakes", "faq", "conclusion"
             }
         },
         "comparison": {
@@ -1804,11 +1810,11 @@ class ValidationService:
         },
         "brand_commercial": {
             "problem_aware_intro": {"section_types": {"introduction"}},
-            "offer_clarity": {"section_types": {"what_is", "definition", "offer_overview"}},
-            "features_or_included": {"section_types": {"key_features", "features", "included"}},
-            "differentiators": {"section_types": {"why_choose_us", "differentiators", "usp"}},
-            "proof": {"section_types": {"proof", "case_study", "authority"}},
-            "process": {"section_types": {"process", "how_it_works", "implementation"}},
+            "offer_clarity": {"section_types": {"what_is", "definition", "offer_overview", "offer", "offer_clarity"}},
+            "features_or_included": {"section_types": {"key_features", "features", "included", "features_or_included"}},
+            "differentiators": {"section_types": {"why_choose_us", "differentiators", "usp", "differentiation"}},
+            "proof": {"section_types": {"proof", "case_study", "authority", "pricing"}},
+            "process": {"section_types": {"process", "how_it_works", "implementation", "process_or_how"}},
             "objection_faq": {"section_types": {"faq"}},
             "comparison_utility": {"section_types": {"comparison", "pricing", "tiers", "alternatives", "comparison_utility"}},
             "decisive_close": {"section_types": {"conclusion"}},
@@ -1870,6 +1876,7 @@ class ValidationService:
             normalized_sections.append({
                 "section": sec,
                 "section_type": (sec.get("section_type") or "").lower().strip(),
+                "coverage_role": (sec.get("coverage_role") or "").lower().strip(),
                 "text_blob": self._section_text_blob(sec)
             })
 
@@ -1907,8 +1914,9 @@ class ValidationService:
             matched = []
             for item in normalized_sections:
                 sec_type = item["section_type"]
+                role = item["coverage_role"]
                 blob = item["text_blob"]
-                if sec_type in aliases or any(alias in blob for alias in aliases):
+                if sec_type in aliases or role in aliases or any(alias in blob for alias in aliases):
                     matched.append(item["section"]["heading_text"])
 
             if matched:
@@ -2343,25 +2351,27 @@ class ValidationService:
             errors.append(f"Too few FAQ questions detected ({faq_count}). Minimum required is 3.")
 
         # --- PK 5-SLOT MAP VALIDATION ---
-        h1_title = outline[0].get("heading_text", "") # Usually H1 is in title generator, but H2/Intro is first here
         pk_sections = [s for s in outline if s.get("requires_primary_keyword")]
+        h2_pk_heading_sections = [s for s in h2_sections if s.get("contains_exact_primary_keyword")]
+        h3_pk_heading_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H3" and s.get("contains_exact_primary_keyword")]
 
-        # Rule 1: Intro (Slot 1) must require PK
-        if outline and not outline[0].get("requires_primary_keyword"):
-             # We allow a slight leniency if it's the very first section even if not index-0
-             intro_sec = next((s for s in outline if (s.get("section_type") or "").lower() == "introduction"), None)
-             if intro_sec and not intro_sec.get("requires_primary_keyword"):
-                  errors.append("Strategic Map Violation: Introduction section must be marked as 'requires_primary_keyword: true'.")
+        # Rule 1: Intro (Slot 1) must require PK (body writing)
+        intro_sec = next((s for s in outline if (s.get("section_type") or "").lower() == "introduction"), None)
+        if intro_sec and not intro_sec.get("requires_primary_keyword"):
+             errors.append("Strategic Map Violation: Introduction section must be marked as 'requires_primary_keyword: true'.")
 
-        # Rule 2: Exactly ONE H2 heading (Slot 2) must contain PK in its metadata requirement
-        h2_pk_sections = [s for s in h2_sections if s.get("requires_primary_keyword")]
-        if len(h2_pk_sections) != 1:
-             errors.append(f"Strategic Map Violation: Exactly ONE H2 heading must require the Primary Keyword (found {len(h2_pk_sections)}).")
+        # Rule 2: Exactly ONE H2 heading (Slot 2) must visibly contain PK
+        if len(h2_pk_heading_sections) != 1:
+             errors.append(f"Strategic Map Violation: Exactly ONE H2 heading must be marked as 'contains_exact_primary_keyword: true' (found {len(h2_pk_heading_sections)}).")
 
-        # Rule 3: Total PK sections should be 4-5 (Slots 1, 2, 4, 5 + Conclusion)
+        # Rule 3: No H3 heading should contain the PK (heading match)
+        if h3_pk_heading_sections:
+             errors.append(f"Strategic Map Violation: H3 headings must never be marked as 'contains_exact_primary_keyword: true' (found {len(h3_pk_heading_sections)}).")
+
+        # Rule 4: Total PK body writing slots should be at least 4
         total_pk_reqs = len(pk_sections)
         if total_pk_reqs < 4:
-             errors.append(f"Strategic Map Violation: Total PK assignment slots should be at least 4 (found {total_pk_reqs}).")
+             errors.append(f"Strategic Map Violation: Total PK assignment slots (requires_primary_keyword) should be at least 4 (found {total_pk_reqs}).")
 
         coverage = self.evaluate_outline_coverage(outline, content_type, primary_keyword=primary_keyword, serp_brief=serp_brief, content_strategy=content_strategy)
         if coverage.get("missing"):
@@ -3016,6 +3026,24 @@ class ValidationService:
         return section_type.lower() in allowed
 
     def _commercial_flow_stage(self, section: Dict[str, Any]) -> str:
+        # 1. Check explicit coverage_role first (preferred driver for commercial coverage)
+        role = (section.get("coverage_role") or "").lower().strip()
+        if role:
+            role_to_stage = {
+                "offer_clarity": "offer",
+                "features_or_included": "features",
+                "differentiators": "differentiation",
+                "proof": "proof",
+                "comparison": "comparison",
+                "process_or_how": "process",
+                "faq": "faq",
+                "conclusion": "conclusion"
+            }
+            if role in role_to_stage:
+                return role_to_stage[role]
+            return role
+
+        # 2. Fallback to section_type and aliases
         section_type = (section.get("section_type") or "").lower().strip()
         for stage, aliases in self.COMMERCIAL_FLOW_SECTION_ALIASES.items():
             if section_type in aliases:

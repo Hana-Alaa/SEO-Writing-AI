@@ -1,3 +1,5 @@
+{% include '02_section_writer_base.txt' %}
+
 ---
 ### II. COMPARISON INTENT NUANCES (REINFORCEMENT)
 

@@ -231,5 +231,76 @@ class TestOutlineRepairService(unittest.TestCase):
         repaired = self.repair_service.clean_conclusion_heading(outline, "")
         self.assertEqual(repaired[1]["heading_text"], "خلاصة ونصائح قبل الزيارة")
 
+    def test_finalize_brand_commercial_coverage_roles_injects_missing(self):
+        """Verify that missing mandatory roles are injected/reassigned."""
+        # Outline with only intro, offer, and conclusion (missing features, differentiators, proof, etc.)
+        outline = [
+            {"section_id": "sec_01", "section_type": "introduction", "heading_text": "Intro", "coverage_role": "introduction"},
+            {"section_id": "sec_02", "section_type": "offer", "heading_text": "Offer 1", "coverage_role": "offer_clarity"},
+            {"section_id": "sec_03", "section_type": "offer", "heading_text": "Offer 2", "coverage_role": "offer_clarity"},
+            {"section_id": "sec_04", "section_type": "offer", "heading_text": "Offer 3", "coverage_role": "offer_clarity"},
+            {"section_id": "sec_05", "section_type": "offer", "heading_text": "Offer 4", "coverage_role": "offer_clarity"},
+            {"section_id": "sec_06", "section_type": "conclusion", "heading_text": "Conclusion", "coverage_role": "conclusion"}
+        ]
+        
+        repaired = self.repair_service.finalize_brand_commercial_coverage_roles(
+            outline, 
+            primary_keyword="شقق للايجار", 
+            brand_name="قولدن هوست"
+        )
+        
+        roles = [s.get("coverage_role") for s in repaired]
+        # It should have reassigned redundant offers
+        self.assertIn("features_or_included", roles)
+        self.assertIn("differentiators", roles)
+        self.assertIn("proof", roles)
+        
+    def test_apply_strategic_map_and_roles_pk_anchoring(self):
+        """Verify PK anchoring: exactly one H2 has contains_exact_primary_keyword=True."""
+        outline = [
+            {"heading_level": "H2", "heading_text": "Section 1", "section_type": "core"},
+            {"heading_level": "H2", "heading_text": "Section 2", "section_type": "benefits"},
+            {"heading_level": "H2", "heading_text": "Section 3", "section_type": "extra"},
+            {"heading_level": "H2", "heading_text": "Section 4", "section_type": "more"},
+            {"heading_level": "H3", "heading_text": "Sub 1", "section_type": "detail"}
+        ]
+        
+        pk = "الكلمة الرئيسية"
+        repaired = self.repair_service.apply_strategic_map_and_roles(
+            outline, 
+            primary_keyword=pk, 
+            content_type="brand_commercial"
+        )
+        
+        # Check PK flags
+        pk_h2_count = sum(1 for s in repaired if s.get("contains_exact_primary_keyword") is True)
+        self.assertEqual(pk_h2_count, 1, "Exactly one H2 must be the PK anchor")
+        
+        # Check H3 doesn't have it
+        h3_pk = any(s.get("contains_exact_primary_keyword") for s in repaired if s.get("heading_level") == "H3")
+        self.assertFalse(h3_pk, "H3 must not be the PK anchor")
+        
+        # Check body writing flags (requires_primary_keyword)
+        writing_pk_count = sum(1 for s in repaired if s.get("requires_primary_keyword") is True)
+        self.assertGreaterEqual(writing_pk_count, 4, "Should have at least 4 body writing slots")
+
+    def test_h2_deduplication(self):
+        """Verify that duplicate H2 headings are resolved."""
+        outline = [
+            {"heading_level": "H2", "heading_text": "المميزات", "section_id": "sec_1"},
+            {"heading_level": "H2", "heading_text": "المميزات", "section_id": "sec_2"},
+            {"heading_level": "H3", "heading_text": "فرعي", "section_id": "sec_3"}
+        ]
+        
+        repaired = self.repair_service.apply_strategic_map_and_roles(
+            outline, 
+            primary_keyword="تيست", 
+            content_type="brand_commercial"
+        )
+        
+        h2_texts = [s["heading_text"] for s in repaired if s["heading_level"] == "H2"]
+        self.assertEqual(len(set(h2_texts)), 2, "H2 headings must be unique after repair")
+        self.assertNotEqual(h2_texts[0], h2_texts[1])
+
 if __name__ == "__main__":
     unittest.main()

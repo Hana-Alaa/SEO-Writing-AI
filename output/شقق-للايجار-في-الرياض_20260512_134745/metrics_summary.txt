@@ -1,0 +1,180 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 44.48 seconds
+  -- Tokens Used: 30,234
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 45.15 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 8.67 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.14 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.60 seconds
+  -- Tokens Used: 738
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 738
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 10.21 seconds
+  -- Tokens Used: 4,006
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 10.30 seconds
+  -- Tokens Used: 4,006
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 49.04 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: SECTION_1_
+  -- Duration: 5.53 seconds
+  -- Tokens Used: 12,123
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: 
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_المزايا والخدمات التي تحصل عليها عند اختيار شقق للايجار في الرياض
+  -- Duration: 7.15 seconds
+  -- Tokens Used: 12,417
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: المزايا والخدمات التي تحصل عليها عند اختيار شقق للايجار في الرياض
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_2_المزايا والخدمات التي تحصل عليها عند اختيار شقق للايجار في الرياض
+  -- Duration: 6.82 seconds
+  -- Tokens Used: 13,311
+--------------------------------------------------
+Step: SECTION_3_أهم ما يميز خدمتنا في شقق للايجار في الرياض
+  -- Duration: 5.07 seconds
+  -- Tokens Used: 12,609
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أهم ما يميز خدمتنا في شقق للايجار في الرياض
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_3_أهم ما يميز خدمتنا في شقق للايجار في الرياض
+  -- Duration: 7.97 seconds
+  -- Tokens Used: 13,418
+--------------------------------------------------
+Step: SECTION_4_دليل الأسعار والعوامل المؤثرة على شقق للايجار في الرياض
+  -- Duration: 16.14 seconds
+  -- Tokens Used: 12,830
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: دليل الأسعار والعوامل المؤثرة على شقق للايجار في الرياض
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_4_دليل الأسعار والعوامل المؤثرة على شقق للايجار في الرياض
+  -- Duration: 6.97 seconds
+  -- Tokens Used: 13,631
+--------------------------------------------------
+Step: SECTION_5_لماذا تختار قولدن هوست عند البحث عن شقة للإيجار في الرياض؟
+  -- Duration: 8.83 seconds
+  -- Tokens Used: 13,141
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تختار قولدن هوست عند البحث عن شقة للإيجار في الرياض؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_5_لماذا تختار قولدن هوست عند البحث عن شقة للإيجار في الرياض؟
+  -- Duration: 10.69 seconds
+  -- Tokens Used: 13,967
+--------------------------------------------------
+Step: SECTION_6_متوسط أسعار شقق للايجار في الرياض حسب المنطقة وأهم العوامل المؤثرة
+  -- Duration: 8.32 seconds
+  -- Tokens Used: 13,701
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: متوسط أسعار شقق للايجار في الرياض حسب المنطقة وأهم العوامل المؤثرة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_6_متوسط أسعار شقق للايجار في الرياض حسب المنطقة وأهم العوامل المؤثرة
+  -- Duration: 33.81 seconds
+  -- Tokens Used: 14,583
+--------------------------------------------------
+Step: SECTION_7_خطوات البحث واختيار شقة للإيجار في الرياض بسهولة
+  -- Duration: 6.13 seconds
+  -- Tokens Used: 13,948
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات البحث واختيار شقة للإيجار في الرياض بسهولة
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_7_خطوات البحث واختيار شقة للإيجار في الرياض بسهولة
+  -- Duration: 7.06 seconds
+  -- Tokens Used: 14,782
+--------------------------------------------------
+Step: SECTION_8_الأسئلة الشائعة حول إيجار الشقق في الرياض وإجابات عملية
+  -- Duration: 6.04 seconds
+  -- Tokens Used: 14,223
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: الأسئلة الشائعة حول إيجار الشقق في الرياض وإجابات عملية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: SECTION_9_خطوتك التالية للعثور على شقة مثالية في الرياض مع قولدن هوست
+  -- Duration: 7.53 seconds
+  -- Tokens Used: 14,364
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوتك التالية للعثور على شقة مثالية في الرياض مع قولدن هوست
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 145.45 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: GLOBAL_COHERENCE
+  -- Duration: 26.24 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_PROMPTING
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: MASTER_FRAME
+  -- Duration: 0.35 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_GENERATION
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: ASSEMBLY
+  -- Duration: 2.93 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: IMAGE_INSERTER
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: META_SCHEMA
+  -- Duration: 9.38 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------
+Step: STEP_TOTAL: RENDER_HTML
+  -- Duration: 0.10 seconds
+  -- Tokens Used: 15,102
+--------------------------------------------------

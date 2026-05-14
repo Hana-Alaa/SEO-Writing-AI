@@ -1,0 +1,31 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: content_writing !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-05-12 13:09:46
+ERROR: CONTRACT VIOLATION in 'SectionWriter.write': missing a required argument: 'content_type'
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\utils\contract_safety.py", line 26, in validate_service_call
+    sig.bind(**kwargs)
+  File "C:\Program Files\Python312\Lib\inspect.py", line 3267, in bind
+    return self._bind(args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python312\Lib\inspect.py", line 3235, in _bind
+    raise TypeError('missing a required argument: {arg!r}'. \
+TypeError: missing a required argument: 'content_type'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 92, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 1754, in _step_2_write_sections
+    res = await self._write_single_section(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 1996, in _write_single_section
+    validate_service_call(
+  File "F:\SEO-Writing-AI\src\utils\contract_safety.py", line 31, in validate_service_call
+    raise PipelineContractError(error_msg) from e
+src.utils.contract_safety.PipelineContractError: CONTRACT VIOLATION in 'SectionWriter.write': missing a required argument: 'content_type'
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

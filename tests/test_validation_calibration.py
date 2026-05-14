@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 import re
 import os
 import sys
@@ -33,6 +34,40 @@ class TestValidationCalibration(unittest.TestCase):
         self.assertTrue(self.validator._brand_heading_allowed("proof"))
         self.assertTrue(self.validator._brand_heading_allowed("case_study"))
         self.assertFalse(self.validator._brand_heading_allowed("features"))
+
+    def test_plain_language_repair_message_requires_msa_not_colloquial(self):
+        text = (
+            "استثمار استراتيجي حصري بعائد استثماري مميز. "
+            "This premium strategic framework creates elite prestige positioning."
+        )
+
+        result = self.validator._check_plain_language_compliance(text)
+        message = result.get("message") or " ".join(result.get("warnings", []))
+
+        self.assertIn("Modern Standard Arabic", message)
+        self.assertIn("not colloquial spoken dialect", message)
+        self.assertNotIn("simple everyday language", message)
+
+    def test_metric_validator_does_not_force_invented_ranges_without_observed_data(self):
+        section = {
+            "heading_text": "SEO pricing factors",
+            "section_type": "body",
+            "section_intent": "informational",
+            "observed_data_mentions": [],
+        }
+        content = (
+            "Pricing should be explained through budget tiers, scope, complexity, and service level "
+            "when reliable numeric ranges are not available.\n\n"
+            "This keeps the section useful without inventing exact figures or presenting weak assumptions "
+            "as market facts."
+        )
+
+        _is_valid, errors = asyncio.run(
+            self.validator.validate_section_output(content=content, section=section)
+        )
+
+        self.assertFalse(any(error.startswith("METRIC_DATA_MISSING") for error in errors))
+        self.assertFalse(any("realistic estimates" in error for error in errors))
 
     def test_arabic_entity_normalization(self):
         # Verify "شقق" and "شقه" match

@@ -1,0 +1,68 @@
+╔══════════════════════════════════════════════════════════╗
+║           EXECUTIVE ARTICLE GENERATION REPORT            ║
+╚══════════════════════════════════════════════════════════╝
+
+● OVERALL EXECUTION TIME: 6.5 minutes
+● TOTAL AI PROCESSING UNITS: 284,040
+● PROJECT STATUS: COMPLETED SUCCESSFULLY
+● GENERATION DATE: 2026-05-12 13:54
+
+PHASE BREAKDOWN
+============================================================
+
+▶ Phase 1: Project Setup
+  ────────────────────────────────────────────────────────
+  • Brand Intelligence Gathering           |     < 1s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  PROJECT SETUP               |     0.0s | AI: 0
+
+▶ Phase 2: Market Analysis
+  ────────────────────────────────────────────────────────
+  • Live Web & Competitor Search           |    45.1s | AI: Local Process
+  • Google Search Intent Analysis          |     8.7s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  MARKET ANALYSIS             |    53.8s | AI: 0
+
+▶ Phase 3: Strategy & Design
+  ────────────────────────────────────────────────────────
+  • User Intent Calibration                |     3.6s | AI: 738
+  • Persona & Tone Design                  |     < 1s | AI: 738
+  • SEO Strategic Roadmap                  |    10.3s | AI: 4,006
+  • Article Structure Design               |    49.0s | AI: 15,102
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  STRATEGY & DESIGN           |     1.0m | AI: 20,584
+
+▶ Phase 4: Content Production
+  ────────────────────────────────────────────────────────
+  • Writing:                               |     5.5s | AI: 12,123
+  • Writing: المزايا والخدمات التي تحصل عليها عند اختيار شقق للايجار في الرياض |     7.2s | AI: 12,417
+  • Writing: المزايا والخدمات التي تحصل عليها عند اختيار شقق للايجار في الرياض |     6.8s | AI: 13,311
+  • Writing: أهم ما يميز خدمتنا في شقق للايجار في الرياض |     5.1s | AI: 12,609
+  • Writing: أهم ما يميز خدمتنا في شقق للايجار في الرياض |     8.0s | AI: 13,418
+  • Writing: دليل الأسعار والعوامل المؤثرة على شقق للايجار في الرياض |    16.1s | AI: 12,830
+  • Writing: دليل الأسعار والعوامل المؤثرة على شقق للايجار في الرياض |     7.0s | AI: 13,631
+  • Writing: لماذا تختار قولدن هوست عند البحث عن شقة للإيجار في الرياض؟ |     8.8s | AI: 13,141
+  • Writing: لماذا تختار قولدن هوست عند البحث عن شقة للإيجار في الرياض؟ |    10.7s | AI: 13,967
+  • Writing: متوسط أسعار شقق للايجار في الرياض حسب المنطقة وأهم العوامل المؤثرة |     8.3s | AI: 13,701
+  • Writing: متوسط أسعار شقق للايجار في الرياض حسب المنطقة وأهم العوامل المؤثرة |    33.8s | AI: 14,583
+  • Writing: خطوات البحث واختيار شقة للإيجار في الرياض بسهولة |     6.1s | AI: 13,948
+  • Writing: خطوات البحث واختيار شقة للإيجار في الرياض بسهولة |     7.1s | AI: 14,782
+  • Writing: الأسئلة الشائعة حول إيجار الشقق في الرياض وإجابات عملية |     6.0s | AI: 14,223
+  • Writing: خطوتك التالية للعثور على شقة مثالية في الرياض مع قولدن هوست |     7.5s | AI: 14,364
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  CONTENT PRODUCTION          |     2.4m | AI: 203,048
+
+▶ Phase 5: Visuals & Finalization
+  ────────────────────────────────────────────────────────
+  • Technical Content Assembly             |     2.9s | AI: 15,102
+  • Image & Visual Integration             |     < 1s | AI: 15,102
+  • SEO Metadata & Schema Markup           |     9.4s | AI: 15,102
+  • Final Web Page Generation              |     < 1s | AI: 15,102
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  VISUALS & FINALIZATION      |     1.7m | AI: 60,408
+
+============================================================
+Note: 'AI Processing Units' represent the computational effort 
+expended by the AI models. 'Local Process' indicates 
+technical assembly tasks performed without external AI costs.
+'AI Generated' indicates high-compute visual creation steps.

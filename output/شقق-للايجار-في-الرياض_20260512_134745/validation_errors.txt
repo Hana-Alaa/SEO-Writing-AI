@@ -1,0 +1,28 @@
+
+--- SECTION:  (sec_01) ---
+- [QUALITY ISSUE]: INTRO_STRUCTURE_VIOLATION: Informational introduction '' must contain 1 to 2 distinct paragraphs.
+--------------------------------------------------
+
+--- SECTION: المزايا والخدمات التي تحصل عليها عند اختيار شقق للايجار في الرياض (sec_02) ---
+- [QUALITY ISSUE]: SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('features'). It MUST be explicitly defined as exactly one of: ['introduction', 'body', 'faq', 'conclusion']. Do NOT guess based on position.
+--------------------------------------------------
+
+--- SECTION: أهم ما يميز خدمتنا في شقق للايجار في الرياض (sec_03) ---
+- [QUALITY ISSUE]: SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('differentiation'). It MUST be explicitly defined as exactly one of: ['introduction', 'body', 'faq', 'conclusion']. Do NOT guess based on position.
+--------------------------------------------------
+
+--- SECTION: دليل الأسعار والعوامل المؤثرة على شقق للايجار في الرياض (sec_04) ---
+- [QUALITY ISSUE]: SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('proof'). It MUST be explicitly defined as exactly one of: ['introduction', 'body', 'faq', 'conclusion']. Do NOT guess based on position.
+--------------------------------------------------
+
+--- SECTION: لماذا تختار قولدن هوست عند البحث عن شقة للإيجار في الرياض؟ (sec_05) ---
+- [QUALITY ISSUE]: SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('comparison'). It MUST be explicitly defined as exactly one of: ['introduction', 'body', 'faq', 'conclusion']. Do NOT guess based on position.
+--------------------------------------------------
+
+--- SECTION: متوسط أسعار شقق للايجار في الرياض حسب المنطقة وأهم العوامل المؤثرة (sec_06) ---
+- [QUALITY ISSUE]: SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('offer'). It MUST be explicitly defined as exactly one of: ['introduction', 'body', 'faq', 'conclusion']. Do NOT guess based on position.
+--------------------------------------------------
+
+--- SECTION: خطوات البحث واختيار شقة للإيجار في الرياض بسهولة (sec_07) ---
+- [QUALITY ISSUE]: SECTION_TYPE_CRITICAL_ERROR: section_type is missing or invalid ('process'). It MUST be explicitly defined as exactly one of: ['introduction', 'body', 'faq', 'conclusion']. Do NOT guess based on position.
+--------------------------------------------------

@@ -1,0 +1,40 @@
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-05-12 11:04:56
+ERROR: Outline validation failed after all retries. Last issues were:
+- Strategic Map Violation: Exactly ONE H2 heading must require the Primary Keyword (found 0).
+- Strategic Map Violation: Total PK assignment slots should be at least 4 (found 1).
+- Outline coverage incomplete for brand_commercial: missing offer_clarity, features_or_included, differentiators.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 92, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 925, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- Strategic Map Violation: Exactly ONE H2 heading must require the Primary Keyword (found 0).
+- Strategic Map Violation: Total PK assignment slots should be at least 4 (found 1).
+- Outline coverage incomplete for brand_commercial: missing offer_clarity, features_or_included, differentiators.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!! TECHNICAL CRASH: outline_generation !!!!!!!!!!!!!!!!!!!!
+TIME: 2026-05-12 11:07:34
+ERROR: Outline validation failed after all retries. Last issues were:
+- Strategic Map Violation: Exactly ONE H2 heading must require the Primary Keyword (found 0).
+- Strategic Map Violation: Total PK assignment slots should be at least 4 (found 1).
+- Outline coverage incomplete for brand_commercial: missing offer_clarity, features_or_included, differentiators.
+TRACEBACK:
+Traceback (most recent call last):
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 92, in run_step
+    new_state = await func(state)
+                ^^^^^^^^^^^^^^^^^
+  File "F:\SEO-Writing-AI\src\services\workflow_controller.py", line 925, in _step_1_outline
+    raise StructureError(
+src.services.workflow_controller.StructureError: Outline validation failed after all retries. Last issues were:
+- Strategic Map Violation: Exactly ONE H2 heading must require the Primary Keyword (found 0).
+- Strategic Map Violation: Total PK assignment slots should be at least 4 (found 1).
+- Outline coverage incomplete for brand_commercial: missing offer_clarity, features_or_included, differentiators.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

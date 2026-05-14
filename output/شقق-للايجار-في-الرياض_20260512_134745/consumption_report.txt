@@ -1,0 +1,57 @@
+==================================================
+        API CONSUMPTION & COST REPORT             
+==================================================
+
+Total Estimated Cost: $0.0000
+Total Tokens: 393,790
+
+Google (Gemini) Cost: $0.0000
+Other Costs: $0.0000
+
+--------------------------------------------------
+Step                      | Model                     | Cost      
+--------------------------------------------------
+EVENT: Initialization     | N/A                       | $0.000000
+STEP_TOTAL: brand_discov  | unknown                   | $0.000000
+web_research              | unknown                   | $0.000000
+STEP_TOTAL: web_research  | unknown                   | $0.000000
+STEP_TOTAL: serp_analysi  | unknown                   | $0.000000
+intent_title              | unknown                   | $0.000000
+STEP_TOTAL: intent_title  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: style_analys  | openai/gpt-4.1            | $0.000000
+content_strategy          | unknown                   | $0.000000
+STEP_TOTAL: content_stra  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: outline_gene  | openai/gpt-4.1            | $0.000000
+section_1_                | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_2_المزايا والخدم  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_2_المزايا والخدم  | unknown                   | $0.000000
+section_3_أهم ما يميز خد  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_3_أهم ما يميز خد  | unknown                   | $0.000000
+section_4_دليل الأسعار و  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_4_دليل الأسعار و  | unknown                   | $0.000000
+section_5_لماذا تختار قو  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_5_لماذا تختار قو  | unknown                   | $0.000000
+section_6_متوسط أسعار شق  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_6_متوسط أسعار شق  | unknown                   | $0.000000
+section_7_خطوات البحث وا  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_7_خطوات البحث وا  | unknown                   | $0.000000
+section_8_الأسئلة الشائع  | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+section_9_خطوتك التالية   | unknown                   | $0.000000
+EVENT: Section Finalized  | N/A                       | $0.000000
+STEP_TOTAL: content_writ  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: global_coher  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: image_prompt  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: master_frame  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: image_genera  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: assembly      | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: image_insert  | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: meta_schema   | openai/gpt-4.1            | $0.000000
+STEP_TOTAL: render_html   | openai/gpt-4.1            | $0.000000

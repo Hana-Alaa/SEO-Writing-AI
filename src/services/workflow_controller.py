@@ -214,6 +214,7 @@ class AsyncWorkflowController:
             "brand_discovery",
             "web_research",
             "content_strategy",
+            "approved_outline_load",
             "outline_generation",
             "content_writing",
             "assembly"
@@ -258,6 +259,15 @@ class AsyncWorkflowController:
         # Check for Heading-Only Mode
         heading_only_mode = state.get("input_data", {}).get("heading_only_mode", False)
         state["heading_only_mode"] = heading_only_mode
+        content_only_mode = state.get("input_data", {}).get("content_only_mode", False)
+        state["content_only_mode"] = content_only_mode
+        content_stage_only_mode = state.get("input_data", {}).get("content_stage_only_mode", False)
+        state["content_stage_only_mode"] = bool(content_stage_only_mode)
+        topic_packs_enabled = state.get("input_data", {}).get(
+            "topic_packs_enabled",
+            state.get("topic_packs_enabled", False),
+        )
+        state["topic_packs_enabled"] = bool(topic_packs_enabled)
 
         steps = [
             # ("semantic_layer", self._step_semantic_layer, 1),
@@ -268,38 +278,51 @@ class AsyncWorkflowController:
             ("intent_title", self.strategy_service.run_intent_title, 0),
             ("style_analysis", self.strategy_service.run_style_analysis, 1),
             ("content_strategy", self.strategy_service.run_content_strategy, 3),
-            ("outline_generation", self._step_1_outline, 1),
-            ("content_writing", self._step_2_write_sections, 1),
-            ("global_coherence", self._step_3_global_coherence_pass, 1),
         ]
+
+        if content_only_mode:
+            logger.info("Content-Only Mode active: using approved outline and skipping outline generation.")
+            steps.append(("approved_outline_load", self._step_load_approved_outline, 0))
+        else:
+            steps.append(("outline_generation", self._step_1_outline, 1))
+
+        steps.extend([
+            ("content_writing", self._step_2_write_sections, 1),
+        ])
+
+        if not content_stage_only_mode:
+            steps.append(("global_coherence", self._step_3_global_coherence_pass, 1))
 
         # Dynamic Image Skipping
         generate_images = state.get("generate_images", True)
         num_images = state.get("num_images", 7)
 
-        if generate_images and num_images > 0:
-            steps.extend([
-                ("image_prompting", self._step_4_generate_image_prompts, 0),
-                ("master_frame", self._step_4_1_generate_master_frame, 1),
-                ("image_generation", self._step_4_5_download_images, 2),
-            ])
+        if content_stage_only_mode:
+            logger.info("Content Stage Only Mode active: stopping after section writing; skipping coherence/finalization/rendering.")
         else:
-            logger.info(f"Skipping image generation: generate_images={generate_images}, num_images={num_images}")
+            if generate_images and num_images > 0:
+                steps.extend([
+                    ("image_prompting", self._step_4_generate_image_prompts, 0),
+                    ("master_frame", self._step_4_1_generate_master_frame, 1),
+                    ("image_generation", self._step_4_5_download_images, 2),
+                ])
+            else:
+                logger.info(f"Skipping image generation: generate_images={generate_images}, num_images={num_images}")
 
-        steps.extend([
-            # ("section_validation", self._step_4_validate_sections, 0),
-            ("assembly", self._step_5_assembly, 0),
-            ("final_humanizer", self._step_5_1_final_humanizer, 1),
-        ])
+            steps.extend([
+                # ("section_validation", self._step_4_validate_sections, 0),
+                ("assembly", self._step_5_assembly, 0),
+                ("final_humanizer", self._step_5_1_final_humanizer, 1),
+            ])
 
-        if generate_images and num_images > 0:
-            steps.append(("image_inserter", self._step_6_image_inserter, 0))
+            if generate_images and num_images > 0:
+                steps.append(("image_inserter", self._step_6_image_inserter, 0))
 
-        steps.extend([
-            ("meta_schema", self._step_7_meta_schema, 0),
-            # ("article_validation", self._step_8_article_validation, 0),
-            ("render_html", self._step_render_html, 0)
-        ])
+            steps.extend([
+                ("meta_schema", self._step_7_meta_schema, 0),
+                # ("article_validation", self._step_8_article_validation, 0),
+                ("render_html", self._step_render_html, 0)
+            ])
         for name, func, retries in steps:
             result = await self.executor.run_step(name, func, state, retries=retries)
             state = result.get("data", state)
@@ -330,6 +353,12 @@ class AsyncWorkflowController:
             if state.get("heading_only_mode"):
                 state["workflow_logger"].log_step_details(
                     "final_heading_response",
+                    0,
+                    output_data=final_output,
+                )
+            elif state.get("content_stage_only_mode"):
+                state["workflow_logger"].log_step_details(
+                    "final_content_stage_response",
                     0,
                     output_data=final_output,
                 )
@@ -364,6 +393,10 @@ class AsyncWorkflowController:
         state["primary_keyword"] = primary_keyword
         state["raw_title"] = raw_title
         state["keywords"] = keywords
+        state["content_only_mode"] = bool(input_data.get("content_only_mode", False))
+        state["content_stage_only_mode"] = bool(input_data.get("content_stage_only_mode", False))
+        state["topic_packs_enabled"] = bool(input_data.get("topic_packs_enabled", state.get("topic_packs_enabled", False)))
+        state["approved_outline"] = input_data.get("approved_outline")
 
         # Dual-Mode / Advanced Customization
         state["workflow_mode"] = input_data.get("workflow_mode", "core")
@@ -518,6 +551,124 @@ class AsyncWorkflowController:
         logger.info(f"Enforcing DEEP Brand Discovery for quality stabilization (URL: {brand_url}).")
         return await self.research_service.run_brand_discovery(state)
 
+    def _extract_observed_pricing_signals(self, state: Dict[str, Any]) -> List[str]:
+        """Extracts numeric pricing patterns from SERP data (titles, snippets, meta)."""
+        serp_data = state.get("serp_data", {})
+        if not serp_data:
+            return []
+
+        # Pricing keywords to filter context
+        price_terms = [
+            "سعر", "اسعار", "أسعار", "تكلفة", "ريال", "درهم", "ايجار", "إيجار",
+            "شهري", "سنوي", "rent", "price", "pricing", "cost", "sar", "aed",
+            "fees", "monthly", "yearly", "annual", "starts from", "تبدأ من"
+        ]
+        
+        # Pattern to find numbers with 3+ digits or decimals (e.g., 110,000 or 2.000 or 1500)
+        price_pattern = re.compile(r"(\d{3,}(?:[.,\s]\d{3})*(?:\.\d+)?|\d{1,3}(?:[.,\s]\d{3})+(?:\.\d+)?)")
+        
+        found_mentions = []
+        
+        def _normalise_price_context(text: str) -> str:
+            return (
+                str(text or "")
+                .lower()
+                .replace("إ", "ا")
+                .replace("أ", "ا")
+                .replace("آ", "ا")
+            )
+
+        def _add_text(value: Any, output: List[str]) -> None:
+            if isinstance(value, str) and value.strip():
+                output.append(value.strip())
+            elif isinstance(value, list):
+                for item in value:
+                    _add_text(item, output)
+            elif isinstance(value, dict):
+                for item in value.values():
+                    _add_text(item, output)
+
+        def _result_text_blobs(result: Any) -> List[str]:
+            if not isinstance(result, dict):
+                return []
+            blobs: List[str] = []
+            for key in (
+                "title",
+                "snippet",
+                "description",
+                "meta_title",
+                "meta_description",
+                "h1",
+            ):
+                _add_text(result.get(key), blobs)
+            headings = result.get("headings")
+            if isinstance(headings, dict):
+                for key in ("h1", "h2", "h3"):
+                    _add_text(headings.get(key), blobs)
+            return blobs
+
+        # Scrape observed ranking titles, snippets, meta descriptions, and H1/H2/H3 snippets.
+        text_blobs: List[str] = []
+        for collection_key in ("results", "top_results"):
+            for result in serp_data.get(collection_key, []) or []:
+                result_blobs = _result_text_blobs(result)
+                text_blobs.extend(result_blobs)
+                # Keep a result-level blob so a price term in the title can ground
+                # a numeric value observed in a meta description or heading.
+                if result_blobs:
+                    text_blobs.append(" ".join(result_blobs))
+        
+        # Add PAA and related searches
+        _add_text(serp_data.get("paa_questions", []), text_blobs)
+        _add_text(serp_data.get("related_searches", []), text_blobs)
+        
+        for blob in text_blobs:
+            if not blob: continue
+            blob_l = _normalise_price_context(blob)
+            
+            # Context Check: only extract if price-related word is nearby
+            if any(term in blob_l for term in price_terms):
+                matches = price_pattern.findall(blob)
+                for match in matches:
+                    cleaned = re.sub(r"[.,\s]", "", match)
+                    if cleaned.isdigit() and len(cleaned) >= 3:
+                        # Extract context: 30 chars before and after
+                        start_idx = blob.find(match)
+                        context_start = max(0, start_idx - 30)
+                        context_end = min(len(blob), start_idx + len(match) + 30)
+                        context = blob[context_start:context_end].strip()
+                        context = " ".join(context.split())
+                        # Avoid obvious guide years such as "2026" unless the
+                        # local context also contains a stronger price marker.
+                        match_digits = re.sub(r"\D", "", match)
+                        if re.fullmatch(r"\d{4}", match_digits):
+                            as_int = int(match_digits)
+                            local_l = _normalise_price_context(context)
+                            strong_price_terms = (
+                                "ريال", "درهم", "sar", "aed", "شهري", "سنوي",
+                                "monthly", "yearly", "annual", "rent", "ايجار",
+                            )
+                            if 1900 <= as_int <= 2099 and not any(t in local_l for t in strong_price_terms):
+                                continue
+                        found_mentions.append(context)
+
+        # Store in state at the required path
+        intelligence = state.setdefault("seo_intelligence", {})
+        market_analysis = intelligence.setdefault("market_analysis", {})
+        market_insights = market_analysis.setdefault("market_insights", {})
+        market_data_signals = market_insights.setdefault("market_data_signals", {})
+        existing_mentions = market_data_signals.get("observed_price_mentions") or []
+        if isinstance(existing_mentions, str):
+            existing_mentions = [existing_mentions]
+        elif not isinstance(existing_mentions, list):
+            existing_mentions = []
+        final_mentions = list(dict.fromkeys(
+            [str(item).strip() for item in existing_mentions + found_mentions if str(item).strip()]
+        ))[:15]
+        market_data_signals["observed_price_mentions"] = final_mentions
+        
+        return final_mentions
+
     async def _step_web_research_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Consolidates research routing."""
         return await self.research_service.run_web_research(state)
@@ -525,11 +676,11 @@ class AsyncWorkflowController:
     async def _step_serp_analysis_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Runs dedicated SERP analysis to extract intent and gaps."""
         state = await self.research_service.run_serp_analysis(state)
+        # Extract pricing signals from SERP raw data
+        self._extract_observed_pricing_signals(state)
         # Build grounding brief for outline generator
         state["serp_outline_brief"] = self.research_service.build_serp_outline_brief(state)
         return state
-
-    # Strategy methods migrated to StrategyService
 
     async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Generates the article outline with a soft retry loop for validation failures."""
@@ -639,6 +790,10 @@ class AsyncWorkflowController:
                 _inspect.signature(self.outline_gen.generate),
             )
 
+            outline_heading_v2_mode = bool(
+                state.get("heading_only_mode") or state.get("content_stage_only_mode")
+            )
+
             # PREFLIGHT CONTRACT CHECK
             _gen_params = _inspect.signature(self.outline_gen.generate).parameters
             validate_service_call(
@@ -669,7 +824,7 @@ class AsyncWorkflowController:
                 brand_advantages=seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("brand_advantages", []),
                 writing_blueprint=seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("writing_blueprint", ""),
                 market_angle=content_strategy.get("market_angle", ""),
-                heading_only_mode=state.get("heading_only_mode", False),
+                heading_only_mode=outline_heading_v2_mode,
                 head_entity=head_entity,
                 entity_phrase=entity_phrase,
                 service_phrase=service_phrase
@@ -682,7 +837,7 @@ class AsyncWorkflowController:
             h_writing_blueprint = seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("writing_blueprint", "")
             h_seo_intelligence = seo_intelligence
 
-            if state.get("heading_only_mode"):
+            if outline_heading_v2_mode:
                 h_seo_intelligence = self._distill_serp_intelligence(
                     seo_intelligence=seo_intelligence,
                     primary_keyword=state.get("primary_keyword", ""),
@@ -702,7 +857,7 @@ class AsyncWorkflowController:
                     h_content_strategy = dict(h_content_strategy)
                     h_content_strategy["enforced_structural_rules"] = state.get("enforced_structural_rules", [])
                 logger.info(
-                    "[TRACER_V1] Heading-Only Detox & Distillation fired for '%s'.",
+                    "[TRACER_V1] Heading v2 Detox & Distillation fired for '%s'.",
                     state.get("primary_keyword", ""),
                 )
 
@@ -738,7 +893,7 @@ class AsyncWorkflowController:
                     market_angle=h_content_strategy.get("market_angle", ""),
                     brand_advantages=h_brand_advantages,
                     writing_blueprint=h_writing_blueprint,
-                    heading_only_mode=state.get("heading_only_mode", False),
+                    heading_only_mode=outline_heading_v2_mode,
                     head_entity=head_entity,
                     entity_phrase=entity_phrase,
                     service_phrase=service_phrase,
@@ -784,12 +939,11 @@ class AsyncWorkflowController:
 
             # Pruning and Repair (Deterministic)
             # TEMPORARY: Relaxed validation for heading-only mode
-            heading_only_mode = state.get("heading_only_mode", False)
             # Use this flag to bypass heavy structural/semantic rules
-            heading_only_relaxed_validation = heading_only_mode
+            heading_only_relaxed_validation = outline_heading_v2_mode
 
             if not heading_only_relaxed_validation:
-                if heading_only_mode:
+                if outline_heading_v2_mode:
                     outline = self.validator.prune_unsupported_optional_subheadings(
                         outline,
                         primary_keyword=state.get("primary_keyword", ""),
@@ -828,7 +982,6 @@ class AsyncWorkflowController:
 
                 # TASK 3: FAQ De-duplication
                 outline = self.outline_repair_service.dedupe_faq_against_h2(outline)
-
                 # TASK 3b: FAQ Refill (restore minimum 4 FAQs after dedupe)
                 outline = self.outline_repair_service.refill_faq_after_dedupe(
                     outline,
@@ -844,7 +997,19 @@ class AsyncWorkflowController:
                     entity_phrase=entity_phrase
                 )
                 outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
-                
+
+                # Apply Anti-Echo and Strategic Map Repairs
+                outline = self.outline_repair_service.clean_echo_and_repetition(
+                    outline, 
+                    title=state.get("title", ""),
+                    primary_keyword=state.get("primary_keyword", "")
+                )
+                outline = self.outline_repair_service.apply_strategic_map_and_roles(
+                    outline,
+                    primary_keyword=state.get("primary_keyword", ""),
+                    content_type=content_type
+                )
+
                 # TASK 4: Conclusion Cleanup
                 outline = self.outline_repair_service.clean_conclusion_heading(
                     outline,
@@ -852,7 +1017,7 @@ class AsyncWorkflowController:
                 )
 
                 # 3. Quality (Thin, Duplicates, CTAs)
-                if heading_only_mode:
+                if outline_heading_v2_mode:
                     quality_errors = self.validator.validate_heading_outline_quality(
                         outline,
                         content_type=content_type,
@@ -874,7 +1039,7 @@ class AsyncWorkflowController:
             else:
                 logger.info("Heading-only mode: Heavy quality validation and deterministic repairs bypassed.")
 
-            if heading_only_mode:
+            if outline_heading_v2_mode:
                 # Keep lightweight, deterministic heading-only fixes active even when
                 # heavy validation is relaxed. These do not force a regeneration and
                 # protect practical visitor intents such as brand-assisted booking.
@@ -1065,6 +1230,15 @@ class AsyncWorkflowController:
         ]
 
         state["internal_url_set"] = set(internal_links)
+
+        if state.get("content_stage_only_mode"):
+            state = self._prepare_outline_for_content(
+                state,
+                outline,
+                source="heading_v2_generated_outline",
+            )
+            outline = state.get("outline", outline)
+            present_types = {sec.get("section_type") for sec in outline}
 
         missing = self.validator._missing_required_sections(present_types, mandatory)
 
@@ -1338,6 +1512,928 @@ class AsyncWorkflowController:
             logger.error(f"Validation of fixed outline failed: {e}")
             return {"enabled": True, "attempted": True, "accepted": False, "reason": f"Validation error: {str(e)}", "changes": changes}
 
+    def _subheading_text(self, item: Any) -> str:
+        if isinstance(item, dict):
+            return str(item.get("heading_text") or item.get("text") or item.get("question") or "").strip()
+        return str(item or "").strip()
+
+    def _parse_approved_outline_payload(self, payload: Any) -> tuple[str, List[Dict[str, Any]]]:
+        """Parse a heading-review response or raw outline list without changing headings."""
+        if not payload:
+            raise StructureError("Content-only mode requires an approved_outline payload.")
+
+        parsed = payload
+        if isinstance(payload, str):
+            raw = payload.strip()
+            try:
+                parsed = json.loads(raw)
+            except Exception:
+                parsed = recover_json(raw)
+
+        title = ""
+        outline = None
+        if isinstance(parsed, dict):
+            title = str(parsed.get("title") or "").strip()
+            outline = (
+                parsed.get("outline_structure")
+                or parsed.get("outline")
+                or parsed.get("sections")
+            )
+        elif isinstance(parsed, list):
+            outline = parsed
+
+        if not isinstance(outline, list) or not outline:
+            raise StructureError("approved_outline must be a non-empty list or a heading response object.")
+
+        cleaned = []
+        for idx, section in enumerate(outline, start=1):
+            if not isinstance(section, dict):
+                continue
+            sec = dict(section)
+            if not sec.get("heading_text"):
+                sec["heading_text"] = sec.get("note") or (
+                    "Opening hook" if idx == 1 else f"Section {idx}"
+                )
+            sec.setdefault("section_id", f"sec_{idx:02d}")
+            sec.setdefault("heading_level", "INTRO" if idx == 1 else "H2")
+            sec.setdefault("section_type", "introduction" if idx == 1 else "core")
+            sec.setdefault("section_intent", "informational")
+            sec["subheadings"] = [
+                text for text in (self._subheading_text(item) for item in sec.get("subheadings", []) or [])
+                if text
+            ]
+            cleaned.append(sec)
+
+        if not cleaned:
+            raise StructureError("approved_outline did not contain any valid section objects.")
+
+        return title, cleaned
+
+    def _infer_contract_format(self, section: Dict[str, Any]) -> str:
+        section_type = (section.get("section_type") or "").lower()
+        subheadings = section.get("subheadings") or []
+        heading_blob = " ".join([
+            str(section.get("heading_text") or ""),
+            " ".join(self._subheading_text(item) for item in subheadings),
+        ]).lower()
+        comparison_terms = ("مقارنة", "الفرق", "مقابل", "compare", "comparison", "versus", " vs ")
+        criteria_terms = ("معايير", "اختيار", "تختار", "كيف تختار", "criteria", "choose", "selection")
+        if section.get("requires_table") or section_type in {"comparison", "pricing"} or any(term in heading_blob for term in comparison_terms):
+            return "table" if not subheadings else "mixed"
+        if section.get("requires_list"):
+            return "bullets"
+        if section_type in {"process", "process_or_how"} or any(term in heading_blob for term in criteria_terms):
+            return "bullets" if not subheadings else "mixed"
+        if section_type == "faq" or subheadings:
+            return "mixed"
+        return "paragraphs"
+
+    def _decompose_heading_promises(self, heading: str, state: Dict[str, Any]) -> List[str]:
+        """Turn compound H2 promises into explicit execution targets for the writer."""
+        heading_l = str(heading or "").lower()
+        is_ar = bool(re.search(r"[\u0600-\u06FF]", heading_l)) or str(
+            state.get("article_language") or ""
+        ).lower().startswith("ar")
+        promises: List[str] = []
+
+        if any(term in heading_l for term in ("أنواع", "نوع", "خيارات", "تصنيفات", "types", "options", "categories")):
+            promises.append(
+                "فرّق بين الأنواع أو الخيارات المذكورة بوضوح عملي."
+                if is_ar
+                else "Clearly differentiate the mentioned types or options."
+            )
+        if any(term in heading_l for term in ("كيف تختار", "طريقة الاختيار", "اختيار", "تختار", "how to choose", "choose", "selection")):
+            promises.append(
+                "اشرح كيف يختار القارئ الخيار الأنسب باستخدام معايير عملية، وليس وصف الأنواع فقط."
+                if is_ar
+                else "Explain how the reader should choose the right option using practical criteria, not only type descriptions."
+            )
+        if any(term in heading_l for term in ("معايير", "criteria")):
+            promises.append(
+                "قدّم المعايير في نقاط واضحة، مع نتيجة أو قرار مرتبط بكل معيار."
+                if is_ar
+                else "Present criteria as clear points, with a decision impact for each one."
+            )
+        if any(term in heading_l for term in ("مقارنة", "الفرق", "مقابل", "compare", "comparison", "versus", " vs ")):
+            promises.append(
+                "حوّل المقارنة إلى فروق قابلة للمسح، ويفضل جدول عند توفر مساحة الجداول."
+                if is_ar
+                else "Turn the comparison into scannable differences, preferably a table when table slots are available."
+            )
+        return promises
+
+    def _infer_brand_policy(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+        brand_name = state.get("brand_name") or state.get("display_brand_name") or ""
+        if not brand_name:
+            return "none"
+
+        content_type = (state.get("content_type") or "").lower()
+        intent = (state.get("intent") or "").lower()
+        if content_type == "brand_commercial" or "commercial" in intent:
+            return "commercial"
+
+        text = " ".join([
+            section.get("heading_text", ""),
+            " ".join(section.get("subheadings", []) or []),
+            state.get("primary_keyword", ""),
+        ]).lower()
+        strategy_terms = (
+            "strategy", "implementation", "service", "seo", "sem", "ppc",
+            "استراتيجية", "تنفيذ", "تطبيق", "خدمة", "خدمات", "تسويق"
+        )
+        if brand_name.lower() in text or any(term in text for term in strategy_terms):
+            return "soft_implementation"
+        return "none"
+
+    def _infer_location_policy(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+        area = str(state.get("area") or "").strip()
+        if not area or area.lower() in {"global", "general", "international"}:
+            return "neutral"
+
+        content_type = (state.get("content_type") or "").lower()
+        primary_keyword = str(state.get("primary_keyword") or "")
+        heading_text = " ".join([
+            section.get("heading_text", ""),
+            " ".join(section.get("subheadings", []) or []),
+        ])
+        section_type = (section.get("section_type") or "").lower()
+
+        if area.lower() in primary_keyword.lower() or area.lower() in heading_text.lower() or section_type in {
+            "location", "visitor_information"
+        }:
+            return "local_required"
+        if content_type in {"brand_commercial", "listing", "real_estate"}:
+            return "local_allowed"
+        return "neutral"
+
+    def _build_section_contract(
+        self,
+        section: Dict[str, Any],
+        outline: List[Dict[str, Any]],
+        index: int,
+        state: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        subheadings = [self._subheading_text(item) for item in section.get("subheadings", []) or []]
+        subheadings = [item for item in subheadings if item]
+        heading = str(section.get("heading_text") or "").strip()
+        section_type = (section.get("section_type") or "").lower()
+
+        if section_type == "introduction" or (section.get("heading_level") or "").upper() == "INTRO":
+            must_answer = [
+                f"Open with a specific, non-generic hook for {state.get('primary_keyword', heading)}",
+                "Start from a concrete reader tension, trade-off, mistake risk, or decision problem",
+                "Orient the reader without defining the topic in detail",
+            ]
+        elif section_type == "faq" and subheadings:
+            must_answer = subheadings
+        else:
+            must_answer = [heading] + self._decompose_heading_promises(heading, state) + subheadings
+
+        prior = []
+        for prev in outline[:index]:
+            prev_heading = str(prev.get("heading_text") or "").strip()
+            if prev_heading:
+                prior.append(prev_heading)
+            for sub in prev.get("subheadings", []) or []:
+                sub_text = self._subheading_text(sub)
+                if sub_text:
+                    prior.append(sub_text)
+
+        contract = {
+            "must_answer": list(dict.fromkeys([item for item in must_answer if item])),
+            "must_not_repeat": list(dict.fromkeys(prior[-8:])),
+            "format": self._infer_contract_format(section),
+            "brand_policy": self._infer_brand_policy(section, state),
+            "location_policy": self._infer_location_policy(section, state),
+        }
+        return contract
+
+    def _infer_taxonomy_axis(self, section: Dict[str, Any]) -> str:
+        """Infer a broad editorial axis without making topic-specific assumptions."""
+        section_type = str(section.get("section_type") or "").lower()
+        heading_blob = " ".join([
+            str(section.get("heading_text") or ""),
+            " ".join(self._subheading_text(item) for item in section.get("subheadings", []) or []),
+        ]).lower()
+
+        if section_type == "faq":
+            return "faq"
+        if section_type == "conclusion":
+            return "conclusion"
+        if section_type in {"differentiators", "brand_support", "brand", "testimonials"}:
+            return "brand_support"
+        if any(term in heading_blob for term in ("سعر", "أسعار", "تكلفة", "ميزانية", "price", "pricing", "cost", "budget", "fee")):
+            return "pricing"
+        if section_type in {"location", "visitor_information"} or any(
+            term in heading_blob
+            for term in ("منطقة", "مناطق", "أحياء", "حي ", "موقع", "أين", "location", "area", "district", "neighborhood", "where")
+        ):
+            return "location_area"
+        if any(term in heading_blob for term in ("أنواع", "نوع", "خيارات", "تصنيفات", "فئات", "types", "options", "categories")):
+            return "category_or_type"
+        if section_type in {"process", "process_or_how"} or any(
+            term in heading_blob for term in ("خطوات", "طريقة", "كيف", "process", "steps", "how")
+        ):
+            return "process"
+        if section_type == "comparison" or any(term in heading_blob for term in ("مقارنة", "الفرق", "comparison", "versus", " vs ")):
+            return "comparison"
+        if section_type in {"introduction"} or str(section.get("heading_level") or "").upper() == "INTRO":
+            return "introduction"
+        return "criteria"
+
+    def _collect_observed_data_mentions(self, section: Dict[str, Any], state: Dict[str, Any]) -> List[str]:
+        """Read already-observed SERP/market signals; do not parse or infer new data."""
+        seo_intelligence = state.get("seo_intelligence", {}) if isinstance(state.get("seo_intelligence", {}), dict) else {}
+        market = (
+            seo_intelligence.get("market_analysis", {})
+            .get("market_insights", {})
+            if isinstance(seo_intelligence.get("market_analysis", {}), dict)
+            else {}
+        )
+        market_signals = market.get("market_data_signals", {}) if isinstance(market.get("market_data_signals", {}), dict) else {}
+        semantic_assets = (
+            seo_intelligence.get("market_analysis", {})
+            .get("semantic_assets", {})
+            if isinstance(seo_intelligence.get("market_analysis", {}), dict)
+            else {}
+        )
+        serp_data = state.get("serp_data", {}) if isinstance(state.get("serp_data", {}), dict) else {}
+
+        candidates: List[str] = []
+
+        def add_value(value: Any) -> None:
+            if isinstance(value, str) and value.strip():
+                candidates.append(value.strip())
+            elif isinstance(value, list):
+                for item in value:
+                    add_value(item)
+            elif isinstance(value, dict):
+                for item in value.values():
+                    add_value(item)
+
+        for key in (
+            "observed_price_mentions",
+            "avg_unit_price_range",
+            "common_down_payment_or_fees",
+            "typical_duration_or_terms",
+            "notable_market_trends",
+        ):
+            add_value(market_signals.get(key))
+        for key in (
+            "paa_questions",
+            "related_searches",
+            "autocomplete_suggestions",
+            "lsi_keywords",
+            "common_strengths",
+            "common_patterns",
+            "observed_notes",
+        ):
+            add_value(serp_data.get(key))
+            add_value(semantic_assets.get(key))
+
+        heading_terms = set(
+            term.strip("،:؛؟?!.,()[]{}\"'").lower()
+            for term in " ".join([
+                str(section.get("heading_text") or ""),
+                " ".join(self._subheading_text(item) for item in section.get("subheadings", []) or []),
+                str(state.get("primary_keyword") or ""),
+            ]).split()
+            if len(term.strip("،:؛؟?!.,()[]{}\"'")) > 2
+        )
+
+        filtered = []
+        for item in candidates:
+            item_l = item.lower()
+            if not heading_terms or any(term in item_l for term in heading_terms):
+                filtered.append(item)
+        if not filtered:
+            filtered = candidates
+        return list(dict.fromkeys(filtered))[:6]
+
+    def _enrichment_text(self, state: Dict[str, Any], arabic: str, english: str) -> str:
+        lang = str(state.get("article_language") or state.get("input_data", {}).get("article_language") or "").lower()
+        primary = str(state.get("primary_keyword") or "")
+        if lang.startswith("ar") or re.search(r"[\u0600-\u06FF]", primary):
+            return arabic
+        return english
+
+    def _detect_active_topic_packs(self, state: Dict[str, Any]) -> List[str]:
+        """Detect thematic detail packs from keyword and observed SERP signals only."""
+        active_packs = []
+        input_data = state.get("input_data", {}) if isinstance(state.get("input_data", {}), dict) else {}
+        if not bool(state.get("topic_packs_enabled", input_data.get("topic_packs_enabled", False))):
+            return active_packs
+
+        def _normalise_signal(value: Any) -> str:
+            text = str(value or "").lower()
+            text = (
+                text.replace("إ", "ا")
+                .replace("أ", "ا")
+                .replace("آ", "ا")
+                .replace("ى", "ي")
+            )
+            return re.sub(r"\s+", " ", text).strip()
+
+        def _collect_text(value: Any) -> List[str]:
+            if isinstance(value, str):
+                return [value]
+            if isinstance(value, list):
+                items: List[str] = []
+                for item in value:
+                    items.extend(_collect_text(item))
+                return items
+            if isinstance(value, dict):
+                items = []
+                for item in value.values():
+                    items.extend(_collect_text(item))
+                return items
+            return []
+
+        def _has_rental_signal(value: Any) -> bool:
+            text = _normalise_signal(value)
+            if not text:
+                return False
+            arabic_terms = (
+                "شقق للايجار",
+                "شقة للايجار",
+                "للايجار",
+                "للايجار",
+                "ايجار شقق",
+            )
+            if any(term in text for term in arabic_terms):
+                return True
+            english_patterns = (
+                r"\bapartments?\s+for\s+rent\b",
+                r"\bapartment\b",
+                r"\brentals?\b",
+                r"\brent\b",
+            )
+            return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in english_patterns)
+
+        keyword_sources = [
+            state.get("primary_keyword"),
+            state.get("raw_title"),
+            state.get("input_data", {}).get("title") if isinstance(state.get("input_data"), dict) else "",
+            state.get("keywords"),
+        ]
+        if any(_has_rental_signal(source) for source in keyword_sources):
+            active_packs.append("rental_real_estate_pack")
+
+        if "rental_real_estate_pack" not in active_packs:
+            serp_data = state.get("serp_data", {}) if isinstance(state.get("serp_data"), dict) else {}
+            seo_intelligence = state.get("seo_intelligence", {}) if isinstance(state.get("seo_intelligence"), dict) else {}
+            serp_sources = _collect_text(serp_data) + _collect_text(
+                seo_intelligence.get("market_analysis", {}) if isinstance(seo_intelligence.get("market_analysis", {}), dict) else {}
+            )
+            if any(_has_rental_signal(source) for source in serp_sources):
+                active_packs.append("rental_real_estate_pack")
+
+        return active_packs
+
+    def _topic_pack_details(self, pack: str, taxonomy_axis: str, state: Dict[str, Any]) -> List[str]:
+        """Returns role-specific enrichment details for a given topic pack."""
+        if pack == "rental_real_estate_pack":
+            axis = "pricing" if taxonomy_axis in {"pricing_by_area", "pricing_by_type"} else taxonomy_axis
+            details = {
+                "introduction": [
+                    self._enrichment_text(state, "سياق السوق العقاري في المدينة المذكورة.", "Real estate market context for the specified city."),
+                    self._enrichment_text(state, "اختلاف الطلب والاختيارات حسب الأحياء ونمط السكن.", "How demand and options vary by neighborhood and living pattern."),
+                ],
+                "category_or_type": [
+                    self._enrichment_text(state, "سياق المدينة وتنوّع خيارات الإيجار داخلها.", "City context and the variety of rental options within it."),
+                    self._enrichment_text(state, "توقعات عدد الغرف والمساحات المتاحة.", "Room-count or size expectations."),
+                    self._enrichment_text(state, "الفروق بين الشقق المفروشة وغير المفروشة.", "Differences between furnished and unfurnished units."),
+                    self._enrichment_text(state, "مدى ملاءمة الشقق للعزاب أو العوائل.", "Suitability for bachelors vs families."),
+                ],
+                "location_area": [
+                    self._enrichment_text(state, "تنوع الأحياء السكنية وتصنيفاتها.", "Neighborhood variation and classifications."),
+                    self._enrichment_text(state, "القرب من الخدمات والمدارس والطرق وأماكن العمل والمعالم القريبة.", "Proximity to services, schools, roads, workplaces, and nearby landmarks."),
+                    self._enrichment_text(state, "مدى ملاءمة المنطقة للعوائل أو الأفراد حسب نمط الحياة.", "How the area fits families or individuals based on lifestyle."),
+                ],
+                "pricing": [
+                    self._enrichment_text(state, "محركات الأسعار: الموقع، المساحة، التأثيث، الخدمات، والقرب من المدارس أو الطرق أو أماكن العمل.", "Price drivers: location, size, furnishing, services, and proximity to schools, roads, or workplaces."),
+                    self._enrichment_text(state, "أهمية الإيجار الشهري مقابل السنوي.", "Relevance of monthly vs yearly rental terms."),
+                    self._enrichment_text(state, "استخدم مستويات سعرية نسبية عند غياب أرقام موثوقة.", "Use relative pricing tiers when reliable numbers are missing."),
+                ],
+                "process": [
+                    self._enrichment_text(state, "اعتبارات الفحص العملي للعين أو بنود العقد.", "Practical inspection or contract considerations."),
+                    self._enrichment_text(state, "مراجعة مدة الإيجار وطريقة الدفع وما يشمله السعر من خدمات.", "Review rental duration, payment method, and services included in the price."),
+                ],
+                "criteria": [
+                    self._enrichment_text(state, "اربط الاختيار بالمساحة وعدد الغرف ونمط السكن.", "Connect the choice to space, room count, and living pattern."),
+                    self._enrichment_text(state, "وضّح أثر الموقع والتأثيث والخدمات القريبة على القرار.", "Explain how location, furnishing, and nearby services affect the decision."),
+                ],
+                "brand_support": [
+                    self._enrichment_text(state, "وضح كيف يساعد البراند في مقارنة خيارات الإيجار حسب الموقع والمساحة والتأثيث.", "Explain how the brand helps compare rental options by location, size, and furnishing."),
+                ]
+            }
+            return details.get(axis, [])
+        return []
+
+    def _section_contract_details(self, taxonomy_axis: str, state: Dict[str, Any]) -> List[str]:
+        detail_map = {
+            "introduction": [
+                self._enrichment_text(state, "حدد المشكلة أو الحاجة الأساسية التي جاء القارئ بسببها.", "Identify the core problem or need that brought the reader here."),
+                self._enrichment_text(state, "ابدأ بتوتر أو مخاطرة قرار محددة، وليس بجملة افتتاحية عامة.", "Start with a concrete tension or decision risk, not a generic opening."),
+                self._enrichment_text(state, "مهّد للموضوع دون الدخول في تفاصيل السكاشن اللاحقة.", "Set up the topic without leaking details from later sections."),
+            ],
+            "category_or_type": [
+                self._enrichment_text(state, "فرّق بين الخيارات أو الفئات بوضوح عملي.", "Differentiate the options or categories in a practical way."),
+                self._enrichment_text(state, "اذكر متى يناسب كل خيار نوعًا مختلفًا من القراء أو الاحتياجات.", "Explain when each option fits a different reader need."),
+                self._enrichment_text(state, "إذا وعد العنوان بطريقة الاختيار، أضف خلاصة واضحة لكيف يختار القارئ بين الخيارات.", "If the heading promises how to choose, add a clear takeaway on how the reader should choose among options."),
+                self._enrichment_text(state, "اجعل كل فئة تضيف معلومة مختلفة لا تصلح لكل الفئات الأخرى.", "Make each category provide a distinct insight that cannot apply to every other category."),
+            ],
+            "location_area": [
+                self._enrichment_text(state, "اربط كل موقع أو منطقة بسبب عملي يهم القارئ.", "Connect each location or area to a practical reader reason."),
+                self._enrichment_text(state, "وضح أثر القرب أو الوصول أو الخدمات على القرار دون ادعاءات غير مدعومة.", "Explain how proximity, access, or services affect the decision without unsupported claims."),
+            ],
+            "pricing": [
+                self._enrichment_text(state, "وضح العوامل التي تغيّر السعر أو التكلفة.", "Explain the factors that change price or cost."),
+                self._enrichment_text(state, "استخدم البيانات المرصودة بحذر، أو قدّم مستويات نسبية واضحة عند غياب الأرقام الموثوقة.", "Use observed data carefully, or provide clear relative tiers when reliable numbers are missing."),
+                self._enrichment_text(state, "اجعل القارئ يفهم كيف يوازن بين السعر والقيمة.", "Help the reader understand how to balance price and value."),
+            ],
+            "comparison": [
+                self._enrichment_text(state, "اعرض الفروق التي تغيّر قرار القارئ فعلًا.", "Focus on differences that materially change the reader's decision."),
+                self._enrichment_text(state, "تجنب المقارنة العامة واذكر معيارًا واضحًا لكل فرق.", "Avoid generic comparison; attach each difference to a clear criterion."),
+                self._enrichment_text(state, "استخدم جدولًا للمقارنة إذا كان عدد الجداول المتاح يسمح بذلك، وإلا استخدم نقاطًا منظمة.", "Use a comparison table when table slots allow it; otherwise use structured bullets."),
+            ],
+            "criteria": [
+                self._enrichment_text(state, "حوّل العنوان إلى معايير عملية يمكن للقارئ استخدامها.", "Turn the heading into practical criteria the reader can use."),
+                self._enrichment_text(state, "اربط كل معيار بنتيجة أو قرار واضح.", "Tie every criterion to a clear outcome or decision."),
+                self._enrichment_text(state, "اكتب المعايير في نقاط قابلة للمسح بدل فقرة طويلة عامة.", "Write criteria as scannable bullets instead of one long generic paragraph."),
+            ],
+            "process": [
+                self._enrichment_text(state, "رتب الخطوات أو الطريقة بشكل منطقي قابل للتطبيق.", "Order the steps or method in a practical sequence."),
+                self._enrichment_text(state, "اذكر ما يجب الانتباه له في كل مرحلة مهمة.", "Mention what to watch for at each important stage."),
+            ],
+            "brand_support": [
+                self._enrichment_text(state, "اربط دور البراند بالمشكلة العملية التي يحاول القارئ حلها.", "Tie the brand role to the practical problem the reader is trying to solve."),
+                self._enrichment_text(state, "اجعل ذكر البراند مساعدًا ومحددًا لا دعائيًا عامًا.", "Keep brand mentions specific and helpful, not generic promotion."),
+            ],
+            "faq": [
+                self._enrichment_text(state, "أجب عن كل سؤال مباشرة قبل أي تفصيل إضافي.", "Answer each question directly before adding detail."),
+                self._enrichment_text(state, "اجعل الإجابات قصيرة ومفيدة وغير مكررة للمتن السابق.", "Keep answers concise, useful, and not repetitive of earlier sections."),
+            ],
+            "conclusion": [
+                self._enrichment_text(state, "لخّص القرار أو الفائدة النهائية دون إعادة تفاصيل السكاشن.", "Synthesize the final decision or value without repeating section details."),
+                self._enrichment_text(state, "اختم بتوجيه عملي واضح يناسب نية المقال.", "Close with a practical next step aligned with the article intent."),
+            ],
+        }
+        return detail_map.get(taxonomy_axis, detail_map["criteria"])
+
+    def _plan_taxonomy_axis(
+        self,
+        section: Dict[str, Any],
+        outline: List[Dict[str, Any]],
+        index: int,
+        state: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Pre-writing taxonomy-axis planner (enrichment-only, no heading changes).
+
+        Tracks which editorial axes have been used by previous H2 sections and
+        returns a planning dict with:
+          - taxonomy_axis: resolved axis for this section
+          - forbidden_taxonomy_axis: axis to avoid when conflict is detected
+          - preferred_axis: recommended alternative axis
+          - h3_rewrite_needed: True ONLY when overlap is confirmed and obvious
+          - h3_corrected_subheadings: replacement H3 list (only when h3_rewrite_needed)
+
+        Core rule: if a prior H2 used ``category_or_type``, a pricing section
+        must not reuse the same segmentation axis.  H2 headings are NEVER modified.
+        H3s are only rewritten when confirmed identical-segmentation overlap exists
+        (>=50 % of the current H3s mirror the segmentation of the prior section).
+        """
+        current_axis = self._infer_taxonomy_axis(section)
+
+        # Collect axes used by all previous H2 sections
+        used_axes: List[str] = []
+        for prev_sec in outline[:index]:
+            if str(prev_sec.get("heading_level", "")).upper() != "H2":
+                continue
+            prev_axis = (
+                prev_sec.get("taxonomy_axis")
+                or self._infer_taxonomy_axis(prev_sec)
+            )
+            used_axes.append(prev_axis)
+
+        forbidden_axis = ""
+        preferred_axis = current_axis
+        h3_rewrite_needed = False
+        h3_corrected_subheadings: Optional[List[str]] = None
+
+        # Core rule: pricing section must not reuse category_or_type segmentation axis
+        if current_axis == "pricing" and "category_or_type" in used_axes:
+            forbidden_axis = "category_or_type"
+
+            # Determine whether location signals justify a pricing_by_area axis
+            area = str(state.get("area") or "").strip()
+            area_neighborhoods = state.get("area_neighborhoods") or []
+            has_location_signals = bool(area) or bool(area_neighborhoods)
+
+            # Check if any prior section was location_area
+            if not has_location_signals:
+                for prev_sec in outline[:index]:
+                    _pax = (
+                        prev_sec.get("taxonomy_axis")
+                        or self._infer_taxonomy_axis(prev_sec)
+                    )
+                    if _pax == "location_area":
+                        has_location_signals = True
+                        break
+
+            # Check heading/subheading text for geographic terms
+            if not has_location_signals:
+                heading_blob = " ".join([
+                    str(section.get("heading_text") or ""),
+                    " ".join(
+                        self._subheading_text(item)
+                        for item in section.get("subheadings", []) or []
+                    ),
+                ]).lower()
+                geo_terms = (
+                    "\u0645\u0646\u0637\u0642\u0629", "\u062d\u064a ", "\u0634\u0645\u0627\u0644",
+                    "\u062c\u0646\u0648\u0628", "\u0634\u0631\u0642", "\u063a\u0631\u0628",
+                    "\u0648\u0633\u0637",
+                    "north", "south", "east", "west", "center",
+                    "area", "district", "region", "zone",
+                )
+                if any(t in heading_blob for t in geo_terms):
+                    has_location_signals = True
+
+            preferred_axis = "pricing_by_area" if has_location_signals else "pricing_by_type"
+
+            # --- Detect confirmed H3 overlap ---
+            # Only check the first matching category_or_type section
+            _price_prefix_re = re.compile(
+                r"^(\u0623\u0633\u0639\u0627\u0631|\u062a\u0643\u0644\u0641\u0629"
+                r"|\u0633\u0639\u0631|price of|pricing of|cost of|prices? for)\s*",
+                re.IGNORECASE,
+            )
+            for prev_sec in outline[:index]:
+                if str(prev_sec.get("heading_level", "")).upper() != "H2":
+                    continue
+                _pax = (
+                    prev_sec.get("taxonomy_axis")
+                    or self._infer_taxonomy_axis(prev_sec)
+                )
+                if _pax != "category_or_type":
+                    continue
+
+                prev_subs = [
+                    self._subheading_text(item).strip().lower()
+                    for item in prev_sec.get("subheadings", []) or []
+                    if self._subheading_text(item).strip()
+                ]
+                curr_subs = [
+                    self._subheading_text(item).strip().lower()
+                    for item in section.get("subheadings", []) or []
+                    if self._subheading_text(item).strip()
+                ]
+
+                if not prev_subs or not curr_subs:
+                    break  # Can't determine overlap without both H3 lists
+
+                def _normalize_text(t: str) -> str:
+                    # Remove Arabic definite article "ال" from start of words
+                    t = re.sub(r"\b\u0627\u0644", "", t)
+                    # Remove all whitespace for robust matching
+                    return re.sub(r"\s+", "", t)
+
+                overlap_count = 0
+                for curr_sub in curr_subs:
+                    bare = _price_prefix_re.sub("", curr_sub).strip()
+                    if not bare:
+                        continue
+                    norm_bare = _normalize_text(bare)
+                    for prev_sub in prev_subs:
+                        norm_prev = _normalize_text(prev_sub)
+                        if norm_bare in norm_prev or norm_prev in norm_bare or norm_bare == norm_prev:
+                            overlap_count += 1
+                            break
+
+                # Confirmed when >= 50% of current H3s mirror the category section
+                if overlap_count / len(curr_subs) >= 0.5:
+                    h3_rewrite_needed = True
+                    if has_location_signals and area:
+                        is_arabic = bool(re.search(r"[\u0600-\u06FF]", area))
+                        directions = (
+                            ["\u0634\u0645\u0627\u0644", "\u062c\u0646\u0648\u0628",
+                             "\u0634\u0631\u0642", "\u063a\u0631\u0628", "\u0648\u0633\u0637"]
+                            if is_arabic
+                            else ["north", "south", "east", "west", "center"]
+                        )
+                        heading_core = str(section.get("heading_text") or "").strip()
+                        # Strip existing price prefix from heading_core to avoid "أسعار أسعار..."
+                        heading_core = _price_prefix_re.sub("", heading_core).strip()
+                        
+                        h3_corrected_subheadings = [
+                            f"\u0623\u0633\u0639\u0627\u0631 {heading_core} \u0641\u064a {d} {area}".strip()
+                            if is_arabic
+                            else f"prices for {heading_core} in {d} {area}"
+                            for d in directions
+                        ]
+                break  # Only evaluate the first matching category section
+
+        result: Dict[str, Any] = {
+            "taxonomy_axis": current_axis,
+            "forbidden_taxonomy_axis": forbidden_axis,
+            "preferred_axis": preferred_axis,
+            "h3_rewrite_needed": h3_rewrite_needed,
+        }
+        if h3_corrected_subheadings is not None:
+            result["h3_corrected_subheadings"] = h3_corrected_subheadings
+        return result
+
+    def _enrich_section_contract(
+        self,
+        section: Dict[str, Any],
+        outline: List[Dict[str, Any]],
+        index: int,
+        state: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Fill missing editorial instructions before section writing without changing headings."""
+        contract = section.get("section_contract") or self._build_section_contract(section, outline, index, state)
+        section["section_contract"] = contract
+
+        heading = str(section.get("heading_text") or state.get("primary_keyword") or "this section").strip()
+        taxonomy_axis = section.get("taxonomy_axis") or contract.get("taxonomy_axis") or self._infer_taxonomy_axis(section)
+
+        # --- Taxonomy-Axis Planning (pre-writing enrichment; never changes H2 headings) ---
+        _axis_plan = self._plan_taxonomy_axis(section, outline, index, state)
+        taxonomy_axis = _axis_plan.get("taxonomy_axis", taxonomy_axis)
+        _planned_forbidden = _axis_plan.get("forbidden_taxonomy_axis", "")
+        _planned_preferred = _axis_plan.get("preferred_axis", taxonomy_axis)
+
+        # Apply controlled H3 correction only when overlap is confirmed and obvious
+        if _axis_plan.get("h3_rewrite_needed") and _axis_plan.get("h3_corrected_subheadings"):
+            _old_subs = list(section.get("subheadings") or [])
+            section["subheadings"] = _axis_plan["h3_corrected_subheadings"]
+            logger.info(
+                "[TaxonomyPlanner] Confirmed H3 overlap in '%s'. "
+                "Rewrote H3s to '%s' axis. Old: %s \u2192 New: %s",
+                heading,
+                _planned_preferred,
+                _old_subs[:3],
+                section["subheadings"][:3],
+            )
+
+        preferred_axis = (
+            section.get("preferred_axis")
+            or contract.get("preferred_axis")
+            or _planned_preferred
+        )
+        observed_mentions = list(dict.fromkeys(
+            (section.get("observed_data_mentions") or contract.get("observed_data_mentions") or [])
+            + self._collect_observed_data_mentions(section, state)
+        ))[:6]
+
+        defaults = {
+            "section_promise": self._enrichment_text(
+                state,
+                f"تقديم إجابة واضحة ومباشرة عن: {heading}",
+                f"Give a clear, direct answer to: {heading}",
+            ),
+            "reader_takeaway": self._enrichment_text(
+                state,
+                f"يفهم القارئ أهم ما يجب معرفته عن {heading} دون تكرار أو تعميم.",
+                f"The reader understands the key practical point about {heading} without repetition or generic filler.",
+            ),
+            "depth_goal": self._enrichment_text(
+                state,
+                f"حوّل {heading} إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+                f"Turn {heading} into practical insight that helps the reader compare, choose, or take a clearer next step.",
+            ),
+            "practical_decision_value": self._enrichment_text(
+                state,
+                "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+                "This section helps the reader narrow options and understand what matters before deciding.",
+            ),
+            "taxonomy_axis": taxonomy_axis,
+            "preferred_axis": preferred_axis,
+            "forbidden_taxonomy_axis": (
+                section.get("forbidden_taxonomy_axis")
+                or contract.get("forbidden_taxonomy_axis")
+                or _planned_forbidden
+            ),
+            "observed_data_mentions": observed_mentions,
+        }
+
+        for key, value in defaults.items():
+            if key == "observed_data_mentions":
+                section[key] = value
+            elif not section.get(key):
+                section[key] = value
+            if not contract.get(key):
+                contract[key] = section.get(key, value)
+
+        existing_details = section.get("must_include_details") or contract.get("must_include_details") or []
+        if isinstance(existing_details, str):
+            existing_details = [existing_details]
+        
+        # --- Topic Pack Enrichment (Dynamic) ---
+        active_packs = self._detect_active_topic_packs(state)
+        pack_details = []
+        for pack in active_packs:
+            pack_details.extend(self._topic_pack_details(pack, taxonomy_axis, state))
+
+        detail_items = list(dict.fromkeys([
+            str(item).strip()
+            for item in list(existing_details) + self._section_contract_details(taxonomy_axis, state) + pack_details
+            if str(item).strip()
+        ]))
+        section["must_include_details"] = detail_items[:8]
+        contract["must_include_details"] = section["must_include_details"]
+        return section
+
+    async def _step_load_approved_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Load an approved heading outline and prepare it for content writing only."""
+        approved_title, outline = self._parse_approved_outline_payload(
+            state.get("approved_outline") or state.get("input_data", {}).get("approved_outline")
+        )
+        if approved_title:
+            state["input_data"]["title"] = approved_title
+
+        state = self._prepare_outline_for_content(state, outline, source="approved_outline")
+        if state.get("workflow_logger"):
+            state["workflow_logger"].log_event("approved_outline_load", {
+                "sections": len(state.get("outline", [])),
+                "content_only_mode": True,
+            })
+        return state
+
+    def _prepare_outline_for_content(
+        self,
+        state: Dict[str, Any],
+        outline: List[Dict[str, Any]],
+        source: str = "generated_outline",
+    ) -> Dict[str, Any]:
+        """Attach writing metadata to an approved/generated outline without changing headings."""
+        input_data = state.get("input_data", {})
+        primary_keyword = state.get("primary_keyword") or (state.get("keywords") or [input_data.get("title", "")])[0]
+        article_language = state.get("article_language") or input_data.get("article_language", "ar")
+
+        content_type = state.get("content_type", "informational")
+        content_strategy = state.get("content_strategy", {})
+        area = state.get("area")
+        keywords = state.get("keywords") or input_data.get("keywords") or [primary_keyword]
+        seo_intelligence = state.get("seo_intelligence", {})
+
+        # Collect observed pricing signals for injection
+        market_analysis = seo_intelligence.get("market_analysis", {})
+        market_insights = market_analysis.get("market_insights", {})
+        market_data_signals = market_insights.get("market_data_signals", {})
+        observed_price_mentions = market_data_signals.get("observed_price_mentions", [])
+
+
+        safe_outline: List[Dict[str, Any]] = []
+        for idx, raw_section in enumerate(outline):
+            section = dict(raw_section)
+            section["subheadings"] = [
+                text for text in (self._subheading_text(item) for item in section.get("subheadings", []) or [])
+                if text
+            ]
+            self.outline_gen._normalize_section(section, idx, content_type, content_strategy, area)
+
+            # --- Pricing Enrichment (Grounded Guidance) ---
+            # If this is a pricing section, inject the observed mentions harvested from SERP.
+            tax_axis = str(section.get("taxonomy_axis", "")).lower()
+            if tax_axis.startswith("pricing") and observed_price_mentions:
+                existing_mentions = section.get("observed_data_mentions", [])
+                section["observed_data_mentions"] = list(dict.fromkeys(
+                    [str(m).strip() for m in existing_mentions + observed_price_mentions if str(m).strip()]
+                ))
+
+            section["primary_keyword"] = primary_keyword
+            section["article_language"] = article_language
+            section.setdefault("assigned_keywords", keywords[:3] if keywords else [primary_keyword])
+            section["section_contract"] = self._build_section_contract(section, outline, idx, state)
+            self._enrich_section_contract(section, outline, idx, state)
+            section["must_not_repeat"] = list(dict.fromkeys(
+                (section.get("must_not_repeat") or []) + section["section_contract"]["must_not_repeat"]
+            ))
+            if (
+                section["section_contract"]["format"] in {"table", "mixed"}
+                and (
+                    section.get("section_type") == "comparison"
+                    or self._infer_taxonomy_axis(section) == "comparison"
+                )
+            ):
+                section.setdefault("requires_table", True)
+            if section["section_contract"]["format"] == "bullets":
+                section["requires_list"] = True
+            safe_outline.append(section)
+
+        semantic_assets = (
+            seo_intelligence.get("market_analysis", {})
+            .get("semantic_assets", {})
+        )
+        serp_data = state.get("serp_data", {}) if isinstance(state.get("serp_data", {}), dict) else {}
+        state["global_keywords"] = {
+            "primary": primary_keyword,
+            "lsi": list(dict.fromkeys(
+                (semantic_assets.get("lsi_keywords", []) or [])
+                + (serp_data.get("lsi_keywords", []) or [])
+                + state.get("secondary_keywords", [])[:5]
+            ))[:12],
+            "semantic": list(dict.fromkeys(
+                (semantic_assets.get("related_searches", []) or [])
+                + (semantic_assets.get("autocomplete_suggestions", []) or [])
+            ))[:12],
+        }
+
+        user_urls = input_data.get("urls", []) or []
+        internal_links = [u.get("link") for u in user_urls if isinstance(u, dict) and u.get("link")]
+        state["internal_url_set"] = {LinkManager.canon_url(url) for url in internal_links if url}
+
+        reference_links = serp_data.get("reference_authority_links", []) if isinstance(serp_data, dict) else []
+        external_refs = []
+        authority_domains = set()
+        for item in reference_links:
+            url = item.get("url") if isinstance(item, dict) else item
+            if url:
+                external_refs.append(LinkManager.canon_url(url))
+                dom = LinkManager.domain(url)
+                if dom:
+                    authority_domains.add(dom)
+        state["authority_domains"] = authority_domains
+
+        brand_url = state.get("brand_url", "")
+        state["blocked_external_domains"] = LinkManager.extract_competitor_domains(serp_data, brand_url)
+        state["prohibited_competitors"] = [
+            domain.split(".")[0].capitalize()
+            for domain in state.get("blocked_external_domains", set())
+            if domain and len(domain.split(".")[0]) > 1
+        ]
+
+        state["available_links_pool"] = {
+            "internal": list(dict.fromkeys(internal_links))[:15],
+            "external_references": list(dict.fromkeys(external_refs))[:10],
+        }
+        state["link_strategy"] = {
+            "internal_topics": [
+                {"text": item.get("text", "Internal Resource"), "link": item.get("link"), "type": "internal"}
+                for item in user_urls if isinstance(item, dict) and item.get("link")
+            ],
+            "affiliate_policy": {"max_per_section": 3, "placement": "distributed", "tone": "neutral"},
+        }
+
+        state["outline"] = safe_outline
+        state["approved_outline_source"] = source
+        logger.info("Prepared %s sections for content writing from %s.", len(safe_outline), source)
+        return state
+
+    def _build_previous_sections_summary(self, state: Dict[str, Any]) -> str:
+        sections = list((state.get("sections") or {}).values())
+        sections.sort(key=lambda item: item.get("section_index", 0))
+
+        lines = []
+        for item in sections:
+            heading = str(item.get("heading_text") or item.get("section_id") or "Previous section").strip()
+            units = item.get("knowledge_units_established") or item.get("topics_covered") or []
+            if units:
+                unit_text = "; ".join(str(unit).strip() for unit in units[:3] if str(unit).strip())
+            else:
+                unit_text = "covered without reusable details"
+            lines.append(f"- {heading}: {unit_text}")
+
+        summary = "\n".join(lines)
+        return summary[-1200:]
+
+    def _enforce_section_heading_lock(self, content: str, section: Dict[str, Any]) -> str:
+        """Keep body content under the approved outline headings only."""
+        if not content:
+            return content
+
+        approved_h3 = {
+            re.sub(r"\s+", " ", self._subheading_text(item)).strip().lower()
+            for item in section.get("subheadings", []) or []
+            if self._subheading_text(item)
+        }
+        kept = []
+        removed = []
+        for line in content.splitlines():
+            stripped = line.strip()
+            if re.match(r"^#{1,2}\s+", stripped):
+                removed.append(stripped)
+                continue
+            if re.match(r"^#{3,6}\s+", stripped):
+                heading_text = re.sub(r"^#{3,6}\s+", "", stripped).strip()
+                normalized = re.sub(r"\s+", " ", heading_text).lower()
+                if approved_h3 and normalized in approved_h3:
+                    kept.append(f"### {heading_text}")
+                else:
+                    removed.append(stripped)
+                continue
+            kept.append(line)
+
+        if removed:
+            logger.info(
+                "[SectionWriter] Removed non-approved heading lines from section '%s': %s",
+                section.get("heading_text", ""),
+                removed[:5],
+            )
+        return "\n".join(kept).strip()
+
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
         input_data = state.get("input_data", {})
         title = input_data.get("title", "Untitled")
@@ -1354,6 +2450,18 @@ class AsyncWorkflowController:
         content_type = state.get("content_type", "informational")
         content_strategy = state.get("content_strategy", {})
         market_angle = content_strategy.get("market_angle", "")
+
+        for idx, section in enumerate(outline):
+            section["subheadings"] = [
+                text for text in (self._subheading_text(item) for item in section.get("subheadings", []) or [])
+                if text
+            ]
+            if not section.get("section_contract"):
+                section["section_contract"] = self._build_section_contract(section, outline, idx, state)
+            self._enrich_section_contract(section, outline, idx, state)
+            section["must_not_repeat"] = list(dict.fromkeys(
+                (section.get("must_not_repeat") or []) + section["section_contract"].get("must_not_repeat", [])
+            ))
 
 
         # Initialize global quality tracking
@@ -1420,7 +2528,6 @@ class AsyncWorkflowController:
                 if res and res.get("generated_content"):
                     content = res["generated_content"]
                     # UPDATE POOL: Prune used internal links only (External are per-fact)
-                    content = res["generated_content"]
                     used_urls = re.findall(r'\[.*?\]\((https?://.*?)\)', content)
 
                     old_internal = available_pool.get("internal", [])
@@ -1434,20 +2541,6 @@ class AsyncWorkflowController:
                     state["full_content_so_far"] += "\n\n" + res["generated_content"]
                     # Update Last Section Content (For Logical Flow)
                     state["last_section_content"] = res["generated_content"]
-
-                    # Track CTAs using has_cta helper
-                    def has_cta_local(text):
-                        return bool(re.search(r'<a\b|<button\b|\[.*?\]\(https?://', text))
-
-                    if has_cta_local(res["generated_content"]):
-                         state["ctas_placed"] = state.get("ctas_placed", 0) + 1
-
-                    # Track Tables (Max 2 rule)
-                    if "|" in res["generated_content"] and re.search(r"\|\s*---\s*\|", res["generated_content"]):
-                         state["tables_placed"] = state.get("tables_placed", 0) + 1
-
-                    # Update global brand mention count
-                    state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
 
                 results.append(res)
 
@@ -1466,32 +2559,36 @@ class AsyncWorkflowController:
             if res.get("section_index") == 0:
                 state["introduction_text"] = res.get("generated_content", "")
 
+            # Track CTAs using has_cta helper
+            def has_cta_local(text):
+                return bool(re.search(r'<a\b|<button\b|\[.*?\]\(https?://', text))
+
+            content = res.get("generated_content", "")
+            if has_cta_local(content):
+                 state["ctas_placed"] = state.get("ctas_placed", 0) + 1
+
+            # Track Tables (Max 2 rule)
+            table_count = len(re.findall(r"(?m)^\s*\|.*\|\s*$\n^\s*\|[\s:\-|]+\|\s*$", content))
+            if table_count:
+                 state["tables_placed"] = state.get("tables_placed", 0) + table_count
+
+            # Update global brand mention count
+            state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
+
             # Update global keyword count
             primary_keyword = global_keywords.get("primary", "")
             if primary_keyword:
-                full_text_for_search = (res.get("heading_text") or "") + "\n" + res.get("generated_content", "")
-
-                # Robust regex for Arabic & English: handles common Arabic prefixes/suffixes
-                # [و|ب|ل|ف|ك|ال]* -> matches common prefixes
-                # (keyword)
-                # [ة|ات|ون|ين|ه|ها|هم|نا|ي]* -> matches common suffixes
-                # Use \b for English or standard word boundaries
-                if any(ord(c) > 127 for c in primary_keyword): # Arabic/Non-ASCII detection
-                    # Arabic-friendly regex: allow common prefixes/suffixes
+                full_text_for_search = (res.get("heading_text") or "") + "\n" + content
+                if any(ord(c) > 127 for c in primary_keyword):
                     pattern = r'(?:[وبلفك]|ال)*{}(?:[ةاتونينههمناي])*'.format(re.escape(primary_keyword.lower()))
                 else:
                     pattern = r'\b{}\b'.format(re.escape(primary_keyword.lower()))
-
                 matches = re.findall(pattern, full_text_for_search.lower())
                 state["global_keyword_count"] = state.get("global_keyword_count", 0) + len(matches)
 
-            # Update full content summary
-            state["full_content_so_far"] = state.get("full_content_so_far", "") + "\n\n" + res.get("generated_content", "")
-
-            # For parallel results, update the brand_mentions_count if not already updated in serial loop
-            if PARALLEL_SECTIONS:
-                state["brand_mentions_count"] = state.get("brand_mentions_count", 0) + res.get("brand_mentions_count", 0)
-
+            # ONLY update full_content_so_far if it wasn't already updated (Parallel mode)
+            if use_parallel:
+                state["full_content_so_far"] = state.get("full_content_so_far", "") + "\n\n" + content
 
         state["sections"] = sections_content
 
@@ -1501,7 +2598,7 @@ class AsyncWorkflowController:
             first_id = outline[0]["section_id"]
             first_res = sections_content.get(first_id)
 
-            if first_res and area.lower() not in first_res["generated_content"].lower():
+            if first_res and area.lower() not in (first_res.get("generated_content") or "").lower():
                 logger.info(f"Local area '{area}' missing in first section. Retrying with enforcement...")
 
                 retry_res = await self._write_single_section(
@@ -1566,6 +2663,8 @@ class AsyncWorkflowController:
 
         execution_plan["brand_link_allowed"] = can_use_brand_link
         execution_plan["brand_url"] = brand_url
+        location_policy = (section.get("section_contract") or {}).get("location_policy", "neutral")
+        area_for_section = state.get("area") if location_policy != "neutral" else ""
 
         # --- GUARANTEE: Inject the brand homepage link into the Introduction's assigned links ---
         # This ensures the AI ALWAYS has the brand link available for the introduction,
@@ -1635,24 +2734,8 @@ class AsyncWorkflowController:
         # SectionWriter respects section.get('cta_eligible') and section.get('section_intent').
         cta_type = section.get("cta_type", "none")
 
-        # --- Context Windowing (Token Optimization) ---
-        # Instead of sending the entire article text (token heavy),
-        # we send the Intro + Full Map of Headings + last 3 sections.
-        intro_text = state.get("introduction_text", "")
-
-        # Get generated content and headings of all sections written so far
-        all_sections_data = list(state.get("sections", {}).values())
-        all_headings = [s.get("heading_text", "No Heading") for s in all_sections_data if "generated_content" in s]
-        all_content = [s["generated_content"] for s in all_sections_data if "generated_content" in s]
-
-        # Keep the last 3 sections for immediate narrative flow
-        recent_context = "\n\n".join(all_content[-3:]) if all_content else ""
-
-        # Build a cumulative map of what has been covered so far to prevent conceptual repetition
-        full_article_map = " | ".join(all_headings) if all_headings else "None"
-
-        cumulative_history = f"STORY SO FAR (Headings): {full_article_map}\n\n"
-        optimized_context = f"{cumulative_history}ARTICLE INTRODUCTION:\n{intro_text}\n\nRECENT CONTEXT (Last 3 Sections):\n{recent_context}" if intro_text else recent_context
+        # Context windowing: send a short memory summary, not full previous text.
+        optimized_context = self._build_previous_sections_summary(state)
 
         # PREFLIGHT CONTRACT CHECK
         validate_service_call(
@@ -1662,6 +2745,7 @@ class AsyncWorkflowController:
             section=section,
             article_intent=article_intent,
             seo_intelligence=seo_intelligence,
+            content_type=content_type,
             link_strategy=link_strategy,
             brand_url=brand_url,
             brand_link_used=state.get("brand_link_used", False),
@@ -1669,7 +2753,7 @@ class AsyncWorkflowController:
             allow_external_links=bool(external_sources),
             workflow_mode=state.get("workflow_mode", "core"),
             execution_plan=execution_plan,
-            area=state.get("area"),
+            area=area_for_section,
             used_phrases=used_phrases,
             used_internal_links=state.get("used_internal_links", []),
             used_external_links=state.get("used_external_links", []),
@@ -1691,7 +2775,7 @@ class AsyncWorkflowController:
             requires_primary_keyword=section.get("requires_primary_keyword", False),
             used_topics=state.get("used_topics", []),
             used_claims=state.get("used_claims", []),
-            previous_section_text=state.get("last_section_content", ""),
+            previous_section_text="",
             previous_content_summary=optimized_context,
             full_outline=state.get("outline", []),
             introduction_text=state.get("introduction_text", ""),
@@ -1717,6 +2801,7 @@ class AsyncWorkflowController:
             section=section,
             article_intent=article_intent,
             seo_intelligence=seo_intelligence,
+            content_type=content_type,
             link_strategy=link_strategy,
             brand_url=brand_url,
             brand_link_used=state.get("brand_link_used", False),
@@ -1724,7 +2809,7 @@ class AsyncWorkflowController:
             allow_external_links=bool(external_sources),
             workflow_mode=state.get("workflow_mode", "core"),
             execution_plan=execution_plan,
-            area=state.get("area"),
+            area=area_for_section,
             used_phrases=used_phrases,
             used_internal_links=state.get("used_internal_links", []),
             used_external_links=state.get("used_external_links", []),
@@ -1747,7 +2832,7 @@ class AsyncWorkflowController:
             requires_primary_keyword=section.get("requires_primary_keyword", False),
             used_topics=state.get("used_topics", []),
             used_claims=state.get("used_claims", []),
-            previous_section_text=state.get("last_section_content", ""),
+            previous_section_text="",
             previous_content_summary=optimized_context, # Optimized Context!
             full_outline=state.get("outline", []),
             introduction_text=state.get("introduction_text", ""),
@@ -1766,7 +2851,7 @@ class AsyncWorkflowController:
             used_anchors=state.get("used_anchors", [])
         )
 
-        content = res_data.get("content", "")
+        content = self._enforce_section_heading_lock(res_data.get("content", ""), section)
         # --- Extract and track Anchor Texts for rotation ---
         if content:
             new_anchors = re.findall(r'\[(.*?)\]\(.*?\)', content)
@@ -1850,12 +2935,22 @@ class AsyncWorkflowController:
             final_content = self.validator.enforce_paragraph_structure(content)
 
             # --- QUALITY VALIDATION & ACTIVE REPAIR LOOP ---
-            try:
-                is_valid, validation_errors = await self.validator.validate_section_output(
-                    content=final_content,
-                    section=section,
-                    state=state
+            is_valid = True
+            validation_errors = []
+            if state.get("content_stage_only_mode"):
+                logger.info(
+                    "Content Stage Only Mode: skipping per-section validation/repair for '%s'.",
+                    section.get("heading_text", "")
                 )
+            else:
+                try:
+                    is_valid, validation_errors = await self.validator.validate_section_output(
+                        content=final_content,
+                        section=section,
+                        state=state
+                    )
+                except Exception as e:
+                    logger.error(f"Validation or Repair loop failed: {e}")
 
                 # Check for "Fixable Quality Issues" that warrant an automated repair attempt
                 # We specifically look for errors defined in ValidationService, following v2.2 priorities
@@ -1916,6 +3011,7 @@ class AsyncWorkflowController:
                         section=section,
                         article_intent=article_intent,
                         seo_intelligence=seo_intelligence,
+                        content_type=content_type,
                         link_strategy=link_strategy,
                         brand_url=brand_url,
                         brand_link_used=state.get("brand_link_used", False),
@@ -1924,7 +3020,7 @@ class AsyncWorkflowController:
                         workflow_mode=state.get("workflow_mode", "core"),
                         execution_plan=repair_plan, # Pass the repair plan
                         draft_to_fix=final_content, # Pass the failed draft
-                        area=state.get("area"),
+                        area=area_for_section,
                         used_phrases=used_phrases,
                         used_internal_links=state.get("used_internal_links", []),
                         used_external_links=state.get("used_external_links", []),
@@ -1946,7 +3042,7 @@ class AsyncWorkflowController:
                         requires_primary_keyword=section.get("requires_primary_keyword", False),
                         used_topics=state.get("used_topics", []),
                         used_claims=state.get("used_claims", []),
-                        previous_section_text=state.get("last_section_content", ""),
+                        previous_section_text="",
                         previous_content_summary=optimized_context,
                         full_outline=state.get("outline", []),
                         introduction_text=state.get("introduction_text", ""),
@@ -1972,6 +3068,7 @@ class AsyncWorkflowController:
                         section=section,
                         article_intent=article_intent,
                         seo_intelligence=seo_intelligence,
+                        content_type=content_type,
                         link_strategy=link_strategy,
                         brand_url=brand_url,
                         brand_link_used=state.get("brand_link_used", False),
@@ -1980,7 +3077,7 @@ class AsyncWorkflowController:
                         workflow_mode=state.get("workflow_mode", "core"),
                         execution_plan=repair_plan, # Pass the repair plan
                         draft_to_fix=final_content, # Pass the failed draft
-                        area=state.get("area"),
+                        area=area_for_section,
                         used_phrases=used_phrases,
                         used_internal_links=state.get("used_internal_links", []),
                         used_external_links=state.get("used_external_links", []),
@@ -2002,7 +3099,7 @@ class AsyncWorkflowController:
                         requires_primary_keyword=section.get("requires_primary_keyword", False),
                         used_topics=state.get("used_topics", []),
                         used_claims=state.get("used_claims", []),
-                        previous_section_text=state.get("last_section_content", ""),
+                        previous_section_text="",
                         previous_content_summary=optimized_context,
                         full_outline=state.get("outline", []),
                         introduction_text=state.get("introduction_text", ""),
@@ -2024,6 +3121,7 @@ class AsyncWorkflowController:
                     new_content = repair_data.get("content", "")
                     if new_content:
                         logger.info(f"Section '{section.get('heading_text')}' repaired successfully.")
+                        new_content = self._enforce_section_heading_lock(new_content, section)
                         final_content = self.validator.enforce_paragraph_structure(new_content)
                         # Re-calculate links and brand link usage for the repaired content
                         found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', final_content)
@@ -2047,8 +3145,6 @@ class AsyncWorkflowController:
                                 f.write(f"- [REPETITION ISSUE]: Found duplicated phrase: '{rep}'\n")
 
                         f.write("-" * 50 + "\n")
-            except Exception as e:
-                logger.error(f"Validation or Repair loop failed: {e}")
             # --------------------------------------------------
 
             # Count brand mentions in finalized content
@@ -2066,10 +3162,13 @@ class AsyncWorkflowController:
             return {
                 **section,
                 "section_id": section_id,
+                "section_index": section_index,
                 "generated_content": final_content,
                 "used_links": found_links,
                 "brand_link_used": state.get("brand_link_used", False),
-                "brand_mentions_count": mentions_in_section
+                "brand_mentions_count": mentions_in_section,
+                "knowledge_units_established": res_data.get("knowledge_units_established", []),
+                "topics_covered": res_data.get("topics_covered", []),
             }
         return None
 
@@ -2290,6 +3389,7 @@ class AsyncWorkflowController:
         if not draft_markdown:
             return state
 
+        title = state.get("input_data", {}).get("title", "Untitled")
         outline = state.get("outline", [])
         sections_dict = state.get("sections", {})
         ordered_sections = [
@@ -2377,7 +3477,6 @@ class AsyncWorkflowController:
             content_type=state.get("content_type", "informational")
         )
 
-        title = state.get("input_data", {}).get("title", "Untitled")
         assembled = await self.assembler.assemble(
             title=title,
             sections=ordered_sections,
@@ -2727,7 +3826,13 @@ class AsyncWorkflowController:
             if not callable(method):
                 raise PipelineContractError(f"Startup Audit Failed: '{type(service).__name__}.{method_name}' is not callable.")
 
-        logger.info("Pipeline Preflight System Audit: PASS (Structural Integrity Verified)")
+        # Final signature check
+        import inspect
+        sig = inspect.signature(self.section_writer.write)
+        if "content_type" not in sig.parameters:
+             raise PipelineContractError("SectionWriter.write missing content_type")
+
+        logger.info("Pipeline Preflight System Audit: PASS (Structural & Argument Integrity Verified)")
 
     # ---------------- UTILITIES ---
 
@@ -2735,6 +3840,7 @@ class AsyncWorkflowController:
         """Constructs the per-section execution plan with CTA rules and writing constraints."""
         content_type = state.get("content_type", "informational")
         section_type = (section.get("section_type") or "").lower()
+        location_policy = (section.get("section_contract") or {}).get("location_policy", "neutral")
 
         # Base plan
         plan = {
@@ -2742,7 +3848,7 @@ class AsyncWorkflowController:
             "cta_type": section.get("cta_type", "none"),
             "cta_position": section.get("cta_position", "none"),
             "structure_rule": "EXACTLY 2-3 PARAGRAPHS. 2-3 SENTENCES PER PARAGRAPH.",
-            "local_context_required": bool(state.get("area")),
+            "local_context_required": location_policy == "local_required",
             "tone_override": state.get("tone"),
             "pov_override": state.get("pov")
         }
@@ -2764,6 +3870,53 @@ class AsyncWorkflowController:
             plan["structure_rule"] = "H3 Questions followed by concise answers."
 
         return plan
+
+    def _build_content_stage_markdown(self, state: Dict[str, Any], title: str) -> str:
+        """Assemble a review draft directly from approved headings and generated section bodies."""
+        outline = state.get("outline", []) or []
+        sections_dict = state.get("sections", {}) or {}
+
+        parts = [f"# {title}"]
+        for outline_section in outline:
+            section_id = outline_section.get("section_id")
+            generated_section = sections_dict.get(section_id, {}) if section_id else {}
+            section = {**outline_section, **generated_section}
+
+            content = self._enforce_section_heading_lock(
+                str(section.get("generated_content", "") or "").strip(),
+                outline_section,
+            )
+
+            section_type = (outline_section.get("section_type") or "").lower()
+            heading = str(outline_section.get("heading_text") or "").strip()
+            heading_level = str(outline_section.get("heading_level") or "H2").upper()
+
+            if section_type != "introduction" and heading:
+                level_num = 2
+                if heading_level.startswith("H"):
+                    try:
+                        level_num = int(heading_level.replace("H", ""))
+                    except ValueError:
+                        level_num = 2
+                level_num = max(2, min(level_num, 6))
+                parts.append(f"{'#' * level_num} {heading}")
+
+            if section_id:
+                parts.append(f"<!-- section_id: {section_id} -->")
+
+            if content:
+                parts.append(content)
+
+        final_markdown = "\n\n".join(part for part in parts if part).strip()
+
+        output_dir = state.get("output_dir", self.work_dir)
+        os.makedirs(output_dir, exist_ok=True)
+        for filename in ("article_content_draft.md", "article_final.md"):
+            with open(os.path.join(output_dir, filename), "w", encoding="utf-8") as f:
+                f.write(final_markdown)
+
+        state["final_output"] = {"final_markdown": final_markdown}
+        return final_markdown
 
     def _assemble_final_output(self, state: Dict[str, Any]) -> Dict[str, Any]:
         import re
@@ -2868,6 +4021,35 @@ class AsyncWorkflowController:
                 "message": "Heading structure generated successfully for review.",
                 "performance": performance,
                 "output_dir": state.get("output_dir", "")
+            }
+
+        if state.get("content_stage_only_mode"):
+            final_markdown = self._build_content_stage_markdown(state, raw_title)
+            outline_map = []
+            for sec in state.get("outline", []) or []:
+                outline_map.append({
+                    "section_id": sec.get("section_id"),
+                    "heading_text": sec.get("heading_text"),
+                    "heading_level": sec.get("heading_level"),
+                    "section_type": sec.get("section_type"),
+                    "section_intent": sec.get("section_intent"),
+                    "subheadings": sec.get("subheadings", []),
+                    "section_contract": sec.get("section_contract", {}),
+                })
+
+            return {
+                "title": raw_title,
+                "slug": state.get("slug", "unknown"),
+                "primary_keyword": state.get("primary_keyword", ""),
+                "content_stage_only_mode": True,
+                "content_only_mode": state.get("content_only_mode", False),
+                "heading_only_mode": False,
+                "final_markdown": final_markdown,
+                "outline_structure": outline_map,
+                "status": "success",
+                "message": "Content draft generated successfully for review.",
+                "performance": performance,
+                "output_dir": state.get("output_dir", ""),
             }
 
         return {

@@ -114,6 +114,122 @@ class OutlineGenerator:
             "comparison": "01_outline_generator_comparison.txt",
             "review_mode": "01_outline_generator_review_mode.txt",
         }
+import json
+import logging
+import asyncio
+import re
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+from jinja2 import Environment, FileSystemLoader, Template, StrictUndefined
+from src.utils.json_utils import recover_json
+
+logger = logging.getLogger(__name__)
+
+class ContentGeneratorError(Exception):
+    """Base exception for content generation errors."""
+    pass
+
+
+def _enforce_paragraph_word_limit(content: str, max_words: int = 40) -> str:
+    """
+    Post-processing function that enforces a maximum word count per paragraph.
+    Paragraphs exceeding max_words are split at sentence boundaries (Arabic & English).
+    Skips table rows, headings, list items, code blocks, and HTML comments.
+    """
+    if not content:
+        return content
+
+    lines = content.split("\n")
+    in_code_block = False
+    in_table = False
+    result_lines = []
+
+    for line in lines:
+        stripped = line.strip()
+        
+        # Track code blocks — skip enforcement inside them.
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            result_lines.append(line)
+            continue
+        if in_code_block:
+            result_lines.append(line)
+            continue
+        
+        # Track tables — rows usually have pipes or alignment markers
+        # Robust check: starts with | OR has at least 2 pipes OR is a separator row
+        is_table_row = stripped.startswith("|") or stripped.count("|") >= 2 or (stripped.startswith("-") and "|" in stripped)
+        
+        if is_table_row:
+            in_table = True
+            result_lines.append(line)
+            continue
+        else:
+            # If we were in a table and hit a non-empty line that isn't a table row, 
+            # it might be a broken table or just the end of the table.
+            if in_table and stripped:
+                in_table = False 
+            elif not stripped:
+                in_table = False
+
+        # Skip headings, list items, HTML comments, blank lines
+        if (
+            not stripped  # blank line
+            or stripped.startswith("#")  # heading
+            or stripped.startswith("-") or stripped.startswith("*") or stripped.startswith("+") # lists
+            or stripped.startswith(">")
+            or stripped.startswith("<!")
+            or stripped.startswith("[")  # link-only lines (CTAs)
+        ):
+            result_lines.append(line)
+            continue
+
+        # Count words (works for Arabic and English)
+        words = stripped.split()
+        if len(words) <= max_words:
+            result_lines.append(line)
+            continue
+
+        # --- Paragraph too long: split at sentence boundaries ---
+        # Sentence boundaries: period, question mark, exclamation for English/Arabic,
+        # Arabic period '\u06D4', Arabic comma '\u060C'.
+        sentences = re.split(r'(?<=[.!?\u06D4])\s+', stripped)
+        
+        current_para = []
+        current_count = 0
+
+        for sentence in sentences:
+            s_words = sentence.split()
+            if current_count + len(s_words) > max_words and current_para:
+                # Emit current paragraph and start a new one
+                result_lines.append(" ".join(current_para))
+                result_lines.append("")  # blank line between paragraphs
+                current_para = s_words
+                current_count = len(s_words)
+            else:
+                current_para.extend(s_words)
+                current_count += len(s_words)
+        
+        if current_para:
+            result_lines.append(" ".join(current_para))
+
+    return "\n".join(result_lines)
+
+
+class OutlineGenerator:
+    def __init__(self, ai_client: Any):
+        self.ai_client = ai_client
+        self.env = Environment(
+            loader=FileSystemLoader("assets/prompts/templates"),
+            undefined=StrictUndefined
+        )
+        
+        self.templates = {
+            "brand_commercial": "01_outline_generator_brand_commercial.txt",
+            "informational": "01_outline_generator_informational.txt",
+            "comparison": "01_outline_generator_comparison.txt",
+            "review_mode": "01_outline_generator_review_mode.txt",
+        }
         # Specialized templates for structural review mode (heading-only)
         self.heading_only_templates = {
             "brand_commercial": "01_outline_generator_heading_only_commercial_v2.txt",
@@ -158,15 +274,26 @@ class OutlineGenerator:
 
         # --- New Decision-Complete Writing Brief Fields ---
         section.setdefault("section_promise", "")
+        section.setdefault("depth_goal", "")
         section.setdefault("reader_takeaway", "")
         section.setdefault("must_include_details", [])
         section.setdefault("must_not_repeat", [])
         section.setdefault("practical_decision_value", "")
+        section.setdefault("taxonomy_axis", "")
+        section.setdefault("preferred_axis", "")
+        section.setdefault("forbidden_taxonomy_axis", "")
+        section.setdefault("observed_data_mentions", [])
         section.setdefault("evidence_expectation", "")
         section.setdefault("value_density_target", "high")
         section.setdefault("allowed_generality_level", "low")
         section.setdefault("subheading_policy", "direct_body")
         section.setdefault("subheadings", [])
+
+        # --- Semantic Execution Layer ---
+        section.setdefault("execution_mode", "")
+        section.setdefault("semantic_goal", "")
+        section.setdefault("decision_frame", "")
+        section.setdefault("content_behavior", "")
 
         section.setdefault("content_type", content_type)
         section.setdefault("content_strategy", content_strategy)
@@ -177,41 +304,66 @@ class OutlineGenerator:
         section.setdefault("list_type", "none")
         section.setdefault("cta_position", "none")
         # --- Primary keyword enforcement for strategic sections ---
-        # If this section is explicitly an introduction (or is the first section),
-        # mark it as requiring the exact primary keyword so downstream
-        # validators and writers will enforce PK presence in the intro.
         sec_type = (section.get("section_type") or "").lower()
         if sec_type == "introduction" or idx == 0:
             section.setdefault("requires_primary_keyword", True)
         else:
             section.setdefault("requires_primary_keyword", section.get("requires_primary_keyword", False))
 
+        # --- Apply Semantic Execution State ---
+        self._apply_semantic_execution_state(section, idx)
+
+    def _apply_semantic_execution_state(self, section: Dict[str, Any], idx: int):
+        """
+        Maps a section to a cognitive execution mode based on its type and taxonomy axis.
+        """
+        from src.services.strategy_service import SEMANTIC_EXECUTION_LAYER
+        
+        sec_type = (section.get("section_type") or "").lower()
+        taxonomy = (section.get("taxonomy_axis") or "").lower()
+        heading = (section.get("heading_text") or "").lower()
+        
+        mode_key = "taxonomy_breakdown"
+        
+        if sec_type == "introduction" or idx == 0:
+            mode_key = "onboarding_context"
+        elif sec_type == "conclusion":
+            mode_key = "buyer_guidance"
+        elif sec_type == "faq":
+            mode_key = "buyer_guidance"
+        elif any(kw in taxonomy or kw in heading for kw in ["price", "cost", "pricing", "أسعار", "تكلفة", "سعر"]):
+            mode_key = "market_practical"
+        elif any(kw in taxonomy or kw in heading for kw in ["location", "area", "neighborhood", "أحياء", "موقع"]):
+            mode_key = "locality_analysis"
+        elif "process" in sec_type or "how" in sec_type or "خطوات" in heading:
+            mode_key = "buyer_guidance"
+        elif any(kw in taxonomy or kw in heading for kw in ["comparison", "vs", "مقارنة"]):
+            mode_key = "comparison_decision"
+        elif sec_type == "proof" or "trust" in taxonomy or "دليل" in heading:
+            mode_key = "trust_proof"
+            
+        state = SEMANTIC_EXECUTION_LAYER.get(mode_key, SEMANTIC_EXECUTION_LAYER["taxonomy_breakdown"])
+        
+        if not section.get("execution_mode"):
+            section["execution_mode"] = state["execution_mode"]
+        if not section.get("semantic_goal"):
+            section["semantic_goal"] = state["semantic_goal"]
+        if not section.get("decision_frame"):
+            section["decision_frame"] = state["decision_frame"]
+        if not section.get("content_behavior"):
+            section["content_behavior"] = state["content_behavior"]
+
     def _validate_outline_schema(self, outline: List[Dict[str, Any]], heading_only_mode: bool = False) -> bool:
         if heading_only_mode:
-            # Leaner requirements for structural review
             required_keys = {
-                "section_id",
-                "heading_level",
-                "heading_text",
-                "section_type",
-                "section_intent"
+                "section_id", "heading_level", "heading_text", "section_type", "section_intent"
             }
         else:
-            # Full writing requirements
             required_keys = {
-                "section_id",
-                "heading_level",
-                "heading_text",
-                "section_intent",
-                "section_promise",
-                "reader_takeaway",
-                "must_include_details",
-                "must_not_repeat",
-                "practical_decision_value",
-                "evidence_expectation",
-                "value_density_target",
-                "allowed_generality_level",
-                "subheading_policy"
+                "section_id", "heading_level", "heading_text", "section_intent",
+                "section_promise", "reader_takeaway", "must_include_details",
+                "must_not_repeat", "practical_decision_value", "evidence_expectation",
+                "value_density_target", "allowed_generality_level", "subheading_policy"
             }
 
         for section in outline:
@@ -219,7 +371,6 @@ class OutlineGenerator:
                 missing = required_keys - set(section.keys())
                 logger.error(f"Section {section.get('section_id')} missing keys: {missing}")
                 return False
-
         return True
 
     async def generate(
@@ -742,10 +893,142 @@ class SectionWriter:
         )
 
         self.templates = {
-            "brand_commercial": "02_section_writer_brand_commercial.txt",
+            "brand_commercial": "02_section_writer_brand_commercial_v2.txt",
             "informational": "02_section_writer_informational.txt",
             "comparison": "02_section_writer_comparison.txt",
         }
+
+    def _build_operational_instructions(self, section: Dict[str, Any]) -> List[str]:
+        """
+        Converts descriptive section metadata into action-oriented writing instructions.
+        """
+        instructions = []
+        mode = section.get("execution_mode", "taxonomy_breakdown")
+        axis = section.get("taxonomy_axis", "")
+        forbidden = section.get("forbidden_taxonomy_axis", "")
+        observed = section.get("observed_data_mentions", [])
+        must_include = section.get("must_include_details", [])
+        
+        # 1. Mode-Specific Operational Actions
+        if mode == "market_practical":
+            instructions.append("Explain clearly why prices vary and what drives the cost in this context.")
+            if axis:
+                instructions.append(f"Compare affordability primarily by the {axis} axis.")
+            instructions.append("Provide the reader with a practical budget decision takeaway or rule of thumb.")
+            if "category" in forbidden or "type" in forbidden:
+                instructions.append("Avoid repeating generic type/category definitions; stay focused on price and value logic.")
+                
+        elif mode == "locality_analysis":
+            instructions.append("Connect every mentioned area or location directly to specific resident lifestyle needs.")
+            instructions.append("Explain practical living factors: accessibility, services, commute, or family/work fit.")
+            instructions.append("Avoid pure geographic listing; prioritize 'vibe' and suitability over distance facts.")
+            
+        elif mode == "taxonomy_breakdown":
+            instructions.append("Classify all options or categories with clear, non-overlapping logic.")
+            instructions.append("Explain the practical differences between categories from a user's usage perspective.")
+            instructions.append("Explicitly match each category to a specific user situation or persona.")
+            if "price" not in (section.get("heading_text") or "").lower():
+                instructions.append("Avoid pricing-first logic; focus on functional and structural fit.")
+                
+        elif mode == "comparison_decision":
+            instructions.append("Evaluate specific trade-offs directly between the compared items.")
+            instructions.append("Explain clearly 'when each option wins' based on user priorities.")
+            instructions.append("Avoid generic summaries; ensure the comparison leads to a clear decision path.")
+            
+        elif mode == "buyer_guidance":
+            instructions.append("Guide the reader through specific selection criteria or a practical process.")
+            instructions.append("Address common points of confusion or hesitation directly.")
+            instructions.append("Ensure every paragraph offers a practical tip or an 'if-then' recommendation.")
+            
+        # 2. Data Grounding Actions
+        if observed:
+            instructions.append("Treat the provided 'observed_data_mentions' as cautious grounding hints only.")
+            instructions.append("Do NOT present these data points as definitive market statistics; use them to support relative logic.")
+            
+        # 3. Content Requirement Actions
+        if must_include:
+            for detail in must_include:
+                # Convert descriptive detail into action instruction
+                instructions.append(f"Integrate detail about: {detail} with a focus on practical utility.")
+                
+        # 4. Axis Enforcement Actions
+        if forbidden:
+            instructions.append(f"Strictly avoid using the '{forbidden}' axis for this section's logic.")
+
+        return instructions
+
+    def _build_cognitive_blueprint(self, section: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Creates an internal reasoning plan (blueprint) for the section.
+        """
+        mode = section.get("execution_mode")
+        axis = section.get("taxonomy_axis", "")
+        observed = section.get("observed_data_mentions", [])
+        must_include = section.get("must_include_details", [])
+        
+        blueprint = {
+            "section_thesis": "",
+            "decision_logic": [],
+            "evidence_plan": [],
+            "reader_value": "",
+            "avoid_patterns": ["generic explanatory prose", "repetitive intro filler"]
+        }
+        
+        if mode == "market_practical":
+            blueprint["section_thesis"] = "Clarify the realistic cost-to-value relationship for the reader's budget."
+            blueprint["decision_logic"] = ["Explain budget tradeoffs", f"Compare affordability by {axis or 'market tiers'}"]
+            blueprint["evidence_plan"] = ["Use relative price tiers", f"Ground logic in {observed or 'market standards'}"]
+            blueprint["reader_value"] = "Confidence in financial expectations and budget planning."
+            blueprint["avoid_patterns"].extend(["unsupported exact prices", "generic pricing filler"])
+            
+        elif mode == "locality_analysis":
+            blueprint["section_thesis"] = "Connect specific locations directly to the resident's daily lifestyle and needs."
+            blueprint["decision_logic"] = ["Map area vibes to personas", "Analyze service accessibility and commute fit"]
+            blueprint["evidence_plan"] = ["Reference local anchors", f"Integrate {must_include or 'area highlights'}"]
+            blueprint["reader_value"] = "Finding a neighborhood that matches their practical daily routine."
+            blueprint["avoid_patterns"].extend(["pure geographic distance lists", "generic 'near services' claims"])
+            
+        elif mode == "taxonomy_breakdown":
+            blueprint["section_thesis"] = "Differentiate available options based on functional and situational fit."
+            blueprint["decision_logic"] = ["Group by user situation", "Highlight structural or service differences"]
+            blueprint["evidence_plan"] = ["Match features to personas", "Use clear category distinctions"]
+            blueprint["reader_value"] = "Choosing the specific type that solves their immediate need."
+            blueprint["avoid_patterns"].extend(["pricing-first thinking", "overlapping category definitions"])
+            
+        elif mode == "comparison_decision":
+            blueprint["section_thesis"] = "Identify the core tradeoffs to simplify a difficult choice between options."
+            blueprint["decision_logic"] = ["Side-by-side suitability check", "Explain 'win' conditions for each option"]
+            blueprint["evidence_plan"] = ["Contrast specific features", "Highlight situational winners"]
+            blueprint["reader_value"] = "Clarity on which option is the objective best fit for their situation."
+            blueprint["avoid_patterns"].extend(["neutral descriptive summaries", "vague 'both are good' conclusions"])
+            
+        elif mode == "buyer_guidance":
+            blueprint["section_thesis"] = "Clarify the next practical step or decision criteria to reduce selection friction."
+            blueprint["decision_logic"] = ["Process walk-through", "Objection handling via logic"]
+            blueprint["evidence_plan"] = ["Checklists or 'if-then' tips", "Practical readiness markers"]
+            blueprint["reader_value"] = "Actionable path forward with reduced decision anxiety."
+            blueprint["avoid_patterns"].extend(["encyclopedic advice", "theoretical market commentary"])
+            
+        elif mode == "trust_proof":
+            blueprint["section_thesis"] = "Establish the reliability and safety of the choice through concrete evidence."
+            blueprint["decision_logic"] = ["Risk reduction analysis", "Validation of process transparency"]
+            blueprint["evidence_plan"] = ["Trust signals", "Verification steps"]
+            blueprint["reader_value"] = "Feeling safe and informed before committing resources."
+            blueprint["avoid_patterns"].extend(["aggressive promotion", "unsubstantiated trust claims"])
+            
+        elif mode == "onboarding_context":
+            blueprint["section_thesis"] = "Orient the reader by validating their problem and promising a specific solution path."
+            blueprint["decision_logic"] = ["Identify the pain point", "Define the decision landscape"]
+            blueprint["evidence_plan"] = ["High-level market context", "Brand mission alignment"]
+            blueprint["reader_value"] = "Immediate clarity on why this article is the right resource for them."
+            blueprint["avoid_patterns"].extend(["deep technical details", "premature calls to action"])
+            
+        else:
+            blueprint["section_thesis"] = f"Explain the {axis or 'topic'} to help the reader understand their options."
+            blueprint["decision_logic"] = ["Clear classification"]
+            blueprint["reader_value"] = "General awareness and orientation."
+
+        return blueprint
 
     async def write(
         self,
@@ -779,7 +1062,6 @@ class SectionWriter:
         workflow_logger: Optional[Any] = None,
         prohibited_competitors: List[str] = None,
         previous_section_text: str = "",
-        # Advanced Customization
         tone: Optional[str] = None,
         pov: Optional[str] = None,
         brand_voice_description: Optional[str] = None,
@@ -805,23 +1087,13 @@ class SectionWriter:
         market_angle: str = ""
     ) -> Dict[str, Any]:
 
-
         brand_url = brand_url if brand_url not in ["None", ""] else None
         primary_keyword = section.get("primary_keyword") or global_keywords.get("primary", "")
-
-
-        supporting_keywords = (
-            global_keywords.get("lsi", []) +
-            global_keywords.get("semantic", [])
-        )
-
+        supporting_keywords = global_keywords.get("lsi", []) + global_keywords.get("semantic", [])
         article_language = section.get("article_language") or "ar"
         allowed_flow = section.get("allowed_flow_steps", [])
 
-        # Flatten strategic intelligence for the template
         market_insights = seo_intelligence.get("market_analysis", {}).get("market_insights", {})
-        
-        # Ensure all expected fields are present to avoid StrictUndefined errors
         safe_seo = {
             "content_gaps": market_insights.get("content_gaps", []),
             "brand_advantages": market_insights.get("brand_advantages", []),
@@ -835,6 +1107,8 @@ class SectionWriter:
             "heading_level": section.get("heading_level", "H2"),
             "heading_text": section.get("heading_text", "Untitled Section"),
             "section_intent": section.get("section_intent", "Informational"),
+            "subheadings": section.get("subheadings", []),
+            "section_contract": section.get("section_contract", {}),
             "content_scope": section.get("content_scope", ""),
             "allowed_flow_steps": allowed_flow,
             "forbidden_elements": section.get("forbidden_elements", []),
@@ -849,9 +1123,8 @@ class SectionWriter:
             "requires_list": section.get("requires_list", False),
             "list_type": section.get("list_type", "none"),
             "cta_position": section.get("cta_position", "none"),
-            "cta_type": cta_type, # New detailed flag
+            "cta_type": cta_type, 
             "cta_allowed": section.get("cta_eligible", section.get("cta_allowed", False)),
-
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
             "localized_angle": section.get("localized_angle", ""),
@@ -860,41 +1133,62 @@ class SectionWriter:
             "decision_layer": section.get("decision_layer", "Market Reality"),
             "sales_intensity": section.get("sales_intensity", "medium"),
             "questions": section.get("questions", []),
-            "assigned_links": section.get("assigned_links", []),
-            "assigned_keywords": section.get("assigned_keywords", []),
             "mandatory_facts": section.get("mandatory_facts", []),
-            "requires_table": section.get("requires_table", False),
-            "table_type": section.get("table_type", "none"),
-            "requires_list": section.get("requires_list", False),
-            "list_type": section.get("list_type", "none"),
             "requires_primary_keyword": requires_primary_keyword,
             "global_keyword_count": global_keyword_count,
             "content_strategy": section.get("content_strategy", {}),
             
-            # --- New Decision-Complete Writing Brief Fields ---
+            # --- Decision-Complete Writing Brief Fields (Hardened Defaults) ---
             "section_promise": section.get("section_promise", ""),
             "reader_takeaway": section.get("reader_takeaway", ""),
+            "depth_goal": section.get("depth_goal", ""),
             "must_include_details": section.get("must_include_details", []),
             "must_not_repeat": section.get("must_not_repeat", []),
             "practical_decision_value": section.get("practical_decision_value", ""),
+            "taxonomy_axis": section.get("taxonomy_axis", ""),
+            "preferred_axis": section.get("preferred_axis", ""),
+            "forbidden_taxonomy_axis": section.get("forbidden_taxonomy_axis", ""),
+            "observed_data_mentions": section.get("observed_data_mentions", []),
             "evidence_expectation": section.get("evidence_expectation", ""),
-            "value_density_target": section.get("value_density_target", "high"),
             "allowed_generality_level": section.get("allowed_generality_level", "low"),
-            "subheading_policy": section.get("subheading_policy", "direct_body")
+            "subheading_policy": section.get("subheading_policy", "direct_body"),
+            
+            # --- Semantic Execution Layer ---
+            "execution_mode": section.get("execution_mode", ""),
+            "semantic_goal": section.get("semantic_goal", ""),
+            "decision_frame": section.get("decision_frame", ""),
+            "content_behavior": section.get("content_behavior", "")
         }
 
+        # --- Operational Contract Adapter Layer ---
+        operational_instructions = self._build_operational_instructions(safe_section)
+        safe_section["operational_instructions"] = operational_instructions
 
-        print("Assigned links:", safe_section["assigned_links"])
+        # --- Cognitive Blueprint Layer ---
+        cognitive_blueprint = self._build_cognitive_blueprint(safe_section)
+        safe_section["cognitive_blueprint"] = cognitive_blueprint
+
+        # --- Runtime Mode Injection ---
+        from src.services.strategy_service import WRITER_MODE_PROFILES
+        mode_key = safe_section["execution_mode"] or "taxonomy_breakdown"
+        mode_instructions = WRITER_MODE_PROFILES.get(mode_key, WRITER_MODE_PROFILES["taxonomy_breakdown"])
+
+        # --- Regional Arabic Adaptation Layer ---
+        from src.services.strategy_service import REGIONAL_ARABIC_PROFILES
+        regional_profile = ""
+        if article_language == "ar":
+            area_norm = (area or "").lower()
+            if any(kw in area_norm for kw in ["مصر", "egypt", "cairo", "alexandria", "القاهرة", "الاسكندرية", "الجيزة"]):
+                regional_profile = REGIONAL_ARABIC_PROFILES["egypt"]
+            elif any(kw in area_norm for kw in ["السعودية", "saudi", "riyadh", "jeddah", "الرياض", "جدة", "الدمام", "مكة"]):
+                regional_profile = REGIONAL_ARABIC_PROFILES["saudi"]
+            elif any(kw in area_norm for kw in ["الامارات", "uae", "dubai", "abu dhabi", "دبي", "ابوظبي", "الشارقة"]):
+                regional_profile = REGIONAL_ARABIC_PROFILES["uae"]
 
         current_year = str(datetime.now().year)
-
-        template_name = self.templates.get(
-            content_type,
-            self.templates["informational"]
-        )
+        template_name = self.templates.get(content_type, self.templates["informational"])
         template = self.env.get_template(template_name)
 
-        # Rich Defaults with Deep Resilience
         final_blueprint = {
             "tonal_dna": {"persona": "Professional", "audience_level": "General", "forbidden_jargon": [], "sentence_rhythm": "Balanced"},
             "formatting_blueprint": {"bolding_frequency": "Standard"},
@@ -928,6 +1222,10 @@ class SectionWriter:
             brand_link_allowed=brand_link_allowed,
             allow_external_links=allow_external_links,
             execution_plan=execution_plan or {},
+            mode_instructions=mode_instructions,
+            regional_profile=regional_profile,
+            operational_instructions=operational_instructions,
+            cognitive_blueprint=cognitive_blueprint,
             area=area,
             used_phrases=used_phrases or [],
             used_topics=used_topics or [],
@@ -951,7 +1249,6 @@ class SectionWriter:
             prohibited_competitors=prohibited_competitors or [],
             current_year=current_year,
             workflow_mode=workflow_mode,
-            # Advanced Customization
             tone=tone,
             pov=pov,
             brand_voice_description=brand_voice_description,
@@ -973,70 +1270,37 @@ class SectionWriter:
             market_angle=market_angle or "",
         )
 
-
-        logger.info("\n================ FINAL PROMPT (SectionWriter) ================\n")
-        logger.info(prompt)
-        logger.info("\n=============================================================\n")    
-
-        print(f"\n=== Generating Section: {safe_section['heading_text']} ===")
-
         try:
             res = await self.ai_client.send(prompt, step=f"section_{section_index+1}")
             response_content = res["content"]
             metadata = res["metadata"]
 
-            if workflow_logger:
-                workflow_logger.log_ai_call(
-                    step_name=f"section_{section_index+1}_{section.get('heading_text', 'No Heading')}",
-                    prompt=prompt,
-                    response=response_content,
-                    tokens=metadata.get("tokens", {}),
-                    duration=metadata.get("duration", 0)
-                )
-
-            heading_text = safe_section['heading_text'] # Define heading_text for error logging
-
             if not response_content:
-                logger.error(f"SectionWriter returned empty response for: {heading_text}")
-                return {
-                    "content": "",
-                    "used_links": [],
-                    "brand_link_used": False,
-                    "metadata": metadata
-                }
+                return {"content": "", "used_links": [], "brand_link_used": False, "metadata": metadata}
 
             data = recover_json(response_content)
             if not data:
-                # Aggressive fallback: Extract "content" value using regex if JSON parse fails
                 content_match = re.search(r'"content":\s*"(.*?)"(?=,\s*"\w+":|\s*\})', response_content, re.DOTALL)
                 if content_match:
                     extracted_content = content_match.group(1).encode().decode('unicode_escape', errors='ignore')
-                    return {
-                        "content": extracted_content,
-                        "used_links": [],
-                        "brand_link_used": False,
-                        "metadata": metadata
-                    }
+                    return {"content": extracted_content, "used_links": [], "brand_link_used": False, "metadata": metadata}
                 
-                # If everything fails, clean the string of ANY JSON-like structure before returning
                 cleaned_fallback = re.sub(r'\{.*?\}|\[.*?\]', '', response_content, flags=re.DOTALL).strip()
-                return {
-                    "content": cleaned_fallback if cleaned_fallback else response_content,
-                    "used_links": [],
-                    "brand_link_used": False,
-                    "metadata": metadata
-                }
+                return {"content": cleaned_fallback if cleaned_fallback else response_content, "used_links": [], "brand_link_used": False, "metadata": metadata}
 
             return {
                 "content": data.get("content", ""),
                 "used_links": data.get("used_links", []),
+                "knowledge_units_established": data.get("knowledge_units_established", []),
                 "topics_covered": data.get("topics_covered", []),
                 "brand_link_used": data.get("brand_link_used", False),
                 "metadata": metadata
             }
+
         except Exception as e:
-            logger.error(f"Error writing section {section.get('section_id', 'unknown')}: {e}")
-            raise ContentGeneratorError(f"Section writing failed: {e}")
+            logger.error(f"SectionWriter failed for section {section_index + 1}: {e}")
+            return {"content": "", "used_links": [], "brand_link_used": False, "metadata": {}}
+
 
 class Assembler:
     def __init__(self, ai_client: Any, template_path: str = "assets/prompts/templates/04_article_assembler.txt"):

@@ -31,6 +31,12 @@ class ArticleRequest(BaseModel):
     include_bullet_lists: bool = Field(True, description="Whether to include bullet lists")
     include_comparison_blocks: bool = Field(True, description="Whether to include comparison blocks")
     bold_key_terms: bool = Field(True, description="Whether to bold key terms in the content")
+    content_only_mode: bool = Field(False, description="Use an approved outline and skip outline regeneration")
+    content_stage_only_mode: bool = Field(False, description="Stop after section content writing and return a draft markdown")
+    approved_outline: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Approved outline_structure from heading review mode"
+    )
     
     # Media Controls
     num_images: int = Field(7, description="Number of images to generate")
@@ -75,6 +81,8 @@ class ArticleResponse(BaseModel):
     
     # Heading-Only Review Mode Fields
     heading_only_mode: Optional[bool] = False
+    content_only_mode: Optional[bool] = False
+    content_stage_only_mode: Optional[bool] = False
     outline_structure: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
     heading_preview_markdown: Optional[str] = None
     heading_quality_audit: Optional[Dict[str, Any]] = None

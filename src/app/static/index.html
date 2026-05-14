@@ -331,6 +331,66 @@
             cursor: pointer;
         }
 
+        .workflow-mode-panel {
+            background: rgba(79, 172, 254, 0.05);
+            border: 1px solid rgba(79, 172, 254, 0.18);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .workflow-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .workflow-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .workflow-option-title {
+            display: block;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: none;
+            letter-spacing: 0;
+            margin-bottom: 0.3rem;
+        }
+
+        .workflow-option small,
+        .workflow-help {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .approved-outline-panel {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .approved-outline-panel.active {
+            display: block;
+        }
+
+        #approved-outline {
+            min-height: 180px;
+            font-family: Consolas, Monaco, monospace;
+            direction: ltr;
+            text-align: left;
+        }
+
         /* Premium File Upload Styles */
         .file-upload-container {
             display: grid;
@@ -894,6 +954,52 @@
 
             </div> <!-- closes advanced-interface -->
 
+            <!-- Workflow Mode Controls -->
+            <div class="workflow-mode-panel">
+                <div class="section-header"><i class="fas fa-route"></i> Workflow Output Mode</div>
+                <div class="workflow-mode-grid">
+                    <div class="workflow-option">
+                        <div>
+                            <label class="workflow-option-title" for="heading-only-mode">Heading only mode</label>
+                            <small>Run research and outline generation only. Use this when you want headings for review.</small>
+                        </div>
+                        <label class="toggle-container">
+                            <input type="checkbox" id="heading-only-mode">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="workflow-option">
+                        <div>
+                            <label class="workflow-option-title" for="content-only-mode">Content only mode</label>
+                            <small>Write the article from an approved outline. This automatically sends heading_only_mode=false.</small>
+                        </div>
+                        <label class="toggle-container">
+                            <input type="checkbox" id="content-only-mode">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="workflow-option">
+                        <div>
+                            <label class="workflow-option-title" for="content-stage-only-mode">Stop after content writing</label>
+                            <small>Generate headings with v2 prompts, write the sections, then return a markdown draft without final assembly/rendering.</small>
+                        </div>
+                        <label class="toggle-container">
+                            <input type="checkbox" id="content-stage-only-mode" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="approved-outline-panel" class="approved-outline-panel">
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Approved Outline JSON</label>
+                        <textarea id="approved-outline" rows="8" placeholder="Paste final_heading_response JSON, outline_structure, or the outline array here..."></textarea>
+                        <small>Required only when Content only mode is enabled. Paste the final heading response exactly as returned by the previous run.</small>
+                    </div>
+                </div>
+                <small class="workflow-help" id="workflow-mode-note">Default run from this screen stops after content writing. Uncheck it for the full article workflow.</small>
+            </div>
+
             <!-- Global Action Bar (Always Visible) -->
             <div style="padding-top: 2rem; border-top: 1px solid var(--border-color); margin-top: 2rem;">
                 <button type="submit" class="submit-btn" id="submitBtn">
@@ -940,6 +1046,42 @@
             // Hide external links in core mode as requested
             document.getElementById('external-links-section').style.display = (mode === 'core') ? 'none' : 'block';
         }
+
+        function syncWorkflowModeControls() {
+            const headingOnly = document.getElementById('heading-only-mode');
+            const contentOnly = document.getElementById('content-only-mode');
+            const contentStageOnly = document.getElementById('content-stage-only-mode');
+            const approvedOutlinePanel = document.getElementById('approved-outline-panel');
+            const note = document.getElementById('workflow-mode-note');
+
+            if (contentOnly.checked) {
+                headingOnly.checked = false;
+                headingOnly.disabled = true;
+                approvedOutlinePanel.classList.add('active');
+                contentStageOnly.disabled = false;
+                note.textContent = contentStageOnly.checked
+                    ? 'Content only mode will use the approved outline and stop after section writing.'
+                    : 'Content only mode will use the approved outline and continue through the full article workflow.';
+            } else if (headingOnly.checked) {
+                contentStageOnly.checked = false;
+                contentStageOnly.disabled = true;
+                headingOnly.disabled = false;
+                approvedOutlinePanel.classList.remove('active');
+                note.textContent = 'Heading only mode will stop after the reviewed outline is generated.';
+            } else {
+                headingOnly.disabled = false;
+                contentStageOnly.disabled = false;
+                approvedOutlinePanel.classList.remove('active');
+                note.textContent = contentStageOnly.checked
+                    ? 'This run will generate headings with v2 prompts, write content, then stop before final assembly/rendering.'
+                    : 'Full workflow mode is active. Turn on Heading only for headings, or Content only to write from a reviewed outline.';
+            }
+        }
+
+        document.getElementById('heading-only-mode').addEventListener('change', syncWorkflowModeControls);
+        document.getElementById('content-only-mode').addEventListener('change', syncWorkflowModeControls);
+        document.getElementById('content-stage-only-mode').addEventListener('change', syncWorkflowModeControls);
+        syncWorkflowModeControls();
 
         function toggleImageSection(mode) {
             const isChecked = document.getElementById(`${mode}-gen-images`).checked;
@@ -1060,6 +1202,16 @@
 
         document.getElementById('main-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const contentOnlyMode = document.getElementById('content-only-mode').checked;
+            const headingOnlyMode = contentOnlyMode ? false : document.getElementById('heading-only-mode').checked;
+            const contentStageOnlyMode = headingOnlyMode ? false : document.getElementById('content-stage-only-mode').checked;
+            const approvedOutline = document.getElementById('approved-outline').value.trim();
+
+            if (contentOnlyMode && !approvedOutline) {
+                alert('Content only mode needs an approved outline JSON before running.');
+                return;
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             const loader = document.getElementById('loader');
             const btnText = submitBtn.querySelector('span');
@@ -1095,6 +1247,10 @@
             formData.append('external_urls', JSON.stringify(externalUrlData));
 
             formData.append('workflow_mode', currentMode);
+            formData.append('heading_only_mode', headingOnlyMode ? 'true' : 'false');
+            formData.append('content_only_mode', contentOnlyMode ? 'true' : 'false');
+            formData.append('content_stage_only_mode', contentStageOnlyMode ? 'true' : 'false');
+            formData.append('approved_outline', approvedOutline);
 
             if (currentMode === 'core') {
                 formData.append('article_language', document.getElementById('core-language').value);
@@ -1178,15 +1334,31 @@
                 const viewBtn = document.getElementById('view-page-btn');
 
                 if (data.status === 'success') {
-                    statusText.innerHTML = `<span style="color: var(--success-color); font-weight: 700;">ARTICLE GENERATED:</span> ${data.slug}`;
-                    viewBtn.href = `${baseUrl}/output/${encodeURIComponent(data.slug)}/page.html`;
-                    viewBtn.style.display = 'block';
+                    const isHeadingOnlyResponse = data.heading_only_mode || (!data.markdown_content && data.heading_preview_markdown);
+                    const isContentStageResponse = data.content_stage_only_mode;
+                    statusText.innerHTML = isHeadingOnlyResponse
+                        ? `<span style="color: var(--success-color); font-weight: 700;">HEADING STRUCTURE GENERATED:</span> ${data.slug}`
+                        : isContentStageResponse
+                            ? `<span style="color: var(--success-color); font-weight: 700;">CONTENT DRAFT GENERATED:</span> ${data.slug}`
+                            : `<span style="color: var(--success-color); font-weight: 700;">ARTICLE GENERATED:</span> ${data.slug}`;
+
+                    if (data.html_content) {
+                        viewBtn.href = `${baseUrl}/output/${encodeURIComponent(data.slug)}/page.html`;
+                        viewBtn.style.display = 'block';
+                    } else {
+                        viewBtn.style.display = 'none';
+                    }
                 } else {
-                    statusText.innerHTML = `<span style="color: var(--error-color); font-weight: 700;">ERROR:</span> ${data.message || 'Check terminal'}`;
+                    const detail = typeof data.detail === 'string'
+                        ? data.detail
+                        : (data.detail && data.detail.message) ? data.detail.message : '';
+                    statusText.innerHTML = `<span style="color: var(--error-color); font-weight: 700;">ERROR:</span> ${data.message || detail || 'Check terminal'}`;
                 }
 
-                document.getElementById('markdown-out').textContent = data.markdown_content || 'No Markdown produced';
-                document.getElementById('html-out').textContent = data.html_content || 'No HTML produced';
+                document.getElementById('markdown-out').textContent =
+                    data.markdown_content || data.heading_preview_markdown || 'No Markdown produced';
+                document.getElementById('html-out').textContent =
+                    data.html_content || JSON.stringify(data.outline_structure || [], null, 2) || 'No HTML produced';
 
             } catch (err) {
                 alert("Failed to connect to backend: " + err.message);
