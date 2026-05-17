@@ -1,0 +1,39 @@
+{
+  "tonal_dna": {
+    "persona": "Expert Authoritative",
+    "audience_level": "Professional",
+    "forbidden_jargon": [
+      "Cybersecurity",
+      "MSOP"
+    ],
+    "writing_tone": "Polished",
+    "sentence_rhythm": "Balanced"
+  },
+  "cta_strategy": {
+    "style": "Aggressive",
+    "wording_patterns": [
+      "Book now!"
+    ],
+    "density": "high",
+    "total_ideal_count": 3
+  },
+  "formatting_blueprint": {
+    "bolding_frequency": "Medium"
+  },
+  "structural_skeleton": [
+    {
+      "type": "H2"
+    },
+    {
+      "type": "TABLE"
+    },
+    {
+      "type": "FAQ"
+    }
+  ],
+  "detected_elements": [
+    "H1",
+    "P",
+    "TABLE"
+  ]
+}

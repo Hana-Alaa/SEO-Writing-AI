@@ -1,0 +1,23 @@
+# THE RUNTIME STATE (سياق التنفيذ الآني)
+
+## 1. LIVE COUNTS & METADATA (عدادات الحالة الحالية)
+- **Current Section Index**: {{ section_index | default(0) }} of {{ total_sections | default(1) }}
+- **Section Type / Intent**: Type: "{{ (section | default({})).get('section_type', 'core') }}" | Intent: "{{ (section | default({})).get('section_intent', 'Informational') }}"
+- **Primary Keyword**: "{{ primary_keyword }}"
+- **Brand Identity**: Brand Name: "{{ brand_name }}" | Brand URL: "{{ brand_url }}" | Context: "{{ brand_context | default('') }}"
+- **Mandatory Section Facts**: {{ ((section | default({})).get('mandatory_facts', [])) | tojson }}
+- **External Validation Sources**: {{ (external_sources | default([])) | tojson }}
+- **CTA Eligibility**: {{ (section | default({})).get('cta_eligible', false) | lower }} | Type: {{ cta_type | default('none') }} | Total CTAs placed so far: {{ ctas_placed | default(0) }}
+
+## 2. SEO KEYWORD COUNTS (إحصاءات الكلمات المفتاحية)
+- **Exact Primary Keyword (PK) Count So Far**: {{ global_keyword_count | default(0) }} / 5
+- **Exact PK Priority**: {{ (section | default({})).get('requires_primary_keyword', false) | lower }}
+- **LSI/NLP Keywords Assigned to this Section**: {{ (section | default({})).get('assigned_keywords', []) | join(', ') }}
+
+## 3. LINK POOLS & USED ANCHORS (مخزون الروابط والنصوص المستهلكة)
+- **Available Brand Internal Links**: {{ (section | default({})).get('available_link_pool', {}).get('internal', []) | tojson }}
+- **Available Authority Links (External)**: {{ (section | default({})).get('available_link_pool', {}).get('external_references', []) | tojson }}
+- **Used Anchors Map**: {{ (used_anchors | default([])) | tojson }}
+
+## 4. PREVIOUS SECTIONS MEMORY (ذاكرة السكاشن السابقة)
+- **Previous Sections Summary**: """{{ previous_content_summary }}"""

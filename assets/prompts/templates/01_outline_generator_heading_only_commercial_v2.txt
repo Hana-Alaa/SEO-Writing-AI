@@ -44,9 +44,10 @@ Your task is to generate only the heading structure layer of an article outline 
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
 - If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
-  - Default order: `offer` -> `features` -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
+  - Default order: `features` (Market Context/Evaluation) -> `offer` (Types/Services) -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
   - If `serp_outline_brief` indicates an informational, destination, attraction, venue guide, or experience-based SERP, keep the outline primarily informational/visitor-first. Use the brand as a soft support for booking, tickets, or next steps only when relevant; do NOT force a provider-selection or service-company journey.
-  - For provider-selection or commercial investigation keywords (e.g., best company, agency, provider, افضل شركة, أفضل مكتب, مزود خدمة), do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
+  - For provider-selection or commercial investigation keywords, do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
+  - The FIRST visible H2 MUST NOT be an `offer` section. It must be a `features` or contextual section that establishes market demand, evaluation criteria, or why the topic matters BEFORE listing types/services.
   - In provider-selection outlines, any H2 about "how to choose", "how to evaluate", criteria, or decision filters MUST use `section_type: "features"` or another evaluation type, NOT `section_type: "offer"`.
   - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
   - If a dedicated brand section is needed, place one `differentiation` section after proof/pricing and before process.
@@ -100,6 +101,7 @@ Your task is to generate only the heading structure layer of an article outline 
     - Good: "Cost of [service/product object] by scope, type, or location", "Average price of [service/product object] based on package, specs, or location", or "What affects the cost of [service/product object]?"
     - Use direct pricing words natively in {{ article_language }} (e.g. أسعار, تكلفة, متوسط سعر).
     - Avoid abstract wording like "عوامل تحديد التكلفة" unless paired with direct pricing wording.
+  - **AVOID GENERIC EVALUATION HEADINGS**: Do NOT use generic "How to choose" (كيف تختار) or "Criteria for choosing" (معايير اختيار) as your default evaluation heading. Instead, focus on the **Value-Add, Benefits, or Market Advantages** of the core entity (e.g., "مميزات [Entity/Action]", "لماذا يعتبر [Entity] الخيار الأفضل؟", "القيمة التي يقدمها [Entity]").
   - Avoid mechanical repetition. If most H2 headings reuse the exact entity phrase, it is a structural failure.
 - Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
 - If you create H3 subheadings, output the exact H3 strings in `subheadings`.
@@ -146,12 +148,16 @@ Usually keep `subheadings` empty UNLESS meaningful segmentation exists.
 
 If pricing varies meaningfully by location, type, category, package, or scope, H3s MUST reflect the most decision-useful segmentation.
 
-PRICING INTENT GUIDELINE:
-- If location is the primary pricing segmentation and major zones have meaningful price differences, prefer splitting them into separate H3s rather than grouping them in one summary.
-- The pricing H2 defines the segmentation contract. If it promises pricing by location, area, zone, or neighborhood, every pricing H3 MUST be a concrete location/area/zone/neighborhood pricing bucket. If it promises pricing by type or category, every pricing H3 MUST be a concrete type/category pricing bucket.
-- For local property rental or listing queries tied to one city, prefer location-based pricing buckets when areas or neighborhoods are the strongest practical price driver, unless the pricing H2 explicitly promises type-based pricing.
+- **DYNAMIC PRICING SEGMENTATION LOGIC**: To determine the primary pricing H3 segmentation, analyze the core entity's industry:
+  - Real Estate & Physical Property (e.g., apartments, offices): Segment by Location/Geography or Property Type.
+    - **REAL ESTATE REGIONAL PRICING MANDATE**: If the core entity is real estate, physical listings, or rentals in a target city (`area`), and the pricing H2 heading mentions regions, zones, areas, or neighborhoods (e.g., "حسب المنطقة"), your H3 subheadings **MUST** strictly segment by the broad city zones/regions (e.g., شمال الرياض, شرق الرياض, غرب الرياض, جنوب الرياض) rather than property types. Secondary dimensions (such as furnished vs unfurnished, or room sizes) **MUST** be detailed within the body/bullets of those regional H3 subheadings, not as standalone sibling H3s.
+  - Service Packages (e.g., SEO, consulting, cleaning): Segment by Scope/Tier or Service Type.
+  - Physical Products/Rentals (e.g., cars, equipment): Segment by Category/Model.
+- Choose the segmentation that acts as the strongest practical price driver in that specific industry. Never force location segmentation unless the industry heavily prices based on geography.
+- If you segment by one dimension (e.g., Location), mention secondary variations (e.g., furnished/unfurnished) inside the body content of those H3s, rather than creating mixed H3s.
 - The pricing H2 MUST commit to a single primary segmentation dimension.
 - Avoid combining multiple primary dimensions in the pricing H2, such as "by type and area".
+
 - If multiple dimensions are relevant, choose the one that best matches user search behavior and decision intent.
 
 When generating pricing H3s, think from the reader’s perspective:
@@ -202,10 +208,8 @@ You MUST:
 You MUST NOT:
 - mix multiple pricing segmentations within the same section unless one is clearly dominant and others are minimal
 - create mixed pricing H3 sets such as type + type + explanation, or location + type + explanation, under one pricing H2
-- assume a fixed segmentation for every topic
-- assume location as the default pricing segmentation unless it is the most decision-relevant dimension for this topic
-- assume type/category as the default pricing segmentation
-- revert to type-based pricing when location/area is clearly the selected or more decision-useful pricing segmentation
+- assume a fixed segmentation for every topic (always analyze the industry first)
+- assume location is the default just because a city is mentioned in the query
 - rely only on explanatory H3s like “what affects price”
 - choose secondary distinctions as the main pricing segmentation if they are not how users typically search
 
@@ -337,6 +341,13 @@ H3s are allowed and should be real user questions.
 
   Prefer broad city zones (e.g., north, east, west, south, central) over specific neighborhoods unless specific neighborhoods are clearly supported by search data or explicitly provided in the input.
 
+  - **TAXONOMICAL CONSISTENCY RULE**: You are STRICTLY FORBIDDEN from mixing broad city zones (e.g., North, East) with specific neighborhoods (e.g., Al-Malqa, Al-Rimal) as sibling H3s under the same Location H2.
+    - Choose ONE classification level and stick to it:
+      * Level A (Highly Preferred): Broad city zones only (e.g., North Riyadh, East Riyadh, West Riyadh, Central/South Riyadh).
+      * Level B: Specific neighborhood clusters only (e.g., Luxury Neighborhoods, Economical Neighborhoods, Business-Central Neighborhoods).
+    - If you choose Broad city zones (Level A), you MUST discuss specific neighborhoods (like Al-Malqa, Al-Rimal) inside the body/bullets of their respective city zone H3s, NOT as standalone sibling H3s.
+    - You are STRICTLY FORBIDDEN from creating a generic catch-all sibling H3 like "أحياء أخرى". Every H3 must represent a specific, well-defined zone or cluster.
+
   H3s MUST:
   - stay anchored to the entity/service/listing
   - include BOTH location AND decision context
@@ -389,6 +400,7 @@ H3s are allowed and should be real user questions.
 
 ### CONFLICT PREVENTION
 
+- **HARD RULE: NO OFFER-FEATURES OVERLAP**: If the core topic makes the "Offer" section (e.g., types of apartments) and the "Features/Criteria" section (e.g., criteria to choose) overlap heavily or repeat the same concepts (like furnished/unfurnished, size, location), you MUST either OMIT the Offer section or MERGE them into a single H2. Do NOT output both if they will force repetitive body text.
 - If comparison would only repeat the features or offer section, it MUST be embedded or omitted, not promoted to a standalone H2.
 - If Features and Comparison sections overlap conceptually, the output is INVALID and must be regenerated with clearer separation.
 
@@ -466,6 +478,7 @@ Return ONLY valid JSON in the following format:
       "heading_level": "INTRO",
       "section_type": "introduction",
       "section_intent": "informational",
+      "visual_format": "compact_narrative",
       "subheadings": []
     },
     {
@@ -477,6 +490,7 @@ Return ONLY valid JSON in the following format:
       "contains_exact_primary_keyword": true,
       "requires_primary_keyword": true,
       "section_intent": "informational",
+      "visual_format": "table",
       "subheadings": ["Optional reader-facing H3", "Optional reader-facing H3"]
     }
   ]
@@ -507,4 +521,5 @@ Follow these role-specific instructions for each section type:
 - No markdown fences.
 - No explanation before or after the JSON.
 - Do not include body content.
-- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `subheadings`.
+- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `visual_format`, `subheadings`.
+- `visual_format` MUST be one of: `compact_narrative`, `bulleted_list`, `table`. Default to `compact_narrative`, but prefer `table` for pricing and comparison sections.

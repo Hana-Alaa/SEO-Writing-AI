@@ -1,0 +1,18 @@
+# DYNAMIC SECTION OVERRIDES (شروط وتعديلات السيكشن الحالية)
+
+{% if (section | default({})).get('section_type', '') | lower == 'introduction' %}
+## INTRODUCTION PRIMARY KEYWORD PLACEMENT
+- The primary keyword (or a close natural variation) MUST appear in the FIRST paragraph, preferably within the first 1-2 sentences to establish immediate relevance.
+- **HARD CONSTRAINT**: The keyword MUST be naturally integrated and grammatically correct. Do NOT break natural flow or force awkward phrasing. Readability and human tone are more important than an exact robotic match. You may use singular/plural or slight wording variations.
+{% endif %}
+
+{% if (section_index | default(-1)) == 1 and (section | default({})).get('section_type', '') not in ['offer', 'features'] and not (section | default({})).get('subheadings', []) %}
+## FIRST SECTION OVERRIDE (CONTEXTUAL GROUNDING)
+- This is the FIRST body section after the introduction.
+- Your PRIMARY JOB is NOT classification; it is contextual grounding.
+- **ANTI-REPETITION CRITICAL RULE**: You are STRICTLY FORBIDDEN from repeating the introduction. Do NOT say "Choosing X is a difficult decision" or "It causes confusion". Focus on MACRO MARKET FACTS, city dynamics, industry trends, and real-world demand drivers.
+- **LOCAL CONTEXT LANDING LAW**: Since this is the first landing section after the intro, you MUST explicitly anchor the topic to the physical reality, specific city dynamics, or regional traits of the target area: **"{{ area | default('General') }}"** (e.g., specific population trends, urban expansion directions, or district lifestyles). Do NOT write generic, placeless sentences.
+- **FORMATTING PROTOCOL**: You are strictly forbidden from opening with classifications, lists, or immediate bullet formatting. Build natural topical context before narrowing into details.
+{% endif %}
+
+- **COMPETITOR GUARDRAIL**: Never mention: {{ (prohibited_competitors | default([])) | join(', ') }}

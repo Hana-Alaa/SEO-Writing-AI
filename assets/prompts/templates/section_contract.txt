@@ -1,0 +1,51 @@
+# THE SECTION CONTRACT (عقد السيكشن التفاعلي)
+
+## 1. OUTLINE & HEADING LOCK (الالتزام بالعناوين المعتمدة)
+- You are writing body content only. Do NOT rename, rewrite, translate, add, delete, or reorder approved headings.
+- **Current Heading**: "{{ (section | default({})).get('heading_text', '') }}" (Do NOT output this heading inside your content; the assembler owns it).
+- **Approved Subheadings**: {{ ((section | default({})).get('subheadings', [])) | tojson }}
+    - If subheadings exist, reproduce them exactly as `### Subheading` and write the body content under each.
+    - If no subheadings exist, do NOT invent any H3s unless `section_contract.format` explicitly asks for a mixed structure.
+
+## 2. THE CONTRACT FIELDS (توجيهات العمل الإلزامية)
+- **`section_promise`**: {{ (section | default({})).get('section_promise') }} (Must be addressed early in the section).
+- **`reader_takeaway`**: {{ (section | default({})).get('reader_takeaway') }} (The logical conclusion the reader must reach by the end).
+- **`must_answer` / `must_include_details`**: {{ (section | default({})).get('must_include_details', []) | tojson }} (Answer every listed item directly).
+- **`must_not_repeat`**: {{ (section | default({})).get('must_not_repeat', []) | tojson }} (Do NOT restate these items).
+- **`Visual Format`**: {{ (section | default({})).get('visual_format', 'paragraphs') }}
+- **`Sales Intensity`**: {{ (section | default({})).get('sales_intensity', 'medium') }}
+
+## 3. SEO KEYWORD CONSTRAINTS (محددات الكلمات المفتاحية)
+- **Budget Gating**: You MUST preserve 2 Primary Keyword (PK) mentions for the Intro and Conclusion.
+    - If `global_keyword_count` >= 3 and this is NOT the conclusion, you are STRICTLY FORBIDDEN from using the exact PK. You MUST use synonyms/LSI terms instead.
+    - If `requires_primary_keyword` is `false`, do NOT use the exact PK to save keyword budget.
+- **Semantic Weaving**: Weave assigned LSI keywords naturally into your sentence flow. Do NOT stuff. Every term should provide semantic depth.
+
+## 4. LINK & ANCHOR CONSTRAINTS (محددات الروابط والنصوص)
+- **Zero Anchor Duplication**: You are STRICTLY FORBIDDEN from repeating any exact anchor text already found in the Used Anchors Map. If you link to a page again, you MUST create a fresh, contextually relevant anchor text.
+- **Natural Anchor Rotation**: Generate variants based on:
+    *   *Semantic Substitution*: Use LSI synonyms and topic-related descriptors.
+    *   *Dynamic Action*: Use verbs matching the reading intent.
+    *   *Value-Driven Phrasing*: Use the specific benefit discussed in the paragraph.
+- **Contextual Linking**: Create a natural narrative bridge for internal links. Do NOT just drop a link randomly or use generic "click here" or raw URLs as anchors. Match links contextually.
+- **External Validation**: Use an external link only if it gives concrete trust value (validating a fact, statistic, or comparison point). Avoid decorative external links.
+
+## 5. CORE QUALITY CONSTRAINTS & LAWS (قوانين الجودة الصارمة)
+- **HEADING PROMISE RESOLUTION LAW / HEADING PROMISE FULFILLMENT (إيفاء وعود العناوين)**: A heading is a strict user intent contract. If a heading or subheading contains keywords of concrete parameters—such as **"أسعار" (Prices), "تكلفة" (Cost), "مساحة" (Size/Area), "خطوات" (Steps), "شروط" (Conditions), "طريقة" (Method), "مميزات" (Features)** or their synonyms—you are **STRICTLY FORBIDDEN** from writing vague, generalized, or abstract sentences that defer the answer or describe the parameter qualitatively.
+
+    - **MANDATORY RESOLUTION**: You **MUST** directly, explicitly, and immediately state the concrete factual data, exact numbers, pricing ranges, step-by-step actions, or specific options. Hand-waving and qualitative descriptions without actual data are a critical quality failure.
+    - **Compound Heading Rule**: If a heading has two distinct components (e.g., "Types and How to Choose"), you **MUST** explicitly and fully address both parts in your content.
+    - **Choice Promise Rule**: If a heading promises "How to Choose" (كيف تختار), you **MUST** include clear, actionable decision-making criteria or a step-by-step selection method.
+- **GEO SCOPE DRIFT CONTROL**: Stay strictly grounded in the target geographical area context: **"{{ area | default('General') }}"**. Do NOT drift, generalize, or import context from other regions/countries.
+- **THE TANGIBLE SPECS MANDATE**: When listing, describing, or comparing product/service "types", "models", "options", or "choices", you are **STRICTLY FORBIDDEN** from using only vague qualitative adjectives (e.g., "spacious", "large", "efficient", "comfortable").
+    - **MANDATORY RESOLUTION**: You **MUST** anchor every option/type with concrete, tangible specifications, physical dimensions, capacity fits, or exact technical boundaries (e.g., area in square meters/feet, room counts, family-size compatibility, capacity limits, or performance metrics).
+- **NO LATER-TOPIC LEAKAGE (SPOILER/FIREWALL RULE)**: You are strictly forbidden from leaking specific details, metrics, or steps that belong to dedicated subsequent sections.
+    - **Pricing Spoiler Rule**: If a dedicated pricing/rates section exists later in the outline, you MUST NOT include exact Riyal ranges or numeric tables in any prior section. Refer to cost qualitatively (e.g., "أعلى سعراً", "خيارات اقتصادية") and save concrete numbers/tables exclusively for the pricing section.
+    - **Process Spoiler Rule**: If a dedicated steps/process section exists later, do NOT list or explain the steps early.
+- **GLOBAL NUMERIC & DATA MANDATE (NO PLACEMENT WITHOUT FULFILLMENT)**: If the active section (or any subheading) naturally promises or mentions prices, costs, dimensions, sizes, metrics, or ROI, you **MUST** include approximate numeric ranges (e.g., 20,000 - 45,000 ريال, 80-120 sqm). Vague hand-waving (e.g., "الأسعار متوسطة", "حسب السوق", "تختلف الأسعار") without concrete numbers is **STRICTLY FORBIDDEN**. If exact research is missing, you MUST use realistic, logical market estimates based on the geographical scope.
+- **REPETITION FIREWALL**: You are STRICTLY FORBIDDEN from repeating any logic, advice patterns, neighborhood highlights, or explanations already discussed in the Previous Sections Summary.
+
+## 6. VISUAL FORMATTING CAP & SLOT LOGIC (قواعد الجداول والقوائم)
+- **Hard Table Limit**: You are forbidden from exceeding **2 tables per article** and **1 table per section** (Current tables placed so far: {{ tables_placed | default(0) }}).
+- **Comparison Table Reservation**: One table slot is strictly reserved for the final comparison section (Step 6). Non-comparison sections are FORBIDDEN from consuming this final slot.
+- **Visual Fallback**: If a table is requested but blocked by the table cap or reservation rules, you MUST automatically fall back to a **Bulleted List** instead.

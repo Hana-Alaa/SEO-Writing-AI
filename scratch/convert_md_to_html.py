@@ -7,9 +7,11 @@ if sys.stdout.encoding != 'utf-8':
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-md_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260514_180916\article_final.md"
+md_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260517_170805\article_final.md"
 html_template_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260514_105342\article_final.html"
-output_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260514_180916\article_final.html"
+output_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260517_170805\article_final.html"
+
+
 
 with open(md_path, 'r', encoding='utf-8') as f:
     md_content = f.read()
@@ -44,6 +46,11 @@ for line in lines:
             current_section["content"][-1]["items"].append(line[2:])
         else:
             current_section["content"].append({"type": "ul", "items": [line[2:]]})
+    elif line.startswith('|'):
+        if current_section["content"] and current_section["content"][-1]["type"] == "table":
+            current_section["content"][-1]["rows"].append(line)
+        else:
+            current_section["content"].append({"type": "table", "rows": [line]})
     else:
         current_section["content"].append({"type": "p", "text": line})
 
@@ -92,7 +99,8 @@ for i, sec in enumerate(parsed_sections):
         cta_html += '</div>\n'
         continue
 
-    sec_html += f'<h2>{sec["title"]}</h2>\n'
+    if sec["title"]:
+        sec_html += f'<h2>{sec["title"]}</h2>\n'
     for item in sec["content"]:
         if item["type"] == "h3":
             sec_html += f'<h3>{item["text"]}</h3>\n'
@@ -100,6 +108,21 @@ for i, sec in enumerate(parsed_sections):
             sec_html += f'<p>{md_to_html(item["text"])}</p>\n'
         elif item["type"] == "ul":
             sec_html += "<ul>\n" + "".join([f"    <li>{md_to_html(li)}</li>\n" for li in item["items"]]) + "</ul>\n"
+        elif item["type"] == "table":
+            sec_html += "<div class=\"table-container\" style=\"overflow-x: auto; margin-bottom: 2rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05);\">\n<table style=\"width: 100%; border-collapse: collapse; text-align: right; background: var(--surface);\">\n"
+            for r_idx, row in enumerate(item["rows"]):
+                if '---' in row: continue
+                cells = [c.strip() for c in row.strip().strip('|').split('|')]
+                sec_html += "    <tr style=\"border-bottom: 1px solid var(--border); transition: background 0.3s;\">\n"
+                for cell in cells:
+                    tag = "th" if r_idx == 0 else "td"
+                    if tag == "th":
+                        style = "padding: 16px; background-color: var(--secondary); color: white; font-weight: 700; border-bottom: 3px solid var(--primary);"
+                    else:
+                        style = "padding: 16px; color: var(--text-main);"
+                    sec_html += f"        <{tag} style=\"{style}\">{md_to_html(cell)}</{tag}>\n"
+                sec_html += "    </tr>\n"
+            sec_html += "</table>\n</div>\n"
     body_html += sec_html
 
 # Inject Title

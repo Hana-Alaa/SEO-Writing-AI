@@ -1,0 +1,8 @@
+# OUTPUT FORMAT (STRICT JSON)
+- RETURN STRICT JSON ONLY. Any HTML used within the `content` field must remain compatible with the JSON output contract.
+{
+  "content": "markdown content",
+  "used_links": ["urls used in this section"],
+  "knowledge_units_established": ["Mandatory: Unique specific facts, prices, or neighborhood names established here to be burned in future sections"],
+  "brand_link_used": true/false
+}

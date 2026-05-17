@@ -46,8 +46,9 @@ Your task is to generate only the heading structure layer of an article outline 
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
 - If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
-  - Default order: `offer` -> `features` -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
-  - For provider-selection or commercial investigation keywords (e.g., best company, agency, provider, افضل شركة, أفضل مكتب, مزود خدمة), do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
+  - Default order: `features` (Market Context/Evaluation) -> `offer` (Types/Services) -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
+  - For provider-selection or commercial investigation keywords, do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
+  - The FIRST visible H2 MUST NOT be an `offer` section. It must be a `features` or contextual section that establishes market demand, evaluation criteria, or why the topic matters BEFORE listing types/services.
   - In provider-selection outlines, any H2 about "how to choose", "how to evaluate", criteria, or decision filters MUST use `section_type: "features"` or another evaluation type, NOT `section_type: "offer"`.
   - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
   - If a dedicated brand section is needed, place one `differentiation` section after proof/pricing and before process.
@@ -120,6 +121,7 @@ Your task is to generate only the heading structure layer of an article outline 
   - **UNIQUE ANGLE MANDATE**: Each H2 MUST introduce a NEW decision angle or data point. Avoid H2s that are just rephrased versions of each other.
   - **EXPAND, DON'T CHANGE (ANTI-DRIFT)**: Semantic variations must expand the core topic within its entity boundary, NOT change the topic (e.g., Avoid drifting from "Web Design" to generic "Tech Consulting").
   - **REPETITION FAILURE**: Repeating the same phrase pattern (e.g., "Best [entity] in [area]") across 3+ H2s is a structural failure.
+  - **VALUE-ADD OVER COPYCATTING**: Do not blindly copy generic SERP sections like "How to choose [Topic]". Instead, prioritize high-value, topic-specific angles like "Advantages of living/investing in [Location]" or "Why [Topic] is highly demanded". Make the outline feel uniquely tailored to the subject's strengths, not a generic template.
 - **ENTITY CONSISTENCY RULES**:
   - Treat **Entity Phrase** ("{{ entity_phrase }}") and **Service/Object Phrase** ("{{ service_phrase }}") as the main semantic topics, NOT phrases that must be copied into every heading.
   - The entity does NOT have to appear explicitly in every heading. It may be implied through semantic context, object-level wording, or user-outcome phrasing.
@@ -143,11 +145,12 @@ Your task is to generate only the heading structure layer of an article outline 
     - Good: "Cost of [service/product object] by scope, type, or location", "Average price of [service/product object] based on package, specs, or location", or "What affects the cost of [service/product object]?"
     - Use direct pricing words natively in {{ article_language }} (e.g. أسعار, تكلفة, متوسط سعر).
     - Avoid abstract wording like "عوامل تحديد التكلفة" unless paired with direct pricing wording.
+  - **AVOID GENERIC EVALUATION HEADINGS**: Do NOT use generic "How to choose" (كيف تختار) or "Criteria for choosing" (معايير اختيار) as your default evaluation heading. Instead, focus on the **Value-Add, Benefits, or Market Advantages** of the core entity (e.g., "مميزات الاستثمار/السكن في...", "لماذا يعتبر X الخيار الأفضل؟", "القيمة التي يقدمها...").
   - Avoid mechanical repetition. If most H2 headings reuse the exact entity phrase, it is a structural failure.
 - Use H3 subheadings only when a section naturally splits into 2 or more named subtopics.
 - If you create H3 subheadings, output the exact H3 strings in `subheadings`.
 - H3 Generation Strategy: Decision Buckets vs. Atomic Details:
-  1. The Taxonomy Principle: Use H3s ONLY for classifying the entity into distinct "standalone siblings" (Types, Categories, Services, Locations, User Segments, Pricing Models, or Comparison Options). Do NOT create H3s for "Anatomy" (internal parts, specs, room layout, finishing, speed, or minor attributes). These belong in the H2 body.
+  1. The Taxonomy Principle (STRICT TAXONOMY AXIS): Use H3s ONLY for classifying the entity into distinct "standalone siblings". You MUST stick to a SINGLE classification axis per section. Do NOT mix physical types (e.g., Studio, Villa) with transaction terms (e.g., Monthly, Yearly) in the same H3 list. Do NOT create H3s for "Anatomy" (internal parts, specs). If the section is about pricing, structure it logically by the primary factor (e.g., Prices by Region) and do NOT make messy overlapping H3s.
   2. The Decision Bifurcation Rule: Generate H3s ONLY if the H2 contains multiple distinct decision paths where a reader must choose between options. Fallback: It is better to return an empty `subheadings` array than to generate weak or forced H3s.
   3. The Non-Overlap Rule: Each H3 must be a distinct bucket. If two H3s could be merged without losing significant meaning, do not separate them.
   4. The Strength & Expansion Test: Every H3 must pass this check: "Can this H3 be expanded into a 150+ word standalone section without repeating the parent H2?". If NO, do not generate it.
