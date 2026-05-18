@@ -1,6 +1,6 @@
-# THE RUNTIME STATE (سياق التنفيذ الآني)
+# THE RUNTIME STATE 
 
-## 1. LIVE COUNTS & METADATA (عدادات الحالة الحالية)
+## 1. LIVE COUNTS & METADATA 
 - **Current Section Index**: {{ section_index | default(0) }} of {{ total_sections | default(1) }}
 - **Section Type / Intent**: Type: "{{ (section | default({})).get('section_type', 'core') }}" | Intent: "{{ (section | default({})).get('section_intent', 'Informational') }}"
 - **Primary Keyword**: "{{ primary_keyword }}"
@@ -9,15 +9,23 @@
 - **External Validation Sources**: {{ (external_sources | default([])) | tojson }}
 - **CTA Eligibility**: {{ (section | default({})).get('cta_eligible', false) | lower }} | Type: {{ cta_type | default('none') }} | Total CTAs placed so far: {{ ctas_placed | default(0) }}
 
-## 2. SEO KEYWORD COUNTS (إحصاءات الكلمات المفتاحية)
+## 2. SEO KEYWORD COUNTS 
 - **Exact Primary Keyword (PK) Count So Far**: {{ global_keyword_count | default(0) }} / 5
 - **Exact PK Priority**: {{ (section | default({})).get('requires_primary_keyword', false) | lower }}
 - **LSI/NLP Keywords Assigned to this Section**: {{ (section | default({})).get('assigned_keywords', []) | join(', ') }}
 
-## 3. LINK POOLS & USED ANCHORS (مخزون الروابط والنصوص المستهلكة)
+## 3. LINK POOLS & USED ANCHORS 
 - **Available Brand Internal Links**: {{ (section | default({})).get('available_link_pool', {}).get('internal', []) | tojson }}
 - **Available Authority Links (External)**: {{ (section | default({})).get('available_link_pool', {}).get('external_references', []) | tojson }}
 - **Used Anchors Map**: {{ (used_anchors | default([])) | tojson }}
 
-## 4. PREVIOUS SECTIONS MEMORY (ذاكرة السكاشن السابقة)
+## 4. PREVIOUS SECTIONS MEMORY 
 - **Previous Sections Summary**: """{{ previous_content_summary }}"""
+
+{% if seo_intelligence and seo_intelligence.serp_raw and seo_intelligence.serp_raw.top_results %}
+## 5. LIVE MARKET RESEARCH & SERP DATA
+- **Market Intelligence**: The following facts and snippets were just retrieved from live search results. You MUST extract concrete data (prices, sizes, features, policies) from these snippets and include them naturally in your writing to fulfill the GLOBAL NUMERIC & DATA MANDATE. Do NOT mention competitor brand names found in the snippets.
+{% for result in seo_intelligence.serp_raw.top_results[:5] %}
+  - **Snippet**: "{{ result.snippet }}"
+{% endfor %}
+{% endif %}

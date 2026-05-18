@@ -48,6 +48,8 @@ class PromptQualityRulesTests(unittest.TestCase):
         self.assertIn("THE TANGIBLE SPECS MANDATE", combined_base)
         self.assertIn("LOCAL CONTEXT LANDING LAW", combined_base)
         self.assertIn("HEADING PROMISE RESOLUTION LAW", combined_base)
+        self.assertIn("THE NUMBERED PROCESS MANDATE", combined_base)
+
 
 
 

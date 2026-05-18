@@ -1,4 +1,4 @@
-# DYNAMIC SECTION OVERRIDES (شروط وتعديلات السيكشن الحالية)
+# DYNAMIC SECTION OVERRIDES 
 
 {% if (section | default({})).get('section_type', '') | lower == 'introduction' %}
 ## INTRODUCTION PRIMARY KEYWORD PLACEMENT

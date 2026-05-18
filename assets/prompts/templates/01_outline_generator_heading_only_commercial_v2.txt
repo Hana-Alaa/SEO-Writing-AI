@@ -44,14 +44,16 @@ Your task is to generate only the heading structure layer of an article outline 
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
 - If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
-  - Default order: `features` (Market Context/Evaluation) -> `offer` (Types/Services) -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
-  - If `serp_outline_brief` indicates an informational, destination, attraction, venue guide, or experience-based SERP, keep the outline primarily informational/visitor-first. Use the brand as a soft support for booking, tickets, or next steps only when relevant; do NOT force a provider-selection or service-company journey.
-  - For provider-selection or commercial investigation keywords, do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
-  - The FIRST visible H2 MUST NOT be an `offer` section. It must be a `features` or contextual section that establishes market demand, evaluation criteria, or why the topic matters BEFORE listing types/services.
-  - In provider-selection outlines, any H2 about "how to choose", "how to evaluate", criteria, or decision filters MUST use `section_type: "features"` or another evaluation type, NOT `section_type: "offer"`.
-  - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
-  - If a dedicated brand section is needed, place one `differentiation` section after proof/pricing and before process.
-  - If the user needs confidence before choosing the brand, include one brand proof section after differentiation and before process using `section_type: "proof"` or `section_type: "case_study"`.
+  - **MANDATORY COMMERCIAL FLOW**: You MUST follow this precise decision journey for service/product pages to build trust and drive conversion. Do NOT deviate from this order unless absolutely necessary based on the topic:
+    1. **Intro**: Speak directly to the reader's problem or need. (Unheaded `section_type: introduction`).
+    2. **What the service/product is** (`section_type: offer`): The FIRST visible H2 MUST be the Offer section. Use the exact Primary Keyword. Keep it brief but clear.
+    3. **Key features or what's included** (`section_type: features`): Highlight features, amenities, or what's included. Use a scannable format.
+    4. **Why choose us / differentiators** (`section_type: differentiation`): Build brand value. Avoid generic claims, be specific.
+    5. **Proof section** (`section_type: proof`): Pricing, stats, case studies, or client results. This is where trust is earned.
+    6. **Comparison** (`section_type: comparison`): Compare service tiers, options, or types (e.g. furnished vs unfurnished). Do NOT use generic 'brand vs alternatives'.
+    7. **How it works / Process** (`section_type: process`): Numbered steps. Reduces friction and objection.
+    8. **FAQ section** (`section_type: faq`): Focus on objections, pricing, and process questions specifically.
+    9. **Conclusion** (`section_type: conclusion`): Direct and confident final CTA.
   - **FORBIDDEN**: You are strictly forbidden from using `section_type: "body"` for any section in a `brand_commercial` outline.
   - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field:
     - `offer_clarity`: For the core service/product definition and options.
@@ -150,7 +152,8 @@ If pricing varies meaningfully by location, type, category, package, or scope, H
 
 - **DYNAMIC PRICING SEGMENTATION LOGIC**: To determine the primary pricing H3 segmentation, analyze the core entity's industry:
   - Real Estate & Physical Property (e.g., apartments, offices): Segment by Location/Geography or Property Type.
-    - **REAL ESTATE REGIONAL PRICING MANDATE**: If the core entity is real estate, physical listings, or rentals in a target city (`area`), and the pricing H2 heading mentions regions, zones, areas, or neighborhoods (e.g., "حسب المنطقة"), your H3 subheadings **MUST** strictly segment by the broad city zones/regions (e.g., شمال الرياض, شرق الرياض, غرب الرياض, جنوب الرياض) rather than property types. Secondary dimensions (such as furnished vs unfurnished, or room sizes) **MUST** be detailed within the body/bullets of those regional H3 subheadings, not as standalone sibling H3s.
+    - **REAL ESTATE REGIONAL PRICING MANDATE**: If the core entity is real estate, physical listings, or rentals in a target city (`area`), your H3 subheadings **MUST** strictly segment by the broad city zones/regions (e.g., شمال الرياض, شرق الرياض, غرب الرياض, جنوب الرياض) regardless of the H2 heading phrasing. You are strictly forbidden from segmenting by property/listing types (such as furnished vs unfurnished, or bedroom count) as H3 headings; these secondary dimensions **MUST** be detailed within the body/bullets of those regional H3 subheadings.
+
   - Service Packages (e.g., SEO, consulting, cleaning): Segment by Scope/Tier or Service Type.
   - Physical Products/Rentals (e.g., cars, equipment): Segment by Category/Model.
 - Choose the segmentation that acts as the strongest practical price driver in that specific industry. Never force location segmentation unless the industry heavily prices based on geography.
