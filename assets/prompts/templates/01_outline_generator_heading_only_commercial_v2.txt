@@ -43,18 +43,19 @@ Your task is to generate only the heading structure layer of an article outline 
   - Do not create any intro subheadings.
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
-- If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
-  - **MANDATORY COMMERCIAL FLOW**: You MUST follow this precise decision journey for service/product pages to build trust and drive conversion. Do NOT deviate from this order unless absolutely necessary based on the topic:
-    1. **Intro**: Speak directly to the reader's problem or need. (Unheaded `section_type: introduction`).
-    2. **What the service/product is** (`section_type: offer`): The FIRST visible H2 MUST be the Offer section. Use the exact Primary Keyword. Keep it brief but clear.
-    3. **Key features or what's included** (`section_type: features`): Highlight features, amenities, or what's included. Use a scannable format.
-    4. **Why choose us / differentiators** (`section_type: differentiation`): Build brand value. Avoid generic claims, be specific.
-    5. **Proof section** (`section_type: proof`): Pricing, stats, case studies, or client results. This is where trust is earned.
-    6. **Comparison** (`section_type: comparison`): Compare service tiers, options, or types (e.g. furnished vs unfurnished). Do NOT use generic 'brand vs alternatives'.
+- If `content_type` is `brand_commercial`, the goal is to convert. The structure should build trust fast and guide the reader toward action.
+  - **CORE DECISION-COVERAGE PILLARS**: You MUST ensure the following 9 conversion pillars are covered and present in the outline. Order matters here:
+    1. **Intro**: Speak directly to the reader's problem or need. Primary keyword in first paragraph. One very soft CTA at the end of intro is acceptable here. (Unheaded `section_type: introduction`).
+    2. **What the service/product is** (`section_type: offer`): The FIRST visible H2 MUST be the Offer section. Use the exact Primary Keyword. Brief but clear.
+    3. **Key features or what's included** (`section_type: features`): Bullet points preferred over paragraphs. Scannable.
+    4. **Why choose us / differentiators** (`section_type: differentiation`): This is where brand value is built. Avoid generic claims, be specific.
+    5. **Proof section** (`section_type: proof`): Stats, case studies, client results, Before/after scenarios. This is where trust is earned. The format is flexible.
+    6. **Comparison table** (`section_type: comparison`): Avoid using brand vs alternatives (overused and repetitive), maybe compare service tiers or options. Strong featured snippet potential. Format is flexible.
     7. **How it works / Process** (`section_type: process`): Numbered steps. Reduces friction and objection.
-    8. **FAQ section** (`section_type: faq`): Focus on objections, pricing, and process questions specifically.
-    9. **Conclusion** (`section_type: conclusion`): Direct and confident final CTA.
-  - **FORBIDDEN**: You are strictly forbidden from using `section_type: "body"` for any section in a `brand_commercial` outline.
+    8. **FAQ section** (`section_type: faq`): Focus on objections and pricing/process questions specifically.
+    9. **Strong conclusion + CTA** (`section_type: conclusion`): This is the main conversion point. Direct and confident.
+  - **FLEXIBILITY & EXPANSION RULE (CRITICAL)**: While the 9 pillars above MUST be covered, you are STRONGLY ENCOURAGED to ADD 1-2 extra domain-specific H2 sections (e.g., Legal Rules, Location/Area Guides, Licensing Requirements, Specific Use Cases) between these pillars if observed in the SERP brief or if highly necessary for the topic.
+  - For these custom added sections, you may use `section_type: "core"` or `section_type: "location"`.
   - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field:
     - `offer_clarity`: For the core service/product definition and options.
     - `features_or_included`: For technical specs, amenities, or what's included.
@@ -64,6 +65,7 @@ Your task is to generate only the heading structure layer of an article outline 
     - `process_or_how`: For the buying journey, steps, or how to get started.
     - `faq`: For the FAQ section.
     - `conclusion`: For the final wrap-up and call to action.
+    - `custom_domain_topic`: For any custom extra H2 section you add (like Legal, Location, etc.).
   - **PRIMARY KEYWORD FIELDS**:
     - `contains_exact_primary_keyword`: Set to `true` ONLY if the heading text itself includes the exact Primary Keyword. This MUST be `true` for exactly ONE visible H2 heading and `false` for everything else (including Intro and H3s).
     - `requires_primary_keyword`: Set to `true` if the section body copy should naturally include the Primary Keyword. This is an instruction for the writer, not a heading rule.

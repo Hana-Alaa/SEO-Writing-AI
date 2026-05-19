@@ -557,27 +557,48 @@ class ResearchService:
         # Identity Discovery
         brand_assets = await self._discover_logo_and_colors(brand_url, state)
         if brand_assets:
-            brand_data = brand_assets.get("brand_data", {})
-            if brand_data:
-                explicit_inputs = self._extract_explicit_brand_inputs(state)
-                merged = self._canonicalize_brand_name(
-                    {
-                        "explicit_input": explicit_inputs,
-                        "visible": [brand_data.get("display_brand_name")],
-                        "metadata": [brand_data.get("official_brand_name")],
-                        "mentions": brand_data.get("brand_aliases", []),
-                        "domain": [brand_data.get("domain_brand_name")],
-                    },
-                    brand_url,
-                    state.get("primary_keyword", ""),
-                )
-                state["display_brand_name"] = merged.get("display_brand_name")
-                state["official_brand_name"] = merged.get("official_brand_name")
-                state["brand_name"] = state["display_brand_name"]
-                state["brand_aliases"] = merged.get("brand_aliases", [])
-                state["domain_brand_name"] = merged.get("domain_brand_name")
-                state["brand_source"] = "explicit_input" if explicit_inputs else "brand_discovery"
-                state["brand_context"] = self._sanitize_brand_context("Fact sheet", state["brand_name"], state.get("primary_keyword", ""))
+            if "logo_path" in brand_assets:
+                state["logo_image_path"] = brand_assets["logo_path"]
+            if "brand_colors" in brand_assets:
+                state["brand_colors"] = brand_assets["brand_colors"]
+
+            # Handle both nested and flat dictionaries
+            brand_data = brand_assets.get("brand_data") or brand_assets
+            
+            # Map brand_name fallback for display/official
+            display_name = brand_data.get("display_brand_name") or brand_data.get("brand_name")
+            official_name = brand_data.get("official_brand_name") or brand_data.get("brand_name")
+            aliases = brand_data.get("brand_aliases") or []
+            domain_name = brand_data.get("domain_brand_name")
+
+            explicit_inputs = self._extract_explicit_brand_inputs(state)
+            merged = self._canonicalize_brand_name(
+                {
+                    "explicit_input": explicit_inputs,
+                    "visible": [display_name] if display_name else [],
+                    "metadata": [official_name] if official_name else [],
+                    "mentions": aliases if isinstance(aliases, list) else [],
+                    "domain": [domain_name] if domain_name else [],
+                },
+                brand_url,
+                state.get("primary_keyword", ""),
+            )
+            state["display_brand_name"] = merged.get("display_brand_name")
+            state["official_brand_name"] = merged.get("official_brand_name")
+            state["brand_name"] = state["display_brand_name"]
+            state["brand_aliases"] = merged.get("brand_aliases", [])
+            state["domain_brand_name"] = merged.get("domain_brand_name")
+            state["brand_source"] = "explicit_input" if explicit_inputs else "brand_discovery"
+            state["brand_context"] = self._sanitize_brand_context("Fact sheet", state["brand_name"], state.get("primary_keyword", ""))
+        
+        state["last_step_prompt"] = f"Brand URL: {brand_url} | Primary Keyword: {state.get('primary_keyword')}"
+        state["last_step_response"] = (
+            f"Brand Name: {state.get('brand_name')}\n"
+            f"Official Brand Name: {state.get('official_brand_name')}\n"
+            f"Source: {state.get('brand_source')}\n"
+            f"Colors: {state.get('brand_colors')}\n"
+            f"Context: {state.get('brand_context')}"
+        )
         return self._sync_brand_state_from_sources(state)
 
     async def run_brand_discovery_light(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -587,6 +608,13 @@ class ResearchService:
             state["brand_name"] = domain_brand
             state["display_brand_name"] = domain_brand
             state["brand_context"] = self._sanitize_brand_context("", domain_brand, state.get("primary_keyword", ""))
+            
+            state["last_step_prompt"] = f"Brand URL: {brand_url} | Primary Keyword: {state.get('primary_keyword')}"
+            state["last_step_response"] = (
+                f"Brand Name: {state.get('brand_name')}\n"
+                f"Source: brand_discovery_light\n"
+                f"Context: {state.get('brand_context')}"
+            )
         return state
 
     async def run_web_research(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -911,4 +939,89 @@ class ResearchService:
         return brief
 
     async def _discover_logo_and_colors(self, url: str, state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extracts company logo URL and dominant colors from a website."""
+        try:
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+            r = requests.get(url, timeout=10, headers=headers)
+            if r.status_code != 200: return None
+            soup = BeautifulSoup(r.text, "html.parser")
+            logo_url = None
+            discovered_brand_name = None
+
+            # Brand Name Extraction
+            og_site = soup.find("meta", property="og:site_name")
+            if og_site: discovered_brand_name = og_site.get("content")
+            if not discovered_brand_name:
+                title_tag = soup.find("title")
+                if title_tag: 
+                    title_text = title_tag.get_text()
+                    parts = [p.strip() for p in re.split(r'\s*[|–—\-]\s*', title_text) if p.strip()]
+                    if parts:
+                        non_generic_parts = [p for p in parts if not self._is_generic_brand_descriptor(p, state.get("primary_keyword", ""))]
+                        candidate_parts = non_generic_parts if non_generic_parts else parts
+                        candidate_parts.sort(key=len)
+                        discovered_brand_name = candidate_parts[0]
+            if not discovered_brand_name:
+                discovered_brand_name = LinkManager.extract_brand_name(url)
+
+            # Logo Extraction (simplified version of the multi-step search)
+            logo_candidates = soup.find_all("img", alt=lambda x: x and 'logo' in x.lower())
+            if not logo_candidates:
+                 logo_candidates = soup.find_all("img", class_=lambda x: x and 'logo' in x.lower())
+            
+            if logo_candidates:
+                logo_url = urljoin(url, logo_candidates[0].get("src"))
+            else:
+                og_image = soup.find("meta", property="og:image")
+                if og_image: logo_url = og_image.get("content")
+
+            if not logo_url:
+                domain = urlparse(url).netloc
+                logo_url = f"https://www.google.com/s2/favicons?sz=128&domain={domain}"
+
+            if not state.get("generate_images", False):
+                return {"logo_path": None, "brand_colors": [], "brand_name": discovered_brand_name, "is_svg": False}
+
+            # Download and Save
+            lr = requests.get(logo_url, timeout=5, headers=headers)
+            if lr.status_code == 200:
+                img_data = lr.content
+                is_svg = logo_url.lower().endswith(".svg") or b"<svg" in img_data[:100].lower()
+                output_dir = state.get("output_dir", self.work_dir)
+                ext = ".svg" if is_svg else ".png"
+                logo_local_path = os.path.join(output_dir, "assets/images", f"brand_logo_{uuid.uuid4().hex[:8]}{ext}")
+                os.makedirs(os.path.dirname(logo_local_path), exist_ok=True)
+                with open(logo_local_path, "wb") as f: f.write(img_data)
+                
+                colors = self._extract_colors_from_image(logo_local_path)
+                return {"logo_path": logo_local_path, "brand_colors": colors, "brand_name": discovered_brand_name, "is_svg": is_svg}
+
+        except Exception as e:
+            logger.warning(f"Logo discovery failed: {e}")
         return None
+
+    def _extract_colors_from_image(self, image_path: str) -> List[str]:
+        """Helper to extract dominant colors from a local image file."""
+        if not image_path or not os.path.exists(image_path): return []
+        try:
+            if image_path.lower().endswith(".svg"):
+                with open(image_path, "r", encoding="utf-8", errors="ignore") as f:
+                    hex_colors = re.findall(r'#(?:[0-9a-fA-F]{3}){1,2}', f.read())
+                    meaningful = [c.lower() for c in hex_colors if c.lower() not in ['#ffffff', '#000000', '#fff', '#000']]
+                    rgb = []
+                    for hc in meaningful[:3]:
+                        hc = hc.lstrip('#')
+                        if len(hc) == 3: hc = ''.join([c*2 for c in hc])
+                        rgb.append(f"rgb({int(hc[0:2], 16)},{int(hc[2:4], 16)},{int(hc[4:6], 16)})")
+                    return rgb
+            with Image.open(image_path) as img:
+                img_small = img.convert("RGBA").resize((50, 50))
+                colors = img_small.getcolors(2500)
+                filtered = []
+                if colors:
+                    for count, color in sorted(colors, reverse=True):
+                        if color[3] < 50 or sum(color[:3]) > 720 or sum(color[:3]) < 40: continue
+                        filtered.append(f"rgb({color[0]},{color[1]},{color[2]})")
+                        if len(filtered) >= 3: break
+                return filtered
+        except: return []

@@ -2306,22 +2306,58 @@ class AsyncWorkflowController:
             section["primary_keyword"] = primary_keyword
             section["article_language"] = article_language
             section.setdefault("assigned_keywords", keywords[:3] if keywords else [primary_keyword])
-            section["section_contract"] = self._build_section_contract(section, outline, idx, state)
-            self._enrich_section_contract(section, outline, idx, state)
+            safe_outline.append(section)
+
+        # Assign requires_table based on priority, respecting the 2-table cap
+        tables_assigned = 0
+        
+        # Priority 1: Comparison sections
+        for section in safe_outline:
+            if tables_assigned >= 2:
+                break
+            tax_axis = self._infer_taxonomy_axis(section)
+            sec_type = (section.get("section_type") or "").lower()
+            if sec_type == "comparison" or tax_axis == "comparison":
+                section["requires_table"] = True
+                tables_assigned += 1
+                logger.info(f"[TableAssigner] Assigned table to comparison section: {section.get('heading_text')}")
+                
+        # Priority 2: Pricing/Proof sections
+        for section in safe_outline:
+            if tables_assigned >= 2:
+                break
+            if section.get("requires_table"):
+                continue
+            tax_axis = self._infer_taxonomy_axis(section)
+            sec_type = (section.get("section_type") or "").lower()
+            if sec_type in {"pricing", "proof"} or tax_axis == "pricing":
+                if sec_type not in {"introduction", "conclusion", "faq"}:
+                    section["requires_table"] = True
+                    tables_assigned += 1
+                    logger.info(f"[TableAssigner] Assigned table to pricing section: {section.get('heading_text')}")
+                    
+        # Priority 3: Explicit visual_format == "table"
+        for section in safe_outline:
+            if tables_assigned >= 2:
+                break
+            if section.get("requires_table"):
+                continue
+            sec_type = (section.get("section_type") or "").lower()
+            if section.get("visual_format") == "table":
+                if sec_type not in {"introduction", "conclusion", "faq"}:
+                    section["requires_table"] = True
+                    tables_assigned += 1
+                    logger.info(f"[TableAssigner] Assigned table based on visual_format to section: {section.get('heading_text')}")
+
+        # Now, build and enrich the section contracts with the correct requires_table value already present
+        for idx, section in enumerate(safe_outline):
+            section["section_contract"] = self._build_section_contract(section, safe_outline, idx, state)
+            self._enrich_section_contract(section, safe_outline, idx, state)
             section["must_not_repeat"] = list(dict.fromkeys(
                 (section.get("must_not_repeat") or []) + section["section_contract"]["must_not_repeat"]
             ))
-            if (
-                section["section_contract"]["format"] in {"table", "mixed"}
-                and (
-                    section.get("section_type") == "comparison"
-                    or self._infer_taxonomy_axis(section) == "comparison"
-                )
-            ):
-                section.setdefault("requires_table", True)
             if section["section_contract"]["format"] == "bullets":
                 section["requires_list"] = True
-            safe_outline.append(section)
 
         semantic_assets = (
             seo_intelligence.get("market_analysis", {})

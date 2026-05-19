@@ -1,0 +1,62 @@
+Line 57: class StructureError(Exception):
+Line 68: class AsyncExecutor:
+Line 70: def __init__(self, observer=None):
+Line 73: async def run_step(self, step_name: str, func: Callable[[Dict[str, Any]], Any], state: Dict[str, Any], retries: int = 0) -> Dict[str, Any]:
+Line 158: class AsyncWorkflowController:
+Line 161: def __init__(self, work_dir: str = ".", ai_client: Optional[BaseAIClient] = None):
+Line 235: async def run_workflow(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 371: async def _step_0_init(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 493: def is_junk_init(url_str):
+Line 541: async def _step_brand_discovery_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 554: def _extract_observed_pricing_signals(self, state: Dict[str, Any]) -> List[str]:
+Line 572: def _normalise_price_context(text: str) -> str:
+Line 581: def _add_text(value: Any, output: List[str]) -> None:
+Line 591: def _result_text_blobs(result: Any) -> List[str]:
+Line 672: async def _step_web_research_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 676: async def _step_serp_analysis_router(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 685: async def _step_1_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 698: def is_junk(url):
+Line 1320: async def _run_controlled_heading_fix(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 1515: def _subheading_text(self, item: Any) -> str:
+Line 1520: def _parse_approved_outline_payload(self, payload: Any) -> tuple[str, List[Dict[str, Any]]]:
+Line 1572: def _infer_contract_format(self, section: Dict[str, Any]) -> str:
+Line 1591: def _decompose_heading_promises(self, heading: str, state: Dict[str, Any]) -> List[str]:
+Line 1625: def _infer_brand_policy(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+Line 1648: def _infer_location_policy(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+Line 1669: def _build_section_contract(
+Line 1711: def _infer_taxonomy_axis(self, section: Dict[str, Any]) -> str:
+Line 1744: def _collect_observed_data_mentions(self, section: Dict[str, Any], state: Dict[str, Any]) -> List[str]:
+Line 1764: def add_value(value: Any) -> None:
+Line 1813: def _enrichment_text(self, state: Dict[str, Any], arabic: str, english: str) -> str:
+Line 1820: def _detect_active_topic_packs(self, state: Dict[str, Any]) -> List[str]:
+Line 1827: def _normalise_signal(value: Any) -> str:
+Line 1837: def _collect_text(value: Any) -> List[str]:
+Line 1852: def _has_rental_signal(value: Any) -> bool:
+Line 1893: def _topic_pack_details(self, pack: str, taxonomy_axis: str, state: Dict[str, Any]) -> List[str]:
+Line 1933: def _section_contract_details(self, taxonomy_axis: str, state: Dict[str, Any]) -> List[str]:
+Line 1984: def _plan_taxonomy_axis(
+Line 2096: def _normalize_text(t: str) -> str:
+Line 2147: def _enrich_section_contract(
+Line 2248: async def _step_load_approved_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 2264: def _prepare_outline_for_content(
+Line 2385: def _build_previous_sections_summary(self, state: Dict[str, Any]) -> str:
+Line 2402: def _enforce_section_heading_lock(self, content: str, section: Dict[str, Any]) -> str:
+Line 2437: async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 2563: def has_cta_local(text):
+Line 2630: async def _write_single_section(
+Line 3175: async def _step_4_generate_image_prompts(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 3216: async def _step_4_1_generate_master_frame(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 3287: async def _step_4_5_download_images(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 3328: async def _step_5_assembly(self, state):
+Line 3386: async def _step_5_1_final_humanizer(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 3505: async def _step_6_image_inserter(self, state):
+Line 3520: async def _step_7_meta_schema(self, state):
+Line 3593: async def _step_8_article_validation(self, state):
+Line 3769: async def _step_render_html(self, state):
+Line 3800: def preflight_system_audit(self):
+Line 3839: def _build_execution_plan(self, section: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
+Line 3874: def _build_content_stage_markdown(self, state: Dict[str, Any], title: str) -> str:
+Line 3921: def _assemble_final_output(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 4082: async def _step_3_global_coherence_pass(self, state: Dict[str, Any]) -> Dict[str, Any]:
+Line 4203: def _apply_heading_only_detox(
+Line 4321: def _distill_serp_intelligence(

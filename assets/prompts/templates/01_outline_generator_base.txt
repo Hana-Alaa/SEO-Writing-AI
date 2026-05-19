@@ -47,6 +47,7 @@ Your task is to generate a Highly-Readable and Helpful article outline in JSON f
     - **MANDATORY FLOOR**: At least 8-12 sections for standard articles; 15-25 sections ONLY when data density is high. Do NOT add fluff to reach targets.
     - Include Conclusion/FAQ/Tables: {{ include_conclusion | default(True) }} / {{ include_faq | default(True) }} / {{ include_tables | default(True) }}.
     - **TABLE CAP (STRICT)**: You are FORBIDDEN from assigning more than **2 tables** in the entire outline. 
+    - **TABLE FLOOR (STRICT)**: You **MUST** assign at least **1 table** in the outline (preferring the pricing/rates or final comparison sections) to guarantee high visual variety for the reader. 
     - **TABLE PRIORITY**: If the article covers real estate or commercial services, the section covering **Payment Plans / Installments** MUST be prioritized for a table format. If the cap is reached, displace a less critical table (e.g., from features or specs).
     - **HEADING PROMISE MANDATE (CRITICAL)**: Every section MUST fulfill the promise of its heading. If a heading mentions a specific metric (e.g., Meter Price, Down Payment, Area Size, Years), the corresponding section `must_include_details` MUST explicitly require those metrics. You are FORBIDDEN from creating a "Price" heading without requiring numeric price ranges.
 
@@ -247,7 +248,7 @@ Your task is to generate a Highly-Readable and Helpful article outline in JSON f
     - **DYNAMIC EXPANSION**: If the research mentions specific secondary topics (e.g., "Schools nearby" or "Maintenance fees"), first attempt to merge them into an existing step. Generate a dedicated section only if the topic cannot be naturally merged and remains critical for trust, completeness, or rankability.
     - **OPTIONAL SECTION GATE**: Legal, financing/payment, infrastructure, and investment sections are allowed only when clearly justified by the Primary Keyword, SERP/PAA evidence, or the Content Strategy. Otherwise, merge them into a more relevant section or omit them.
     - **SECTION FOCUS RULES**:
-        1. `features` must stay focused on the product itself: layout, size, finishing, amenities, inclusions, or direct buyer-facing specs.
+        1. `features` must stay focused on the product itself: layout, size, finishing, amenities, inclusions, or direct buyer-facing specs. You are STRICTLY FORBIDDEN from describing generic city infrastructure or location advantages (e.g. schools, roads, general city lifestyle) as product features.
         2. `proof` or pricing-oriented validation must stay specific to the product's prices, demand, or market proof, not broad investment framing.
         3. `comparison` must actively help the reader choose between real options such as ready vs under-construction, area differences, or payment-plan differences when relevant.
         4. `process` must focus on the buying journey and next steps. Do not create legal-validation headings unless they are explicitly justified by keyword, SERP/PAA, or strategy.

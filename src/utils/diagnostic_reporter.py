@@ -98,6 +98,10 @@ class DiagnosticReporter:
         if "init" in step.lower():
             checks.append("✅ Init Correct")
         
+        if "brand_discovery" in step.lower():
+            if "Brand Name:" in response: checks.append("🎯 Brand Discovered")
+            else: checks.append("⚠️ No Brand Data")
+
         if "web_research" in step.lower():
             checks.append("🌐 Facts Fetched")
             

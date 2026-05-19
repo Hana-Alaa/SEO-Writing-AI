@@ -1,0 +1,682 @@
+Found 27 occurrences of 'requires_table'.
+
+--- Occurrence 1 at position 346295 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "depth_goal": "حوّل افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل إلى فهم عملي يساعد القارئ على 
+--------------------------------------------------
+
+--- Occurrence 2 at position 355658 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة",
+      "depth_goal": "حوّل شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو 
+--------------------------------------------------
+
+--- Occurrence 3 at position 365209 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: مواصفات الشقق التي تهم المستأجر: من المساحة إلى الخدمات والمرافق",
+      "depth_goal": "حوّل مواصفات الشقق التي تهم المستأجر: من المساحة إلى الخدمات والمرافق إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو ات
+--------------------------------------------------
+
+--- Occurrence 4 at position 375194 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: أفضل مناطق الرياض لاختيار شقة للايجار حسب احتياجك وميزانيتك",
+      "depth_goal": "حوّل أفضل مناطق الرياض لاختيار شقة للايجار حسب احتياجك وميزانيتك إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أ
+--------------------------------------------------
+
+--- Occurrence 5 at position 385343 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: لماذا تعتبر عروض قولدن هوست خياراً موثوقاً لاستئجار الشقق في الرياض؟",
+      "depth_goal": "حوّل لماذا تعتبر عروض قولدن هوست خياراً موثوقاً لاستئجار الشقق في الرياض؟ إلى فهم عملي يساعد القارئ على المقارنة أو الاختي
+--------------------------------------------------
+
+--- Occurrence 6 at position 395422 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية",
+      "depth_goal": "حوّل متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+--------------------------------------------------
+
+--- Occurrence 7 at position 405581 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح",
+      "depth_goal": "حوّل خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "read
+--------------------------------------------------
+
+--- Occurrence 8 at position 415396 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: أسئلة شائعة حول استئجار شقق في الرياض",
+      "depth_goal": "حوّل أسئلة شائعة حول استئجار شقق في الرياض إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "reader_takeaway": "يفهم القارئ
+--------------------------------------------------
+
+--- Occurrence 9 at position 425075 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "depth_goal": "حوّل الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أ
+--------------------------------------------------
+
+--- Occurrence 10 at position 566855 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "depth_goal": "حوّل افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل إلى فهم عملي يساعد القارئ على 
+--------------------------------------------------
+
+--- Occurrence 11 at position 576446 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة",
+      "depth_goal": "حوّل شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو 
+--------------------------------------------------
+
+--- Occurrence 12 at position 586095 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: مواصفات الشقق التي تهم المستأجر: من المساحة إلى الخدمات والمرافق",
+      "depth_goal": "حوّل مواصفات الشقق التي تهم المستأجر: من المساحة إلى الخدمات والمرافق إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو ات
+--------------------------------------------------
+
+--- Occurrence 13 at position 596178 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: أفضل مناطق الرياض لاختيار شقة للايجار حسب احتياجك وميزانيتك",
+      "depth_goal": "حوّل أفضل مناطق الرياض لاختيار شقة للايجار حسب احتياجك وميزانيتك إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أ
+--------------------------------------------------
+
+--- Occurrence 14 at position 606425 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: لماذا تعتبر عروض قولدن هوست خياراً موثوقاً لاستئجار الشقق في الرياض؟",
+      "depth_goal": "حوّل لماذا تعتبر عروض قولدن هوست خياراً موثوقاً لاستئجار الشقق في الرياض؟ إلى فهم عملي يساعد القارئ على المقارنة أو الاختي
+--------------------------------------------------
+
+--- Occurrence 15 at position 616602 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية",
+      "depth_goal": "حوّل متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+--------------------------------------------------
+
+--- Occurrence 16 at position 626859 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح",
+      "depth_goal": "حوّل خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "read
+--------------------------------------------------
+
+--- Occurrence 17 at position 636772 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: أسئلة شائعة حول استئجار شقق في الرياض",
+      "depth_goal": "حوّل أسئلة شائعة حول استئجار شقق في الرياض إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "reader_takeaway": "يفهم القارئ
+--------------------------------------------------
+
+--- Occurrence 18 at position 646550 ---
+_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": true,
+      "cta_type": "strong",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "depth_goal": "حوّل الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أ
+--------------------------------------------------
+
+--- Occurrence 19 at position 742013 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "depth_goal": "حوّل افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل إلى فهم عملي يساعد القارئ على 
+--------------------------------------------------
+
+--- Occurrence 20 at position 751604 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة",
+      "depth_goal": "حوّل شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو 
+--------------------------------------------------
+
+--- Occurrence 21 at position 761253 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: مواصفات الشقق التي تهم المستأجر: من المساحة إلى الخدمات والمرافق",
+      "depth_goal": "حوّل مواصفات الشقق التي تهم المستأجر: من المساحة إلى الخدمات والمرافق إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو ات
+--------------------------------------------------
+
+--- Occurrence 22 at position 771336 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: أفضل مناطق الرياض لاختيار شقة للايجار حسب احتياجك وميزانيتك",
+      "depth_goal": "حوّل أفضل مناطق الرياض لاختيار شقة للايجار حسب احتياجك وميزانيتك إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أ
+--------------------------------------------------
+
+--- Occurrence 23 at position 781583 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: لماذا تعتبر عروض قولدن هوست خياراً موثوقاً لاستئجار الشقق في الرياض؟",
+      "depth_goal": "حوّل لماذا تعتبر عروض قولدن هوست خياراً موثوقاً لاستئجار الشقق في الرياض؟ إلى فهم عملي يساعد القارئ على المقارنة أو الاختي
+--------------------------------------------------
+
+--- Occurrence 24 at position 791760 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية",
+      "depth_goal": "حوّل متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+--------------------------------------------------
+
+--- Occurrence 25 at position 802017 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح",
+      "depth_goal": "حوّل خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "read
+--------------------------------------------------
+
+--- Occurrence 26 at position 811930 ---
+t_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: أسئلة شائعة حول استئجار شقق في الرياض",
+      "depth_goal": "حوّل أسئلة شائعة حول استئجار شقق في الرياض إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "reader_takeaway": "يفهم القارئ
+--------------------------------------------------
+
+--- Occurrence 27 at position 821708 ---
+_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": true,
+      "cta_type": "strong",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "depth_goal": "حوّل الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أ
+--------------------------------------------------

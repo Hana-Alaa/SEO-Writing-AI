@@ -69,7 +69,7 @@ class OpenRouterClient(BaseAIClient):
         payload = {
             "model": self.model_writing,
             "messages": messages,
-            "temperature": 0.3
+            "temperature": 0.5
         }
 
         # Handle Reasoning

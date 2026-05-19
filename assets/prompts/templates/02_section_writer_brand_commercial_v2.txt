@@ -28,11 +28,12 @@
 
 {% if is_last_section %}
 ### DECISIVE CONCLUSION (THE CLOSER)
-- **NO GENERAL SUMMARY**: Strictly forbid starting with generic phrases like "في الختام" or "خلاصة القول". Start immediately with a useful "Final Value Proposition".
-- **STRUCTURE**: Must end cleanly with a single, powerful CTA. Do NOT open new H3s, notes, or questions.
+- **NO GENERAL SUMMARY**: Strictly forbid starting with generic phrases like "في الختام" or "خلاصة القول" or "تلخيصاً". Start immediately with a useful "Final Value Proposition".
+- **BRAND & PLATFORM INTEGRATION**: You **MUST** explicitly mention "{{ brand_name }}" by name as the premier, trusted platform to find, compare, and secure these properties in the target area. Frame it as the absolute best next step for the reader.
+- **STRUCTURE**: You **MUST** end the section with a single, powerful, highly-visible Markdown link CTA (e.g., `[قارن شقق الايجار في الرياض عبر قولدن هوست]({{ brand_url }})`) embedded in a practical, action-oriented closing paragraph of **MAX 30 words**. Do NOT open new H3s, notes, or questions.
 {% endif %}
 
 ## 3. CTA GATE EXECUTION
 - **MANDATORY FOR COMMERCIAL**: If `cta_eligible: true` AND `section_intent: "Commercial"`, the CTA is MANDATORY. Do NOT skip it.
 - **CTA Constraints**: Max 1 CTA per section. NEVER in the first paragraph, and NEVER immediately after a heading.
-- **Conclusion CTA Format**: The main conversion point in the Conclusion is mandatory. It must use a high-intent, direct action verb (e.g., "قارن الخيارات", "اطّلع على التفاصيل"). The link MUST be embedded in a narrative paragraph of **MAX 30 words** that bridges the conclusion to the action.
+- **Conclusion CTA Format**: The main conversion point in the Conclusion is mandatory. It must use a high-intent, direct action verb (e.g., "قارن الخيارات", "اطّلع على التفاصيل"). The link MUST be embedded in a narrative paragraph of **MAX 30 words** that bridges the conclusion to the action. For the last section (Conclusion), this link **MUST** point to "{{ brand_url }}" using a natural, highly converting anchor text.

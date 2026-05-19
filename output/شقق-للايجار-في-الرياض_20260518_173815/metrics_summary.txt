@@ -1,0 +1,88 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 0.75 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 50.36 seconds
+  -- Tokens Used: 34,104
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 51.05 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 8.62 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.14 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 2.75 seconds
+  -- Tokens Used: 727
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 727
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 7.68 seconds
+  -- Tokens Used: 4,602
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 7.78 seconds
+  -- Tokens Used: 4,602
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 9.92 seconds
+  -- Tokens Used: 13,729
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: افتتاحية تعريفية تبرز أهمية سهولة إيجاد شقة مناسبة في الرياض
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: شقق للايجار في الرياض: الأنواع المتوفرة وخيارات تناسب جميع الاحتياجات
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أهم المزايا التي تميز الشقق المعروضة للإيجار في الرياض
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا تعتبر الشقق عبر قولدن هوست خيارك الأمثل في الرياض؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسعار الشقق للايجار في الرياض حسب المناطق
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أبرز مناطق الرياض المناسبة لاستئجار شقة حسب احتياجك
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات استئجار شقة في الرياض بمساعدة قولدن هوست
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول استئجار الشقق في الرياض
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ الآن: احجز شقتك المثالية في الرياض مع قولدن هوست
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 98.05 seconds
+  -- Tokens Used: 13,729
+--------------------------------------------------

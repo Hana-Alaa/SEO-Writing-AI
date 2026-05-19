@@ -1,0 +1,134 @@
+-------------------- RESPONSE --------------------
+{
+  "title": "شقق للايجار في الرياض: أفضل الخيارات والعروض مع قولدن هوست",
+  "outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تعريفية تربط القارئ بحاجة البحث عن شقق للايجار في الرياض وتوضح ما سيجده في المقال",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_02",
+      "heading_text": "شقق للايجار في الرياض: أنواع الخيارات المتوفرة ومزايا كل نوع",
+      "heading_level": "H2",
+      "section_type": "offer",
+      "coverage_role": "offer_clarity",
+      "contains_exact_primary_keyword": true,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "table",
+      "subheadings": [
+        "شقق مفروشة للايجار: الراحة والجاهزية للسكن الفوري",
+        "شقق غير مفروشة للايجار: مرونة الترتيب والتأثيث حسب رغبتك",
+        "شقق استوديو للايجار: حل عملي للأفراد والطلاب",
+        "شقق متعددة الغرف: خيارات مناسبة للعائلات"
+      ]
+    },
+    {
+      "section_id": "sec_03",
+      "heading_text": "كيف تقارن بين الشقق المتاحة في الرياض وتحدد الأنسب لاحتياجك وميزانيتك؟",
+      "heading_level": "H2",
+      "section_type": "features",
+      "coverage_role": "features_or_included",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_04",
+      "heading_text": "أفضل مناطق الرياض لاختيار شقة للايجار حسب نمط حياتك وميزانيتك",
+      "heading_level": "H2",
+      "section_type": "location",
+      "coverage_role": "offer_clarity",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "table",
+      "subheadings": [
+        "شقق للايجار في شمال الرياض: للعائلات والمجمعات الحديثة",
+        "شقق للايجار في شرق الرياض: خيارات اقتصادية ومساحات أكبر",
+        "شقق للايجار في غرب الرياض: قرب الخدمات والمراكز التجارية",
+        "شقق للايجار في جنوب الرياض: أسعار مناسبة وسهولة الوصول",
+        "شقق للايجار في وسط الرياض: للمحترفين وقرب الأعمال"
+      ]
+    },
+    {
+      "section_id": "sec_05",
+      "heading_text": "أسعار الشقق للايجار في الرياض: متوسط الأسعار حسب نوع الشقة والمنطقة",
+      "heading_level": "H2",
+      "section_type": "proof",
+      "coverage_role": "proof",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "table",
+      "subheadings": [
+        "متوسط أسعار الشقق المفروشة في الرياض",
+        "متوسط أسعار الشقق غير المفروشة في الرياض",
+        "متوسط أسعار شقق الاستوديو في الرياض",
+        "متوسط أسعار الشقق متعددة الغرف في الرياض"
+      ]
+    },
+    {
+      "section_id": "sec_06",
+      "heading_text": "ما الذي يميز تجربة البحث والاستئجار مع قولدن هوست؟",
+      "heading_level": "H2",
+      "section_type": "differentiators",
+      "coverage_role": "differentiators",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": false,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_07",
+      "heading_text": "خطوات استئجار شقة في الرياض عبر قولدن هوست: من البحث حتى الاستلام",
+      "heading_level": "H2",
+      "section_type": "process_or_how",
+      "coverage_role": "process_or_how",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_08",
+      "heading_text": "أسئلة شائعة حول استئجار الشقق في الرياض",
+      "heading_level": "H2",
+      "section_type": "faq",
+      "coverage_role": "faq",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "bulleted_list",
+      "subheadings": [
+        "ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟",
+        "كيف يمكنني معرفة متوسط أسعار الشقق في الأحياء المختلفة؟",
+        "هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟",
+        "ما هي أفضل مناطق الرياض للعائلات أو الأفراد؟",
+        "هل يمكن زيارة الشقة قبل توقيع العقد؟",
+        "ما طرق الدفع المتاحة عند الاستئجار عبر قولدن هوست؟"
+      ]
+    },
+    {
+      "section_id": "sec_09",
+      "heading_text": "كيف تبدأ بخطوة واثقة لاختيار شقتك المثالية في الرياض مع قولدن هوست",
+      "heading_level": "H2",
+      "section_type": "conclusion",
+      "coverage_role": "conclusion",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": false,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    }
+  ]
+}

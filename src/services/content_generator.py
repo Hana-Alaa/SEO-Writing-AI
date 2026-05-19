@@ -417,19 +417,12 @@ class OutlineGenerator:
 
         current_year = str(datetime.now().year)
 
-        # Heading-Only Mode Isolation: Use specialized lightweight templates per content type
-        if heading_only_mode:
-            template_name = self.heading_only_templates.get(
-                content_type,
-                self.heading_only_fallback
-            )
-        else:
-            template_name = self.templates.get(
-                content_type,
-                self.templates["informational"]
-            )
+        # Stage 1: ALWAYS generate a high-converting heading flow using heading-only templates
+        template_name = self.heading_only_templates.get(
+            content_type,
+            self.heading_only_fallback
+        )
         template = self.env.get_template(template_name)
-
 
         final_blueprint = {
             "tonal_dna": {"persona": "Professional", "audience_level": "General", "forbidden_jargon": [], "sentence_rhythm": "Balanced"},
@@ -466,7 +459,6 @@ class OutlineGenerator:
             market_angle=market_angle,
             current_year=current_year,
             prohibited_competitors=prohibited_competitors or [],
-            # Pass advanced settings to template
             article_size=article_size,
             include_conclusion=include_conclusion,
             include_faq=include_faq,
@@ -480,11 +472,13 @@ class OutlineGenerator:
             style_blueprint=final_blueprint,
             brand_advantages=brand_advantages or [],
             writing_blueprint=writing_blueprint or "",
-            heading_only_mode=heading_only_mode,
+            heading_only_mode=True,  # ALWAYS True for Stage 1 flow
             head_entity=head_entity,
             entity_phrase=entity_phrase,
             service_phrase=service_phrase
         )
+        logger.info("\n=============================================================\n")
+        logger.info("STAGE 1: GENERATING HIGH-CONVERTING HEADING FLOW")
         logger.info("\n=============================================================\n")
 
         # response = await self.ai_client.send(prompt)
@@ -493,46 +487,41 @@ class OutlineGenerator:
         metadata = res["metadata"]
 
         if not response:
-            logger.error("Outline AI returned empty response")
-            # return []
+            logger.error("Stage 1 Outline AI returned empty response")
             return {
                 "outline": [],
                 "keyword_expansion": {},
                 "metadata": metadata
             }
 
-
         data = recover_json(response)
 
         if not data:
-            logger.error(f"CRITICAL: Failed to parse AI response as JSON for outline. Step: outline. Raw response (first 200 chars):\n{response[:200]}")
-            raise ContentGeneratorError(f"AI returned invalid JSON structure. Starting with: {response[:50]}")
+            logger.error(f"CRITICAL: Failed to parse AI response as JSON for outline Stage 1. Raw response (first 200 chars):\n{response[:200]}")
+            raise ContentGeneratorError(f"AI returned invalid JSON structure for Stage 1. Starting with: {response[:50]}")
 
-        # AUTO-RECOVERY: If AI returns a list, assume it's the outline itself.
         if isinstance(data, list):
             logger.warning("AI returned a list instead of a dictionary. Auto-wrapping as 'outline'.")
             data = {"outline": data}
 
         if not isinstance(data, dict):
             logger.error(f"CRITICAL: AI returned {type(data)} instead of dict. Raw response:\n{response}")
-            raise ContentGeneratorError("Invalid structure returned by AI (expected dictionary).")
+            raise ContentGeneratorError("Invalid structure returned by AI for Stage 1.")
 
-        outline = data.get("outline")
+        outline = data.get("outline", [])
         keyword_expansion = data.get("keyword_expansion", {})
         semantic_entities = data.get("semantic_entities", [])
         semantic_concepts = data.get("semantic_concepts", [])
         intent_clusters = data.get("intent_clusters", [])
 
         if not outline or not isinstance(outline, list):
-            logger.error(f"Outline missing or invalid in data: {list(data.keys())}")
-            raise ContentGeneratorError("Invalid outline structure returned by AI (missing or non-list 'outline' field).")
+            logger.error(f"Stage 1 Outline missing or invalid in data: {list(data.keys())}")
+            raise ContentGeneratorError("Invalid Stage 1 outline structure returned by AI.")
 
-
-        if not self._validate_outline_schema(outline, heading_only_mode=heading_only_mode):
-            logger.error("Outline schema validation failed.")
-            raise ContentGeneratorError("Invalid outline schema returned by AI (missing required section keys).")
+        if not self._validate_outline_schema(outline, heading_only_mode=True):
+            logger.error("Stage 1 outline schema validation failed.")
+            raise ContentGeneratorError("Invalid Stage 1 outline schema returned by AI.")
         
-        # AUTO-NORMALIZE: Ensure all sections have necessary fields for the orchestrator, even in review mode
         for idx, section in enumerate(outline):
             self._normalize_section(section, idx, content_type, content_strategy, area)
 
@@ -541,45 +530,123 @@ class OutlineGenerator:
             for idx, section in enumerate(outline):
                 self._normalize_section(section, idx, content_type, content_strategy, area)
 
-        total_min_words = sum(
-            section.get("estimated_word_count_min", 0)
-            for section in outline
+        # Stage 1 Complete! If heading_only_mode is True, stop and return here.
+        if heading_only_mode:
+            if not isinstance(keyword_expansion, dict):
+                keyword_expansion = {}
+            keyword_expansion["primary"] = keywords[0] if keywords else title
+            keyword_expansion.setdefault("core", keywords)
+            keyword_expansion.setdefault("lsi", [])
+            keyword_expansion.setdefault("semantic", [])
+            keyword_expansion.setdefault("paa", [])
+
+            return {
+                "outline": outline,
+                "keyword_expansion": keyword_expansion,
+                "semantic_entities": semantic_entities,
+                "semantic_concepts": semantic_concepts,
+                "intent_clusters": intent_clusters,
+                "metadata": metadata
+            }
+
+        # STAGE 2: ENRICH OUTLINE WITH SEO DIRECTIVES & CONTRACTS
+        logger.info("\n=============================================================\n")
+        logger.info("STAGE 2: ENRICHING HEADINGS WITH SEO DIRECTIVES & CONTRACTS")
+        logger.info("\n=============================================================\n")
+
+        enricher_template = self.env.get_template("01_outline_enricher.txt")
+        enricher_prompt = enricher_template.render(
+            title=title,
+            keywords=keywords,
+            primary_keyword=primary_keyword,
+            urls=urls,
+            article_language=article_language,
+            area=area,
+            brand_name=brand_name,
+            brand_url=brand_url,
+            brand_advantages=brand_advantages or [],
+            brand_context=brand_context,
+            prohibited_competitors=prohibited_competitors or [],
+            content_strategy=content_strategy,
+            seo_intelligence=seo_intelligence,
+            heading_outline=outline
         )
 
-        # if total_min_words < 1200:
-        #     raise ContentGeneratorError(
-        #         f"Total estimated word count too low: {total_min_words}"
-        #     )
+        res2 = await self.ai_client.send(enricher_prompt, step="outline_enrichment")
+        response2 = res2["content"]
+        metadata2 = res2["metadata"]
 
-        if not outline or not isinstance(outline, list) or not self._validate_outline_schema(outline, heading_only_mode=heading_only_mode):
-            raise ContentGeneratorError("Invalid outline schema returned by AI.")
+        if not response2:
+            logger.error("Stage 2 Outline Enricher returned empty response")
+            raise ContentGeneratorError("Stage 2 enrichment failed: Empty response.")
 
-        # Normalize sections so defaults and strategic flags (e.g. requires_primary_keyword)
-        # are applied consistently before downstream consumers use the outline.
-        for idx, section in enumerate(outline):
-            try:
-                self._normalize_section(section, idx, content_type, content_strategy, area)
-            except Exception:
-                # Be tolerant: if normalization fails for a section, continue and log.
-                logger.exception(f"Failed to normalize section at index {idx}")
+        data2 = recover_json(response2)
+        if not data2 or not isinstance(data2, dict) or "outline" not in data2:
+            logger.error(f"CRITICAL: Failed to parse Stage 2 enriched outline JSON. Raw response (first 200 chars):\n{response2[:200]}")
+            raise ContentGeneratorError("Stage 2 enrichment returned invalid JSON structure.")
 
-        if not isinstance(keyword_expansion, dict):
-            keyword_expansion = {}
+        enriched_outline = data2.get("outline", [])
+        if not enriched_outline or not isinstance(enriched_outline, list):
+            logger.error("Enriched outline is not a valid list.")
+            raise ContentGeneratorError("Enriched outline missing or invalid.")
 
-        keyword_expansion["primary"] = keywords[0] if keywords else title
-        keyword_expansion.setdefault("core", keywords)
-        keyword_expansion.setdefault("lsi", [])
-        keyword_expansion.setdefault("semantic", [])
-        keyword_expansion.setdefault("paa", [])
+        # Defensive Alignment: Ensure exact match of headings and ordering from Stage 1
+        if len(enriched_outline) != len(outline):
+            logger.warning(f"Stage 2 generated {len(enriched_outline)} headings, but Stage 1 had {len(outline)}. Aligning to Stage 1 headings.")
+            aligned_outline = []
+            for idx, orig_sec in enumerate(outline):
+                if idx < len(enriched_outline):
+                    enriched_sec = enriched_outline[idx]
+                    orig_sec.update({k: v for k, v in enriched_sec.items() if k not in ["heading_text", "heading_level", "section_id", "section_type"]})
+                aligned_outline.append(orig_sec)
+            enriched_outline = aligned_outline
+        else:
+            # Force overlay structural variables from Stage 1 to guarantee 100% heading/type matching
+            for idx, orig_sec in enumerate(outline):
+                enriched_sec = enriched_outline[idx]
+                enriched_sec["heading_text"] = orig_sec["heading_text"]
+                enriched_sec["heading_level"] = orig_sec["heading_level"]
+                enriched_sec["section_type"] = orig_sec["section_type"]
+                enriched_sec["section_id"] = orig_sec["section_id"]
+                # Also do subheadings alignment
+                orig_subs = orig_sec.get("subheadings", [])
+                enr_subs = enriched_sec.get("subheadings", [])
+                if orig_subs and enr_subs and len(orig_subs) == len(enr_subs):
+                    for s_idx, orig_sub in enumerate(orig_subs):
+                        enr_subs[s_idx]["heading_text"] = orig_sub["heading_text"]
+                        enr_subs[s_idx]["heading_level"] = orig_sub.get("heading_level", "H3")
 
+        # Validate fully enriched schema
+        if not self._validate_outline_schema(enriched_outline, heading_only_mode=False):
+            logger.error("Enriched outline schema validation failed.")
+            raise ContentGeneratorError("Invalid enriched detailed outline schema.")
+
+        # Normalize all enriched sections
+        for idx, section in enumerate(enriched_outline):
+            self._normalize_section(section, idx, content_type, content_strategy, area)
+
+        keyword_expansion2 = data2.get("keyword_expansion", {})
+        if not isinstance(keyword_expansion2, dict):
+            keyword_expansion2 = {}
+
+        keyword_expansion2["primary"] = keywords[0] if keywords else title
+        keyword_expansion2.setdefault("core", keywords)
+        keyword_expansion2.setdefault("lsi", [])
+        keyword_expansion2.setdefault("semantic", [])
+        keyword_expansion2.setdefault("paa", [])
+
+        # Merge metadata logs
+        merged_metadata = dict(metadata2)
+        merged_metadata["stage1_tokens"] = metadata.get("tokens", {})
+        merged_metadata["stage1_duration"] = metadata.get("duration", 0)
 
         return {
-            "outline": outline,
-            "keyword_expansion": keyword_expansion,
-            "semantic_entities": semantic_entities,
-            "semantic_concepts": semantic_concepts,
-            "intent_clusters": intent_clusters,
-            "metadata": metadata
+            "outline": enriched_outline,
+            "keyword_expansion": keyword_expansion2,
+            "semantic_entities": data2.get("semantic_entities", []),
+            "semantic_concepts": data2.get("semantic_concepts", []),
+            "intent_clusters": data2.get("intent_clusters", []),
+            "metadata": merged_metadata
         }
 
     def _repair_heading_only_informational_outline(
@@ -1099,7 +1166,8 @@ class SectionWriter:
             "brand_advantages": market_insights.get("brand_advantages", []),
             "writing_guide": market_insights.get("writing_guide", ""),
             "differentiation_strategy": market_insights.get("differentiation_strategy", []),
-            "structural_patterns": market_insights.get("structural_patterns", [])
+            "structural_patterns": market_insights.get("structural_patterns", []),
+            "serp_raw": seo_intelligence.get("serp_raw", {})
         }
         
         # Provide defaults for section fields

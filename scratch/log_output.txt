@@ -1,0 +1,812 @@
+Found 12 occurrences of 'sec_09'.
+
+--- Occurrence 1 at position 424099 ---
+ة أو الاختيار أو اتخاذ خطوة أوضح.",
+        "practical_decision_value": "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+        "taxonomy_axis": "faq",
+        "preferred_axis": "faq",
+        "forbidden_taxonomy_axis": "",
+        "observed_data_mentions": [
+          "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر",
+          "شقق مفروشة للايجار في الرياض",
+          "شقق 1 غرفة نوم للايجار في الرياض",
+          "شقق 3 غرفة نوم للايجار في الرياض",
+          "شقق 2 غرفة نوم للايجار في الرياض",
+          "بيوت و فلل للايجار في الرياض"
+        ],
+        "must_include_details": [
+          "أجب عن كل سؤال مباشرة قبل أي تفصيل إضافي.",
+          "اجعل الإجابات قصيرة ومفيدة وغير مكررة للمتن السابق."
+        ]
+      }
+    },
+    {
+      "section_id": "sec_09",
+      "heading_text": "الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "heading_level": "H2",
+      "section_type": "conclusion",
+      "coverage_role": "conclusion",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": [],
+      "decision_layer": "Market Reality",
+      "sales_intensity": "medium",
+      "content_goal": "",
+      "assigned_keywords": [
+        "شقق للايجار في الرياض"
+      ],
+      "content_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": false,
+      "cta_type": "none",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "depth_goal": "حوّل الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "reader_takeaway": "يفهم القارئ أهم ما يجب معرفته عن الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست دون تكرار أو تعميم.",
+      "must_include_details": [
+        "لخّص القرار أو الفائدة النهائية دون إعادة تفاصيل السكاشن.",
+        "اختم بتوجيه عملي واضح يناسب نية المقال."
+      ],
+      "must_not_repeat": [
+        "خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح",
+        "أسئلة شائعة حول استئجار شقق في الرياض",
+        "ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟",
+        "كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟",
+        "هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟",
+        "ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟",
+        "هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟",
+        "ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟"
+      ],
+      "practical_decision_value": "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+      "taxonomy_axis": "conclusion",
+      "preferred_axis": "conclusion",
+      "forbidden_taxonomy_axis": "",
+      "observed_data_mentions": [
+        "شقق للايجار في الرياض - 419 شق
+--------------------------------------------------
+
+--- Occurrence 2 at position 487666 ---
+text\": \"أسئلة شائعة حول استئجار شقق في الرياض\",\n      \"heading_level\": \"H2\",\n      \"section_type\": \"faq\",\n      \"coverage_role\": \"faq\",\n      \"contains_exact_primary_keyword\": false,\n      \"requires_primary_keyword\": true,\n      \"section_intent\": \"informational\",\n      \"visual_format\": \"bulleted_list\",\n      \"subheadings\": [\n        \"ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟\",\n        \"كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟\",\n        \"هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟\",\n        \"ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟\",\n        \"هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟\",\n        \"ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟\"\n      ]\n    },\n    {\n      \"section_id\": \"sec_09\",\n      \"heading_text\": \"الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست\",\n      \"heading_level\": \"H2\",\n      \"section_type\": \"conclusion\",\n      \"coverage_role\": \"conclusion\",\n      \"contains_exact_primary_keyword\": false,\n      \"requires_primary_keyword\": true,\n      \"section_intent\": \"commercial\",\n      \"visual_format\": \"compact_narrative\",\n      \"subheadings\": []\n    }\n  ]\n}",
+  "serp_data": {
+    "top_results": [
+      {
+        "title": "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر السعودية",
+        "url": "https://www.propertyfinder.sa/ar/%D9%84%D9%84%D8%A7%D9%8A%D8%AC%D8%A7%D8%B1/%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6/%D8%B4%D9%82%D9%82-%D9%84%D9%84%D8%A7%D9%8A%D8%AC%D8%A7%D8%B1.html",
+        "meta_title": "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر السعودية",
+        "meta_description": "",
+        "estimated_word_count": 0,
+        "headings": {
+          "h1": "شقق للايجار في الرياض",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        "has_lists": true,
+        "has_images": true,
+        "has_charts": false,
+        "cta_style": "soft commercial",
+        "word_count_data_missing": true,
+        "avg_word_count_reliable": false
+      },
+      {
+        "title": "شقق للإيجار في شمال الرياض | عقار ستي",
+        "url": "https://www.aqarcity.net/properties/distcat/13/rent/10632",
+        "meta_title": "شقق للإيجار في شمال الرياض | عقار ستي",
+        "meta_description": "",
+        "estimated_word_count": 0,
+        "headings": {
+          "h1": "شقق للإيجار في شمال الرياض",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        "has_lists": true,
+        "has_images": true,
+        "has_charts": false,
+        "cta_style": "soft commercial",
+        "word_count_data_missing": true,
+        "avg_word_count_reliable": false
+      },
+      {
+        "title": "شقق للايجار في العارض في حي العارض, الرياض, السعودية | أودع العقارية",
+        "url": "https://www.oda.com.sa/projects/300775",
+        "meta_title": "شقق للايجار في العارض في حي العارض, الرياض, السعودية | أودع العقارية",
+        "meta_description": "",
+        "estimated_word_count": 60,
+        "headings": {
+          "h1": "شقق للايجار في العارض في حي العارض, الرياض, السعودية",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        
+--------------------------------------------------
+
+--- Occurrence 3 at position 564025 ---
+ []
+    },
+    {
+      "section_id": "sec_08",
+      "heading_text": "أسئلة شائعة حول استئجار شقق في الرياض",
+      "heading_level": "H2",
+      "section_type": "faq",
+      "coverage_role": "faq",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "bulleted_list",
+      "subheadings": [
+        "ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟",
+        "كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟",
+        "هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟",
+        "ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟",
+        "هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟",
+        "ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟"
+      ]
+    },
+    {
+      "section_id": "sec_09",
+      "heading_text": "الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "heading_level": "H2",
+      "section_type": "conclusion",
+      "coverage_role": "conclusion",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    }
+  ]
+}
+============================================================
+
+############################## WORKFLOW STEP: content_writing (122.25s) ##############################
+STEP_INPUT:
+{
+  "input_data": {
+    "title": "شقق للايجار في الرياض: دليل مبسط لاختيار أفضل العروض 2026 | قولدن هوست",
+    "keywords": [
+      "شقق للايجار في الرياض"
+    ],
+    "article_language": "ar",
+    "area": "الرياض",
+    "urls": [
+      {
+        "link": "https://goldenhost.co/",
+        "text": "قولدن هوست",
+        "is_brand": true
+      }
+    ],
+    "external_urls": [],
+    "generate_images": false,
+    "logo_image": null,
+    "reference_image": null,
+    "brand_voice_guidelines": null,
+    "brand_voice_examples": null,
+    "workflow_mode": "core",
+    "tone": null,
+    "article_type": null,
+    "pov": null,
+    "article_size": "1000",
+    "brand_voice_description": null,
+    "include_meta_keywords": true,
+    "include_conclusion": true,
+    "include_faq": true,
+    "include_tables": true,
+    "include_bullet_lists": true,
+    "include_comparison_blocks": true,
+    "bold_key_terms": true,
+    "num_images": 7,
+    "image_style": "illustration",
+    "image_size": "1024x1024",
+    "include_featured_image": true,
+    "custom_branding_frame": false,
+    "custom_keyword_density": null,
+    "secondary_keywords": [],
+    "competitor_count": 5,
+    "style_reference": "",
+    "heading_only_mode": false,
+    "content_only_mode": false,
+    "content_stage_only_mode": true,
+    "approved_outline": ""
+  },
+  "seo_meta": {},
+  "outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": [],
+      "decision_layer": "Market Reality",
+      "sales_intensity": "medium",
+      "content_goal": "",
+      "assigned_keywords": [
+        "شقق للايجار في الرياض"
+      ],
+      "content_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_step
+--------------------------------------------------
+
+--- Occurrence 4 at position 645573 ---
+لى تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+        "taxonomy_axis": "faq",
+        "preferred_axis": "faq",
+        "forbidden_taxonomy_axis": "",
+        "observed_data_mentions": [
+          "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر",
+          "شقق مفروشة للايجار في الرياض",
+          "شقق 1 غرفة نوم للايجار في الرياض",
+          "شقق 3 غرفة نوم للايجار في الرياض",
+          "شقق 2 غرفة نوم للايجار في الرياض",
+          "بيوت و فلل للايجار في الرياض"
+        ],
+        "must_include_details": [
+          "أجب عن كل سؤال مباشرة قبل أي تفصيل إضافي.",
+          "اجعل الإجابات قصيرة ومفيدة وغير مكررة للمتن السابق."
+        ]
+      },
+      "available_link_pool": {
+        "internal": [],
+        "external_references": []
+      }
+    },
+    {
+      "section_id": "sec_09",
+      "heading_text": "الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "heading_level": "H2",
+      "section_type": "conclusion",
+      "coverage_role": "conclusion",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": [],
+      "decision_layer": "Market Reality",
+      "sales_intensity": "medium",
+      "content_goal": "",
+      "assigned_keywords": [
+        "شقق للايجار في الرياض"
+      ],
+      "content_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": true,
+      "cta_type": "strong",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "depth_goal": "حوّل الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "reader_takeaway": "يفهم القارئ أهم ما يجب معرفته عن الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست دون تكرار أو تعميم.",
+      "must_include_details": [
+        "لخّص القرار أو الفائدة النهائية دون إعادة تفاصيل السكاشن.",
+        "اختم بتوجيه عملي واضح يناسب نية المقال."
+      ],
+      "must_not_repeat": [
+        "خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح",
+        "أسئلة شائعة حول استئجار شقق في الرياض",
+        "ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟",
+        "كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟",
+        "هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟",
+        "ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟",
+        "هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟",
+        "ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟"
+      ],
+      "practical_decision_value": "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+      "taxonomy_axis": "conclusion",
+      "preferred_axis": "conclusion",
+      "forbidden_taxonomy_axis": "",
+      "observed_data_mentions": [
+        "شقق للايجار في الرياض - 419 ش
+--------------------------------------------------
+
+--- Occurrence 5 at position 712748 ---
+text\": \"أسئلة شائعة حول استئجار شقق في الرياض\",\n      \"heading_level\": \"H2\",\n      \"section_type\": \"faq\",\n      \"coverage_role\": \"faq\",\n      \"contains_exact_primary_keyword\": false,\n      \"requires_primary_keyword\": true,\n      \"section_intent\": \"informational\",\n      \"visual_format\": \"bulleted_list\",\n      \"subheadings\": [\n        \"ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟\",\n        \"كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟\",\n        \"هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟\",\n        \"ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟\",\n        \"هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟\",\n        \"ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟\"\n      ]\n    },\n    {\n      \"section_id\": \"sec_09\",\n      \"heading_text\": \"الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست\",\n      \"heading_level\": \"H2\",\n      \"section_type\": \"conclusion\",\n      \"coverage_role\": \"conclusion\",\n      \"contains_exact_primary_keyword\": false,\n      \"requires_primary_keyword\": true,\n      \"section_intent\": \"commercial\",\n      \"visual_format\": \"compact_narrative\",\n      \"subheadings\": []\n    }\n  ]\n}",
+  "serp_data": {
+    "top_results": [
+      {
+        "title": "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر السعودية",
+        "url": "https://www.propertyfinder.sa/ar/%D9%84%D9%84%D8%A7%D9%8A%D8%AC%D8%A7%D8%B1/%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6/%D8%B4%D9%82%D9%82-%D9%84%D9%84%D8%A7%D9%8A%D8%AC%D8%A7%D8%B1.html",
+        "meta_title": "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر السعودية",
+        "meta_description": "",
+        "estimated_word_count": 0,
+        "headings": {
+          "h1": "شقق للايجار في الرياض",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        "has_lists": true,
+        "has_images": true,
+        "has_charts": false,
+        "cta_style": "soft commercial",
+        "word_count_data_missing": true,
+        "avg_word_count_reliable": false
+      },
+      {
+        "title": "شقق للإيجار في شمال الرياض | عقار ستي",
+        "url": "https://www.aqarcity.net/properties/distcat/13/rent/10632",
+        "meta_title": "شقق للإيجار في شمال الرياض | عقار ستي",
+        "meta_description": "",
+        "estimated_word_count": 0,
+        "headings": {
+          "h1": "شقق للإيجار في شمال الرياض",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        "has_lists": true,
+        "has_images": true,
+        "has_charts": false,
+        "cta_style": "soft commercial",
+        "word_count_data_missing": true,
+        "avg_word_count_reliable": false
+      },
+      {
+        "title": "شقق للايجار في العارض في حي العارض, الرياض, السعودية | أودع العقارية",
+        "url": "https://www.oda.com.sa/projects/300775",
+        "meta_title": "شقق للايجار في العارض في حي العارض, الرياض, السعودية | أودع العقارية",
+        "meta_description": "",
+        "estimated_word_count": 60,
+        "headings": {
+          "h1": "شقق للايجار في العارض في حي العارض, الرياض, السعودية",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        
+--------------------------------------------------
+
+--- Occurrence 6 at position 820731 ---
+لى تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+        "taxonomy_axis": "faq",
+        "preferred_axis": "faq",
+        "forbidden_taxonomy_axis": "",
+        "observed_data_mentions": [
+          "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر",
+          "شقق مفروشة للايجار في الرياض",
+          "شقق 1 غرفة نوم للايجار في الرياض",
+          "شقق 3 غرفة نوم للايجار في الرياض",
+          "شقق 2 غرفة نوم للايجار في الرياض",
+          "بيوت و فلل للايجار في الرياض"
+        ],
+        "must_include_details": [
+          "أجب عن كل سؤال مباشرة قبل أي تفصيل إضافي.",
+          "اجعل الإجابات قصيرة ومفيدة وغير مكررة للمتن السابق."
+        ]
+      },
+      "available_link_pool": {
+        "internal": [],
+        "external_references": []
+      }
+    },
+    {
+      "section_id": "sec_09",
+      "heading_text": "الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "heading_level": "H2",
+      "section_type": "conclusion",
+      "coverage_role": "conclusion",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": [],
+      "decision_layer": "Market Reality",
+      "sales_intensity": "medium",
+      "content_goal": "",
+      "assigned_keywords": [
+        "شقق للايجار في الرياض"
+      ],
+      "content_scope": "",
+      "forbidden_elements": [],
+      "allowed_flow_steps": [],
+      "image_plan": {
+        "required": false,
+        "image_type": "illustration",
+        "alt_text": ""
+      },
+      "cta_eligible": true,
+      "cta_type": "strong",
+      "cta_allowed": false,
+      "cta_rules": {
+        "placement": "none",
+        "max_sentences": 0,
+        "mandatory": false
+      },
+      "requires_table": false,
+      "table_columns": [],
+      "estimated_word_count_min": 300,
+      "estimated_word_count_max": 600,
+      "section_promise": "تقديم إجابة واضحة ومباشرة عن: الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "depth_goal": "حوّل الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+      "reader_takeaway": "يفهم القارئ أهم ما يجب معرفته عن الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست دون تكرار أو تعميم.",
+      "must_include_details": [
+        "لخّص القرار أو الفائدة النهائية دون إعادة تفاصيل السكاشن.",
+        "اختم بتوجيه عملي واضح يناسب نية المقال."
+      ],
+      "must_not_repeat": [
+        "خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح",
+        "أسئلة شائعة حول استئجار شقق في الرياض",
+        "ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟",
+        "كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟",
+        "هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟",
+        "ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟",
+        "هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟",
+        "ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟"
+      ],
+      "practical_decision_value": "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+      "taxonomy_axis": "conclusion",
+      "preferred_axis": "conclusion",
+      "forbidden_taxonomy_axis": "",
+      "observed_data_mentions": [
+        "شقق للايجار في الرياض - 419 ش
+--------------------------------------------------
+
+--- Occurrence 7 at position 832169 ---
+اً موثوقاً لاستئجار الشقق في الرياض؟', 'heading_level': 'H2', 'section_type': 'differentiation', 'coverage_role': 'differentia...",
+    "sec_06": "{'section_id': 'sec_06', 'heading_text': 'متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية', 'heading_level': 'H2', 'section_type': 'proof', 'coverage_role': 'proof', 'contains_exact_primary_k...",
+    "sec_07": "{'section_id': 'sec_07', 'heading_text': 'خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح', 'heading_level': 'H2', 'section_type': 'process', 'coverage_role': 'process_or_how', 'contains_exact_prim...",
+    "sec_08": "{'section_id': 'sec_08', 'heading_text': 'أسئلة شائعة حول استئجار شقق في الرياض', 'heading_level': 'H2', 'section_type': 'faq', 'coverage_role': 'faq', 'contains_exact_primary_keyword': False, 'requir...",
+    "sec_09": "{'section_id': 'sec_09', 'heading_text': 'الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست', 'heading_level': 'H2', 'section_type': 'conclusion', 'coverage_role': 'conclusion', 'contains_ex..."
+  },
+  "assets/images": [],
+  "final_output": {},
+  "content_type": "brand_commercial",
+  "brand_link_used": true,
+  "used_internal_links": [
+    "https://goldenhost.co"
+  ],
+  "used_external_links": [],
+  "prohibited_competitors": [
+    "Aqarcity",
+    "Propertyfinder",
+    "Oda"
+  ],
+  "blocked_external_domains": "{'aqarcity.net', 'propertyfinder.sa', 'oda.com.sa'}",
+  "brand_name": "قولدن هوست",
+  "display_brand_name": "قولدن هوست",
+  "official_brand_name": "قولدن هوست",
+  "brand_aliases": [
+    "Golden Host"
+  ],
+  "domain_brand_name": "Golden Host",
+  "max_external_links": 6,
+  "global_keyword_count": 8,
+  "used_topics": [
+    "البحث عن شقق للايجار في الرياض يواجه صعوبات تتعلق بتنوع الخيارات وتفاوت المواصفات.",
+    "منصة قولدن هوست تتيح مقارنة الشقق حسب المساحة وعدد الغرف والمزايا الداخلية.",
+    "الميزانية الشهرية للإيجار تمثل أحد أهم عناصر القرار.",
+    "الشقق المفروشة في الرياض تتراوح مساحتها بين 45 و120 متر مربع وتضم أثاثًا كاملاً وخدمات إضافية.",
+    "الشقق غير المفروشة تبدأ مساحتها من 70 إلى 200 متر مربع وتناسب الاستقرار طويل الأمد.",
+    "شقق الاستوديو في الرياض تتراوح مساحتها بين 30 و45 متر مربع وتناسب الأفراد أو الطلاب.",
+    "شقق غرفة نوم واحدة مساحتها بين 50 و70 متر مربع وتناسب الأفراد أو الأزواج الجدد.",
+    "شقق غرفتين نوم تتراوح مساحتها من 80 حتى 120 متر مربع وتناسب العائلات الصغيرة.",
+    "شقق ثلاث غرف نوم أو أكثر تبدأ من 130 متر مربع وتناسب العائلات الكبيرة أو من يحتاجون لمساحات إضافية.",
+    "الشقق الصغيرة في الرياض تتراوح مساحتها بين 50-80 متر مربع وتناسب الأفراد أو الأزواج.",
+    "الشقق العائلية غالباً ما تتطلب مساحة 120-180 متر مربع.",
+    "وجود موقف سيارات خاص أو مغطى ضروري في أحياء الكثافة العالية.",
+    "التشطيب العصري يشمل أرضيات سيراميك، مطابخ مجهزة، وإضاءة موفرة للطاقة.",
+    "الشقق المزودة بكاميرات مراقبة وبوابات إلكترونية توفر أماناً إضافياً.",
+    "شمال الرياض: أحياء مثل الصحافة، الياسمين، النرجس مناسبة للعائلات، شقق بمساحات 100-180 متر مربع، مجمعات مغلقة، جودة حياة مرتفعة.",
+    "شرق الرياض: أحياء الرمال، اليرموك، شقق بمساحات 120-200 متر مربع، أسعار معقولة، ملائمة للعائلات الكبيرة.",
+    "غرب الرياض: ظهرة لبن، العريجاء الغربية، شقق بمساحات 90-150 متر مربع، قرب الأسواق والخدمات.",
+    "جنوب الرياض: الشفا، العزيزية، شقق بأسعار منخفضة، مساحات 80-140 متر مربع، مناسبة للفترات الانتقالية.",
+    "وسط الرياض: الملز، ال
+--------------------------------------------------
+
+--- Occurrence 8 at position 832195 ---
+في الرياض؟', 'heading_level': 'H2', 'section_type': 'differentiation', 'coverage_role': 'differentia...",
+    "sec_06": "{'section_id': 'sec_06', 'heading_text': 'متوسط أسعار الشقق للايجار في الرياض حسب الأحياء الرئيسية', 'heading_level': 'H2', 'section_type': 'proof', 'coverage_role': 'proof', 'contains_exact_primary_k...",
+    "sec_07": "{'section_id': 'sec_07', 'heading_text': 'خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح', 'heading_level': 'H2', 'section_type': 'process', 'coverage_role': 'process_or_how', 'contains_exact_prim...",
+    "sec_08": "{'section_id': 'sec_08', 'heading_text': 'أسئلة شائعة حول استئجار شقق في الرياض', 'heading_level': 'H2', 'section_type': 'faq', 'coverage_role': 'faq', 'contains_exact_primary_keyword': False, 'requir...",
+    "sec_09": "{'section_id': 'sec_09', 'heading_text': 'الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست', 'heading_level': 'H2', 'section_type': 'conclusion', 'coverage_role': 'conclusion', 'contains_ex..."
+  },
+  "assets/images": [],
+  "final_output": {},
+  "content_type": "brand_commercial",
+  "brand_link_used": true,
+  "used_internal_links": [
+    "https://goldenhost.co"
+  ],
+  "used_external_links": [],
+  "prohibited_competitors": [
+    "Aqarcity",
+    "Propertyfinder",
+    "Oda"
+  ],
+  "blocked_external_domains": "{'aqarcity.net', 'propertyfinder.sa', 'oda.com.sa'}",
+  "brand_name": "قولدن هوست",
+  "display_brand_name": "قولدن هوست",
+  "official_brand_name": "قولدن هوست",
+  "brand_aliases": [
+    "Golden Host"
+  ],
+  "domain_brand_name": "Golden Host",
+  "max_external_links": 6,
+  "global_keyword_count": 8,
+  "used_topics": [
+    "البحث عن شقق للايجار في الرياض يواجه صعوبات تتعلق بتنوع الخيارات وتفاوت المواصفات.",
+    "منصة قولدن هوست تتيح مقارنة الشقق حسب المساحة وعدد الغرف والمزايا الداخلية.",
+    "الميزانية الشهرية للإيجار تمثل أحد أهم عناصر القرار.",
+    "الشقق المفروشة في الرياض تتراوح مساحتها بين 45 و120 متر مربع وتضم أثاثًا كاملاً وخدمات إضافية.",
+    "الشقق غير المفروشة تبدأ مساحتها من 70 إلى 200 متر مربع وتناسب الاستقرار طويل الأمد.",
+    "شقق الاستوديو في الرياض تتراوح مساحتها بين 30 و45 متر مربع وتناسب الأفراد أو الطلاب.",
+    "شقق غرفة نوم واحدة مساحتها بين 50 و70 متر مربع وتناسب الأفراد أو الأزواج الجدد.",
+    "شقق غرفتين نوم تتراوح مساحتها من 80 حتى 120 متر مربع وتناسب العائلات الصغيرة.",
+    "شقق ثلاث غرف نوم أو أكثر تبدأ من 130 متر مربع وتناسب العائلات الكبيرة أو من يحتاجون لمساحات إضافية.",
+    "الشقق الصغيرة في الرياض تتراوح مساحتها بين 50-80 متر مربع وتناسب الأفراد أو الأزواج.",
+    "الشقق العائلية غالباً ما تتطلب مساحة 120-180 متر مربع.",
+    "وجود موقف سيارات خاص أو مغطى ضروري في أحياء الكثافة العالية.",
+    "التشطيب العصري يشمل أرضيات سيراميك، مطابخ مجهزة، وإضاءة موفرة للطاقة.",
+    "الشقق المزودة بكاميرات مراقبة وبوابات إلكترونية توفر أماناً إضافياً.",
+    "شمال الرياض: أحياء مثل الصحافة، الياسمين، النرجس مناسبة للعائلات، شقق بمساحات 100-180 متر مربع، مجمعات مغلقة، جودة حياة مرتفعة.",
+    "شرق الرياض: أحياء الرمال، اليرموك، شقق بمساحات 120-200 متر مربع، أسعار معقولة، ملائمة للعائلات الكبيرة.",
+    "غرب الرياض: ظهرة لبن، العريجاء الغربية، شقق بمساحات 90-150 متر مربع، قرب الأسواق والخدمات.",
+    "جنوب الرياض: الشفا، العزيزية، شقق بأسعار منخفضة، مساحات 80-140 متر مربع، مناسبة للفترات الانتقالية.",
+    "وسط الرياض: الملز، العليا، شقق بمساحات 70-120 م
+--------------------------------------------------
+
+--- Occurrence 9 at position 901710 ---
+text\": \"أسئلة شائعة حول استئجار شقق في الرياض\",\n      \"heading_level\": \"H2\",\n      \"section_type\": \"faq\",\n      \"coverage_role\": \"faq\",\n      \"contains_exact_primary_keyword\": false,\n      \"requires_primary_keyword\": true,\n      \"section_intent\": \"informational\",\n      \"visual_format\": \"bulleted_list\",\n      \"subheadings\": [\n        \"ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟\",\n        \"كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟\",\n        \"هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟\",\n        \"ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟\",\n        \"هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟\",\n        \"ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟\"\n      ]\n    },\n    {\n      \"section_id\": \"sec_09\",\n      \"heading_text\": \"الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست\",\n      \"heading_level\": \"H2\",\n      \"section_type\": \"conclusion\",\n      \"coverage_role\": \"conclusion\",\n      \"contains_exact_primary_keyword\": false,\n      \"requires_primary_keyword\": true,\n      \"section_intent\": \"commercial\",\n      \"visual_format\": \"compact_narrative\",\n      \"subheadings\": []\n    }\n  ]\n}",
+  "serp_data": {
+    "top_results": [
+      {
+        "title": "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر السعودية",
+        "url": "https://www.propertyfinder.sa/ar/%D9%84%D9%84%D8%A7%D9%8A%D8%AC%D8%A7%D8%B1/%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6/%D8%B4%D9%82%D9%82-%D9%84%D9%84%D8%A7%D9%8A%D8%AC%D8%A7%D8%B1.html",
+        "meta_title": "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر السعودية",
+        "meta_description": "",
+        "estimated_word_count": 0,
+        "headings": {
+          "h1": "شقق للايجار في الرياض",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        "has_lists": true,
+        "has_images": true,
+        "has_charts": false,
+        "cta_style": "soft commercial",
+        "word_count_data_missing": true,
+        "avg_word_count_reliable": false
+      },
+      {
+        "title": "شقق للإيجار في شمال الرياض | عقار ستي",
+        "url": "https://www.aqarcity.net/properties/distcat/13/rent/10632",
+        "meta_title": "شقق للإيجار في شمال الرياض | عقار ستي",
+        "meta_description": "",
+        "estimated_word_count": 0,
+        "headings": {
+          "h1": "شقق للإيجار في شمال الرياض",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        "has_lists": true,
+        "has_images": true,
+        "has_charts": false,
+        "cta_style": "soft commercial",
+        "word_count_data_missing": true,
+        "avg_word_count_reliable": false
+      },
+      {
+        "title": "شقق للايجار في العارض في حي العارض, الرياض, السعودية | أودع العقارية",
+        "url": "https://www.oda.com.sa/projects/300775",
+        "meta_title": "شقق للايجار في العارض في حي العارض, الرياض, السعودية | أودع العقارية",
+        "meta_description": "",
+        "estimated_word_count": 60,
+        "headings": {
+          "h1": "شقق للايجار في العارض في حي العارض, الرياض, السعودية",
+          "h2": [],
+          "h3": []
+        },
+        "has_faq": false,
+        "has_tables": false,
+        
+--------------------------------------------------
+
+--- Occurrence 10 at position 982932 ---
+ []
+    },
+    {
+      "section_id": "sec_08",
+      "heading_text": "أسئلة شائعة حول استئجار شقق في الرياض",
+      "heading_level": "H2",
+      "section_type": "faq",
+      "coverage_role": "faq",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "bulleted_list",
+      "subheadings": [
+        "ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟",
+        "كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟",
+        "هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟",
+        "ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟",
+        "هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟",
+        "ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟"
+      ]
+    },
+    {
+      "section_id": "sec_09",
+      "heading_text": "الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "heading_level": "H2",
+      "section_type": "conclusion",
+      "coverage_role": "conclusion",
+      "contains_exact_primary_keyword": false,
+      "requires_primary_keyword": true,
+      "section_intent": "commercial",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    }
+  ]
+}
+============================================================
+
+############################## WORKFLOW STEP: final_content_stage_response (0.00s) ##############################
+STEP_OUTPUT:
+{
+  "title": "شقق للايجار في الرياض: دليل مبسط لاختيار أفضل العروض 2026 | قولدن هوست",
+  "slug": "شقق-للايجار-في-الرياض_20260518_163646",
+  "primary_keyword": "شقق للايجار في الرياض",
+  "content_stage_only_mode": true,
+  "content_only_mode": false,
+  "heading_only_mode": false,
+  "final_markdown": "# شقق للايجار في الرياض: دليل مبسط لاختيار أفضل العروض 2026 | قولدن هوست\n\n<!-- section_id: sec_01 -->\n\nقد يكون البحث عن شقق للايجار في الرياض تجربة تتسم بالحيرة، خاصة مع تنوع الخيارات واختلاف المواصفات بين الأحياء والمجمعات. كثيرون يواجهون توتراً واضحاً بين الرغبة في الحصول على موقع مناسب، ومساحة تلائم احتياجات الأسرة، وبين ضرورة ضبط الميزانية الشهرية للإيجار.\n\nهنا تظهر منصة قولدن هوست كحل عملي وموثوق، إذ تتيح للمستخدمين تصفح مجموعة واسعة من الشقق المعروضة للإيجار في الرياض، مع إمكانية المقارنة بين المساحات، وعدد الغرف، والمزايا الداخلية لكل وحدة، مما يجعل عملية اتخاذ القرار أكثر وضوحاً وأماناً.\n\nلبدء رحلتك في استكشاف أفضل الشقق المتاحة، يمكنك [زيارة منصة قولدن هوست](https://goldenhost.co/) والاطلاع على التفاصيل الدقيقة لكل عرض، لتجد بسهولة الخيار الأنسب لاحتياجاتك وميزانيتك.\n\n## شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة\n\n<!-- section_id: sec_02 -->\n\nتتوفر شقق الايجار في الرياض بأنواع ومساحات متعددة لتناسب مختلف الاحتياجات، من السكن الفردي إلى العائلات الكبيرة. فيما يلي عرض لأهم الفئات والاختلافات العملية بينها.\n\n### شقق مفروشة للايجار في الرياض\n\n- تناسب من يبحث عن إقامة قصيرة أو انتقال مؤقت، مثل الموظفين الجدد أو زوار المدينة.\n- غالبًا ما تتراوح مساحتها بين 45 و120 متر مربع، وتشمل غرف نوم واحدة أو اثنتين وصالة.\n- تضم الأثاث الكامل، أجهزة كهربائية أساسية، وخدمات مثل الإنترنت والتنظيف الدوري.\n\n### شقق غير مفروشة للايجار في الرياض\n\n- مناسبة للعائلات أو الأفراد الراغبين في الاستقرار طويل الأمد وتخصيص الأثاث حسب ذوقهم.\n- تتوفر بمساحات تبدأ من 70 متر مربع وتصل إلى 200 متر مربع أو أكثر حسب عدد الغرف.\n- تتيح مرونة أكبر في الترتيب الداخلي وتن
+--------------------------------------------------
+
+--- Occurrence 11 at position 995835 ---
+فر عادة في الشقق المؤجرة بالرياض؟\n- اتصال إنترنت عالي السرعة\n- مواقف سيارات مخصصة أو مظللة\n- نظام أمني (كاميرات مراقبة أو حراسة)\n- صيانة دورية للمرافق\n- تكييف مركزي أو منفصل حسب نوع الشقة\n\n### هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟\nنعم، من حق المستأجر معاينة الشقة شخصياً أو عبر جولة افتراضية قبل الالتزام بأي عقد، وهذا يضمن التأكد من حالة العقار ومطابقته للمتطلبات.\n\n### ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟\nطرق الدفع تشمل التحويل البنكي، الدفع الإلكتروني الآمن عبر المنصة، أو شيكات دورية حسب الاتفاق مع المالك، مع توثيق جميع العمليات إلكترونياً.\n\nبنهاية هذه الإجابات، يصبح لدى القارئ صورة واضحة عن أهم النقاط العملية لاستئجار شقة في الرياض، مما يسهّل اتخاذ القرار بثقة ووعي تام.\n\n## الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست\n\n<!-- section_id: sec_09 -->\n\nاختيار شقق للايجار في الرياض يتطلب تركيزاً على المعايير العملية، مثل المساحة الفعلية، ملاءمة الموقع لاحتياجاتك اليومية، وتوفر الخدمات الأساسية ضمن العقار نفسه. الثقة في قرارك تبدأ من وضوح المواصفات، شفافية العقود، وتنوع الخيارات المتاحة. إذا رغبت في ضمان تجربة إيجار مستقرة، ركّز على التحقق من تفاصيل الشقة، مستوى الأمان، وسهولة الوصول إلى الخدمات الحيوية.\n\nلتحقيق أقصى استفادة وتوفير وقتك وجهدك في البحث، ننصحك بالاعتماد على منصة موثوقة تجمع لك كل الخيارات وتمنحك بيانات دقيقة عن كل شقة. قولدن هوست تتيح لك مقارنة شقق للايجار في الرياض بسهولة، مع إمكانية تصفح المواصفات والصور ومراجعة شروط الإيجار بوضوح.\n\nقارن شقق الايجار في الرياض عبر قولدن هوست",
+  "outline_structure": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "subheadings": [],
+      "section_contract": {
+        "must_answer": [
+          "Open with a specific, non-generic hook for شقق للايجار في الرياض",
+          "Start from a concrete reader tension, trade-off, mistake risk, or decision problem",
+          "Orient the reader without defining the topic in detail"
+        ],
+        "must_not_repeat": [],
+        "format": "paragraphs",
+        "brand_policy": "commercial",
+        "location_policy": "local_required",
+        "section_promise": "تقديم إجابة واضحة ومباشرة عن: افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+        "reader_takeaway": "يفهم القارئ أهم ما يجب معرفته عن افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل دون تكرار أو تعميم.",
+        "depth_goal": "حوّل افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+        "practical_decision_value": "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+        "taxonomy_axis": "introduction",
+        "preferred_axis": "introduction",
+        "forbidden_taxonomy_axis": "",
+        "observed_data_mentions": [
+          "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر",
+          "شقق مفروشة للايجار في الرياض",
+          "شقق 1 غرفة نوم للايجار في الرياض",
+          "شقق 3 غرفة نوم للايجار في الرياض",
+          "شقق 2 غرفة نوم للايجار في الرياض",
+          "بيوت و فلل للايجار في الرياض"
+        ],
+        "must_include_det
+--------------------------------------------------
+
+--- Occurrence 12 at position 1016666 ---
+ة أو الاختيار أو اتخاذ خطوة أوضح.",
+        "practical_decision_value": "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+        "taxonomy_axis": "faq",
+        "preferred_axis": "faq",
+        "forbidden_taxonomy_axis": "",
+        "observed_data_mentions": [
+          "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر",
+          "شقق مفروشة للايجار في الرياض",
+          "شقق 1 غرفة نوم للايجار في الرياض",
+          "شقق 3 غرفة نوم للايجار في الرياض",
+          "شقق 2 غرفة نوم للايجار في الرياض",
+          "بيوت و فلل للايجار في الرياض"
+        ],
+        "must_include_details": [
+          "أجب عن كل سؤال مباشرة قبل أي تفصيل إضافي.",
+          "اجعل الإجابات قصيرة ومفيدة وغير مكررة للمتن السابق."
+        ]
+      }
+    },
+    {
+      "section_id": "sec_09",
+      "heading_text": "الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+      "heading_level": "H2",
+      "section_type": "conclusion",
+      "section_intent": "commercial",
+      "subheadings": [],
+      "section_contract": {
+        "must_answer": [
+          "الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست"
+        ],
+        "must_not_repeat": [
+          "خطوات حجز واختيار شقتك عبر قولدن هوست بسهولة ووضوح",
+          "أسئلة شائعة حول استئجار شقق في الرياض",
+          "ما الفرق بين الشقق المفروشة وغير المفروشة في الرياض؟",
+          "كم يبلغ متوسط الإيجار الشهري للشقق في الرياض؟",
+          "هل يمكن استئجار شقة في الرياض بعقد شهري أو سنوي؟",
+          "ما هي أهم الخدمات التي تتوفر عادة في الشقق المؤجرة بالرياض؟",
+          "هل يمكن زيارة الشقة قبل توقيع عقد الإيجار؟",
+          "ما طرق الدفع المتاحة عند استئجار شقة عبر قولدن هوست؟"
+        ],
+        "format": "paragraphs",
+        "brand_policy": "commercial",
+        "location_policy": "local_required",
+        "section_promise": "تقديم إجابة واضحة ومباشرة عن: الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست",
+        "reader_takeaway": "يفهم القارئ أهم ما يجب معرفته عن الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست دون تكرار أو تعميم.",
+        "depth_goal": "حوّل الخلاصة: كيف تجد شقتك المثالية في الرياض بثقة مع قولدن هوست إلى فهم عملي يساعد القارئ على المقارنة أو الاختيار أو اتخاذ خطوة أوضح.",
+        "practical_decision_value": "يساعد هذا السكشن القارئ على تضييق الخيارات وفهم ما يستحق الانتباه قبل القرار.",
+        "taxonomy_axis": "conclusion",
+        "preferred_axis": "conclusion",
+        "forbidden_taxonomy_axis": "",
+        "observed_data_mentions": [
+          "شقق للايجار في الرياض - 419 شقق للايجار | بروبرتي فايندر",
+          "شقق مفروشة للايجار في الرياض",
+          "شقق 1 غرفة نوم للايجار في الرياض",
+          "شقق 3 غرفة نوم للايجار في الرياض",
+          "شقق 2 غرفة نوم للايجار في الرياض",
+          "بيوت و فلل للايجار في الرياض"
+        ],
+        "must_include_details": [
+          "لخّص القرار أو الفائدة النهائية دون إعادة تفاصيل السكاشن.",
+          "اختم بتوجيه عملي واضح يناسب نية المقال."
+        ]
+      }
+    }
+  ],
+  "status": "success",
+  "message": "Content draft generated successfully for review.",
+  "performance": {
+    "total_tokens": 121099,
+    "total_latency": 210.8,
+    "calls": 15
+  },
+  "output_dir": "F:\\SEO-Writing-AI\\output\\شقق-للايجار-في-الرياض_20260518_163646"
+}
+######################################
+--------------------------------------------------

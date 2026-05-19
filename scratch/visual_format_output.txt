@@ -1,0 +1,217 @@
+Found 20 occurrences of 'outline':
+
+--- Occurrence 1 ---
+"outline": [],
+==================================================
+
+--- Occurrence 2 ---
+"outline": [],
+==================================================
+
+--- Occurrence 3 ---
+"outline": [],
+==================================================
+
+--- Occurrence 4 ---
+"outline": [],
+==================================================
+
+--- Occurrence 5 ---
+"outline": [],
+==================================================
+
+--- Occurrence 6 ---
+"outline": [],
+==================================================
+
+--- Occurrence 7 ---
+"outline": [],
+==================================================
+
+--- Occurrence 8 ---
+"outline": [],
+==================================================
+
+--- Occurrence 9 ---
+"outline": [],
+==================================================
+
+--- Occurrence 10 ---
+"outline": [],
+==================================================
+
+--- Occurrence 11 ---
+"outline": [],
+==================================================
+
+--- Occurrence 12 ---
+"outline": [],
+==================================================
+
+--- Occurrence 13 ---
+"outline": [],
+==================================================
+
+--- Occurrence 14 ---
+"outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": [],
+==================================================
+
+--- Occurrence 15 ---
+"outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "Internal opening label",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_02",
+      "heading_text": "Reader-facing H2 heading",
+      "heading_level": "H2",
+      "section_type": "offer",
+      "coverage_role": "offer_clarity",
+      "contains_exact_primary_keyword": true,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "table",
+      "subheadings": ["Optional reader-facing H3", "Optional reader-facing H3"]
+    }
+  ]
+}
+```
+
+### 9. DETAILED SECTION INSTRUCTIONS
+
+Follow these role-specific instructions for each section type:
+
+- **introduction**: Start with a light, relevant hook that reflects the buyer's need. Naturally introduce the primary keyword. Briefly explain what the reader will understan
+==================================================
+
+--- Occurrence 16 ---
+"outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_02",
+      "heading_text": "شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة",
+      "heading_level": "H2",
+      "section_type": "offer",
+      "coverage_role": "offer_clarity",
+      "contains_exact_primary_keyword": true,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "table",
+      "subheadings": [
+        "شقق مفروشة للايجار في الرياض",
+        "شقق غير مفروشة للايجار في الرياض",
+        "شقق استوديو للايجار في الرياض",
+        "شقق غرفة نوم واحدة للايجار في الرياض",
+        "شقق غرفتين نوم للايجار في الرياض",
+        "شقق ثلاث غرف نوم أو أكثر لل
+==================================================
+
+--- Occurrence 17 ---
+"outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": [],
+==================================================
+
+--- Occurrence 18 ---
+"outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": [],
+==================================================
+
+--- Occurrence 19 ---
+"outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "Internal opening label",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_02",
+      "heading_text": "Reader-facing H2 heading",
+      "heading_level": "H2",
+      "section_type": "offer",
+      "coverage_role": "offer_clarity",
+      "contains_exact_primary_keyword": true,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "table",
+      "subheadings": ["Optional reader-facing H3", "Optional reader-facing H3"]
+    }
+  ]
+}
+```
+
+### 9. DETAILED SECTION INSTRUCTIONS
+
+Follow these role-specific instructions for each section type:
+
+- **introduction**: Start with a light, relevant hook that reflects the buyer's need. Naturally introduce the primary keyword. Briefly explain what the reader will understan
+==================================================
+
+--- Occurrence 20 ---
+"outline": [
+    {
+      "section_id": "sec_01",
+      "heading_text": "افتتاحية تلامس حاجة الباحث عن شقق للايجار في الرياض وتوضح ما سيجنيه من الدليل",
+      "heading_level": "INTRO",
+      "section_type": "introduction",
+      "section_intent": "informational",
+      "visual_format": "compact_narrative",
+      "subheadings": []
+    },
+    {
+      "section_id": "sec_02",
+      "heading_text": "شقق للايجار في الرياض: الأنواع، المساحات، وأبرز الخيارات المتوفرة",
+      "heading_level": "H2",
+      "section_type": "offer",
+      "coverage_role": "offer_clarity",
+      "contains_exact_primary_keyword": true,
+      "requires_primary_keyword": true,
+      "section_intent": "informational",
+      "visual_format": "table",
+      "subheadings": [
+        "شقق مفروشة للايجار في الرياض",
+        "شقق غير مفروشة للايجار في الرياض",
+        "شقق استوديو للايجار في الرياض",
+        "شقق غرفة نوم واحدة للايجار في الرياض",
+        "شقق غرفتين نوم للايجار في الرياض",
+        "شقق ثلاث غرف نوم أو أكثر لل
+==================================================

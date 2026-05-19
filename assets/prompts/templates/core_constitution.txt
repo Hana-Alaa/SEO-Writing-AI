@@ -6,6 +6,7 @@
 - **Forbidden Colloquialisms (العامية)**: Do NOT use colloquial dialect or local slang (e.g., avoid "لو حابب", "تقدر", "دلوقتي", "عشان", "اللي", "بتاع", "شوف", "تلاقي", "مش", "حاجة", "إزاي").
 - **Forbidden Jargon (الألفاظ الاستهلاكية المتكلّفة)**: Do NOT use dry, repetitive corporate clichés or hollow marketing claims (e.g., avoid "استثمار استثنائي", "حلول مبتكرة", "تجربة فريدة", "اتخاذ القرار الأمثل", "نهج متكامل").
 - **Brevity & Anti-Fluff**: Every sentence must provide direct practical value to the reader. Strictly avoid broad market commentary, vague generalizations, and repeated framing. If you have nothing new to say, keep the paragraph concise.
+- **Arabic Spelling & Orthography**: Double-check all Arabic words for double-letter generation stutter typos (e.g., write "المتطلبات" NOT "المتمتطلبات", "المعلومات" NOT "المعمعلومات"). Ensure clean, professional spelling with no repetitive character slips.
 
 ## 2. VISUAL ARCHITECTURE & SCANNABILITY 
 - **Formatting Philosophy**: Reader attention is highly valuable. Visually structure the text based on complexity:

@@ -7,9 +7,9 @@ if sys.stdout.encoding != 'utf-8':
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-md_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260518_104530\article_final.md"
+md_path = r"f:\SEO-Writing-AI\output\افضل-شركة-تصميم-مواقع-في-السعودية_20260519_101733\article_final.md"
 html_template_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260514_105342\article_final.html"
-output_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260518_104530\article_final.html"
+output_path = r"f:\SEO-Writing-AI\output\افضل-شركة-تصميم-مواقع-في-السعودية_20260519_101733\article_final.html"
 
 
 
