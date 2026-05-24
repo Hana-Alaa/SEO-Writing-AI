@@ -1,0 +1,88 @@
+===================================================
+        AI Workflow Execution Metrics Summary      
+===================================================
+
+Step: EVENT: INITIALIZATION
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: BRAND_DISCOVERY
+  -- Duration: 9.13 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: WEB_RESEARCH
+  -- Duration: 66.85 seconds
+  -- Tokens Used: 35,815
+--------------------------------------------------
+Step: STEP_TOTAL: WEB_RESEARCH
+  -- Duration: 67.20 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: SERP_ANALYSIS
+  -- Duration: 9.85 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: INTENT_TITLE
+  -- Duration: 1.21 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: INTENT_TITLE
+  -- Duration: 3.17 seconds
+  -- Tokens Used: 715
+--------------------------------------------------
+Step: STEP_TOTAL: STYLE_ANALYSIS
+  -- Duration: 0.01 seconds
+  -- Tokens Used: 715
+--------------------------------------------------
+Step: CONTENT_STRATEGY
+  -- Duration: 27.14 seconds
+  -- Tokens Used: 3,760
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_STRATEGY
+  -- Duration: 27.17 seconds
+  -- Tokens Used: 3,760
+--------------------------------------------------
+Step: STEP_TOTAL: OUTLINE_GENERATION
+  -- Duration: 16.49 seconds
+  -- Tokens Used: 13,923
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: افتتاحية مرتبطة بحاجة المشتري مع إدخال الكلمة الرئيسية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: افضل شركة تصميم مواقع في السعودية: الخدمات والخيارات المتاحة لأصحاب الأعمال
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: المميزات الأساسية التي يجب توفرها في خدمات تصميم المواقع
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: لماذا CREATIVE MINDS خيارك الأفضل لتصميم المواقع في السعودية؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: نماذج أعمال CREATIVE MINDS: مشاريع ناجحة في تصميم المواقع بالسعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: مقارنة بين باقات تصميم المواقع: ما الذي يناسب احتياجك وميزانيتك؟
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: خطوات تنفيذ مشروع تصميم موقعك مع CREATIVE MINDS
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: أسئلة شائعة حول اختيار شركة تصميم مواقع في السعودية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: EVENT: SECTION FINALIZED: ابدأ الآن: خطوات التواصل مع CREATIVE MINDS لتصميم موقعك باحترافية
+  -- Duration: 0.00 seconds
+  -- Tokens Used: 0
+--------------------------------------------------
+Step: STEP_TOTAL: CONTENT_WRITING
+  -- Duration: 70.11 seconds
+  -- Tokens Used: 13,923
+--------------------------------------------------

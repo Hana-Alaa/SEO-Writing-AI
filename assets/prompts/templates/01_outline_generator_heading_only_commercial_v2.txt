@@ -13,6 +13,7 @@ Your task is to generate only the heading structure layer of an article outline 
 - Content Type: "{{ content_type | default('informational') }}"
 - Area: "{{ area | default('General') }}"
 - Brand Context: "{{ brand_context | default('') }}"
+- If Brand Context contains `[BRAND EVIDENCE INVENTORY - OUTLINE GATE]`, obey it as the hard availability map for brand-owned headings.
 - Head Entity: "{{ head_entity | default('') }}"
 - Entity Phrase: "{{ entity_phrase | default('') }}"
 - Service/Object Phrase: "{{ service_phrase | default(entity_phrase | default('')) }}"
@@ -48,8 +49,8 @@ Your task is to generate only the heading structure layer of an article outline 
     1. **Intro**: Speak directly to the reader's problem or need. Primary keyword in first paragraph. One very soft CTA at the end of intro is acceptable here. (Unheaded `section_type: introduction`).
     2. **What the service/product is** (`section_type: offer`): The FIRST visible H2 MUST be the Offer section. Use the exact Primary Keyword. Brief but clear.
     3. **Key features or what's included** (`section_type: features`): Bullet points preferred over paragraphs. Scannable.
-    4. **Why choose us / differentiators** (`section_type: differentiation`): This is where brand value is built. Avoid generic claims, be specific.
-    5. **Proof section** (`section_type: proof`): Stats, case studies, client results, Before/after scenarios. This is where trust is earned. The format is flexible.
+    4. **Evidence-grounded brand fit / differentiators** (`section_type: differentiation`): Use operational, evidence-backed brand framing only. Do not use generic "Why choose us" headings unless the injected brand heading guardrails explicitly allow differentiation and provide supporting evidence.
+    5. **Evidence-backed proof or examples** (`section_type: proof`): Include only page-backed pricing, case studies, projects, trust signals, or examples. Do not invent stats, client results, testimonials, before/after scenarios, or trust proof.
     6. **Comparison table** (`section_type: comparison`): Avoid using brand vs alternatives (overused and repetitive), maybe compare service tiers or options. Strong featured snippet potential. Format is flexible.
     7. **How it works / Process** (`section_type: process`): Numbered steps. Reduces friction and objection.
     8. **FAQ section** (`section_type: faq`): Focus on objections and pricing/process questions specifically.
@@ -59,8 +60,8 @@ Your task is to generate only the heading structure layer of an article outline 
   - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field:
     - `offer_clarity`: For the core service/product definition and options.
     - `features_or_included`: For technical specs, amenities, or what's included.
-    - `differentiators`: For unique selling points and brand strengths.
-    - `proof`: For pricing, availability, case studies, or trust signals.
+    - `differentiators`: For evidence-backed operational advantages or differentiation only; avoid generic promotional brand headings.
+    - `proof`: For observed pricing, availability, case studies, projects, or trust signals only.
     - `comparison`: For comparing options, scenarios, or alternatives.
     - `process_or_how`: For the buying journey, steps, or how to get started.
     - `faq`: For the FAQ section.
@@ -70,6 +71,12 @@ Your task is to generate only the heading structure layer of an article outline 
     - `contains_exact_primary_keyword`: Set to `true` ONLY if the heading text itself includes the exact Primary Keyword. This MUST be `true` for exactly ONE visible H2 heading and `false` for everything else (including Intro and H3s).
     - `requires_primary_keyword`: Set to `true` if the section body copy should naturally include the Primary Keyword. This is an instruction for the writer, not a heading rule.
   - The article should not become a pure brand page. It should help the reader evaluate the market first, then make the provided brand feel like the logical choice.
+  - Do not mention the brand in every section. Generic market headings should stay generic unless the visible heading explicitly needs the brand.
+  - Brand-owned headings must be answerable from the brand evidence inventory.
+  - Do not create brand project/case-study headings unless `projects_available` is true.
+  - Do not create "Brand projects in [country/city]" unless `explicit_geography` contains that country/city. If projects exist but geography is unsupported, use "Projects shown by [Brand]" instead.
+  - Do not create brand pricing/packages headings unless `pricing_available` is true.
+  - Do not create dedicated brand-proof sections when inventory confidence is low.
   - Comparison is NOT a mandatory standalone section. If comparison is useful, it may be embedded inside the most relevant section (offer, features, proof/pricing, or location) unless it deserves a dedicated standalone H2.
 - The first visible core H2 MUST be decision-useful and specific, but if it is an offer section, it MUST describe available options/types directly and MUST NOT use 'how to choose' phrasing.
   - Avoid: "أفضل مناطق شراء [entity] للبيع في [area]".
@@ -236,6 +243,14 @@ Good:
 4. Differentiation H2:
 Always return an empty `subheadings` array.
 Brand benefits should be written in the body, not as H3s.
+- **BRAND & WHY CHOOSE US HEADINGS**: Brand headings are explicitly allowed, including why/advantages headings (e.g. "لماذا تختار [Brand]" or "أهم مميزات التعامل مع [Brand]").
+- However, headings must be answerable from available evidence in the brand context.
+- Prefer specific headings when possible:
+  - "ما الخدمات التي تعرضها [Brand] لتصميم المواقع؟" (or matching primary keyword/service)
+  - "كيف توضح [Brand] مراحل تنفيذ مشاريع التصميم؟" (or matching workflow/process)
+  - "أمثلة من مشاريع [Brand] المعروضة في صفحة الأعمال" (or matching projects)
+  - "ما التقنيات والخدمات الرقمية التي تظهر في صفحات [Brand]؟" (or matching tech stack)
+- Avoid broad headings only when they cannot be answered specifically from the evidence.
 
 Brand proof sections are recommended for brand_commercial content when the reader needs evidence before choosing the provided brand.
 Use `section_type: "proof"` or `section_type: "case_study"` for this section.

@@ -103,6 +103,30 @@ SEMANTIC_EXECUTION_LAYER = {
         "decision_frame": "risk reduction",
         "content_behavior": "Showcase concrete evidence, signals, or process transparency that validates the entity's claims."
     },
+    "brand_service_catalog": {
+        "execution_mode": "brand_service_catalog",
+        "semantic_goal": "brand service clarity",
+        "decision_frame": "matching observed services to the reader's need",
+        "content_behavior": "Describe actual brand-provided services and capabilities from observed evidence; do not write generic provider-selection advice."
+    },
+    "brand_evidence_application": {
+        "execution_mode": "brand_evidence_application",
+        "semantic_goal": "evidence-backed brand fit",
+        "decision_frame": "using observed brand evidence to explain fit",
+        "content_behavior": "Ground brand differentiation in observed services, technologies, workflow, or projects."
+    },
+    "brand_project_examples": {
+        "execution_mode": "brand_project_examples",
+        "semantic_goal": "observed project proof",
+        "decision_frame": "using named project or case evidence",
+        "content_behavior": "Use actual observed project/client names and snippets; do not substitute generic project-evaluation advice."
+    },
+    "brand_process_delivery": {
+        "execution_mode": "brand_process_delivery",
+        "semantic_goal": "observed delivery workflow",
+        "decision_frame": "how the reader works with the brand",
+        "content_behavior": "Explain the brand's observed workflow stages as a practical collaboration path."
+    },
     "onboarding_context": {
         "execution_mode": "onboarding_context",
         "semantic_goal": "establish the reader's orientation",
@@ -141,6 +165,26 @@ WRITER_MODE_PROFILES = {
         "- **REASONING STYLE**: Emphasize verification and signals. Use validation-oriented language.\n"
         "- **EVIDENCE**: Focus on process transparency, concrete signals, and reliability indicators.\n"
         "- **PRIORITY**: Build confidence. Avoid aggressive promotion; let the evidence speak for itself."
+    ),
+    "brand_service_catalog": (
+        "- **REASONING STYLE**: Treat this as the brand's service catalog, not a market checklist.\n"
+        "- **EVIDENCE**: Use observed service names, capabilities, and source snippets directly.\n"
+        "- **PRIORITY**: Explain what the brand provides under each heading; avoid 'make sure/ask/check' advice as the main body."
+    ),
+    "brand_evidence_application": (
+        "- **REASONING STYLE**: Explain brand fit through observed evidence, not generic praise.\n"
+        "- **EVIDENCE**: Use named services, technologies, workflow stages, and project examples when available.\n"
+        "- **PRIORITY**: Keep the section specific to the brand and avoid unsupported geography or best/top claims."
+    ),
+    "brand_project_examples": (
+        "- **REASONING STYLE**: Fulfill the project/example promise with actual observed projects or client examples.\n"
+        "- **EVIDENCE**: Mention project/client names exactly as provided by the evidence brief.\n"
+        "- **PRIORITY**: Do not replace missing or weak project details with generic project-evaluation criteria."
+    ),
+    "brand_process_delivery": (
+        "- **REASONING STYLE**: Present the observed collaboration or delivery workflow as a practical sequence.\n"
+        "- **EVIDENCE**: Use observed stages such as consultation, planning, design, development, execution, delivery, testing, or launch.\n"
+        "- **PRIORITY**: Explain how the reader works with the brand; avoid generic vendor-selection checklists."
     ),
     "onboarding_context": (
         "- **REASONING STYLE**: Orient the reader quickly by validating their problem and outlining the solution path.\n"

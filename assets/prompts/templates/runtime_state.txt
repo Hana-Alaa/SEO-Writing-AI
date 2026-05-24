@@ -9,6 +9,101 @@
 - **External Validation Sources**: {{ (external_sources | default([])) | tojson }}
 - **CTA Eligibility**: {{ (section | default({})).get('cta_eligible', false) | lower }} | Type: {{ cta_type | default('none') }} | Total CTAs placed so far: {{ ctas_placed | default(0) }}
 
+## 1b. BRAND EVIDENCE SPECIFICS
+{% set section_brand_evidence = section_source_text | default('') %}
+{% set brand_page_briefs = section_brand_page_briefs | default([]) %}
+{% set raw_brand_blocks = section_raw_brand_blocks | default([]) %}
+
+[BRAND PAGE BRIEFS - PRIMARY BRAND CONTEXT]
+{% if brand_page_briefs %}
+{% for brief in brand_page_briefs %}
+Source URL: {{ brief.get('source_url') or brief.get('url') or '' }}
+Page type: {{ brief.get('page_type', 'other') }}
+Page title: {{ brief.get('page_title', '') }}
+Grounded summary:
+{{ brief.get('grounded_summary', '') }}
+{% if brief.get('observed_services') %}
+Observed services/capabilities: {{ brief.get('observed_services') | join(', ') }}
+{% endif %}
+{% if brief.get('observed_projects') %}
+Observed projects/clients: {{ brief.get('observed_projects') | join(', ') }}
+{% endif %}
+{% if brief.get('observed_technologies') %}
+Observed terminology/technology: {{ brief.get('observed_technologies') | join(', ') }}
+{% endif %}
+{% if brief.get('observed_process_steps') %}
+Observed process/workflow: {{ brief.get('observed_process_steps') | join(', ') }}
+{% endif %}
+{% if brief.get('explicit_geography') %}
+Explicit geography: {{ brief.get('explicit_geography') | join(', ') }}
+{% endif %}
+{% if brief.get('observed_pricing') %}
+Observed pricing/package evidence: {{ brief.get('observed_pricing') | join(', ') }}
+{% endif %}
+{% if brief.get('claim_boundaries') %}
+Claim boundaries:
+{% for boundary in brief.get('claim_boundaries') %}
+- {{ boundary }}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+{% else %}
+No brand page briefs selected.
+{% endif %}
+
+[RAW BRAND SOURCE BLOCKS]
+{% if raw_brand_blocks %}
+{% for block in raw_brand_blocks %}
+Source URL: {{ block.get('source_url') or block.get('url') or '' }}
+Page type: {{ block.get('page_type', 'other') }}
+Heading: {{ block.get('heading', '') }}
+Observed text:
+{{ block.get('observed_text') or block.get('text') or '' }}
+Observed facts:
+{% if block.get('observed_facts') %}
+{% for fact in block.get('observed_facts') %}
+- {{ fact }}
+{% endfor %}
+{% else %}
+- No structured facts extracted from this block.
+{% endif %}
+
+{% endfor %}
+{% else %}
+No raw brand source blocks selected.
+Do not add brand proof claims.
+{% endif %}
+
+[SECTION BRAND UNDERSTANDING]
+{{ section_brand_understanding | default({}) | tojson }}
+
+{% if section_brand_evidence %}
+{% if '[SECTION-SPECIFIC BRAND EVIDENCE]' in section_brand_evidence %}
+{{ section_brand_evidence }}
+{% else %}
+[SECTION-SPECIFIC BRAND EVIDENCE]
+{{ section_brand_evidence }}
+{% endif %}
+{% else %}
+[SECTION-SPECIFIC BRAND EVIDENCE]
+No section-specific brand evidence selected.
+Do not add brand proof claims.
+{% endif %}
+
+Rules for writer:
+- Brand-owned sections must answer the heading using the brand page briefs first, then raw observed text and the structured understanding block.
+- Treat `brand_page_briefs` as grounded compression of source pages. Preserve exact terminology and named examples from it.
+- Do not use brand evidence cards, generic headings, menu labels, or slogans as claim truth.
+- If a project section has `relevant_projects`, mention the observed project/client names naturally.
+- If a project section has no `relevant_projects`, do not invent projects or case studies.
+- If raw blocks are empty, do not create brand proof claims.
+- If a section mentions the brand, use observable facts from these blocks.
+- Prefer descriptive operational language.
+- Do not invent pricing, packages, guarantees, timelines, certifications, partnerships, project counts, testimonials, market leadership, geography, or local presence.
+- General market guidance may use market research only in non-brand sections. Brand-owned pricing, packages, timelines, geography, guarantees, or trust claims require explicit brand evidence in this block.
+- Intro must avoid technical catalog dumps; use simple buyer language and at most 1-2 broad observed capabilities.
+
 ## 2. SEO KEYWORD COUNTS 
 - **Exact Primary Keyword (PK) Count So Far**: {{ global_keyword_count | default(0) }} / 5
 - **Exact PK Priority**: {{ (section | default({})).get('requires_primary_keyword', false) | lower }}

@@ -2440,8 +2440,10 @@ class ValidationService:
     def enforce_intent_distribution(self, outline: List[Dict], intent: str, content_type: str) -> Tuple[List[Dict], List[str]]:
         errors = []
         h2_sections = [s for s in outline if (s.get("heading_level") or "").upper() == "H2"]
+        normalized_content_type = (content_type or "").lower()
+        normalized_intent = (intent or "").lower()
 
-        if content_type == "brand_commercial":
+        if normalized_content_type == "brand_commercial":
             TARGET_COMMERCIAL_RATIO = 0.70
             PROTECTED_TYPES = {"faq", "conclusion", "introduction"}
 
@@ -2480,7 +2482,9 @@ class ValidationService:
                         f"Brand articles require at least 70% commercial/transactional H2 sections."
                     )
 
-        if intent.lower() == "informational":
+            return outline, errors
+
+        if normalized_intent == "informational":
             for s in outline:
                 # Force ALL sections to Informational intent
                 s["section_intent"] = "Informational"

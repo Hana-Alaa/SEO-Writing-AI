@@ -49,6 +49,7 @@ from src.services.strategy_service import StrategyService
 from src.services.validation_service import ValidationService
 from src.services.semantic_service import SemanticService
 from src.services.outline_repair_service import OutlineRepairService
+from src.services.brand_evidence_service import BrandEvidenceService, build_brand_offer_contract
 from src.utils.contract_safety import PipelineContractError, validate_service_call, is_signature_mismatch
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -207,6 +208,7 @@ class AsyncWorkflowController:
         )
         self.validator = ValidationService(ai_client=self.ai_client, semantic_model=self.semantic_service)
         self.outline_repair_service = OutlineRepairService()
+        self.brand_evidence_service = BrandEvidenceService()
 
         # Hardened Error Management: Essential steps that MUST succeed
         self.CRITICAL_STEPS = {
@@ -549,7 +551,160 @@ class AsyncWorkflowController:
             return state
 
         logger.info(f"Enforcing DEEP Brand Discovery for quality stabilization (URL: {brand_url}).")
-        return await self.research_service.run_brand_discovery(state)
+        state = await self.research_service.run_brand_discovery(state)
+        
+        # --- Additive Phase 1.5: Crawl, Build Map, Offer Contract & Guardrails ---
+        from src.services.brand_evidence_service import (
+            get_empty_brand_offer_contract,
+            build_brand_offer_contract,
+            build_brand_generation_guardrails
+        )
+        
+        # 1. Same-domain defensive crawl enrichment
+        try:
+            raw_max = state.get("brand_crawl_max_pages")
+            max_pages = 6
+            if raw_max is not None:
+                try:
+                    max_pages = int(raw_max)
+                except (ValueError, TypeError):
+                    max_pages = 6
+            max_pages = max(1, min(max_pages, 8))
+            state = await self.brand_evidence_service.enrich_brand_internal_resources(state, max_pages=max_pages)
+        except Exception as e:
+            logger.warning(f"Brand site evidence enrichment crawl failed: {e}. Fallback to existing resources.")
+
+        # 2. Build Evidence Map and Offer Contract
+        try:
+            state = await self.brand_evidence_service.run_brand_evidence_map(state)
+            contract = build_brand_offer_contract(state)
+            state["brand_offer_contract"] = contract
+        except Exception as e:
+            logger.warning(f"Brand evidence mapping or contract generation failed: {e}. Populating fallback state.")
+            # Minimal/empty safe map
+            if "brand_evidence_map" not in state or not state["brand_evidence_map"]:
+                state["brand_evidence_map"] = {
+                    "strong_signals": [],
+                    "medium_signals": [],
+                    "weak_signals": [],
+                    "strong_source_urls": [],
+                    "source_counts": {"headings": 0, "cta_labels": 0, "anchors": 0, "urls": 0},
+                    "missing_evidence": []
+                }
+            # Fallback contract with full schema
+            contract = get_empty_brand_offer_contract(state)
+            state["brand_offer_contract"] = contract
+
+        # 3. Build Guardrails
+        try:
+            guardrails = build_brand_generation_guardrails(state)
+            state["brand_generation_guardrails"] = guardrails
+        except Exception as e:
+            logger.warning(f"Brand guardrails generation failed: {e}. Populating fallback guardrails.")
+            guardrails = {
+                "brand_confidence": "low",
+                "brand_usage_mode": "soft_context_only",
+                "allowed_brand_claims": [],
+                "allowed_conversion_actions": [],
+                "forbidden_brand_claims": [
+                    "delivery timelines", "response time guarantees", "payment gateway support",
+                    "testimonials or client proof", "portfolio claims", "verified/award claims",
+                    "local team claims", "custom/no-template process claims"
+                ],
+                "brand_section_policy": "do_not_create_dedicated_brand_proof_or_why_choose_sections"
+            }
+            state["brand_generation_guardrails"] = guardrails
+
+        # 4. Separate brand_guardrail_context (Clearly marked, clean, non-mutating)
+        summary = "\n[BRAND GENERATION GUARDRAILS - DO NOT TREAT AS BRAND DESCRIPTION]\n"
+        summary += f"- Brand confidence: {guardrails.get('brand_confidence', 'low')}\n"
+        summary += f"- Brand usage mode: {guardrails.get('brand_usage_mode', 'soft_context_only')}\n"
+        summary += f"- Allowed brand claims: {', '.join(guardrails.get('allowed_brand_claims', []))}\n"
+        summary += f"- Allowed conversion actions: {', '.join(guardrails.get('allowed_conversion_actions', []))}\n"
+        summary += f"- Forbidden brand claims: {', '.join(guardrails.get('forbidden_brand_claims', []))}\n"
+        summary += f"- Brand section policy: {guardrails.get('brand_section_policy', 'do_not_create_dedicated_brand_proof_or_why_choose_sections')}\n"
+        
+        state["brand_guardrail_context"] = summary
+
+        # 4b. Store brand evidence cards and index
+        try:
+            from src.services.brand_evidence_service import build_brand_evidence_cards, build_brand_pages_index
+            state["brand_evidence_cards"] = build_brand_evidence_cards(state)
+            state["brand_pages_index"] = build_brand_pages_index(state)
+        except Exception as e:
+            logger.warning(f"Failed to build brand evidence cards or index: {e}")
+            state["brand_evidence_cards"] = []
+            state["brand_pages_index"] = {}
+
+        # 4c. Store brand source chunks (Phase 1.7 Step 8)
+        try:
+            from src.services.brand_evidence_service import build_brand_source_chunks
+            state["brand_source_chunks"] = build_brand_source_chunks(state)
+            logger.info(f"[brand_source_chunks] compiled count={len(state.get('brand_source_chunks', []))}")
+        except Exception as e:
+            logger.warning(f"Failed to compile brand source chunks: {e}")
+            state["brand_source_chunks"] = []
+
+        # 4c.1. Store page-level grounded brand briefs (writer-facing truth layer)
+        try:
+            from src.services.brand_evidence_service import build_brand_page_briefs
+            state["brand_page_briefs"] = build_brand_page_briefs(state)
+            logger.info("[brand_page_briefs] compiled count=%s", len(state.get("brand_page_briefs", [])))
+        except Exception as e:
+            logger.warning(f"Failed to compile brand page briefs: {e}")
+            state["brand_page_briefs"] = []
+
+        # 4d. Store brand evidence inventory (Phase 1.9 Step 4)
+        try:
+            from src.services.brand_evidence_service import build_brand_evidence_inventory
+            state["brand_evidence_inventory"] = build_brand_evidence_inventory(state)
+            logger.info(
+                "[brand_evidence_inventory] services=%s projects=%s pricing=%s process=%s trust=%s",
+                state["brand_evidence_inventory"].get("services_available"),
+                state["brand_evidence_inventory"].get("projects_available"),
+                state["brand_evidence_inventory"].get("pricing_available"),
+                state["brand_evidence_inventory"].get("process_available"),
+                state["brand_evidence_inventory"].get("trust_available"),
+            )
+        except Exception as e:
+            logger.warning(f"Failed to build brand evidence inventory: {e}")
+            state["brand_evidence_inventory"] = {
+                "services_available": False,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "service_page_urls": [],
+                "project_page_urls": [],
+                "pricing_page_urls": [],
+                "process_page_urls": [],
+                "trust_page_urls": [],
+                "confidence": "low",
+            }
+
+        # 3b. Build Writing Brief & Brief Context (Phase 1.6)
+        try:
+            from src.services.brand_evidence_service import build_brand_writing_brief, format_brand_writing_brief_context
+            state["brand_writing_brief"] = build_brand_writing_brief(state)
+            state["brand_writing_brief_context"] = format_brand_writing_brief_context(state["brand_writing_brief"])
+        except Exception as e:
+            logger.warning(f"Brand writing brief generation failed: {e}.")
+            state["brand_writing_brief"] = {}
+            state["brand_writing_brief_context"] = ""
+
+        # Concise logging
+        missing = contract.get("evidence_summary", {}).get("missing_evidence", [])
+        logger.info(
+            f"[brand_offer_contract] created=true "
+            f"| confidence={contract['brand_identity'].get('confidence', 'low')} "
+            f"| value_props_count={len(contract.get('value_propositions', []))} "
+            f"| conversion_actions_count={len(contract.get('conversion_actions', []))} "
+            f"| missing_evidence={missing[:3]}"
+        )
+        
+        return state
+
 
     def _extract_observed_pricing_signals(self, state: Dict[str, Any]) -> List[str]:
         """Extracts numeric pricing patterns from SERP data (titles, snippets, meta)."""
@@ -794,8 +949,6 @@ class AsyncWorkflowController:
                 state.get("heading_only_mode") or state.get("content_stage_only_mode")
             )
 
-            # PREFLIGHT CONTRACT CHECK
-            _gen_params = _inspect.signature(self.outline_gen.generate).parameters
             validate_service_call(
                 self.outline_gen.generate,
                 title=title,
@@ -806,7 +959,7 @@ class AsyncWorkflowController:
                 seo_intelligence=seo_intelligence,
                 content_type=content_type,
                 content_strategy=content_strategy,
-                brand_context=state.get("brand_context", ""),
+                brand_context=state.get("brand_context", "") + self._format_brand_evidence_inventory_context(state),
                 area=area,
                 feedback=feedback,
                 mandatory_section_types=list(mandatory),
@@ -833,6 +986,15 @@ class AsyncWorkflowController:
             # --- Heading-Only Strategy Detox (Localized to this step) ---
             h_content_strategy = content_strategy
             h_brand_context = state.get("brand_context", "")
+            
+            try:
+                compact_summary = ""
+                guardrails_context = ""
+            except Exception as e:
+                logger.warning(f"Failed to build compact brand evidence summary or guardrails: {e}")
+                compact_summary = ""
+                guardrails_context = ""
+            inventory_context = self._format_brand_evidence_inventory_context(state)
             h_brand_advantages = seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("brand_advantages", [])
             h_writing_blueprint = seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("writing_blueprint", "")
             h_seo_intelligence = seo_intelligence
@@ -872,7 +1034,7 @@ class AsyncWorkflowController:
                     seo_intelligence=h_seo_intelligence,
                     content_type=content_type,
                     content_strategy=h_content_strategy,
-                    brand_context=h_brand_context,
+                    brand_context=h_brand_context + inventory_context,
                     area=area,
                     feedback=feedback,
                     mandatory_section_types=list(mandatory),
@@ -989,13 +1151,14 @@ class AsyncWorkflowController:
                 )
 
                 # TASK 3c: Deterministic FAQ Enrichment (Brand Utility)
-                outline = self.outline_repair_service.enrich_brand_utility_faq(
-                    outline,
-                    serp_brief=state.get("serp_outline_brief", {}),
-                    brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
-                    content_type=content_type,
-                    entity_phrase=entity_phrase
-                )
+                if state.get("brand_generation_guardrails", {}).get("brand_section_policy") != "do_not_create_dedicated_brand_proof_or_why_choose_sections":
+                    outline = self.outline_repair_service.enrich_brand_utility_faq(
+                        outline,
+                        serp_brief=state.get("serp_outline_brief", {}),
+                        brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
+                        content_type=content_type,
+                        entity_phrase=entity_phrase
+                    )
                 outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
 
                 # Apply Anti-Echo and Strategic Map Repairs
@@ -1044,13 +1207,14 @@ class AsyncWorkflowController:
                 # heavy validation is relaxed. These do not force a regeneration and
                 # protect practical visitor intents such as brand-assisted booking.
                 outline = self.outline_repair_service.dedupe_faq_against_h2(outline)
-                outline = self.outline_repair_service.enrich_brand_utility_faq(
-                    outline,
-                    serp_brief=state.get("serp_outline_brief", {}),
-                    brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
-                    content_type=content_type,
-                    entity_phrase=entity_phrase,
-                )
+                if state.get("brand_generation_guardrails", {}).get("brand_section_policy") != "do_not_create_dedicated_brand_proof_or_why_choose_sections":
+                    outline = self.outline_repair_service.enrich_brand_utility_faq(
+                        outline,
+                        serp_brief=state.get("serp_outline_brief", {}),
+                        brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
+                        content_type=content_type,
+                        entity_phrase=entity_phrase,
+                    )
                 outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
                 outline = self.outline_repair_service.clean_conclusion_heading(
                     outline,
@@ -1086,6 +1250,16 @@ class AsyncWorkflowController:
             outline,
             content_type=content_type
         )
+
+        # Keep the commercial mix authoritative even in heading/content-stage
+        # paths where the heavier validation block is intentionally relaxed.
+        outline, dist_errors = self.validator.enforce_intent_distribution(
+            outline,
+            intent,
+            content_type,
+        )
+        if dist_errors:
+            logger.warning("[intent_distribution] Post-outline correction warnings: %s", " | ".join(dist_errors))
 
         outline = self.validator.enforce_content_angle(
             outline,
@@ -1139,6 +1313,8 @@ class AsyncWorkflowController:
                 sec, idx, content_type, content_strategy, area
             )
             sec.setdefault("assigned_keywords", [])
+
+        outline = self._normalize_outline_with_brand_evidence_inventory(outline, state)
 
         # LSI distribution safely
         lsi_keywords = keyword_expansion.get("lsi", [])
@@ -1221,6 +1397,8 @@ class AsyncWorkflowController:
             section["assigned_links"] = []
 
         state["outline"] = outline
+        state = await self._run_post_outline_brand_targeted_crawl(state, outline)
+        outline = state.get("outline", outline)
         present_types = {sec.get("section_type") for sec in outline}
 
         user_urls = state.get("input_data", {}).get("urls", [])
@@ -1622,6 +1800,187 @@ class AsyncWorkflowController:
             )
         return promises
 
+    def _section_visibly_references_brand(self, section: Dict[str, Any], state: Dict[str, Any]) -> bool:
+        brand_name = str(state.get("brand_name") or state.get("display_brand_name") or "").strip().lower()
+        aliases = state.get("brand_aliases") or []
+        refs = [brand_name] + [str(alias).strip().lower() for alias in aliases if str(alias).strip()]
+        refs = [ref for ref in refs if ref]
+        if not refs:
+            return False
+        visible_text = " ".join([
+            str(section.get("heading_text") or ""),
+            " ".join(self._subheading_text(item) for item in section.get("subheadings", []) or []),
+        ]).lower()
+        return any(ref in visible_text for ref in refs)
+
+    def _brand_evidence_inventory_for_outline(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Return a compact inventory view without mutating canonical brand context."""
+        inventory = state.get("brand_evidence_inventory")
+        if not isinstance(inventory, dict):
+            try:
+                from src.services.brand_evidence_service import build_brand_evidence_inventory
+                inventory = build_brand_evidence_inventory(state)
+            except Exception:
+                inventory = {}
+
+        return {
+            "services_available": bool(inventory.get("services_available")),
+            "projects_available": bool(inventory.get("projects_available")),
+            "pricing_available": bool(inventory.get("pricing_available")),
+            "process_available": bool(inventory.get("process_available")),
+            "trust_available": bool(inventory.get("trust_available")),
+            "explicit_geography": [
+                str(item).strip()
+                for item in (inventory.get("explicit_geography") or [])
+                if str(item).strip()
+            ][:8],
+            "confidence": inventory.get("confidence") or "low",
+        }
+
+    def _format_brand_evidence_inventory_context(self, state: Dict[str, Any]) -> str:
+        inventory = self._brand_evidence_inventory_for_outline(state)
+        return (
+            "\n[BRAND EVIDENCE INVENTORY - OUTLINE GATE]\n"
+            + json.dumps(inventory, ensure_ascii=False)
+            + "\nRules:\n"
+            "- Do not mention the brand in every section; generic headings should stay generic.\n"
+            "- Brand-owned headings must be answerable from this inventory.\n"
+            "- Do not create brand project headings unless projects_available is true.\n"
+            "- Do not create Brand projects in a country/city unless explicit_geography supports it.\n"
+            "- If projects exist but geography is unsupported, use Projects shown by Brand, not Projects by Brand in a location.\n"
+            "- Do not create brand pricing/packages headings unless pricing_available is true.\n"
+            "- Do not create dedicated brand-proof sections for low-confidence inventory.\n"
+            "[END BRAND EVIDENCE INVENTORY]\n"
+        )
+
+    def _derive_outline_brand_evidence_requirements(
+        self,
+        outline: List[Dict[str, Any]],
+        state: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Infer which brand evidence buckets the finalized outline will need."""
+        brand_name = str(state.get("brand_name") or state.get("display_brand_name") or "").strip()
+        focus_terms: List[str] = []
+        requirements = {
+            "needs_services": False,
+            "needs_projects": False,
+            "needs_process": False,
+            "needs_pricing": False,
+            "needs_technologies": False,
+            "needs_trust": False,
+            "needs_geography": False,
+            "focus_terms": focus_terms,
+        }
+
+        def section_blob(section: Dict[str, Any]) -> str:
+            return " ".join([
+                str(section.get("heading_text") or ""),
+                str(section.get("section_type") or ""),
+                str(section.get("taxonomy_axis") or ""),
+                str(section.get("content_goal") or ""),
+                str(section.get("section_promise") or ""),
+                " ".join(self._subheading_text(item) for item in section.get("subheadings", []) or []),
+            ]).casefold()
+
+        term_groups = {
+            "needs_services": ["brand_offer", "services", "service", "offer", "solutions", "خدمات", "خدمة", "حلول"],
+            "needs_projects": ["brand_projects", "project", "projects", "portfolio", "case study", "case-study", "proof", "client", "clients", "examples", "مشاريع", "مشروع", "أعمال", "اعمال", "نماذج", "عملاء"],
+            "needs_process": ["brand_process", "process", "workflow", "steps", "stages", "how it works", "خطوات", "مراحل", "طريقة", "تنفيذ"],
+            "needs_pricing": ["pricing", "price", "cost", "package", "packages", "plans", "أسعار", "اسعار", "تكلفة", "باقات", "باقة"],
+            "needs_technologies": ["brand_features", "technology", "technologies", "tech", "stack", "tools", "systems", "تقنيات", "تكنولوجيا", "أدوات", "انظمة", "أنظمة"],
+            "needs_trust": ["brand_support", "differentiation", "trust", "certified", "certification", "testimonials", "reviews", "لماذا", "ثقة", "اعتماد", "شهادات", "تقييمات"],
+            "needs_geography": ["geography", "local", "location", "market", "saudi", "riyadh", "السعودية", "الرياض", "السوق"],
+        }
+
+        for section in outline or []:
+            if not isinstance(section, dict):
+                continue
+            blob = section_blob(section)
+            heading = str(section.get("heading_text") or "").strip()
+            if heading:
+                focus_terms.append(heading)
+            if brand_name and brand_name.casefold() in blob:
+                focus_terms.append(brand_name)
+            for key, terms in term_groups.items():
+                if any(term in blob for term in terms):
+                    requirements[key] = True
+
+        requirements["focus_terms"] = list(dict.fromkeys(term for term in focus_terms if term))[:12]
+        return requirements
+
+    async def _run_post_outline_brand_targeted_crawl(
+        self,
+        state: Dict[str, Any],
+        outline: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """After outline creation, crawl extra brand pages for promised evidence."""
+        if not state.get("brand_url") or state.get("content_type") != "brand_commercial":
+            return state
+
+        requirements = self._derive_outline_brand_evidence_requirements(outline, state)
+        active_requirements = [
+            key for key, enabled in requirements.items()
+            if key.startswith("needs_") and enabled
+        ]
+        state["outline_evidence_requirements"] = requirements
+        if not active_requirements:
+            return state
+
+        focus_parts = [
+            state.get("brand_crawl_focus", ""),
+            state.get("primary_keyword", ""),
+            state.get("raw_title", ""),
+            " ".join(requirements.get("focus_terms") or []),
+            " ".join(key.replace("needs_", "") for key in active_requirements),
+        ]
+        state["brand_crawl_focus"] = " ".join(str(part or "") for part in focus_parts).strip()
+
+        try:
+            max_pages = int(state.get("brand_outline_crawl_max_pages") or state.get("brand_crawl_max_pages") or 8)
+        except (TypeError, ValueError):
+            max_pages = 8
+        max_pages = max(1, min(max_pages, 8))
+
+        try:
+            before_urls = {
+                str(item.get("link") or item.get("url") or "")
+                for item in state.get("internal_resources", []) or []
+                if isinstance(item, dict)
+            }
+            state = await self.brand_evidence_service.enrich_brand_internal_resources(state, max_pages=max_pages)
+            after_urls = {
+                str(item.get("link") or item.get("url") or "")
+                for item in state.get("internal_resources", []) or []
+                if isinstance(item, dict)
+            }
+            state["post_outline_brand_crawl_report"] = {
+                "requirements": requirements,
+                "new_urls": sorted(url for url in (after_urls - before_urls) if url),
+                "max_pages": max_pages,
+            }
+            from src.services.brand_evidence_service import (
+                build_brand_evidence_cards,
+                build_brand_evidence_inventory,
+                build_brand_page_briefs,
+                build_brand_pages_index,
+                build_brand_source_chunks,
+            )
+            state["brand_evidence_cards"] = build_brand_evidence_cards(state)
+            state["brand_pages_index"] = build_brand_pages_index(state)
+            state["brand_source_chunks"] = build_brand_source_chunks(state)
+            state["brand_page_briefs"] = build_brand_page_briefs(state)
+            state["brand_evidence_inventory"] = build_brand_evidence_inventory(state)
+            logger.info(
+                "[post_outline_brand_crawl] requirements=%s new_urls=%s chunks=%s briefs=%s",
+                active_requirements,
+                len(state["post_outline_brand_crawl_report"]["new_urls"]),
+                len(state.get("brand_source_chunks", [])),
+                len(state.get("brand_page_briefs", [])),
+            )
+        except Exception as e:
+            logger.warning("[post_outline_brand_crawl] skipped due to error: %s", e)
+        return state
+
     def _infer_brand_policy(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
         brand_name = state.get("brand_name") or state.get("display_brand_name") or ""
         if not brand_name:
@@ -1629,7 +1988,12 @@ class AsyncWorkflowController:
 
         content_type = (state.get("content_type") or "").lower()
         intent = (state.get("intent") or "").lower()
-        if content_type == "brand_commercial" or "commercial" in intent:
+        section_type = (section.get("section_type") or "").lower()
+        if content_type == "brand_commercial":
+            if section_type in {"introduction", "conclusion"} or self._section_visibly_references_brand(section, state):
+                return "commercial"
+            return "none"
+        if "commercial" in intent and self._section_visibly_references_brand(section, state):
             return "commercial"
 
         text = " ".join([
@@ -1706,6 +2070,7 @@ class AsyncWorkflowController:
             "brand_policy": self._infer_brand_policy(section, state),
             "location_policy": self._infer_location_policy(section, state),
         }
+        section["_visible_brand_reference"] = self._section_visibly_references_brand(section, state)
         return contract
 
     def _infer_taxonomy_axis(self, section: Dict[str, Any]) -> str:
@@ -1720,6 +2085,27 @@ class AsyncWorkflowController:
             return "faq"
         if section_type == "conclusion":
             return "conclusion"
+        brand_policy = str((section.get("section_contract") or {}).get("brand_policy") or section.get("brand_policy") or "").lower()
+        is_brand_commercial = (
+            str(section.get("content_type") or "").lower() == "brand_commercial"
+            and (brand_policy == "commercial" or bool(section.get("_visible_brand_reference")))
+        )
+        if is_brand_commercial:
+            if section_type in {"proof", "case_study"} or any(
+                term in heading_blob
+                for term in ("مشاريع", "نماذج", "أعمال", "سابقة", "portfolio", "projects", "case studies")
+            ):
+                return "brand_projects"
+            if section_type in {"process", "process_or_how"} or any(
+                term in heading_blob for term in ("خطوات", "مراحل", "تنفيذ", "طلب", "process", "steps")
+            ):
+                return "brand_process"
+            if section_type in {"offer", "core_or_benefits", "services"} or any(
+                term in heading_blob for term in ("خدمات", "الخدمات", "حلول", "options", "services", "offer")
+            ):
+                return "brand_offer"
+            if section_type in {"features", "differentiation", "differentiators", "brand_support", "brand"}:
+                return "brand_features" if section_type == "features" else "brand_support"
         if section_type in {"differentiators", "brand_support", "brand", "testimonials"}:
             return "brand_support"
         if any(term in heading_blob for term in ("سعر", "أسعار", "تكلفة", "ميزانية", "price", "pricing", "cost", "budget", "fee")):
@@ -1970,6 +2356,25 @@ class AsyncWorkflowController:
                 self._enrichment_text(state, "اربط دور البراند بالمشكلة العملية التي يحاول القارئ حلها.", "Tie the brand role to the practical problem the reader is trying to solve."),
                 self._enrichment_text(state, "اجعل ذكر البراند مساعدًا ومحددًا لا دعائيًا عامًا.", "Keep brand mentions specific and helpful, not generic promotion."),
             ],
+            "brand_offer": [
+                self._enrichment_text(state, "اشرح الخدمات أو الحلول التي يقدمها البراند فعليًا من أدلة الموقع المرصودة.", "Explain the services or solutions the brand actually provides from observed website evidence."),
+                self._enrichment_text(state, "اكتب تحت كل خدمة بوصفها خدمة مقدمة من البراند، لا كمعيار لاختيار أي شركة.", "Write under each service as a brand-provided service, not as criteria for choosing any company."),
+                self._enrichment_text(state, "استخدم أسماء الخدمات والقدرات المرصودة مثل Web Development أو Mobile App أو ERP/CRM/POS عند توفرها.", "Use observed service/capability names such as Web Development, Mobile App, or ERP/CRM/POS when available."),
+            ],
+            "brand_features": [
+                self._enrichment_text(state, "حوّل المميزات إلى قدرات تقنية وخدمات مرصودة لدى البراند، وليس نصائح عامة للبحث في السوق.", "Turn features into observed brand capabilities and services, not generic market-search advice."),
+                self._enrichment_text(state, "اذكر التقنيات أو الأنظمة المرصودة بأسمائها عند توفرها.", "Mention observed technologies or systems by name when available."),
+                self._enrichment_text(state, "تجنب صيغ مثل تأكد أو اسأل أو اختر؛ اشرح ما يتوفر فعليًا لدى البراند.", "Avoid phrasing like make sure, ask, or choose; explain what the brand actually provides."),
+            ],
+            "brand_projects": [
+                self._enrichment_text(state, "اذكر أسماء المشاريع أو العملاء أو دراسات الحالة المرصودة صراحة في أدلة البراند.", "Mention the observed project, client, or case-study names explicitly found in brand evidence."),
+                self._enrichment_text(state, "لا تحوّل هذا السكشن إلى معايير عامة لتقييم المشاريع.", "Do not turn this section into generic project-evaluation criteria."),
+                self._enrichment_text(state, "إذا كان الموقع الجغرافي غير مدعوم، لا تربط المشاريع بالسعودية.", "If geography is unsupported, do not tie projects to Saudi Arabia."),
+            ],
+            "brand_process": [
+                self._enrichment_text(state, "استخدم مراحل العمل المرصودة لدى البراند مثل Consultation & Planning وDesign & Development وExecution & Delivery عند توفرها.", "Use observed brand workflow stages such as Consultation & Planning, Design & Development, and Execution & Delivery when available."),
+                self._enrichment_text(state, "اكتب العملية كطريقة تعامل مع البراند، لا كقائمة نصائح عامة لاختيار مزود خدمة.", "Write the process as the way to work with the brand, not as generic advice for selecting a provider."),
+            ],
             "faq": [
                 self._enrichment_text(state, "أجب عن كل سؤال مباشرة قبل أي تفصيل إضافي.", "Answer each question directly before adding detail."),
                 self._enrichment_text(state, "اجعل الإجابات قصيرة ومفيدة وغير مكررة للمتن السابق.", "Keep answers concise, useful, and not repetitive of earlier sections."),
@@ -2218,6 +2623,92 @@ class AsyncWorkflowController:
             "observed_data_mentions": observed_mentions,
         }
 
+        brand_name = state.get("display_brand_name") or state.get("brand_name") or "the brand"
+        brand_axis_defaults = {
+            "brand_offer": {
+                "section_promise": self._enrichment_text(
+                    state,
+                    f"عرض الخدمات والحلول التي يقدمها {brand_name} فعليًا والمرتبطة بعنوان السكشن.",
+                    f"Show the actual services and solutions {brand_name} provides that match this section.",
+                ),
+                "reader_takeaway": self._enrichment_text(
+                    state,
+                    f"يفهم القارئ ما الذي يقدمه {brand_name} كخدمات محددة، لا مجرد معايير لاختيار أي شركة.",
+                    f"The reader understands what {brand_name} specifically offers, not generic provider-selection criteria.",
+                ),
+                "depth_goal": self._enrichment_text(
+                    state,
+                    "حوّل كل H3 إلى شرح خدمة فعلية مدعومة بأدلة البراند.",
+                    "Turn each H3 into a brand-provided service explanation grounded in brand evidence.",
+                ),
+                "practical_decision_value": self._enrichment_text(
+                    state,
+                    "يساعد السكشن القارئ على معرفة مدى ملاءمة خدمات البراند لاحتياجه.",
+                    "This section helps the reader judge how the brand's services fit their need.",
+                ),
+            },
+            "brand_features": {
+                "section_promise": self._enrichment_text(
+                    state,
+                    f"شرح القدرات والمميزات التقنية المرصودة لدى {brand_name}.",
+                    f"Explain the observed technical capabilities and features available from {brand_name}.",
+                ),
+                "reader_takeaway": self._enrichment_text(
+                    state,
+                    "يفهم القارئ القدرات التقنية المتوفرة لدى البراند بأسماء واضحة، لا نصائح عامة.",
+                    "The reader understands the brand's concrete capabilities by name, not generic advice.",
+                ),
+                "depth_goal": self._enrichment_text(
+                    state,
+                    "استخدم أسماء الأدوات والأنظمة والخدمات المرصودة بدل عبارات تقنية عامة.",
+                    "Use observed tools, systems, and service names instead of broad technical phrasing.",
+                ),
+            },
+            "brand_projects": {
+                "section_promise": self._enrichment_text(
+                    state,
+                    f"عرض أمثلة مشاريع أو عملاء مرصودة لدى {brand_name} عند توفرها.",
+                    f"Show observed projects or client examples from {brand_name} when available.",
+                ),
+                "reader_takeaway": self._enrichment_text(
+                    state,
+                    "يرى القارئ أمثلة فعلية من الأدلة بدل قائمة معايير عامة.",
+                    "The reader sees actual evidence examples instead of generic evaluation criteria.",
+                ),
+                "depth_goal": self._enrichment_text(
+                    state,
+                    "اذكر أسماء المشاريع المرصودة واربط كل مثال بما يوضحه عن قدرة البراند.",
+                    "Mention observed project names and tie each example to what it demonstrates about the brand.",
+                ),
+            },
+            "brand_process": {
+                "section_promise": self._enrichment_text(
+                    state,
+                    f"شرح طريقة طلب وتنفيذ المشروع مع {brand_name} باستخدام مراحل العمل المرصودة.",
+                    f"Explain how to request and execute a project with {brand_name} using observed workflow stages.",
+                ),
+                "reader_takeaway": self._enrichment_text(
+                    state,
+                    "يفهم القارئ خطوات التعامل مع البراند بترتيب عملي واضح.",
+                    "The reader understands the practical sequence for working with the brand.",
+                ),
+            },
+            "brand_support": {
+                "section_promise": self._enrichment_text(
+                    state,
+                    f"توضيح ما يميز {brand_name} اعتمادًا على خدمات وتقنيات ومشاريع مرصودة.",
+                    f"Explain what differentiates {brand_name} using observed services, technologies, and projects.",
+                ),
+                "reader_takeaway": self._enrichment_text(
+                    state,
+                    "يفهم القارئ أسباب الملاءمة من أدلة ملموسة، لا مدح عام.",
+                    "The reader understands fit through concrete evidence, not generic praise.",
+                ),
+            },
+        }
+        if taxonomy_axis in brand_axis_defaults:
+            defaults.update(brand_axis_defaults[taxonomy_axis])
+
         for key, value in defaults.items():
             if key == "observed_data_mentions":
                 section[key] = value
@@ -2236,6 +2727,45 @@ class AsyncWorkflowController:
         for pack in active_packs:
             pack_details.extend(self._topic_pack_details(pack, taxonomy_axis, state))
 
+        brand_mode_map = {
+            "brand_offer": (
+                "brand_service_catalog",
+                "brand service clarity",
+                "matching observed services to the reader's need",
+                "Describe actual brand-provided services and capabilities from evidence; do not write generic provider-selection advice.",
+            ),
+            "brand_features": (
+                "brand_evidence_application",
+                "observed brand capabilities",
+                "matching technical evidence to practical benefits",
+                "Explain observed brand capabilities, tools, and systems by name; avoid generic criteria wording.",
+            ),
+            "brand_projects": (
+                "brand_project_examples",
+                "observed project proof",
+                "using named projects or case evidence",
+                "Use actual observed project/client names and snippets; do not substitute generic project-evaluation advice.",
+            ),
+            "brand_process": (
+                "brand_process_delivery",
+                "observed delivery workflow",
+                "how the reader works with the brand",
+                "Explain the brand's observed workflow stages as a practical collaboration path.",
+            ),
+            "brand_support": (
+                "brand_evidence_application",
+                "evidence-backed brand fit",
+                "why the brand fits this need",
+                "Ground differentiation in observed services, technologies, workflow, or projects.",
+            ),
+        }
+        if taxonomy_axis in brand_mode_map:
+            mode, semantic_goal, decision_frame, behavior = brand_mode_map[taxonomy_axis]
+            section["execution_mode"] = mode
+            section["semantic_goal"] = semantic_goal
+            section["decision_frame"] = decision_frame
+            section["content_behavior"] = behavior
+
         detail_items = list(dict.fromkeys([
             str(item).strip()
             for item in list(existing_details) + self._section_contract_details(taxonomy_axis, state) + pack_details
@@ -2253,6 +2783,7 @@ class AsyncWorkflowController:
         if approved_title:
             state["input_data"]["title"] = approved_title
 
+        state = await self._run_post_outline_brand_targeted_crawl(state, outline)
         state = self._prepare_outline_for_content(state, outline, source="approved_outline")
         if state.get("workflow_logger"):
             state["workflow_logger"].log_event("approved_outline_load", {
@@ -2260,6 +2791,252 @@ class AsyncWorkflowController:
                 "content_only_mode": True,
             })
         return state
+
+    def _fulfill_and_downgrade_heading(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+        heading = str(section.get("heading_text") or "").strip()
+        heading_lower = heading.lower()
+        lang = (state.get("article_language") or "ar").lower()
+        brand_name = str(state.get("brand_name") or state.get("display_brand_name") or "").strip()
+        brand_aliases = [str(a).strip() for a in (state.get("brand_aliases") or []) if str(a).strip()]
+        brand_terms = [brand_name.lower()] + [a.lower() for a in brand_aliases]
+        mentions_brand = any(term and term in heading_lower for term in brand_terms)
+        content_type = str(state.get("content_type") or "").lower()
+        is_brand_owned = content_type == "brand_commercial" and mentions_brand
+
+        def _cards_have(key: str) -> bool:
+            for card in state.get("brand_evidence_cards", []) or []:
+                if isinstance(card, dict) and not card.get("excluded_reason") and card.get(key):
+                    return True
+            return False
+
+        def _safe_brand_operational_heading() -> str:
+            return (
+                f"نطاق الخدمات المتاحة لدى {brand_name or 'البراند'} حسب احتياج المشروع"
+                if lang.startswith("ar")
+                else f"Service Scope Available From {brand_name or 'the Brand'}"
+            )
+
+        pricing_terms = ["باقات", "باقة", "أسعار", "اسعار", "تكلفة", "pricing", "packages", "package", "plans", "cost"]
+        if is_brand_owned and any(k in heading_lower for k in pricing_terms) and not _cards_have("visible_pricing_or_packages"):
+            section["fulfillment_status"] = "unsupported"
+            section["fulfillment_reason"] = "brand pricing/packages heading without explicit brand pricing/package evidence"
+            section["subheadings"] = []
+            downgraded = _safe_brand_operational_heading()
+            logger.warning("[brand_fulfillment] Downgrading unsupported brand pricing/packages heading '%s' -> '%s'", heading, downgraded)
+            return downgraded
+
+        geography_terms = ["السعودية", "الرياض", "جدة", "saudi", "riyadh", "jeddah"]
+        if is_brand_owned and any(k in heading_lower for k in geography_terms) and not _cards_have("visible_geography"):
+            cleaned = re.sub(r"\s+(?:في|داخل|بالـ?|ب)\s*(?:السعودية|الرياض|جدة)\b", "", heading, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s+(?:in|across|within)\s+(?:saudi arabia|saudi|riyadh|jeddah)\b", "", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s+", " ", cleaned).strip(" -–—:")
+            if cleaned and cleaned != heading:
+                section["fulfillment_status"] = "weak"
+                section["fulfillment_reason"] = "removed unsupported brand geography claim from heading"
+                logger.info("[brand_fulfillment] Removed unsupported geography from brand heading '%s' -> '%s'", heading, cleaned)
+                heading = cleaned
+                heading_lower = heading.lower()
+        
+        is_project_heading = any(k in heading_lower for k in [
+            "مشاريع", "سابقة أعمال", "أمثلة من أعمال", "أمثلة من مشاريع", "مشاريعنا", "سابقة أعمالنا",
+            "projects", "case studies", "portfolio", "our work", "our projects"
+        ])
+        
+        if is_project_heading:
+            chunks = state.get("brand_source_chunks", [])
+            from src.services.brand_evidence_service import build_section_brand_understanding
+            brief = build_section_brand_understanding(section, state, chunks)
+            
+            if not brief.get("relevant_projects"):
+                logger.info(f"[HeadingDowngrader] Downgrading project-promising heading '{heading}' due to zero project evidence.")
+                section["fulfillment_status"] = "unsupported"
+                section["fulfillment_reason"] = "project/case-study heading without observed project evidence"
+                if lang == "ar":
+                    if "تصميم" in heading or "موقع" in heading:
+                        return "كيف تختار أفضل شركة تصميم مواقع وتطبيقات؟"
+                    elif "برمجة" in heading or "تطوير" in heading:
+                        return "معايير تقييم شركات البرمجة والخدمات الرقمية"
+                    else:
+                        return "معايير اختيار أفضل شريك لتطوير موقعك الإلكتروني"
+                else:
+                    return "How to Choose the Right Web Development Partner"
+        return heading
+
+    def _fulfill_and_downgrade_heading(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+        """Downgrade brand-owned headings that inventory says cannot be fulfilled."""
+        heading = str(section.get("heading_text") or "").strip()
+        heading_lower = heading.lower()
+        lang = (state.get("article_language") or "ar").lower()
+        brand_name = str(state.get("brand_name") or state.get("display_brand_name") or "").strip()
+        brand_aliases = [str(a).strip() for a in (state.get("brand_aliases") or []) if str(a).strip()]
+        brand_terms = [brand_name.lower()] + [alias.lower() for alias in brand_aliases]
+        mentions_brand = any(term and term in heading_lower for term in brand_terms)
+        content_type = str(state.get("content_type") or "").lower()
+        is_brand_owned = content_type == "brand_commercial" and mentions_brand
+        inventory = self._brand_evidence_inventory_for_outline(state)
+
+        def _cards_have(key: str) -> bool:
+            for card in state.get("brand_evidence_cards", []) or []:
+                if isinstance(card, dict) and not card.get("excluded_reason") and card.get(key):
+                    return True
+            return False
+
+        def _available(inventory_key: str, card_key: str) -> bool:
+            return bool(inventory.get(inventory_key)) or _cards_have(card_key)
+
+        def _safe_brand_operational_heading() -> str:
+            return (
+                f"نطاق الخدمات المتاحة لدى {brand_name or 'البراند'} حسب احتياج المشروع"
+                if lang.startswith("ar")
+                else f"Service Scope Available From {brand_name or 'the Brand'}"
+            )
+
+        pricing_terms = [
+            "Ø¨Ø§Ù‚Ø§Øª", "Ø¨Ø§Ù‚Ø©", "Ø£Ø³Ø¹Ø§Ø±", "Ø§Ø³Ø¹Ø§Ø±", "ØªÙƒÙ„ÙØ©",
+            "باقات", "باقة", "أسعار", "اسعار", "تكلفة",
+            "pricing", "packages", "package", "plans", "cost",
+        ]
+        if is_brand_owned and any(term in heading_lower for term in pricing_terms) and not _available("pricing_available", "visible_pricing_or_packages"):
+            section["fulfillment_status"] = "unsupported"
+            section["fulfillment_reason"] = "brand pricing/packages heading without explicit brand pricing/package evidence"
+            section["subheadings"] = []
+            downgraded = _safe_brand_operational_heading()
+            logger.warning("[brand_fulfillment] Downgrading unsupported brand pricing/packages heading '%s' -> '%s'", heading, downgraded)
+            return downgraded
+
+        explicit_geo = [str(item).casefold() for item in inventory.get("explicit_geography", [])]
+        area = str(state.get("area") or "").strip()
+        geo_candidates = [area] if area else []
+        english_geo_tail = re.search(r"\b(?:in|across|within)\s+([A-Z][A-Za-z\s.'-]{2,80})$", heading)
+        if english_geo_tail:
+            geo_candidates.append(english_geo_tail.group(1).strip())
+        unsupported_geo = [
+            candidate for candidate in geo_candidates
+            if candidate and candidate.casefold() not in explicit_geo
+        ]
+        if is_brand_owned and unsupported_geo and not _available("explicit_geography", "visible_geography"):
+            cleaned = heading
+            for candidate in unsupported_geo:
+                cleaned = re.sub(r"\s+(?:in|across|within)\s+" + re.escape(candidate) + r"\b", "", cleaned, flags=re.IGNORECASE)
+                cleaned = re.sub(r"\s+(?:في|داخل|عبر)\s*" + re.escape(candidate) + r"\b", "", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s+", " ", cleaned).strip(" -â€“—:")
+            if cleaned and cleaned != heading:
+                section["fulfillment_status"] = "weak"
+                section["fulfillment_reason"] = "removed unsupported brand geography claim from heading"
+                logger.info("[brand_fulfillment] Removed unsupported geography from brand heading '%s' -> '%s'", heading, cleaned)
+                heading = cleaned
+                heading_lower = heading.lower()
+
+        project_terms = [
+            "Ù…Ø´Ø§Ø±ÙŠØ¹", "Ø³Ø§Ø¨Ù‚Ø© Ø£Ø¹Ù…Ø§Ù„", "Ø£Ù…Ø«Ù„Ø© Ù…Ù† Ø£Ø¹Ù…Ø§Ù„",
+            "Ø£Ù…Ø«Ù„Ø© Ù…Ù† Ù…Ø´Ø§Ø±ÙŠØ¹", "Ù…Ø´Ø§Ø±ÙŠØ¹Ù†Ø§", "Ø³Ø§Ø¨Ù‚Ø© Ø£Ø¹Ù…Ø§Ù„Ù†Ø§",
+            "مشاريع", "نماذج", "أعمال", "سابقة أعمال",
+            "projects", "case studies", "portfolio", "our work", "our projects",
+        ]
+        if any(term in heading_lower for term in project_terms) and not _available("projects_available", "visible_project_or_case_study_examples"):
+            logger.info("[HeadingDowngrader] Downgrading project-promising heading '%s' due to zero project evidence.", heading)
+            section["fulfillment_status"] = "unsupported"
+            section["fulfillment_reason"] = "project/case-study heading without observed project evidence"
+            section["subheadings"] = []
+            if lang == "ar":
+                if "ØªØµÙ…ÙŠÙ…" in heading or "Ù…ÙˆÙ‚Ø¹" in heading:
+                    return "كيف تختار أفضل شركة تصميم مواقع وتطبيقات؟"
+                if "Ø¨Ø±Ù…Ø¬Ø©" in heading or "ØªØ·ÙˆÙŠØ±" in heading:
+                    return "معايير تقييم شركات البرمجة والخدمات الرقمية"
+                return "معايير اختيار أفضل شريك لتطوير موقعك الإلكتروني"
+            return "How to Choose the Right Web Development Partner"
+
+        proof_like = (section.get("section_type") or "").lower() in {"proof", "case_study", "case-study", "differentiation"}
+        if (
+            is_brand_owned
+            and proof_like
+            and inventory.get("confidence") == "low"
+            and not any(inventory.get(key) for key in ("projects_available", "trust_available", "pricing_available"))
+        ):
+            section["fulfillment_status"] = "weak"
+            section["fulfillment_reason"] = "low-confidence inventory cannot support a dedicated brand-proof heading"
+            section["subheadings"] = []
+            return _safe_brand_operational_heading()
+
+        return heading
+
+    def _generic_taxonomy_axis_for_section(self, section: Dict[str, Any]) -> str:
+        section_type = str(section.get("section_type") or "").lower()
+        heading_blob = " ".join([
+            str(section.get("heading_text") or ""),
+            " ".join(self._subheading_text(item) for item in section.get("subheadings", []) or []),
+        ]).lower()
+        if section_type == "faq":
+            return "faq"
+        if section_type == "conclusion":
+            return "conclusion"
+        if section_type == "process" or any(term in heading_blob for term in ("process", "steps", "how", "خطوات", "مراحل")):
+            return "process"
+        if section_type == "comparison" or any(term in heading_blob for term in ("comparison", "compare", "versus", " vs ", "مقارنة")):
+            return "comparison"
+        if section_type == "pricing" or any(term in heading_blob for term in ("pricing", "price", "cost", "budget", "أسعار", "تكلفة")):
+            return "pricing"
+        if section_type in {"offer", "services"}:
+            return "category_or_type"
+        return "criteria"
+
+    def _normalize_outline_with_brand_evidence_inventory(
+        self,
+        outline: List[Dict[str, Any]],
+        state: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        """Post-outline brand evidence gate based on the compact inventory."""
+        if str(state.get("content_type") or "").lower() != "brand_commercial":
+            return outline
+
+        normalized: List[Dict[str, Any]] = []
+        for raw_section in outline:
+            section = raw_section
+            section_type = str(section.get("section_type") or "").lower()
+            visible_brand = self._section_visibly_references_brand(section, state)
+
+            if section_type == "faq" and not visible_brand:
+                section["brand_policy"] = "none"
+                section["taxonomy_axis"] = "faq"
+                if isinstance(section.get("section_contract"), dict):
+                    section["section_contract"]["brand_policy"] = "none"
+                    section["section_contract"]["taxonomy_axis"] = "faq"
+                normalized.append(section)
+                continue
+
+            if not visible_brand and section_type not in {"introduction", "intro", "conclusion"}:
+                section["brand_policy"] = "none"
+                current_axis = str(section.get("taxonomy_axis") or "").lower()
+                if current_axis.startswith("brand_"):
+                    section["taxonomy_axis"] = self._generic_taxonomy_axis_for_section(section)
+                if isinstance(section.get("section_contract"), dict):
+                    section["section_contract"]["brand_policy"] = "none"
+                    contract_axis = str(section["section_contract"].get("taxonomy_axis") or "").lower()
+                    if contract_axis.startswith("brand_"):
+                        section["section_contract"]["taxonomy_axis"] = section.get("taxonomy_axis") or self._generic_taxonomy_axis_for_section(section)
+                normalized.append(section)
+                continue
+
+            original_heading = str(section.get("heading_text") or "")
+            section["heading_text"] = self._fulfill_and_downgrade_heading(section, state)
+            if section["heading_text"] != original_heading:
+                visible_brand = self._section_visibly_references_brand(section, state)
+
+            if visible_brand or section_type in {"introduction", "intro", "conclusion"}:
+                section["brand_policy"] = "commercial"
+            else:
+                section["brand_policy"] = "none"
+                if str(section.get("taxonomy_axis") or "").lower().startswith("brand_"):
+                    section["taxonomy_axis"] = self._generic_taxonomy_axis_for_section(section)
+
+            if isinstance(section.get("section_contract"), dict):
+                section["section_contract"]["brand_policy"] = section["brand_policy"]
+                if section["brand_policy"] == "none" and str(section["section_contract"].get("taxonomy_axis") or "").lower().startswith("brand_"):
+                    section["section_contract"]["taxonomy_axis"] = section.get("taxonomy_axis") or self._generic_taxonomy_axis_for_section(section)
+
+            normalized.append(section)
+
+        return normalized
 
     def _prepare_outline_for_content(
         self,
@@ -2294,6 +3071,9 @@ class AsyncWorkflowController:
             ]
             self.outline_gen._normalize_section(section, idx, content_type, content_strategy, area)
 
+            # Apply Heading Fulfillment & Downgrade Rule (Phase 1.7 Step 9)
+            section["heading_text"] = self._fulfill_and_downgrade_heading(section, state)
+
             # --- Pricing Enrichment (Grounded Guidance) ---
             # If this is a pricing section, inject the observed mentions harvested from SERP.
             tax_axis = str(section.get("taxonomy_axis", "")).lower()
@@ -2307,6 +3087,8 @@ class AsyncWorkflowController:
             section["article_language"] = article_language
             section.setdefault("assigned_keywords", keywords[:3] if keywords else [primary_keyword])
             safe_outline.append(section)
+
+        safe_outline = self._normalize_outline_with_brand_evidence_inventory(safe_outline, state)
 
         # Assign requires_table based on priority, respecting the 2-table cap
         tables_assigned = 0
@@ -2469,6 +3251,199 @@ class AsyncWorkflowController:
                 removed[:5],
             )
         return "\n".join(kept).strip()
+
+    def _evaluate_brand_owned_section_fulfillment(
+        self,
+        section: Dict[str, Any],
+        content: str,
+        state: Dict[str, Any],
+    ) -> Dict[str, str]:
+        """Soft deterministic fulfillment check for brand-owned sections."""
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        evaluation_section = section
+        if not evaluation_section.get("taxonomy_axis"):
+            evaluation_section = dict(section)
+            evaluation_section["taxonomy_axis"] = self._infer_taxonomy_axis(evaluation_section)
+
+        return evaluate_brand_section_fulfillment(
+            section=evaluation_section,
+            content=content,
+            section_brand_understanding=evaluation_section.get("section_brand_understanding"),
+            section_raw_brand_blocks=evaluation_section.get("section_raw_brand_blocks"),
+            state=state,
+        )
+
+        contract = section.get("section_contract") or {}
+        brand_policy = str(contract.get("brand_policy") or section.get("brand_policy") or "").lower()
+        content_type = str(state.get("content_type") or "").lower()
+        if content_type != "brand_commercial" and brand_policy != "commercial":
+            return {"fulfillment_status": "satisfied", "fulfillment_reason": "not brand-owned"}
+
+        heading = str(section.get("heading_text") or "")
+        heading_lower = heading.lower()
+        content_lower = (content or "").lower()
+        axis = str(section.get("taxonomy_axis") or contract.get("taxonomy_axis") or self._infer_taxonomy_axis(section)).lower()
+        cards = state.get("brand_evidence_cards") or []
+
+        def _values(keys: List[str]) -> List[str]:
+            out: List[str] = []
+            for card in cards:
+                if not isinstance(card, dict) or card.get("excluded_reason"):
+                    continue
+                for key in keys:
+                    out.extend(str(item).strip() for item in card.get(key, []) if str(item).strip())
+            return list(dict.fromkeys(out))
+
+        services = _values(["visible_products_or_services", "visible_features_or_capabilities"])
+        projects = _values(["visible_project_or_case_study_examples"])
+        process_steps = _values(["visible_process_steps"])
+        pricing = _values(["visible_pricing_or_packages"])
+        geography = _values(["visible_geography"])
+
+        def _mentioned(values: List[str]) -> bool:
+            for value in values:
+                folded = value.lower()
+                if folded and folded in content_lower:
+                    return True
+            return False
+
+        pricing_terms = ["باقات", "باقة", "أسعار", "اسعار", "تكلفة", "pricing", "packages", "package", "cost"]
+        geo_terms = ["السعودية", "الرياض", "جدة", "saudi", "riyadh", "jeddah"]
+
+        if any(term in heading_lower for term in pricing_terms) and not pricing:
+            return {"fulfillment_status": "unsupported", "fulfillment_reason": "brand pricing/packages promised without brand pricing evidence"}
+        if any(term in heading_lower for term in geo_terms) and not geography:
+            return {"fulfillment_status": "unsupported", "fulfillment_reason": "brand geography promised without explicit brand geography evidence"}
+        if axis == "brand_projects":
+            if projects and _mentioned(projects):
+                return {"fulfillment_status": "satisfied", "fulfillment_reason": "observed project evidence used"}
+            return {"fulfillment_status": "unsupported" if projects else "weak", "fulfillment_reason": "project section did not surface observed project names"}
+        if axis == "brand_offer":
+            if services and _mentioned(services):
+                return {"fulfillment_status": "satisfied", "fulfillment_reason": "observed service evidence used"}
+            return {"fulfillment_status": "weak" if services else "unsupported", "fulfillment_reason": "service section lacks observed service/capability evidence"}
+        if axis == "brand_process":
+            if process_steps and _mentioned(process_steps):
+                return {"fulfillment_status": "satisfied", "fulfillment_reason": "observed process evidence used"}
+            return {"fulfillment_status": "weak" if process_steps else "unsupported", "fulfillment_reason": "process section lacks observed process evidence"}
+
+        return {"fulfillment_status": "satisfied", "fulfillment_reason": "no strict brand-owned promise detected"}
+
+    def _format_section_raw_brand_blocks_for_prompt(self, blocks: List[Dict[str, Any]]) -> str:
+        """Format selected raw brand blocks for prompt visibility without dumping full pages."""
+        if not blocks:
+            return ""
+
+        lines: List[str] = []
+        for idx, block in enumerate(blocks, start=1):
+            if idx > 1:
+                lines.append("")
+            lines.append(f"Source URL: {block.get('source_url') or block.get('url') or ''}")
+            lines.append(f"Page type: {block.get('page_type') or 'other'}")
+            lines.append(f"Heading: {block.get('heading') or ''}")
+            lines.append("Observed text:")
+            lines.append(str(block.get("observed_text") or block.get("text") or "").strip())
+            lines.append("Observed facts:")
+            facts = block.get("observed_facts") or []
+            if facts:
+                for fact in facts[:8]:
+                    lines.append(f"- {fact}")
+            else:
+                lines.append("- No structured facts extracted from this block.")
+
+        return "\n".join(lines).strip()
+
+    def _format_section_brand_page_briefs_for_prompt(self, briefs: List[Dict[str, Any]]) -> str:
+        """Format selected page-level brand briefs as readable writer context."""
+        if not briefs:
+            return ""
+
+        lines: List[str] = []
+        for idx, brief in enumerate(briefs, start=1):
+            if idx > 1:
+                lines.append("")
+            lines.append(f"Source URL: {brief.get('source_url') or brief.get('url') or ''}")
+            lines.append(f"Page type: {brief.get('page_type') or 'other'}")
+            lines.append(f"Page title: {brief.get('page_title') or ''}")
+            lines.append("Grounded summary:")
+            lines.append(str(brief.get("grounded_summary") or "").strip())
+
+            observed_pairs = [
+                ("Observed services", brief.get("observed_services") or []),
+                ("Observed projects", brief.get("observed_projects") or []),
+                ("Observed technologies", brief.get("observed_technologies") or []),
+                ("Observed process steps", brief.get("observed_process_steps") or []),
+                ("Explicit geography", brief.get("explicit_geography") or []),
+                ("Observed pricing", brief.get("observed_pricing") or []),
+            ]
+            for label, values in observed_pairs:
+                if values:
+                    lines.append(f"{label}: {', '.join(str(value) for value in values[:10])}")
+
+            boundaries = brief.get("claim_boundaries") or []
+            if boundaries:
+                lines.append("Claim boundaries:")
+                for boundary in boundaries[:6]:
+                    lines.append(f"- {boundary}")
+
+        return "\n".join(lines).strip()
+
+    def _build_brand_section_evidence_audit(
+        self,
+        section: Dict[str, Any],
+        section_brand_page_briefs: List[Dict[str, Any]],
+        section_raw_brand_blocks: List[Dict[str, Any]],
+        section_brand_understanding: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Create a compact per-section audit of selected brand evidence."""
+        def compact_list(values: Any, limit: int = 8) -> List[str]:
+            if not isinstance(values, list):
+                values = [values] if values else []
+            result: List[str] = []
+            seen = set()
+            for value in values:
+                text = str(value or "").strip()
+                if not text:
+                    continue
+                key = text.casefold()
+                if key in seen:
+                    continue
+                seen.add(key)
+                result.append(text[:160])
+                if len(result) >= limit:
+                    break
+            return result
+
+        urls: List[str] = []
+        headings: List[str] = []
+        for brief in section_brand_page_briefs or []:
+            if not isinstance(brief, dict):
+                continue
+            urls.append(brief.get("source_url") or brief.get("url") or "")
+            headings.append(brief.get("page_title") or brief.get("heading") or "")
+        for block in section_raw_brand_blocks or []:
+            if not isinstance(block, dict):
+                continue
+            urls.append(block.get("source_url") or block.get("url") or "")
+            headings.append(block.get("heading") or block.get("page_title") or "")
+
+        understanding = section_brand_understanding if isinstance(section_brand_understanding, dict) else {}
+        return {
+            "section_id": section.get("section_id") or section.get("id"),
+            "heading": section.get("heading_text", ""),
+            "selected_briefs_count": len(section_brand_page_briefs or []),
+            "selected_blocks_count": len(section_raw_brand_blocks or []),
+            "selected_urls": compact_list(urls),
+            "selected_headings": compact_list(headings),
+            "relevant_projects": compact_list(understanding.get("relevant_projects", [])),
+            "relevant_services": compact_list(understanding.get("relevant_services", [])),
+            "relevant_process_steps": compact_list(understanding.get("relevant_process_steps", [])),
+            "relevant_technologies": compact_list(understanding.get("relevant_technologies", [])),
+            "not_supported_for_this_section": compact_list(understanding.get("not_supported_for_this_section", [])),
+            "fulfillment_status": section.get("fulfillment_status", "pending"),
+            "fulfillment_reason": section.get("fulfillment_reason", ""),
+        }
 
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
         input_data = state.get("input_data", {})
@@ -2717,30 +3692,56 @@ class AsyncWorkflowController:
 
         used_phrases = state.get("used_phrases", [])
 
-        # --- Find the most relevant brand page for this specific section ---
-        brand_context = state.get("brand_context", "")
-        brand_pages_index = state.get("brand_pages_index", {})
+        brand_label = state.get("display_brand_name") or state.get("brand_name") or ""
+        brand_context = (
+            f"Brand name: {brand_label}. "
+            "For factual brand claims, use only the selected brand page briefs, raw brand source blocks, "
+            "and section brand understanding supplied in this prompt."
+        ).strip()
+        
+        # Select raw brand blocks and build the section organizer (Phase 1.9 Step 4).
+        # Cards/inventory may route this selection, but the writer receives raw
+        # page-backed blocks as the factual source of truth.
         section_source_text = ""
+        section_brand_page_briefs: List[Dict[str, Any]] = []
+        section_raw_brand_blocks: List[Dict[str, Any]] = []
+        section_brand_understanding: Dict[str, Any] = {}
 
-        if brand_pages_index:
-            # Score each indexed page by relevance to this specific section
-            section_heading = (section.get("heading_text") or "").lower()
-            section_type = (section.get("section_type") or "").lower()
-            section_goal = (section.get("content_goal") or "").lower()
-            section_query = f"{section_heading} {section_type} {section_goal}"
-            section_tokens = [t for t in section_query.split() if len(t) > 2]
+        try:
+            from src.services.brand_evidence_service import (
+                build_section_brand_understanding,
+                select_section_brand_page_briefs,
+                select_section_raw_brand_blocks,
+            )
+            section_brand_page_briefs = select_section_brand_page_briefs(section, state)
+            section_raw_brand_blocks = select_section_raw_brand_blocks(section, state)
+            section_for_understanding = dict(section)
+            section_for_understanding["section_brand_page_briefs"] = section_brand_page_briefs
+            section_brand_understanding = build_section_brand_understanding(
+                section_for_understanding,
+                state,
+                section_raw_brand_blocks,
+            )
+            section["section_brand_page_briefs"] = section_brand_page_briefs
+            section["section_raw_brand_blocks"] = section_raw_brand_blocks
+            section["section_brand_understanding"] = section_brand_understanding
 
-            best_url, best_score, best_text = "", 0, ""
-            for url, page_text in brand_pages_index.items():
-                text_lower = page_text.lower()
-                score = sum(1 for t in section_tokens if t in text_lower)
-                if score > best_score:
-                    best_score, best_url, best_text = score, url, page_text
+            formatted_raw_blocks = self._format_section_raw_brand_blocks_for_prompt(section_raw_brand_blocks)
+            if formatted_raw_blocks:
+                section_source_text = formatted_raw_blocks
 
-            if best_text and best_score > 0:
-                # Trim to avoid token bloat
-                section_source_text = best_text[:2500]
-                logger.info(f"Section '{section_heading}' -> using brand page: {best_url} (score={best_score})")
+            status = (
+                section_brand_understanding
+                .get("recommended_angle", {})
+                .get("preferred_section_style", "general_guidance")
+                if isinstance(section_brand_understanding, dict)
+                else "unavailable"
+            )
+            logger.info("[brand_page_briefs] selected_count=%s", len(section_brand_page_briefs))
+            logger.info("[brand_raw_blocks] selected_count=%s", len(section_raw_brand_blocks))
+            logger.info("[brand_section_understanding] status=%s", status)
+        except Exception as e:
+            logger.warning(f"Failed to select raw brand blocks and compile section understanding: {e}")
 
         # --- Extract curated external sources from SERP ---
         external_sources = []
@@ -2824,10 +3825,12 @@ class AsyncWorkflowController:
             area_neighborhoods=state.get("area_neighborhoods", []),
             global_keyword_count=global_keyword_count,
             brand_mentions_count=brand_mentions_count,
-            brand_advantages=brand_advantages,
             writing_blueprint=writing_blueprint,
             market_angle=market_angle,
-            used_anchors=state.get("used_anchors", [])
+            used_anchors=state.get("used_anchors", []),
+            section_brand_page_briefs=section_brand_page_briefs,
+            section_raw_brand_blocks=section_raw_brand_blocks,
+            section_brand_understanding=section_brand_understanding
         )
 
         # Try 1
@@ -2884,10 +3887,19 @@ class AsyncWorkflowController:
             brand_advantages=brand_advantages,
             writing_blueprint=writing_blueprint,
             market_angle=market_angle,
-            used_anchors=state.get("used_anchors", [])
+            used_anchors=state.get("used_anchors", []),
+            section_brand_page_briefs=section_brand_page_briefs,
+            section_raw_brand_blocks=section_raw_brand_blocks,
+            section_brand_understanding=section_brand_understanding
         )
 
-        content = self._enforce_section_heading_lock(res_data.get("content", ""), section)
+        raw_content = (
+            res_data.get("content")
+            or res_data.get("generated_content")
+            or res_data.get("section_content")
+            or ""
+        )
+        content = self._enforce_section_heading_lock(raw_content, section)
         # --- Extract and track Anchor Texts for rotation ---
         if content:
             new_anchors = re.findall(r'\[(.*?)\]\(.*?\)', content)
@@ -2969,6 +3981,218 @@ class AsyncWorkflowController:
                     state["brand_link_used"] = True
 
             final_content = self.validator.enforce_paragraph_structure(content)
+            fulfillment_report = self._evaluate_brand_owned_section_fulfillment(section, final_content, state)
+            section["fulfillment_status"] = fulfillment_report.get("fulfillment_status", "satisfied")
+            section["fulfillment_reason"] = fulfillment_report.get("fulfillment_reason", "")
+            if section["fulfillment_status"] == "unsupported":
+                logger.warning(
+                    "[brand_fulfillment] unsupported section='%s' reason='%s'. Applying soft-first correction.",
+                    section.get("heading_text", ""),
+                    section.get("fulfillment_reason", ""),
+                )
+                original_heading = section.get("heading_text", "")
+                downgraded_heading = self._fulfill_and_downgrade_heading(section, state)
+                if downgraded_heading and downgraded_heading != original_heading:
+                    section["heading_text"] = downgraded_heading
+                    fulfillment_report = self._evaluate_brand_owned_section_fulfillment(section, final_content, state)
+                    section["fulfillment_status"] = fulfillment_report.get("fulfillment_status", "satisfied")
+                    section["fulfillment_reason"] = fulfillment_report.get("fulfillment_reason", "")
+
+                if section.get("fulfillment_status") == "unsupported" and not section.get("_brand_fulfillment_repair_attempted"):
+                    section["_brand_fulfillment_repair_attempted"] = True
+                    repair_plan = dict(execution_plan or {})
+                    repair_feedback = [
+                        "BRAND FULFILLMENT CORRECTION:",
+                        f"- Reason: {section.get('fulfillment_reason', 'unsupported brand-owned section')}",
+                        "- Rewrite only the offending unsupported parts while preserving the section structure.",
+                        "- Use the [RAW BRAND SOURCE BLOCKS] and [SECTION BRAND UNDERSTANDING] as the evidence boundary.",
+                        "- If relevant_projects exist, mention at least one observed project/client name exactly.",
+                        "- If no raw evidence supports pricing, geography, trust, certification, timelines, guarantees, or market leadership, remove that claim.",
+                    ]
+                    repair_plan["structure_rule"] = "\n".join(
+                        [
+                            str(repair_plan.get("structure_rule") or execution_plan.get("structure_rule") or "").strip(),
+                            *repair_feedback,
+                        ]
+                    ).strip()
+
+                    validate_service_call(
+                        self.section_writer.write,
+                        title=title,
+                        global_keywords=global_keywords,
+                        section=section,
+                        article_intent=article_intent,
+                        seo_intelligence=seo_intelligence,
+                        content_type=content_type,
+                        link_strategy=link_strategy,
+                        brand_url=brand_url,
+                        brand_link_used=state.get("brand_link_used", False),
+                        brand_link_allowed=execution_plan.get("brand_link_allowed", False),
+                        allow_external_links=bool(external_sources),
+                        workflow_mode=state.get("workflow_mode", "core"),
+                        execution_plan=repair_plan,
+                        draft_to_fix=final_content,
+                        area=area_for_section,
+                        used_phrases=used_phrases,
+                        used_internal_links=state.get("used_internal_links", []),
+                        used_external_links=state.get("used_external_links", []),
+                        section_index=section_index,
+                        total_sections=total_sections,
+                        brand_context=brand_context,
+                        section_source_text=section_source_text,
+                        external_sources=external_sources,
+                        workflow_logger=state.get("workflow_logger"),
+                        prohibited_competitors=state.get("prohibited_competitors", []),
+                        cta_type=cta_type,
+                        tone=state.get("tone"),
+                        pov=state.get("pov"),
+                        brand_voice_description=state.get("brand_voice_description"),
+                        brand_voice_guidelines=state.get("brand_voice_guidelines"),
+                        brand_voice_examples=state.get("brand_voice_examples"),
+                        custom_keyword_density=state.get("custom_keyword_density"),
+                        bold_key_terms=state.get("bold_key_terms", True),
+                        requires_primary_keyword=section.get("requires_primary_keyword", False),
+                        used_topics=state.get("used_topics", []),
+                        used_claims=state.get("used_claims", []),
+                        previous_section_text="",
+                        previous_content_summary=optimized_context,
+                        full_outline=state.get("outline", []),
+                        introduction_text=state.get("introduction_text", ""),
+                        external_resources=state.get("external_resources", []),
+                        brand_name=state.get("brand_name", ""),
+                        style_blueprint=state.get("style_blueprint", {}),
+                        ctas_placed=state.get("ctas_placed", 0),
+                        tables_placed=state.get("tables_placed", 0),
+                        serp_data=state.get("serp_data", {}),
+                        area_neighborhoods=state.get("area_neighborhoods", []),
+                        global_keyword_count=global_keyword_count,
+                        brand_mentions_count=brand_mentions_count,
+                        brand_advantages=brand_advantages,
+                        writing_blueprint=writing_blueprint,
+                        market_angle=market_angle,
+                        used_anchors=state.get("used_anchors", []),
+                        section_brand_page_briefs=section_brand_page_briefs,
+                        section_raw_brand_blocks=section_raw_brand_blocks,
+                        section_brand_understanding=section_brand_understanding,
+                    )
+
+                    repair_data = await self.section_writer.write(
+                        title=title,
+                        global_keywords=global_keywords,
+                        section=section,
+                        article_intent=article_intent,
+                        seo_intelligence=seo_intelligence,
+                        content_type=content_type,
+                        link_strategy=link_strategy,
+                        brand_url=brand_url,
+                        brand_link_used=state.get("brand_link_used", False),
+                        brand_link_allowed=execution_plan.get("brand_link_allowed", False),
+                        allow_external_links=bool(external_sources),
+                        workflow_mode=state.get("workflow_mode", "core"),
+                        execution_plan=repair_plan,
+                        draft_to_fix=final_content,
+                        area=area_for_section,
+                        used_phrases=used_phrases,
+                        used_internal_links=state.get("used_internal_links", []),
+                        used_external_links=state.get("used_external_links", []),
+                        section_index=section_index,
+                        total_sections=total_sections,
+                        brand_context=brand_context,
+                        section_source_text=section_source_text,
+                        external_sources=external_sources,
+                        workflow_logger=state.get("workflow_logger"),
+                        prohibited_competitors=state.get("prohibited_competitors", []),
+                        cta_type=cta_type,
+                        tone=state.get("tone"),
+                        pov=state.get("pov"),
+                        brand_voice_description=state.get("brand_voice_description"),
+                        brand_voice_guidelines=state.get("brand_voice_guidelines"),
+                        brand_voice_examples=state.get("brand_voice_examples"),
+                        custom_keyword_density=state.get("custom_keyword_density"),
+                        bold_key_terms=state.get("bold_key_terms", True),
+                        requires_primary_keyword=section.get("requires_primary_keyword", False),
+                        used_topics=state.get("used_topics", []),
+                        used_claims=state.get("used_claims", []),
+                        previous_section_text="",
+                        previous_content_summary=optimized_context,
+                        full_outline=state.get("outline", []),
+                        introduction_text=state.get("introduction_text", ""),
+                        external_resources=state.get("external_resources", []),
+                        brand_name=state.get("brand_name", ""),
+                        style_blueprint=state.get("style_blueprint", {}),
+                        ctas_placed=state.get("ctas_placed", 0),
+                        tables_placed=state.get("tables_placed", 0),
+                        serp_data=state.get("serp_data", {}),
+                        area_neighborhoods=state.get("area_neighborhoods", []),
+                        global_keyword_count=global_keyword_count,
+                        brand_mentions_count=brand_mentions_count,
+                        brand_advantages=brand_advantages,
+                        writing_blueprint=writing_blueprint,
+                        market_angle=market_angle,
+                        used_anchors=state.get("used_anchors", []),
+                        section_brand_page_briefs=section_brand_page_briefs,
+                        section_raw_brand_blocks=section_raw_brand_blocks,
+                        section_brand_understanding=section_brand_understanding,
+                    )
+
+                    candidate_content = (
+                        repair_data.get("content")
+                        or repair_data.get("generated_content")
+                        or repair_data.get("section_content")
+                        or ""
+                    )
+                    if candidate_content:
+                        candidate_content = self._enforce_section_heading_lock(candidate_content, section)
+                        candidate_content = LinkManager.sanitize_section_links(
+                            content=candidate_content,
+                            state=state,
+                            brand_url=brand_url or "",
+                            max_external=2,
+                        )
+                        candidate_final = self.validator.enforce_paragraph_structure(candidate_content)
+                        candidate_report = self._evaluate_brand_owned_section_fulfillment(section, candidate_final, state)
+                        if candidate_report.get("fulfillment_status") != "unsupported":
+                            final_content = candidate_final
+                            content = candidate_final
+                            found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', final_content)
+                            section["fulfillment_status"] = candidate_report.get("fulfillment_status", "satisfied")
+                            section["fulfillment_reason"] = candidate_report.get("fulfillment_reason", "")
+                            logger.info(
+                                "[brand_fulfillment] corrective rewrite accepted section='%s' status='%s'.",
+                                section.get("heading_text", ""),
+                                section.get("fulfillment_status"),
+                            )
+                        else:
+                            logger.warning(
+                                "[brand_fulfillment] corrective rewrite still unsupported section='%s' reason='%s'. Keeping safer previous version.",
+                                section.get("heading_text", ""),
+                                candidate_report.get("fulfillment_reason", ""),
+                            )
+
+            brand_evidence_audit = self._build_brand_section_evidence_audit(
+                section=section,
+                section_brand_page_briefs=section_brand_page_briefs,
+                section_raw_brand_blocks=section_raw_brand_blocks,
+                section_brand_understanding=section_brand_understanding,
+            )
+            section["brand_evidence_audit"] = brand_evidence_audit
+            logger.info(
+                "[brand_section_audit] section_id=%s heading=%s briefs=%s blocks=%s urls=%s projects=%s services=%s fulfillment=%s",
+                brand_evidence_audit.get("section_id"),
+                brand_evidence_audit.get("heading"),
+                brand_evidence_audit.get("selected_briefs_count"),
+                brand_evidence_audit.get("selected_blocks_count"),
+                brand_evidence_audit.get("selected_urls"),
+                brand_evidence_audit.get("relevant_projects"),
+                brand_evidence_audit.get("relevant_services"),
+                brand_evidence_audit.get("fulfillment_status"),
+            )
+            if state.get("workflow_logger"):
+                state["workflow_logger"].log_step_details(
+                    step_name=f"BRAND_SECTION_EVIDENCE_AUDIT: {section_id}",
+                    duration=0,
+                    output_data=brand_evidence_audit,
+                )
 
             # --- QUALITY VALIDATION & ACTIVE REPAIR LOOP ---
             is_valid = True
@@ -3094,7 +4318,10 @@ class AsyncWorkflowController:
                         brand_advantages=brand_advantages,
                         writing_blueprint=writing_blueprint,
                         market_angle=market_angle,
-                        used_anchors=state.get("used_anchors", [])
+                        used_anchors=state.get("used_anchors", []),
+                        section_brand_page_briefs=section_brand_page_briefs,
+                        section_raw_brand_blocks=section_raw_brand_blocks,
+                        section_brand_understanding=section_brand_understanding
                     )
 
                     # RETRY 1: Surgical Edit Mode
@@ -3151,7 +4378,10 @@ class AsyncWorkflowController:
                         brand_advantages=brand_advantages,
                         writing_blueprint=writing_blueprint,
                         market_angle=market_angle,
-                        used_anchors=state.get("used_anchors", [])
+                        used_anchors=state.get("used_anchors", []),
+                        section_brand_page_briefs=section_brand_page_briefs,
+                        section_raw_brand_blocks=section_raw_brand_blocks,
+                        section_brand_understanding=section_brand_understanding
                     )
 
                     new_content = repair_data.get("content", "")
@@ -3184,6 +4414,17 @@ class AsyncWorkflowController:
             # --------------------------------------------------
 
             # Count brand mentions in finalized content
+            claim_gate_brief = None
+            if state.get("brand_writing_brief") or state.get("brand_name"):
+                from src.services.brand_evidence_service import apply_brand_claim_gate
+                claim_gate_brief = dict(state.get("brand_writing_brief") or {})
+                claim_gate_brief["brand_name"] = claim_gate_brief.get("brand_name") or state.get("brand_name", "")
+                claim_gate_brief["brand_offer_contract"] = state.get("brand_offer_contract", {})
+                claim_gate_brief["section_source_text"] = section_source_text
+                if state.get("brand_aliases"):
+                    claim_gate_brief["brand_aliases"] = state.get("brand_aliases")
+                final_content = apply_brand_claim_gate(final_content, claim_gate_brief)
+
             brand_name = state.get("brand_name", "")
             mentions_in_section = 0
             if brand_name and final_content:
@@ -3195,7 +4436,7 @@ class AsyncWorkflowController:
                 if mentions_in_section == 0 and brand_name.lower() in final_content.lower():
                      mentions_in_section = final_content.lower().count(brand_name.lower())
 
-            return {
+            ret_dict = {
                 **section,
                 "section_id": section_id,
                 "section_index": section_index,
@@ -3206,6 +4447,19 @@ class AsyncWorkflowController:
                 "knowledge_units_established": res_data.get("knowledge_units_established", []),
                 "topics_covered": res_data.get("topics_covered", []),
             }
+            for alias_key in ["content", "section_content"]:
+                if alias_key in res_data and isinstance(res_data.get(alias_key), str):
+                    ret_dict[alias_key] = apply_brand_claim_gate(
+                        res_data[alias_key],
+                        claim_gate_brief
+                    ) if claim_gate_brief else res_data[alias_key]
+            if claim_gate_brief:
+                from src.services.brand_evidence_service import apply_brand_claim_gate
+                for key in ["generated_content", "content", "section_content"]:
+                    if key in ret_dict:
+                        ret_dict[key] = apply_brand_claim_gate(ret_dict[key], claim_gate_brief)
+                final_content = ret_dict["generated_content"]
+            return ret_dict
         return None
 
     async def _step_4_generate_image_prompts(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -3994,13 +5248,14 @@ class AsyncWorkflowController:
 
         if state.get("heading_only_mode"):
             outline = state.get("outline", [])
-            outline = self.outline_repair_service.enrich_brand_utility_faq(
-                outline,
-                serp_brief=state.get("serp_outline_brief", {}),
-                brand_context=state.get("display_brand_name", "") or state.get("brand_name", ""),
-                content_type=state.get("content_type", ""),
-                entity_phrase=state.get("entity_phrase", "") or state.get("primary_keyword", ""),
-            )
+            if state.get("brand_generation_guardrails", {}).get("brand_section_policy") != "do_not_create_dedicated_brand_proof_or_why_choose_sections":
+                outline = self.outline_repair_service.enrich_brand_utility_faq(
+                    outline,
+                    serp_brief=state.get("serp_outline_brief", {}),
+                    brand_context=state.get("display_brand_name", "") or state.get("brand_name", ""),
+                    content_type=state.get("content_type", ""),
+                    entity_phrase=state.get("entity_phrase", "") or state.get("primary_keyword", ""),
+                )
             outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
             state["outline"] = outline
             heading_map = []
@@ -4269,9 +5524,10 @@ class AsyncWorkflowController:
 
             if sanitized_brand_context:
                 sanitized_brand_context = (
-                    "Keep the informational flow buyer-first. Use the brand as a soft supporting mention "
-                    "only when it helps orientation, and reserve stronger differentiation for the dedicated "
-                    "brand or conclusion sections."
+                    "Keep the article buyer-aware, but treat the provided brand as the primary provider "
+                    "being evaluated. Service, proof, differentiation, process, and conclusion sections "
+                    "should use observed brand evidence to explain what the brand actually provides. "
+                    "Do not convert brand service sections into generic provider-selection advice."
                 )
 
             if sanitized_brand_advantages:
@@ -4283,9 +5539,9 @@ class AsyncWorkflowController:
 
             if sanitized_writing_blueprint:
                 sanitized_writing_blueprint = (
-                    "Keep headings buyer-focused, entity-anchored, comparison-friendly, and easy to expand "
-                    "into practical commercial content. Prefer clarity and decision support over markety or "
-                    "brand-first phrasing."
+                    "Keep headings buyer-focused while making brand-owned sections answerable from observed "
+                    "brand evidence. Prefer service/catalog, project/example, and process headings that the "
+                    "writer can fulfill with specific brand facts."
                 )
 
             return sanitized_strategy, sanitized_brand_context, sanitized_brand_advantages, sanitized_writing_blueprint

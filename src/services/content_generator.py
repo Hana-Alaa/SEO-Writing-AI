@@ -1006,6 +1006,26 @@ class SectionWriter:
             instructions.append("Guide the reader through specific selection criteria or a practical process.")
             instructions.append("Address common points of confusion or hesitation directly.")
             instructions.append("Ensure every paragraph offers a practical tip or an 'if-then' recommendation.")
+
+        elif mode == "brand_service_catalog":
+            instructions.append("Write this as the brand's observed service catalog, not a generic buyer checklist.")
+            instructions.append("Under each service/subheading, explain what the brand provides using source-backed services and capabilities.")
+            instructions.append("Avoid leading with 'make sure', 'ask', 'check', or generic provider-selection advice.")
+
+        elif mode == "brand_evidence_application":
+            instructions.append("Explain the brand's fit using observed services, technologies, workflow stages, and project evidence.")
+            instructions.append("Use operational, descriptive language tied to the evidence brief.")
+            instructions.append("Avoid generic praise, unsupported geography, or best/top/trusted claims.")
+
+        elif mode == "brand_project_examples":
+            instructions.append("Fulfill the project/example promise by naming observed projects or client examples from the evidence brief.")
+            instructions.append("If a project detail is unavailable, state only what the source supports and do not replace it with generic evaluation advice.")
+            instructions.append("Do not claim Saudi project presence unless the evidence brief explicitly supports it.")
+
+        elif mode == "brand_process_delivery":
+            instructions.append("Explain the observed collaboration or delivery workflow as a sequence for working with the brand.")
+            instructions.append("Use observed process stage names when available.")
+            instructions.append("Avoid turning the section into a checklist for choosing any provider.")
             
         # 2. Data Grounding Actions
         if observed:
@@ -1082,6 +1102,34 @@ class SectionWriter:
             blueprint["evidence_plan"] = ["Trust signals", "Verification steps"]
             blueprint["reader_value"] = "Feeling safe and informed before committing resources."
             blueprint["avoid_patterns"].extend(["aggressive promotion", "unsubstantiated trust claims"])
+
+        elif mode == "brand_service_catalog":
+            blueprint["section_thesis"] = "Clarify the actual services the brand provides for this need."
+            blueprint["decision_logic"] = ["Map each service to a reader need", "Use observed service/capability names"]
+            blueprint["evidence_plan"] = ["Brand service evidence", "Source-backed capabilities"]
+            blueprint["reader_value"] = "Understanding whether the brand's services match the project."
+            blueprint["avoid_patterns"].extend(["generic provider-selection criteria", "market checklist prose"])
+
+        elif mode == "brand_evidence_application":
+            blueprint["section_thesis"] = "Explain brand fit through observed capabilities and proof points."
+            blueprint["decision_logic"] = ["Connect evidence to practical outcomes", "Separate supported facts from unsupported claims"]
+            blueprint["evidence_plan"] = ["Services", "Technologies", "Workflow", "Projects"]
+            blueprint["reader_value"] = "Seeing why the brand is relevant without generic promotion."
+            blueprint["avoid_patterns"].extend(["generic praise", "unsupported local presence claims"])
+
+        elif mode == "brand_project_examples":
+            blueprint["section_thesis"] = "Use actual observed projects or case examples to support the brand section."
+            blueprint["decision_logic"] = ["Name the examples", "Explain what each example demonstrates"]
+            blueprint["evidence_plan"] = ["Project names", "Client snippets", "Technologies used"]
+            blueprint["reader_value"] = "Concrete examples instead of abstract credibility claims."
+            blueprint["avoid_patterns"].extend(["generic project-evaluation advice", "invented project details"])
+
+        elif mode == "brand_process_delivery":
+            blueprint["section_thesis"] = "Explain the practical workflow for requesting and executing a project with the brand."
+            blueprint["decision_logic"] = ["Order observed stages", "Show what happens at each stage"]
+            blueprint["evidence_plan"] = ["Observed workflow stages", "CTA/contact evidence"]
+            blueprint["reader_value"] = "Knowing what working with the brand looks like."
+            blueprint["avoid_patterns"].extend(["generic vendor-selection process", "unsupported timelines"])
             
         elif mode == "onboarding_context":
             blueprint["section_thesis"] = "Orient the reader by validating their problem and promising a specific solution path."
@@ -1151,7 +1199,10 @@ class SectionWriter:
         draft_to_fix: str = None,
         brand_advantages: List[str] = None,
         writing_blueprint: str = "",
-        market_angle: str = ""
+        market_angle: str = "",
+        section_brand_page_briefs: List[Dict[str, Any]] = None,
+        section_raw_brand_blocks: List[Dict[str, Any]] = None,
+        section_brand_understanding: Dict[str, Any] = None
     ) -> Dict[str, Any]:
 
         brand_url = brand_url if brand_url not in ["None", ""] else None
@@ -1336,6 +1387,9 @@ class SectionWriter:
             brand_advantages=brand_advantages or [],
             writing_blueprint=writing_blueprint or "",
             market_angle=market_angle or "",
+            section_brand_page_briefs=section_brand_page_briefs or [],
+            section_raw_brand_blocks=section_raw_brand_blocks or [],
+            section_brand_understanding=section_brand_understanding,
         )
 
         try:

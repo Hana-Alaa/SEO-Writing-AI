@@ -7,9 +7,9 @@ if sys.stdout.encoding != 'utf-8':
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-md_path = r"f:\SEO-Writing-AI\output\افضل-شركة-تصميم-مواقع-في-السعودية_20260519_101733\article_final.md"
+md_path = r"f:\SEO-Writing-AI\output\افضل-شركة-تصميم-مواقع-في-السعودية_20260521_153830\article_final.md"
 html_template_path = r"f:\SEO-Writing-AI\output\شقق-للايجار-في-الرياض_20260514_105342\article_final.html"
-output_path = r"f:\SEO-Writing-AI\output\افضل-شركة-تصميم-مواقع-في-السعودية_20260519_101733\article_final.html"
+output_path = r"f:\SEO-Writing-AI\output\افضل-شركة-تصميم-مواقع-في-السعودية_20260521_153830\article_final.html"
 
 
 
@@ -128,8 +128,12 @@ for i, sec in enumerate(parsed_sections):
 
 # Inject Title
 title_match = re.search(r'^# (.*)', md_content)
-title = title_match.group(1) if title_match else "شقق للايجار في الرياض"
-final_html = re.sub(r'<h1>.*?</h1>', f'<h1>{title.replace("قولدن هوست", "<span>قولدن هوست</span>")}</h1>', html_template)
+title = title_match.group(1) if title_match else "افضل شركة تصميم مواقع في السعودية"
+brand_to_wrap = "Creative Minds" if "Creative Minds" in title else ("قولدن هوست" if "قولدن هوست" in title else "")
+if brand_to_wrap:
+    final_html = re.sub(r'<h1>.*?</h1>', f'<h1>{title.replace(brand_to_wrap, f"<span>{brand_to_wrap}</span>")}</h1>', html_template)
+else:
+    final_html = re.sub(r'<h1>.*?</h1>', f'<h1>{title}</h1>', html_template)
 
 # Replace Article Content
 replacement_content = body_html + faq_html + cta_html
