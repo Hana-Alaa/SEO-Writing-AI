@@ -942,6 +942,52 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(brief_high_no_diff["allowed_claim_strength"], "operational")
         self.assertIn("Do not use differentiation", " ".join(brief_high_no_diff["section_guidance"]))
 
+    def test_brand_writing_brief_prefers_page_briefs_over_noisy_contract_dump(self):
+        """Page briefs should replace noisy legacy card/contract values in writer boundary context."""
+        from src.services.brand_evidence_service import build_brand_writing_brief, format_brand_writing_brief_context
+
+        state = {
+            "brand_name": "BrandCo",
+            "primary_keyword": "software services",
+            "brand_generation_guardrails": {"brand_confidence": "high", "brand_usage_mode": "standard_context"},
+            "brand_offer_contract": {
+                "brand_identity": {"confidence": "high"},
+                "offer_mechanics": {
+                    "supporting_services": [
+                        "UX Design by following the latest",
+                        "expert design",
+                        "Specialized Design Services for Building & Management",
+                    ]
+                },
+                "value_propositions": ["Why You Should Choose Us"],
+            },
+            "brand_evidence_cards": [
+                {
+                    "visible_products_or_services": ["IntoSOFTWARE", "Design Services"],
+                    "visible_features_or_capabilities": ["Fast Turnaround"],
+                }
+            ],
+            "brand_page_briefs": [
+                {
+                    "observed_services": ["Web Development", "Mobile App Development"],
+                    "observed_technologies": ["React", "Node.js"],
+                    "observed_process_steps": ["Planning", "Testing"],
+                    "observed_trust_signals": [],
+                    "observed_ctas": ["Contact"],
+                }
+            ],
+        }
+
+        brief = build_brand_writing_brief(state)
+        context = format_brand_writing_brief_context(brief)
+
+        self.assertIn("Web Development", brief["allowed_services"])
+        self.assertIn("Mobile App Development", brief["allowed_services"])
+        self.assertNotIn("UX Design by following the latest", context)
+        self.assertNotIn("expert design", context)
+        self.assertNotIn("Specialized Design Services for Building & Management", context)
+        self.assertNotIn("IntoSOFTWARE", context)
+
     def test_apply_brand_claim_gate_scenarios(self):
         """
         Verify that apply_brand_claim_gate blocks forbidden brand claims while preserving newlines and other content.
@@ -3043,8 +3089,9 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         text, count = select_section_brand_sources(section, state)
 
-        self.assertEqual(count, 0)
-        self.assertEqual(text, "")
+        self.assertEqual(count, 1)
+        self.assertIn("Web Development", text)
+        self.assertIn("ERP", text)
 
         section["heading_text"] = "Services offered by Creative Minds"
         text, count = select_section_brand_sources(section, state)
@@ -3106,7 +3153,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         brief = build_section_brand_understanding(section, state, chunks)
 
-        self.assertIn("Aqar Ya Masr Mob App", brief["relevant_projects"])
+        self.assertIn("Aqar Ya Masr", brief["relevant_projects"])
         self.assertIn("Baddel", brief["relevant_projects"])
         self.assertEqual(brief["recommended_angle"]["preferred_section_style"], "evidence_grounded")
 
@@ -3270,7 +3317,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(brief["relevant_projects"][:4], [
             "Acumen Consulting Egypt",
-            "Aqar Ya Masr Web app",
+            "Aqar Ya Masr",
             "Arab Business Academy",
             "Baddel",
         ])
@@ -3641,6 +3688,37 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(select_section_raw_brand_blocks(section, state), [])
 
+    def test_brand_commercial_service_heading_receives_brand_blocks_without_visible_brand(self):
+        """Commercial service sections should be brand-aware even with generic approved headings."""
+        state = {
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+            "brand_source_chunks": [
+                {
+                    "url": "https://brand.test/services",
+                    "page_type": "services",
+                    "heading": "Services",
+                    "text": "BrandCo provides Web Development, UX/UI Design, and CRM integrations for business teams.",
+                }
+            ],
+        }
+        section = {"heading_text": "Available service options", "section_type": "offer"}
+
+        blocks = select_section_raw_brand_blocks(section, state)
+
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0]["source_url"], "https://brand.test/services")
+        self.assertIn("Web Development", blocks[0]["observed_text"])
+
     def test_phase_19_step2_pricing_section_requires_explicit_pricing(self):
         """Phase 1.9 Step 2: brand pricing/package sections return [] without explicit pricing evidence."""
         state = {
@@ -3855,6 +3933,88 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Web Development", brief["relevant_services"])
         for noisy in ["Brief", "Technologies Used", "Why You Should Choose Us", "IntoSOFTWARE"]:
             self.assertNotIn(noisy, combined)
+
+    def test_project_understanding_filters_labels_and_merges_channel_variants(self):
+        """Project extraction should not treat field labels or app/web variants as separate projects."""
+        from src.services.brand_evidence_service import build_section_brand_understanding
+
+        section = {"heading_text": "Projects shown by BrandCo", "section_type": "proof", "section_intent": "Commercial"}
+        state = {"brand_name": "BrandCo"}
+        chunks = [
+            {
+                "source_url": "https://brand.test/projects",
+                "page_type": "projects",
+                "heading": "Project Details",
+                "observed_text": (
+                    "Name: Aqar Ya Masr Web app. Publish Date: 2024. Objective: Real estate platform. "
+                    "Name: Aqar Ya Masr Mob App. Client: Baddel. Location: in Egypt."
+                ),
+                "observed_facts": [
+                    "Name: Aqar Ya Masr Web app",
+                    "Publish Date: 2024",
+                    "Objective: Real estate platform",
+                    "Name: Aqar Ya Masr Mob App",
+                    "Client: Baddel",
+                    "Location: in Egypt",
+                ],
+            }
+        ]
+
+        brief = build_section_brand_understanding(section, state, chunks)
+
+        self.assertIn("Aqar Ya Masr", brief["relevant_projects"])
+        self.assertIn("Baddel", brief["relevant_projects"])
+        self.assertNotIn("Aqar Ya Masr Web app", brief["relevant_projects"])
+        self.assertNotIn("Aqar Ya Masr Mob App", brief["relevant_projects"])
+        self.assertNotIn("Name", brief["relevant_projects"])
+        self.assertNotIn("Publish Date", brief["relevant_projects"])
+        self.assertNotIn("Objective", brief["relevant_projects"])
+        self.assertNotIn("in Egypt", brief["relevant_projects"])
+
+    def test_project_understanding_filters_real_metadata_label_patterns(self):
+        """Project extraction rejects page metadata labels observed in portfolio pages."""
+        from src.services.brand_evidence_service import build_section_brand_understanding
+
+        section = {"heading_text": "Projects shown by BrandCo", "section_type": "proof", "section_intent": "Commercial"}
+        state = {"brand_name": "BrandCo"}
+        chunks = [
+            {
+                "source_url": "https://brand.test/portfolio/project-a",
+                "page_type": "portfolio",
+                "heading": "Project Detail",
+                "observed_text": (
+                    "Name Aqar Ya Masr. Creation Aqar Ya Masr Egypt Real Estate. "
+                    "Creation To develop a comprehensive digital ecosystem. "
+                    "Scope of Work. Deliverables. Technology Stack. Quality Assurance. Client: Baddel."
+                ),
+                "observed_facts": [
+                    "Name Aqar Ya Masr",
+                    "Creation Aqar Ya Masr Egypt Real Estate",
+                    "Creation To develop a comprehensive digital ecosystem",
+                    "Scope of Work",
+                    "Deliverables",
+                    "Technology Stack",
+                    "Quality Assurance",
+                    "Client: Baddel",
+                ],
+            }
+        ]
+
+        brief = build_section_brand_understanding(section, state, chunks)
+
+        self.assertIn("Aqar Ya Masr", brief["relevant_projects"])
+        self.assertIn("Baddel", brief["relevant_projects"])
+        rejected = " | ".join(brief["relevant_projects"])
+        for label in [
+            "Name Aqar Ya Masr",
+            "Creation Aqar Ya Masr Egypt Real Estate",
+            "Creation To develop",
+            "Scope of Work",
+            "Deliverables",
+            "Technology Stack",
+            "Quality Assurance",
+        ]:
+            self.assertNotIn(label, rejected)
 
     def test_phase_19_step3_service_process_geo_cta_from_raw(self):
         """Phase 1.9 Step 3: services, process, geography, and CTAs come from raw text."""
@@ -4119,7 +4279,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         brief = build_section_brand_understanding(section, state, retrieved_chunks=[])
 
-        self.assertEqual(brief["relevant_projects"][:3], ["Acumen Consulting Egypt", "Aqar Ya Masr Web app", "Baddel"])
+        self.assertEqual(brief["relevant_projects"][:3], ["Acumen Consulting Egypt", "Aqar Ya Masr", "Baddel"])
         self.assertNotIn("Subscribe Now", brief["relevant_projects"])
         self.assertNotIn("Why You Should Choose Us", brief["relevant_projects"])
         self.assertIn("Observed project/client examples include", brief["useful_source_snippets"][0])
@@ -4458,8 +4618,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertIn('"projects_available": true', sent_context)
         self.assertIn("Do not create brand pricing/packages headings unless pricing_available is true.", sent_context)
 
-    def test_phase_19_step5_generic_heading_is_not_brand_offer(self):
-        """Phase 1.9 Step 5: generic headings without visible brand do not become brand-owned sections."""
+    def test_brand_commercial_service_heading_is_brand_offer_even_when_generic(self):
+        """Brand commercial service headings should be grounded in the brand even without visible brand text."""
         controller = AsyncWorkflowController(work_dir=".")
         state = {
             "brand_name": "BrandCo",
@@ -4478,9 +4638,32 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         prepared = controller._prepare_outline_for_content(state, outline)
         offer = prepared["outline"][1]
 
-        self.assertEqual(offer["section_contract"]["brand_policy"], "none")
-        self.assertNotEqual(offer["taxonomy_axis"], "brand_offer")
-        self.assertNotEqual(offer.get("execution_mode"), "brand_service_catalog")
+        self.assertEqual(offer["section_contract"]["brand_policy"], "commercial")
+        self.assertEqual(offer["taxonomy_axis"], "brand_offer")
+        self.assertEqual(offer.get("execution_mode"), "brand_service_catalog")
+
+    def test_generic_comparison_heading_stays_non_brand_owned(self):
+        """Comparison sections remain market guidance unless they visibly reference the brand."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "software services",
+            "content_strategy": {},
+            "seo_intelligence": {},
+            "brand_evidence_inventory": {"services_available": True, "projects_available": True, "pricing_available": False, "explicit_geography": [], "confidence": "medium"},
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "Introduction", "heading_level": "INTRO", "section_type": "introduction", "subheadings": []},
+            {"section_id": "comparison", "heading_text": "Corporate websites versus ecommerce stores", "heading_level": "H2", "section_type": "comparison", "taxonomy_axis": "comparison", "subheadings": []},
+        ]
+
+        prepared = controller._prepare_outline_for_content(state, outline)
+        comparison = prepared["outline"][1]
+
+        self.assertEqual(comparison["section_contract"]["brand_policy"], "none")
+        self.assertEqual(comparison["taxonomy_axis"], "comparison")
 
     def test_phase_19_step5_brand_heading_is_brand_offer_when_visible(self):
         """Phase 1.9 Step 5: visible brand offer headings remain brand-owned and answerable."""
@@ -4530,6 +4713,66 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(proof["heading_text"], "Projects shown by BrandCo")
         self.assertNotIn("Countryland", proof["heading_text"])
         self.assertEqual(proof["taxonomy_axis"], "brand_projects")
+
+    def test_brand_owned_generic_service_heading_removes_unsupported_target_area(self):
+        """Brand-owned service headings should not keep target geography as brand presence proof."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "area": "Saudi Arabia",
+            "primary_keyword": "best web design company in Saudi Arabia",
+            "content_strategy": {},
+            "seo_intelligence": {},
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "Introduction", "heading_level": "INTRO", "section_type": "introduction", "subheadings": []},
+            {
+                "section_id": "offer",
+                "heading_text": "Best web design company in Saudi Arabia: available services",
+                "heading_level": "H2",
+                "section_type": "offer",
+                "subheadings": [],
+            },
+        ]
+
+        prepared = controller._prepare_outline_for_content(state, outline)
+        offer = prepared["outline"][1]
+
+        self.assertNotIn("Saudi Arabia", offer["heading_text"])
+        self.assertEqual(offer["section_contract"]["brand_policy"], "commercial")
+
+    def test_phase_19_step5_removes_unsupported_arabic_prefixed_geography(self):
+        """Arabic brand headings like 'بالسعودية' should lose unsupported geography."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "article_language": "ar",
+            "area": "السعودية",
+            "primary_keyword": "شركة تصميم مواقع",
+            "content_strategy": {},
+            "seo_intelligence": {},
+            "brand_evidence_inventory": {"services_available": True, "projects_available": True, "pricing_available": False, "explicit_geography": [], "confidence": "medium"},
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "مقدمة", "heading_level": "INTRO", "section_type": "introduction", "subheadings": []},
+            {"section_id": "proof", "heading_text": "نماذج من مشاريع BrandCo بالسعودية", "heading_level": "H2", "section_type": "proof", "subheadings": []},
+        ]
+
+        prepared = controller._prepare_outline_for_content(state, outline)
+        proof = prepared["outline"][1]
+
+        self.assertEqual(proof["heading_text"], "نماذج من مشاريع BrandCo")
+        self.assertNotIn("السعودية", proof["heading_text"])
 
     def test_phase_19_step5_project_heading_downgrades_when_projects_unavailable(self):
         """Phase 1.9 Step 5: brand project headings are downgraded when inventory has no projects."""
@@ -4862,6 +5105,43 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(report["fulfillment_status"], "satisfied")
 
+    def test_phase_19_step6_best_keyword_heading_is_not_brand_trust_claim_by_itself(self):
+        """SEO query wording in a heading must not create unsupported trust/geography failures."""
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        section = {
+            "section_id": "offer",
+            "heading_text": "Best web design company in Saudi Arabia: available services",
+            "taxonomy_axis": "brand_offer",
+            "section_contract": {"brand_policy": "commercial", "taxonomy_axis": "brand_offer"},
+        }
+        understanding = {
+            "relevant_services": ["Web Development"],
+            "relevant_technologies": ["React"],
+            "relevant_geography": [],
+        }
+        raw_blocks = [
+            {
+                "source_url": "https://brand.test/services",
+                "page_type": "services",
+                "heading": "Services",
+                "observed_text": "BrandCo provides Web Development using React.",
+                "observed_facts": ["Service: Web Development", "Technology: React"],
+            }
+        ]
+
+        report = evaluate_brand_section_fulfillment(
+            section,
+            "BrandCo provides Web Development using React for business websites.",
+            understanding,
+            raw_blocks,
+            {"content_type": "brand_commercial", "brand_name": "BrandCo", "area": "Saudi Arabia"},
+        )
+
+        self.assertNotEqual(report["fulfillment_status"], "unsupported")
+        self.assertNotIn("trust", report["fulfillment_reason"])
+        self.assertNotIn("geography", report["fulfillment_reason"])
+
     async def test_phase_19_step6_corrective_rewrite_happens_at_most_once(self):
         """Phase 1.9 Step 6: unsupported brand-owned content gets only one corrective rewrite."""
         controller = AsyncWorkflowController(work_dir=".")
@@ -5066,6 +5346,115 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(audit_calls), 1)
         self.assertEqual(audit_calls[0]["output_data"]["selected_blocks_count"], 1)
         self.assertEqual(audit_calls[0]["output_data"]["fulfillment_status"], "satisfied")
+
+    def test_required_comparison_table_is_inserted_when_writer_omits_it(self):
+        """Required table sections should not ship as prose-only content."""
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "comparison",
+            "heading_text": "المواقع المؤسسية مقابل المتاجر الإلكترونية",
+            "section_type": "comparison",
+            "taxonomy_axis": "comparison",
+            "requires_table": True,
+        }
+        content = "هذا السكشن يشرح الفرق بين خيارين بحسب هدف المشروع وطريقة تفاعل المستخدم."
+
+        result = controller._ensure_required_table_content(content, section, {"article_language": "ar"})
+
+        self.assertIn("| المعيار |", result)
+        self.assertIn("|---|---|---|", result)
+        self.assertTrue(controller._content_has_markdown_table(result))
+
+    def test_project_families_cluster_variants_and_rank_target_area_evidence(self):
+        """Project families should merge variants and prefer target-area evidence when present."""
+        from src.services.brand_evidence_service import build_section_brand_understanding
+
+        section = {"heading_text": "Projects shown by BrandCo", "section_type": "proof", "section_intent": "Commercial"}
+        state = {"brand_name": "BrandCo", "content_type": "brand_commercial", "area": "Countryland"}
+        chunks = [
+            {
+                "source_url": "https://brand.test/projects",
+                "page_type": "projects",
+                "heading": "Portfolio",
+                "observed_text": (
+                    "Project: Nile Portal Web app. Project: Nile Portal Mob App. "
+                    "Project: Countryland Retail Platform. Location: Countryland."
+                ),
+                "observed_facts": [
+                    "Project: Nile Portal Web app",
+                    "Project: Nile Portal Mob App",
+                    "Project: Countryland Retail Platform",
+                    "Location: Countryland",
+                ],
+            }
+        ]
+
+        brief = build_section_brand_understanding(section, state, chunks)
+
+        self.assertEqual(brief["relevant_projects"][0], "Countryland Retail")
+        self.assertIn("Nile Portal", brief["relevant_projects"])
+        families = {item["name"]: item for item in brief["relevant_project_families"]}
+        self.assertIn("Nile Portal", families)
+        self.assertIn("Nile Portal Web app", families["Nile Portal"]["variants"])
+        self.assertIn("Nile Portal Mob App", families["Nile Portal"]["variants"])
+        self.assertEqual(families["Countryland Retail"]["target_area_relevance"], "explicit")
+
+    def test_brand_fulfillment_flags_low_paragraph_evidence_density(self):
+        """Brand-owned sections with generic filler paragraphs should be weak even if one service is mentioned."""
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        section = {
+            "heading_text": "Services offered by BrandCo",
+            "section_type": "offer",
+            "taxonomy_axis": "brand_offer",
+            "section_contract": {"brand_policy": "commercial", "taxonomy_axis": "brand_offer"},
+        }
+        understanding = {"relevant_services": ["Web Development", "CRM Integrations"], "relevant_projects": []}
+        content = (
+            "When choosing a provider, compare options carefully and ask about support before making a decision.\n\n"
+            "BrandCo provides Web Development for teams that need a clearer digital presence."
+        )
+
+        report = evaluate_brand_section_fulfillment(
+            section,
+            content,
+            understanding,
+            [{"source_url": "https://brand.test/services", "page_type": "services", "heading": "Services", "observed_text": "BrandCo provides Web Development and CRM Integrations.", "observed_facts": []}],
+            {"content_type": "brand_commercial", "brand_name": "BrandCo"},
+        )
+
+        self.assertEqual(report["fulfillment_status"], "weak")
+        self.assertIn("evidence density", report["fulfillment_reason"])
+        self.assertEqual(report["evidence_density"]["total_paragraphs"], 2)
+        self.assertEqual(report["evidence_density"]["anchored_paragraphs"], 1)
+
+    def test_brand_fulfillment_flags_heading_drift_into_generic_advice(self):
+        """A service heading should not be fulfilled by generic buyer-advice prose with a token service mention."""
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        section = {
+            "heading_text": "Services offered by BrandCo",
+            "section_type": "offer",
+            "taxonomy_axis": "brand_offer",
+            "section_contract": {"brand_policy": "commercial", "taxonomy_axis": "brand_offer"},
+        }
+        understanding = {"relevant_services": ["Web Development"], "relevant_projects": []}
+        content = (
+            "To choose the right option, compare providers, ask about onboarding, check delivery criteria, "
+            "and make sure the Web Development scope is suitable for your priority."
+        )
+
+        report = evaluate_brand_section_fulfillment(
+            section,
+            content,
+            understanding,
+            [{"source_url": "https://brand.test/services", "page_type": "services", "heading": "Services", "observed_text": "BrandCo provides Web Development.", "observed_facts": []}],
+            {"content_type": "brand_commercial", "brand_name": "BrandCo"},
+        )
+
+        self.assertEqual(report["fulfillment_status"], "weak")
+        self.assertIn("heading drift", report["fulfillment_reason"])
+        self.assertTrue(report["heading_fidelity"]["drift_detected"])
 
 if __name__ == '__main__':
     unittest.main()

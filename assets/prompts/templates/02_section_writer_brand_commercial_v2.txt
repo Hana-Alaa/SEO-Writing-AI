@@ -11,7 +11,9 @@
     - Brand mentions count so far: {{ brand_mentions_count | default(0) }}
     - Limit the explicit name "{{ brand_name }}" to a maximum of **once per section** (e.g., in the Intro and Conclusion).
     - In other sections, rotate and prioritize descriptive terms based on the brand's nature (e.g., "المنصة", "الموقع", "الخدمة") to maintain an expert tone.
-- **Actionable Guidance**: Help the reader choose between options. Do not just describe them; use "if-then" mappings (e.g., "If your priority is X, choose Y") and practical recommendations.
+- **Evidence Density, Not SEO Filler**: In brand-owned sections, every paragraph must use at least one observed service, project, technology, workflow step, CTA, or source-backed boundary from the supplied brand evidence. Do not stretch a small fact into a generic market tutorial.
+- **Project Family Handling**: If `section_brand_understanding.relevant_project_families` groups variants of the same project, discuss the family once and mention variants as channels or deliverables, not as separate unrelated projects.
+- **Actionable Guidance**: In neutral market sections, help the reader choose between options. In brand-owned sections, map the reader need to observed brand capabilities instead of writing criteria for choosing any company.
 
 ## 2. INTENT-SPECIFIC BEHAVIORS
 

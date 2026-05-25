@@ -138,6 +138,44 @@ def _sanitize_evidence_item(
         return item
 
     if category in {"project", "project_explicit"}:
+        project_metadata_labels = {
+            "name",
+            "project name",
+            "client name",
+            "publish date",
+            "published date",
+            "publication date",
+            "objective",
+            "objectives",
+            "creation",
+            "created",
+            "scope of work",
+            "deliverables",
+            "technology stack",
+            "technologies used",
+            "quality assurance",
+            "details",
+            "project details",
+        }
+        if folded in project_metadata_labels:
+            return ""
+        item = re.sub(
+            r"^(?:name|project\s+name|client\s+name|client|case\s+study|creation|created|objective|objectives)\b\s*[:\-]?\s*",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
+        item = re.sub(
+            r"^(?:project)\s*[:\-]\s*",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
+        folded = item.casefold()
+        if not item or folded in project_metadata_labels:
+            return ""
+        if re.match(r"^(?:to|for|with|using|by)\s+\w+", item, re.IGNORECASE):
+            return ""
         if len(item.split()) > 8:
             return ""
         if _PRICING_CONTEXT_RE.search(item) or _TRUST_CONTEXT_RE.search(item):
@@ -1831,29 +1869,61 @@ def build_brand_writing_brief(state: dict) -> dict:
         allowed_claim_strength = "contextual"
 
     cards = state.get("brand_evidence_cards") or []
+    page_briefs = state.get("brand_page_briefs") or []
+    page_briefs = [brief for brief in page_briefs if isinstance(brief, dict)]
 
-    # 4. Extract allowed capabilities/services. Prefer structured card facts and
-    # strip crawler/menu/promo noise so the brief does not become a raw page dump.
+    # 4. Extract allowed capabilities/services. Prefer page-level grounded
+    # briefs when available; they are raw-source compression and avoid the old
+    # card/contract path that can promote headings or slogans into claims.
+    page_services: List[str] = []
+    page_capabilities: List[str] = []
+    page_trust: List[str] = []
+    page_ctas: List[str] = []
+    if page_briefs:
+        for brief in page_briefs:
+            page_services.extend(str(item).strip() for item in brief.get("observed_services") or [] if str(item).strip())
+            page_capabilities.extend(str(item).strip() for item in brief.get("observed_technologies") or [] if str(item).strip())
+            page_capabilities.extend(str(item).strip() for item in brief.get("observed_process_steps") or [] if str(item).strip())
+            page_trust.extend(str(item).strip() for item in brief.get("observed_trust_signals") or [] if str(item).strip())
+            page_ctas.extend(str(item).strip() for item in brief.get("observed_ctas") or [] if str(item).strip())
+
+    if page_briefs:
+        service_source = page_services
+        capability_source = page_capabilities
+        trust_source = page_trust
+        cta_source = page_ctas
+        value_prop_source: List[str] = []
+    else:
+        service_source = (
+            (contract.get("offer_mechanics", {}).get("supporting_services", []) or [])
+            + _collect_card_values(cards, ["visible_products_or_services"], limit=12, category="service")
+        )
+        capability_source = (
+            (contract.get("keyword_fit", {}).get("relevant_brand_capabilities", []) or [])
+            + _collect_card_values(cards, ["visible_features_or_capabilities"], limit=12, category="capability")
+        )
+        trust_source = contract.get("trust_signals", []) or []
+        cta_source = contract.get("conversion_actions", []) or []
+        value_prop_source = contract.get("value_propositions", []) or []
+
     allowed_services = _clean_evidence_items(
-        (contract.get("offer_mechanics", {}).get("supporting_services", []) or [])
-        + _collect_card_values(cards, ["visible_products_or_services"], limit=12, category="service"),
+        service_source,
         limit=12,
         category="service",
     )
     allowed_capabilities = _clean_evidence_items(
-        (contract.get("keyword_fit", {}).get("relevant_brand_capabilities", []) or [])
-        + _collect_card_values(cards, ["visible_features_or_capabilities"], limit=12, category="capability"),
+        capability_source,
         limit=12,
         category="capability",
     )
-    allowed_value_props = _clean_evidence_items(contract.get("value_propositions", []) or [], limit=8)
+    allowed_value_props = _clean_evidence_items(value_prop_source, limit=8)
     allowed_trust_signals = _clean_evidence_items(
-        contract.get("trust_signals", []) or [],
+        trust_source,
         limit=8,
         category="trust",
         allow_promotional=False,
     )
-    allowed_conversion_actions = _clean_evidence_items(contract.get("conversion_actions", []) or [], limit=8, category="cta", allow_promotional=True)
+    allowed_conversion_actions = _clean_evidence_items(cta_source, limit=8, category="cta", allow_promotional=True)
 
     # Combine allowed claims (limited in low confidence)
     if confidence == "low":
@@ -3259,6 +3329,61 @@ def _section_visibly_references_brand(section: dict, state: dict) -> bool:
     return any(ref in visible_text for ref in refs)
 
 
+def _section_should_receive_brand_evidence(section: dict, state: dict) -> bool:
+    """Return True when a commercial section should receive brand evidence."""
+    section = section or {}
+    state = state or {}
+    if _section_visibly_references_brand(section, state):
+        return True
+
+    content_type = str(state.get("content_type") or section.get("content_type") or "").casefold()
+    if content_type != "brand_commercial":
+        return False
+
+    section_type = str(section.get("section_type") or "").casefold()
+    heading_level = str(section.get("heading_level") or "").upper()
+    if section_type in {"introduction", "intro", "conclusion"} or heading_level == "INTRO":
+        return True
+
+    # Keep genuinely informational/support sections neutral unless they name
+    # the brand. Commercial offer/process/proof sections need brand context even
+    # when the approved heading is phrased generically.
+    if section_type in {"faq", "comparison", "pricing", "packages", "location"}:
+        return False
+
+    contract = section.get("section_contract") if isinstance(section.get("section_contract"), dict) else {}
+    brand_policy = str(contract.get("brand_policy") or section.get("brand_policy") or "").casefold()
+    taxonomy_axis = str(section.get("taxonomy_axis") or contract.get("taxonomy_axis") or "").casefold()
+    if brand_policy == "commercial" or taxonomy_axis.startswith("brand_"):
+        return True
+
+    inventory = state.get("brand_evidence_inventory") or {}
+    if section_type in {"offer", "services", "core_or_benefits"} and inventory.get("services_available"):
+        return True
+    if section_type in {"features", "differentiation", "differentiators", "brand_support", "brand"} and any(
+        inventory.get(key) for key in ("services_available", "projects_available", "process_available", "trust_available")
+    ):
+        return True
+    if section_type in {"process", "process_or_how"} and (inventory.get("process_available") or inventory.get("services_available")):
+        return True
+    if section_type in {"proof", "case_study", "case-study"} and (inventory.get("projects_available") or inventory.get("trust_available")):
+        return True
+
+    intent = str(section.get("section_intent") or "").casefold()
+    if intent in {"informational", "information", "info"}:
+        return False
+
+    brandable_types = {
+        "offer", "services", "core_or_benefits", "features", "differentiation",
+        "differentiators", "brand_support", "brand", "proof", "case_study",
+        "case-study", "process", "process_or_how",
+    }
+    if section_type in brandable_types:
+        return True
+
+    return "commercial" in intent and section_type not in {"faq", "comparison"}
+
+
 def select_section_brand_sources(section: dict, state: dict) -> tuple[str, int]:
     """
     Selects 1-2 brand evidence cards for a given section without mutating state.
@@ -3281,7 +3406,7 @@ def select_section_brand_sources(section: dict, state: dict) -> tuple[str, int]:
     if not brand_refs:
         return "", 0
         
-    if not _section_visibly_references_brand(section, state):
+    if not _section_should_receive_brand_evidence(section, state):
         return "", 0
 
     # Constraint: fallback to build_brand_evidence_cards if missing (pure call)
@@ -4274,9 +4399,9 @@ def select_section_brand_page_briefs(section: dict, state: dict, max_briefs: int
     """
     Select page-level brand briefs for the current section.
 
-    Generic non-brand sections receive no brand briefs. For brand-owned sections,
-    this chooses human-readable page summaries first and leaves cards out of the
-    writer truth path.
+    Neutral informational sections receive no brand briefs. Brand-commercial
+    offer/proof/process sections receive page summaries even when the approved
+    heading is phrased without the brand name.
     """
     if max_briefs <= 0:
         return []
@@ -4285,7 +4410,7 @@ def select_section_brand_page_briefs(section: dict, state: dict, max_briefs: int
     section_type = str(section.get("section_type") or "").lower()
     heading_level = str(section.get("heading_level") or "").upper()
     is_intro_or_conclusion = section_type in {"introduction", "intro", "conclusion"} or heading_level == "INTRO"
-    if not is_intro_or_conclusion and not _section_visibly_references_brand(section, state):
+    if not is_intro_or_conclusion and not _section_should_receive_brand_evidence(section, state):
         return []
 
     briefs = state.get("brand_page_briefs")
@@ -4391,7 +4516,7 @@ def retrieve_brand_source_chunks(section: dict, state: dict, top_k: int = 3) -> 
     # Pre-flight relevance guard: raw brand chunks are only injected when the
     # visible section heading/subheadings name the brand. Generic commercial
     # sections should not turn into brand catalog copy by accident.
-    if not _section_visibly_references_brand(section, state):
+    if not _section_should_receive_brand_evidence(section, state):
         return []
     
     brand_aliases = state.get("brand_aliases")
@@ -4484,7 +4609,7 @@ def select_section_raw_brand_blocks(section: dict, state: dict, max_blocks: int 
     section_type = str(section.get("section_type") or "").lower()
     heading_level = str(section.get("heading_level") or "").upper()
     is_intro_or_conclusion = section_type in {"introduction", "intro", "conclusion"} or heading_level == "INTRO"
-    if not is_intro_or_conclusion and not _section_visibly_references_brand(section, state):
+    if not is_intro_or_conclusion and not _section_should_receive_brand_evidence(section, state):
         return []
 
     chunks = state.get("brand_source_chunks")
@@ -5160,6 +5285,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         "section_intent": intent,
         "relevant_services": [],
         "relevant_projects": [],
+        "relevant_project_families": [],
         "relevant_process_steps": [],
         "relevant_technologies": [],
         "relevant_geography": [],
@@ -5217,6 +5343,11 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     noisy_exact = {
         "brief", "technologies used", "s 0", "on time", "management", "delivering",
         "why you should choose us", "intosoftware", "top rated agency", "fast turnaround",
+        "name", "project name", "client name", "publish date", "published date",
+        "publication date", "objective", "objectives", "creation", "created",
+        "sector", "audience", "location", "expertise", "view project",
+        "details", "project details", "scope of work", "deliverables",
+        "technology stack", "technologies used", "quality assurance",
     }
 
     def is_noisy_label(value: Any) -> bool:
@@ -5231,6 +5362,69 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         if folded.startswith(("on time", "delivering ", "management ")):
             return True
         return False
+
+    def normalize_project_candidate(value: Any) -> str:
+        item = re.sub(r"\s+", " ", str(value or "")).strip().strip('"').strip("'")
+        item = item.strip("«»<>").strip(" :-|")
+        if not item:
+            return ""
+        if item.casefold() in noisy_exact:
+            return ""
+        item = re.sub(
+            r"^(?:name|project\s+name|client\s+name|client|case\s+study|creation|created|objective|objectives)\b\s*[:\-]?\s*",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
+        item = re.sub(r"^(?:project)\s*[:\-]\s*", "", item, flags=re.IGNORECASE).strip(" :-|")
+        item = re.sub(
+            r"\b(?:location|sector|audience|expertise|technologies used|technology stack|publish date|published date|view project|scope of work|deliverables|quality assurance)\b.*$",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
+        if not item:
+            return ""
+        folded = item.casefold()
+        if folded in noisy_exact:
+            return ""
+        if re.match(r"^(?:to|for|with|using|by)\s+\w+", item, re.IGNORECASE):
+            return ""
+        if re.match(r"^(?:in|at|from|inside|within)\s+[A-Za-z\u0600-\u06FF .'-]{2,80}$", item, re.IGNORECASE):
+            return ""
+        if re.match(r"^(?:\u0641\u064a|\u062f\u0627\u062e\u0644|\u0639\u0628\u0631)\s+[\u0600-\u06FF A-Za-z.'-]{2,80}$", item):
+            return ""
+
+        # Merge delivery-channel variants of the same named project. This keeps
+        # "Example Web App" and "Example Mob App" from being treated as two
+        # separate projects while preserving the observed project name itself.
+        base = re.sub(
+            r"\s+(?:web\s+app|mob\s+app|mobile\s+app|app|website|web\s+site|platform)$",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
+        if base and len(base.split()) >= 2:
+            item = base
+        return item
+
+    def clean_project_variant(value: Any) -> str:
+        item = re.sub(r"\s+", " ", str(value or "")).strip().strip('"').strip("'").strip("«»<>").strip(" :-|")
+        item = re.sub(
+            r"^(?:name|project\s+name|client\s+name|client|case\s+study|creation|created|objective|objectives)\b\s*[:\-]?\s*",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
+        item = re.sub(r"^(?:project)\s*[:\-]\s*", "", item, flags=re.IGNORECASE).strip(" :-|")
+        item = re.sub(
+            r"\b(?:location|sector|audience|expertise|technologies used|technology stack|publish date|published date|view project|scope of work|deliverables|quality assurance)\b.*$",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
+        cleaned = _sanitize_evidence_item(item, "project_explicit")
+        return cleaned or ""
 
     def is_noisy_project_block(block: Dict[str, Any]) -> bool:
         heading_value = re.sub(r"\s+", " ", str(block.get("heading") or "")).strip()
@@ -5384,8 +5578,9 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     )
     project_candidates: List[str] = list(page_project_candidates)
     for pattern in [
-        r"\b(?:client|project|case study)\s*[:\-]\s*([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)(?=(?:[.;\n]\s*(?:client|project|case study|sector|audience|expertise|location)\s*[:\-])|[.;\n]|$)",
-        r"\b(?:project|case study|client|app|website|platform)\s*[:\-]\s*([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)(?=(?:[.;\n]\s*(?:project|case study|client|app|website|platform)\s*[:\-])|[.;\n]|$)",
+        r"\b(?:name|client|project|case study)\s*[:\-]\s*([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)(?=(?:[.;\n]\s*(?:name|client|project|case study|sector|audience|expertise|location)\s*[:\-])|[.;\n]|$)",
+        r"\b(?:name|project|case study|client|app|website|platform)\s*[:\-]\s*([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)(?=(?:[.;\n]\s*(?:name|project|case study|client|app|website|platform)\s*[:\-])|[.;\n]|$)",
+        r"\b(?:name|client|creation)\s+([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)(?=(?:[.;\n]\s*(?:name|client|project|case study|sector|audience|expertise|location|creation|objective))|[.;\n]|$)",
         r"\b(?:mobile app|web app|website|platform)\s+([A-Z][A-Za-z0-9&'\-]*(?:\s+[A-Z][A-Za-z0-9&'\-]*){1,6}(?:\s+(?:Mob App|Mobile App|Web App|Web app|Website|Platform|App))?)\b",
         r"(?:project|app|website|client|platform)\s+(?:\u00c2\u00ab|\u00ab|\u0164)(.*?)(?:\u00c2\u00bb|\u00bb|\u0165)",
     ]:
@@ -5413,6 +5608,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
 
     seen_projects = set()
     expanded_project_candidates: List[str] = []
+    project_family_variants: Dict[str, set] = {}
     for candidate in project_candidates:
         expanded_project_candidates.append(candidate)
         suffix_match = re.match(
@@ -5424,6 +5620,9 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             expanded_project_candidates.append(suffix_match.group(1).strip())
 
     for candidate in expanded_project_candidates:
+        raw_candidate = str(candidate or "").strip()
+        variant = clean_project_variant(raw_candidate)
+        candidate = normalize_project_candidate(candidate)
         item = str(candidate or "").strip().strip('"').strip("'").strip("Â«").strip("Â»")
         item = re.sub(
             r"\b(?:location|sector|audience|expertise|technologies used|view project)\b.*$",
@@ -5437,7 +5636,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             item,
             flags=re.IGNORECASE,
         ).strip(" :-")
-        item = re.sub(r"^(?:client|case study)\s+", "", item, flags=re.IGNORECASE).strip(" :-")
+        item = normalize_project_candidate(item)
         if not item or is_noisy_label(item):
             continue
         folded = item.casefold()
@@ -5449,6 +5648,8 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             continue
         cleaned = _sanitize_evidence_item(item, "project_explicit")
         if not cleaned or cleaned.casefold() in seen_projects:
+            if cleaned and variant:
+                project_family_variants.setdefault(cleaned.casefold(), set()).add(variant)
             continue
         cleaned_key = cleaned.casefold()
         partial_suffixes = (" app", " web app", " mob app", " mobile app", " website", " platform")
@@ -5456,11 +5657,95 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             existing.startswith(cleaned_key) and existing[len(cleaned_key):] in partial_suffixes
             for existing in seen_projects
         ):
+            if variant:
+                for existing in seen_projects:
+                    if existing.startswith(cleaned_key) and existing[len(cleaned_key):] in partial_suffixes:
+                        project_family_variants.setdefault(existing, set()).add(variant)
             continue
         seen_projects.add(cleaned_key)
+        project_family_variants.setdefault(cleaned_key, set()).add(cleaned)
+        if variant:
+            project_family_variants.setdefault(cleaned_key, set()).add(variant)
         brief["relevant_projects"].append(cleaned)
-        if len(brief["relevant_projects"]) >= 8:
+        if len(brief["relevant_projects"]) >= 24:
             break
+
+    def project_context_extension(project: str, other: str) -> bool:
+        project_key = project.casefold()
+        other_key = other.casefold()
+        if project_key == other_key or not project_key.startswith(other_key + " "):
+            return False
+        extra = project_key[len(other_key):].strip()
+        if not extra:
+            return False
+        channel_suffixes = {
+            "app", "web app", "mob app", "mobile app", "website", "platform",
+            "integration", "implementation", "development", "migration", "redesign",
+        }
+        if extra in channel_suffixes:
+            return False
+        return len(extra.split()) <= 5
+
+    if len(brief["relevant_projects"]) > 1:
+        filtered_projects: List[str] = []
+        for project in brief["relevant_projects"]:
+            if any(
+                project_context_extension(project, other)
+                for other in brief["relevant_projects"]
+                if other != project and len(other.split()) >= 2
+            ):
+                continue
+            filtered_projects.append(project)
+        brief["relevant_projects"] = filtered_projects
+
+    area_terms = [
+        str(state.get("area") or "").strip(),
+        str(state.get("target_area") or "").strip(),
+        str(state.get("primary_keyword") or "").strip(),
+    ]
+    area_terms.extend(str(item).strip() for item in brief.get("relevant_geography", []) if str(item).strip())
+    area_terms = [term for term in area_terms if term]
+
+    def project_country_relevance_score(project: str) -> int:
+        folded_project = _fulfillment_text(project)
+        score = 0
+        for term in area_terms:
+            folded_term = _fulfillment_text(term)
+            if not folded_term or len(folded_term) < 3:
+                continue
+            if folded_term in folded_project:
+                score += 80
+        for block in project_blocks:
+            block_blob = "\n".join([
+                str(block.get("heading") or ""),
+                str(block.get("observed_text") or ""),
+                "\n".join(str(fact) for fact in block.get("observed_facts", []) or []),
+            ])
+            folded_blob = _fulfillment_text(block_blob)
+            if folded_project and folded_project not in folded_blob:
+                continue
+            for term in area_terms:
+                folded_term = _fulfillment_text(term)
+                if folded_term and len(folded_term) >= 3 and folded_term in folded_blob:
+                    score += 40
+        return score
+
+    original_project_order = {project.casefold(): idx for idx, project in enumerate(brief["relevant_projects"])}
+    brief["relevant_projects"] = sorted(
+        brief["relevant_projects"],
+        key=lambda project: (-project_country_relevance_score(project), original_project_order.get(project.casefold(), 999)),
+    )[:8]
+    brief["relevant_project_families"] = [
+        {
+            "name": project,
+            "variants": [
+                variant for variant in sorted(project_family_variants.get(project.casefold(), set()))
+                if variant and variant.casefold() != project.casefold()
+            ][:6],
+            "target_area_relevance": "explicit" if project_country_relevance_score(project) > 0 else "general",
+        }
+        for project in brief["relevant_projects"]
+    ]
 
     snippets: List[str] = []
     for page in page_briefs or []:
@@ -5577,11 +5862,95 @@ def _fulfillment_any_mentioned(content_text: str, values: List[Any]) -> List[str
     return list(dict.fromkeys(matched))
 
 
+def _fulfillment_paragraphs(content: str) -> List[str]:
+    """Extract prose/list paragraphs while ignoring headings and markdown tables."""
+    chunks = re.split(r"\n\s*\n", str(content or "").strip())
+    paragraphs: List[str] = []
+    for chunk in chunks:
+        lines = []
+        for line in chunk.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if stripped.startswith("|") and stripped.endswith("|"):
+                continue
+            lines.append(stripped)
+        text = re.sub(r"\s+", " ", " ".join(lines)).strip()
+        if len(text) >= 35:
+            paragraphs.append(text)
+    return paragraphs
+
+
+def _evidence_density_report(content: str, anchors: List[Any]) -> Dict[str, Any]:
+    """Measure whether brand-owned prose is led by observed evidence anchors."""
+    cleaned_anchors: List[str] = []
+    seen = set()
+    for anchor in anchors or []:
+        text = re.sub(r"\s+", " ", str(anchor or "")).strip()
+        if not text or len(text) < 3:
+            continue
+        folded = text.casefold()
+        if folded in seen:
+            continue
+        seen.add(folded)
+        cleaned_anchors.append(text)
+
+    paragraphs = _fulfillment_paragraphs(content)
+    anchored_indices: List[int] = []
+    missing_indices: List[int] = []
+    matched_by_paragraph: List[List[str]] = []
+    for idx, paragraph in enumerate(paragraphs, start=1):
+        folded_paragraph = _fulfillment_text(paragraph)
+        matched = _fulfillment_any_mentioned(folded_paragraph, cleaned_anchors)
+        matched_by_paragraph.append(matched)
+        if matched:
+            anchored_indices.append(idx)
+        else:
+            missing_indices.append(idx)
+
+    total = len(paragraphs)
+    anchored = len(anchored_indices)
+    ratio = round(anchored / total, 3) if total else 1.0
+    return {
+        "total_paragraphs": total,
+        "anchored_paragraphs": anchored,
+        "anchor_ratio": ratio,
+        "missing_paragraph_indices": missing_indices,
+        "anchors_available": cleaned_anchors[:18],
+        "matched_by_paragraph": matched_by_paragraph,
+    }
+
+
+_GENERIC_ADVICE_DRIFT_RE = re.compile(
+    r"\b(?:choose|compare|ask|check|ensure|make sure|criteria|evaluate|if your priority|best option|suitable for)\b|"
+    r"(?:\u0643\u064a\u0641\s+\u062a\u062e\u062a\u0627\u0631|\u0627\u062e\u062a\u064a\u0627\u0631|\u0645\u0639\u0627\u064a\u064a\u0631|\u0642\u0627\u0631\u0646|\u062a\u0623\u0643\u062f|\u0627\u0633\u0623\u0644|\u0625\u0630\u0627\s+\u0643\u0627\u0646|\u064a\u0646\u0627\u0633\u0628|\u0627\u0644\u062e\u064a\u0627\u0631\s+\u0627\u0644\u0623\u0646\u0633\u0628)",
+    re.IGNORECASE,
+)
+
+
+def _heading_drift_report(content: str, axis: str, matched_evidence: List[str]) -> Dict[str, Any]:
+    """Detect when a brand-owned section drifts into generic buyer advice."""
+    paragraphs = _fulfillment_paragraphs(content)
+    advice_hits = sum(len(_GENERIC_ADVICE_DRIFT_RE.findall(paragraph)) for paragraph in paragraphs)
+    matched_count = len(matched_evidence or [])
+    drift = False
+    if axis in {"brand_offer", "brand_features", "brand_support"}:
+        drift = advice_hits >= 3 and matched_count <= 1
+    elif axis == "brand_projects":
+        drift = advice_hits >= 2 and matched_count <= 1
+    return {
+        "generic_advice_hits": advice_hits,
+        "matched_evidence_count": matched_count,
+        "drift_detected": drift,
+    }
+
+
 def _legacy_section_understanding_from_cards(state: Dict[str, Any]) -> Dict[str, Any]:
     """Compatibility fallback for callers not yet passing raw section blocks."""
     brief = {
         "relevant_services": [],
         "relevant_projects": [],
+        "relevant_project_families": [],
         "relevant_process_steps": [],
         "relevant_technologies": [],
         "relevant_geography": [],
@@ -5698,8 +6067,17 @@ def evaluate_brand_section_fulfillment(
     )
     support_flags = _section_understanding_support_flags(raw_blocks)
     content_text = _fulfillment_text(content)
-    heading_text = _fulfillment_text(section.get("heading_text"))
+    heading_text_raw = str(section.get("heading_text") or "")
+    heading_text = _fulfillment_text(heading_text_raw)
     combined_written_text = f"{heading_text}\n{content_text}"
+    brand_name = str(state.get("brand_name") or section.get("brand_name") or "").strip()
+    aliases = state.get("brand_aliases") or []
+    if isinstance(aliases, str):
+        aliases = [aliases]
+    brand_terms = [term.casefold() for term in [brand_name] + aliases if str(term).strip()]
+    heading_mentions_brand = bool(
+        brand_terms and any(term in heading_text_raw.casefold() for term in brand_terms)
+    )
 
     services = list(dict.fromkeys(
         [str(item).strip() for item in (brief.get("relevant_services") or []) if str(item).strip()]
@@ -5708,6 +6086,42 @@ def evaluate_brand_section_fulfillment(
     projects = [str(item).strip() for item in (brief.get("relevant_projects") or []) if str(item).strip()]
     process_steps = [str(item).strip() for item in (brief.get("relevant_process_steps") or []) if str(item).strip()]
     geography = [str(item).strip() for item in (brief.get("relevant_geography") or []) if str(item).strip()]
+    ctas = [str(item).strip() for item in (brief.get("relevant_ctas") or []) if str(item).strip()]
+
+    evidence_anchors = list(dict.fromkeys(services + projects + process_steps + geography + ctas))
+    density_report = _evidence_density_report(content or "", evidence_anchors)
+    section_type = str(section.get("section_type") or "").casefold()
+
+    def attach_reports(report: Dict[str, Any], matched: Optional[List[str]] = None) -> Dict[str, Any]:
+        matched_values = matched if matched is not None else report.get("matched_evidence", [])
+        report["evidence_density"] = density_report
+        report["heading_fidelity"] = _heading_drift_report(content or "", axis, matched_values or [])
+        return report
+
+    def evidence_density_issue(matched: List[str]) -> Optional[Dict[str, Any]]:
+        if section_type in {"introduction", "intro", "conclusion", "faq"}:
+            return None
+        if not evidence_anchors or density_report.get("total_paragraphs", 0) < 2:
+            return None
+        ratio = float(density_report.get("anchor_ratio", 1.0))
+        if ratio >= 0.75:
+            return None
+        status = "unsupported" if density_report.get("anchored_paragraphs", 0) == 0 else "weak"
+        return {
+            "fulfillment_status": status,
+            "fulfillment_reason": "brand evidence density below threshold; section contains generic prose not anchored to observed brand evidence",
+            "matched_evidence": matched,
+        }
+
+    def heading_drift_issue(matched: List[str]) -> Optional[Dict[str, Any]]:
+        drift = _heading_drift_report(content or "", axis, matched)
+        if not drift.get("drift_detected"):
+            return None
+        return {
+            "fulfillment_status": "weak",
+            "fulfillment_reason": "heading drift detected; brand-owned section reads like generic buyer advice instead of answering the heading with observed brand evidence",
+            "matched_evidence": matched,
+        }
 
     raw_pricing_supported = bool(support_flags.get("pricing"))
     raw_geo_supported = bool(geography) or bool(support_flags.get("geography"))
@@ -5742,67 +6156,91 @@ def evaluate_brand_section_fulfillment(
     )
 
     area = str(state.get("area") or "").strip()
-    area_claimed = bool(area and _fulfillment_text(area) in combined_written_text)
+    area_claimed = bool(area and _fulfillment_text(area) in content_text)
+    promised_geo_claim = promised_geo and (
+        heading_mentions_brand
+        or axis in {"brand_projects", "brand_pricing"}
+        or bool(section.get("_visible_brand_reference"))
+    )
     unsupported_claims: List[str] = []
     if (promised_pricing or pricing_claim_re.search(combined_written_text)) and not raw_pricing_supported:
         unsupported_claims.append("brand pricing/packages promised without explicit raw brand pricing evidence")
-    if (promised_geo or area_claimed or geography_claim_re.search(combined_written_text)) and not raw_geo_supported:
+    if (promised_geo_claim or area_claimed or geography_claim_re.search(content_text)) and not raw_geo_supported:
         unsupported_claims.append("brand geography/market presence promised without explicit raw brand geography evidence")
-    if trust_claim_re.search(combined_written_text) and not raw_trust_supported:
+    if trust_claim_re.search(content_text) and not raw_trust_supported:
         unsupported_claims.append("brand trust/certification/leadership claim lacks explicit raw evidence")
-    if timeline_claim_re.search(combined_written_text) and not raw_timeline_supported:
+    if timeline_claim_re.search(content_text) and not raw_timeline_supported:
         unsupported_claims.append("brand timeline/response-time claim lacks explicit raw evidence")
     if unsupported_claims:
-        return {
+        return attach_reports({
             "fulfillment_status": "unsupported",
             "fulfillment_reason": "; ".join(dict.fromkeys(unsupported_claims)),
             "matched_evidence": [],
-        }
+        })
 
     if promised_projects:
         matched_projects = _fulfillment_any_mentioned(content_text, projects)
         if projects and matched_projects:
-            return {
+            density_issue = evidence_density_issue(matched_projects)
+            if density_issue:
+                return attach_reports(density_issue, matched_projects)
+            drift_issue = heading_drift_issue(matched_projects)
+            if drift_issue:
+                return attach_reports(drift_issue, matched_projects)
+            return attach_reports({
                 "fulfillment_status": "satisfied",
                 "fulfillment_reason": "observed project evidence used",
                 "matched_evidence": matched_projects,
-            }
-        return {
+            }, matched_projects)
+        return attach_reports({
             "fulfillment_status": "unsupported" if projects else "weak",
             "fulfillment_reason": "project section did not surface observed project names",
             "matched_evidence": [],
-        }
+        })
 
     if axis == "brand_offer":
         matched_services = _fulfillment_any_mentioned(content_text, services)
         if services and matched_services:
-            return {
+            density_issue = evidence_density_issue(matched_services)
+            if density_issue:
+                return attach_reports(density_issue, matched_services)
+            drift_issue = heading_drift_issue(matched_services)
+            if drift_issue:
+                return attach_reports(drift_issue, matched_services)
+            return attach_reports({
                 "fulfillment_status": "satisfied",
                 "fulfillment_reason": "observed service/capability evidence used",
                 "matched_evidence": matched_services,
-            }
-        return {
+            }, matched_services)
+        return attach_reports({
             "fulfillment_status": "unsupported" if services else "weak",
             "fulfillment_reason": "service section lacks observed service/capability evidence",
             "matched_evidence": [],
-        }
+        })
 
     if promised_process:
         matched_steps = _fulfillment_any_mentioned(content_text, process_steps)
         if process_steps and matched_steps:
-            return {
+            density_issue = evidence_density_issue(matched_steps)
+            if density_issue:
+                return attach_reports(density_issue, matched_steps)
+            return attach_reports({
                 "fulfillment_status": "satisfied",
                 "fulfillment_reason": "observed process evidence used",
                 "matched_evidence": matched_steps,
-            }
-        return {
+            }, matched_steps)
+        return attach_reports({
             "fulfillment_status": "unsupported" if process_steps else "weak",
             "fulfillment_reason": "process section lacks observed process evidence",
             "matched_evidence": [],
-        }
+        })
 
-    return {
+    density_issue = evidence_density_issue([])
+    if density_issue and axis.startswith("brand_"):
+        return attach_reports(density_issue, [])
+
+    return attach_reports({
         "fulfillment_status": "satisfied",
         "fulfillment_reason": "no strict brand-owned promise detected",
         "matched_evidence": [],
-    }
+    })

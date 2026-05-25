@@ -214,3 +214,59 @@
 --- SECTION: How ProTech uses React (s1) ---
 - [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
 --------------------------------------------------
+
+--- SECTION: Introduction (intro) ---
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: How ProTech uses React (s1) ---
+- [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
+--------------------------------------------------
+
+--- SECTION: Introduction (intro) ---
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: How ProTech uses React (s1) ---
+- [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
+--------------------------------------------------
+
+--- SECTION: Introduction (intro) ---
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: How ProTech uses React (s1) ---
+- [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
+--------------------------------------------------
+
+--- SECTION: Introduction (intro) ---
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: How ProTech uses React (s1) ---
+- [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
+--------------------------------------------------
+
+--- SECTION: Introduction (intro) ---
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: How ProTech uses React (s1) ---
+- [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
+--------------------------------------------------
+
+--- SECTION: Introduction (intro) ---
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: How ProTech uses React (s1) ---
+- [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
+--------------------------------------------------
+
+--- SECTION: Introduction (intro) ---
+- [QUALITY ISSUE]: Paragraph count is 1, must be 2-8
+--------------------------------------------------
+
+--- SECTION: How ProTech uses React (s1) ---
+- [QUALITY ISSUE]: PLAIN_LANGUAGE_REQUIRED: simplify phrasing
+--------------------------------------------------

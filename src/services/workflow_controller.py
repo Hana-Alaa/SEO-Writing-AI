@@ -1981,6 +1981,50 @@ class AsyncWorkflowController:
             logger.warning("[post_outline_brand_crawl] skipped due to error: %s", e)
         return state
 
+    def _section_role_should_use_brand_evidence(self, section: Dict[str, Any], state: Dict[str, Any]) -> bool:
+        """Brand-commercial sections that should be grounded in brand evidence."""
+        content_type = str(state.get("content_type") or section.get("content_type") or "").lower()
+        if content_type != "brand_commercial":
+            return False
+
+        section_type = str(section.get("section_type") or "").lower()
+        heading_level = str(section.get("heading_level") or "").upper()
+        if section_type in {"introduction", "intro", "conclusion"} or heading_level == "INTRO":
+            return True
+        if section_type in {"faq", "comparison", "pricing", "packages", "location"}:
+            return self._section_visibly_references_brand(section, state)
+
+        contract = section.get("section_contract") if isinstance(section.get("section_contract"), dict) else {}
+        brand_policy = str(contract.get("brand_policy") or section.get("brand_policy") or "").lower()
+        axis = str(section.get("taxonomy_axis") or contract.get("taxonomy_axis") or "").lower()
+        if brand_policy == "commercial" or axis.startswith("brand_"):
+            return True
+
+        inventory = self._brand_evidence_inventory_for_outline(state)
+        if section_type in {"offer", "services", "core_or_benefits"} and inventory.get("services_available"):
+            return True
+        if section_type in {"features", "differentiation", "differentiators", "brand_support", "brand"}:
+            return any(inventory.get(key, False) for key in ("services_available", "projects_available", "process_available", "trust_available"))
+        if section_type in {"process", "process_or_how"}:
+            return bool(inventory.get("process_available") or inventory.get("services_available"))
+        if section_type in {"proof", "case_study", "case-study"}:
+            return bool(inventory.get("projects_available") or inventory.get("trust_available"))
+
+        intent = str(section.get("section_intent") or "").lower()
+        if intent in {"informational", "information", "info"}:
+            return False
+
+        if section_type in {"offer", "services", "core_or_benefits"}:
+            return bool(inventory.get("services_available", True))
+        if section_type in {"features", "differentiation", "differentiators", "brand_support", "brand"}:
+            return any(inventory.get(key, False) for key in ("services_available", "projects_available", "process_available", "trust_available"))
+        if section_type in {"process", "process_or_how"}:
+            return bool(inventory.get("process_available") or inventory.get("services_available"))
+        if section_type in {"proof", "case_study", "case-study"}:
+            return bool(inventory.get("projects_available") or inventory.get("trust_available"))
+
+        return "commercial" in intent and bool(inventory.get("services_available"))
+
     def _infer_brand_policy(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
         brand_name = state.get("brand_name") or state.get("display_brand_name") or ""
         if not brand_name:
@@ -1990,7 +2034,11 @@ class AsyncWorkflowController:
         intent = (state.get("intent") or "").lower()
         section_type = (section.get("section_type") or "").lower()
         if content_type == "brand_commercial":
-            if section_type in {"introduction", "conclusion"} or self._section_visibly_references_brand(section, state):
+            if (
+                section_type in {"introduction", "conclusion"}
+                or self._section_visibly_references_brand(section, state)
+                or self._section_role_should_use_brand_evidence(section, state)
+            ):
                 return "commercial"
             return "none"
         if "commercial" in intent and self._section_visibly_references_brand(section, state):
@@ -2872,7 +2920,8 @@ class AsyncWorkflowController:
         brand_terms = [brand_name.lower()] + [alias.lower() for alias in brand_aliases]
         mentions_brand = any(term and term in heading_lower for term in brand_terms)
         content_type = str(state.get("content_type") or "").lower()
-        is_brand_owned = content_type == "brand_commercial" and mentions_brand
+        role_requires_brand_evidence = self._section_role_should_use_brand_evidence(section, state)
+        is_brand_owned = content_type == "brand_commercial" and (mentions_brand or role_requires_brand_evidence)
         inventory = self._brand_evidence_inventory_for_outline(state)
 
         def _cards_have(key: str) -> bool:
@@ -2914,11 +2963,25 @@ class AsyncWorkflowController:
             candidate for candidate in geo_candidates
             if candidate and candidate.casefold() not in explicit_geo
         ]
-        if is_brand_owned and unsupported_geo and not _available("explicit_geography", "visible_geography"):
+        if is_brand_owned and unsupported_geo and not inventory.get("explicit_geography"):
             cleaned = heading
             for candidate in unsupported_geo:
                 cleaned = re.sub(r"\s+(?:in|across|within)\s+" + re.escape(candidate) + r"\b", "", cleaned, flags=re.IGNORECASE)
+                cleaned = re.sub(r"\s+(?:\u0628\u0627\u0644|\u0628\u0640?|\u0628)\s*" + re.escape(candidate) + r"\b", "", cleaned, flags=re.IGNORECASE)
+                if candidate.startswith("\u0627\u0644") and len(candidate) > 2:
+                    bare_candidate = candidate[2:]
+                    cleaned = re.sub(r"\s+(?:\u0628\u0627\u0644|\u0628)\s*" + re.escape(bare_candidate) + r"\b", "", cleaned, flags=re.IGNORECASE)
                 cleaned = re.sub(r"\s+(?:في|داخل|عبر)\s*" + re.escape(candidate) + r"\b", "", cleaned, flags=re.IGNORECASE)
+                # Arabic word boundaries are unreliable for prefixed forms such
+                # as "بالسعودية"; run a punctuation-aware pass as well.
+                candidate_pattern = re.escape(candidate)
+                location_tail = r"(?=$|[\s:،,؛.!?])"
+                cleaned = re.sub(r"\s+(?:in|across|within)\s+" + candidate_pattern + location_tail, "", cleaned, flags=re.IGNORECASE)
+                cleaned = re.sub(r"\s+(?:\u0641\u064a|\u062f\u0627\u062e\u0644|\u0639\u0628\u0631)\s*" + candidate_pattern + location_tail, "", cleaned, flags=re.IGNORECASE)
+                cleaned = re.sub(r"\s+(?:\u0628\u0627\u0644|\u0628\u0640?|\u0628)\s*" + candidate_pattern + location_tail, "", cleaned, flags=re.IGNORECASE)
+                if candidate.startswith("\u0627\u0644") and len(candidate) > 2:
+                    bare_candidate = candidate[2:]
+                    cleaned = re.sub(r"\s+(?:\u0628\u0627\u0644|\u0628)\s*" + re.escape(bare_candidate) + location_tail, "", cleaned, flags=re.IGNORECASE)
             cleaned = re.sub(r"\s+", " ", cleaned).strip(" -â€“—:")
             if cleaned and cleaned != heading:
                 section["fulfillment_status"] = "weak"
@@ -2994,6 +3057,7 @@ class AsyncWorkflowController:
             section = raw_section
             section_type = str(section.get("section_type") or "").lower()
             visible_brand = self._section_visibly_references_brand(section, state)
+            should_use_brand_evidence = self._section_role_should_use_brand_evidence(section, state)
 
             if section_type == "faq" and not visible_brand:
                 section["brand_policy"] = "none"
@@ -3004,7 +3068,11 @@ class AsyncWorkflowController:
                 normalized.append(section)
                 continue
 
-            if not visible_brand and section_type not in {"introduction", "intro", "conclusion"}:
+            if (
+                not visible_brand
+                and not should_use_brand_evidence
+                and section_type not in {"introduction", "intro", "conclusion"}
+            ):
                 section["brand_policy"] = "none"
                 current_axis = str(section.get("taxonomy_axis") or "").lower()
                 if current_axis.startswith("brand_"):
@@ -3021,8 +3089,9 @@ class AsyncWorkflowController:
             section["heading_text"] = self._fulfill_and_downgrade_heading(section, state)
             if section["heading_text"] != original_heading:
                 visible_brand = self._section_visibly_references_brand(section, state)
+                should_use_brand_evidence = self._section_role_should_use_brand_evidence(section, state)
 
-            if visible_brand or section_type in {"introduction", "intro", "conclusion"}:
+            if visible_brand or should_use_brand_evidence or section_type in {"introduction", "intro", "conclusion"}:
                 section["brand_policy"] = "commercial"
             else:
                 section["brand_policy"] = "none"
@@ -3330,6 +3399,78 @@ class AsyncWorkflowController:
 
         return {"fulfillment_status": "satisfied", "fulfillment_reason": "no strict brand-owned promise detected"}
 
+    def _content_has_markdown_table(self, content: str) -> bool:
+        """Detect a basic markdown table with a separator row."""
+        if not content:
+            return False
+        return bool(re.search(r"(?m)^\s*\|.+\|\s*$\n^\s*\|[\s:\-|]+\|\s*$", content))
+
+    def _build_required_section_table(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+        """Create a compact fallback table when a required visual table is missing."""
+        lang = str(state.get("article_language") or section.get("article_language") or "").lower()
+        heading = str(section.get("heading_text") or "")
+        section_type = str(section.get("section_type") or "").lower()
+        axis = str(section.get("taxonomy_axis") or "").lower()
+        is_ar = lang.startswith("ar") or bool(re.search(r"[\u0600-\u06FF]", heading))
+
+        if is_ar:
+            if section_type == "comparison" or axis == "comparison":
+                return (
+                    "| المعيار | الخيار الأول | الخيار الثاني |\n"
+                    "|---|---|---|\n"
+                    "| الهدف | حضور تعريفي وتنظيم معلومات الشركة | بيع أو تفاعل مباشر مع المستخدم |\n"
+                    "| الوظائف | صفحات خدمات، نماذج تواصل، محتوى تعريفي | دفع، طلبات، حسابات مستخدمين، إدارة منتجات |\n"
+                    "| التعقيد | أقل غالبًا ويعتمد على المحتوى والتصميم | أعلى بسبب التكاملات والعمليات |\n"
+                    "| الأنسب له | الشركات والمؤسسات التي تريد عرض خدماتها | المتاجر والمنصات التي تحتاج معاملات رقمية |"
+                )
+            if section_type == "pricing" or axis == "pricing":
+                return (
+                    "| عامل التكلفة | تأثيره على السعر |\n"
+                    "|---|---|\n"
+                    "| عدد الصفحات والشاشات | يزيد حجم التصميم والتطوير المطلوب |\n"
+                    "| التكاملات | بوابات الدفع أو ERP/CRM ترفع التعقيد |\n"
+                    "| إدارة المحتوى | تحتاج لوحة تحكم أو تدريب أو دعم إضافي |\n"
+                    "| الصيانة | تحدد مستوى المتابعة بعد الإطلاق |"
+                )
+            return (
+                "| العنصر | ما يجب توضيحه في هذا السكشن |\n"
+                "|---|---|\n"
+                "| الخدمة | ما الذي يحصل عليه العميل فعليًا |\n"
+                "| الدليل | مثال أو قدرة مرصودة من المصادر |\n"
+                "| الفائدة | أثر الخدمة على قرار العميل |\n"
+                "| حدود الادعاء | ما لا يجب وعد القارئ به دون دليل |"
+            )
+
+        if section_type == "comparison" or axis == "comparison":
+            return (
+                "| Criterion | Option A | Option B |\n"
+                "|---|---|---|\n"
+                "| Goal | Informational presence and company clarity | Direct selling or user interaction |\n"
+                "| Functions | Service pages, contact forms, brand content | Payments, orders, accounts, product management |\n"
+                "| Complexity | Usually lower and content-led | Higher because of integrations and operations |\n"
+                "| Best fit | Companies presenting services | Stores and platforms handling transactions |"
+            )
+        return (
+            "| Element | What This Section Should Clarify |\n"
+            "|---|---|\n"
+            "| Service | What the client actually receives |\n"
+            "| Evidence | Observed capability or source-backed example |\n"
+            "| Benefit | How it helps the buyer decide |\n"
+            "| Claim boundary | What must not be promised without evidence |"
+        )
+
+    def _ensure_required_table_content(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+        """Insert a fallback table when the outline required one and none exists."""
+        if not section.get("requires_table") or self._content_has_markdown_table(content or ""):
+            return content
+        table = self._build_required_section_table(section, state)
+        if not table:
+            return content
+        parts = re.split(r"\n\s*\n", (content or "").strip(), maxsplit=1)
+        if len(parts) == 2 and parts[0].strip():
+            return parts[0].strip() + "\n\n" + table + "\n\n" + parts[1].strip()
+        return ((content or "").strip() + "\n\n" + table).strip()
+
     def _format_section_raw_brand_blocks_for_prompt(self, blocks: List[Dict[str, Any]]) -> str:
         """Format selected raw brand blocks for prompt visibility without dumping full pages."""
         if not blocks:
@@ -3437,12 +3578,18 @@ class AsyncWorkflowController:
             "selected_urls": compact_list(urls),
             "selected_headings": compact_list(headings),
             "relevant_projects": compact_list(understanding.get("relevant_projects", [])),
+            "relevant_project_families": compact_list([
+                item.get("name") if isinstance(item, dict) else item
+                for item in (understanding.get("relevant_project_families", []) or [])
+            ]),
             "relevant_services": compact_list(understanding.get("relevant_services", [])),
             "relevant_process_steps": compact_list(understanding.get("relevant_process_steps", [])),
             "relevant_technologies": compact_list(understanding.get("relevant_technologies", [])),
             "not_supported_for_this_section": compact_list(understanding.get("not_supported_for_this_section", [])),
             "fulfillment_status": section.get("fulfillment_status", "pending"),
             "fulfillment_reason": section.get("fulfillment_reason", ""),
+            "evidence_density": section.get("evidence_density", {}),
+            "heading_fidelity": section.get("heading_fidelity", {}),
         }
 
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -3981,12 +4128,23 @@ class AsyncWorkflowController:
                     state["brand_link_used"] = True
 
             final_content = self.validator.enforce_paragraph_structure(content)
+            final_content = self._ensure_required_table_content(final_content, section, state)
             fulfillment_report = self._evaluate_brand_owned_section_fulfillment(section, final_content, state)
             section["fulfillment_status"] = fulfillment_report.get("fulfillment_status", "satisfied")
             section["fulfillment_reason"] = fulfillment_report.get("fulfillment_reason", "")
-            if section["fulfillment_status"] == "unsupported":
+            section["evidence_density"] = fulfillment_report.get("evidence_density", {})
+            section["heading_fidelity"] = fulfillment_report.get("heading_fidelity", {})
+            repairable_weak_fulfillment = (
+                section.get("fulfillment_status") == "weak"
+                and any(
+                    marker in section.get("fulfillment_reason", "").lower()
+                    for marker in ("evidence density", "heading drift")
+                )
+            )
+            if section["fulfillment_status"] == "unsupported" or repairable_weak_fulfillment:
                 logger.warning(
-                    "[brand_fulfillment] unsupported section='%s' reason='%s'. Applying soft-first correction.",
+                    "[brand_fulfillment] %s section='%s' reason='%s'. Applying soft-first correction.",
+                    section.get("fulfillment_status"),
                     section.get("heading_text", ""),
                     section.get("fulfillment_reason", ""),
                 )
@@ -3997,8 +4155,19 @@ class AsyncWorkflowController:
                     fulfillment_report = self._evaluate_brand_owned_section_fulfillment(section, final_content, state)
                     section["fulfillment_status"] = fulfillment_report.get("fulfillment_status", "satisfied")
                     section["fulfillment_reason"] = fulfillment_report.get("fulfillment_reason", "")
+                    section["evidence_density"] = fulfillment_report.get("evidence_density", {})
+                    section["heading_fidelity"] = fulfillment_report.get("heading_fidelity", {})
 
-                if section.get("fulfillment_status") == "unsupported" and not section.get("_brand_fulfillment_repair_attempted"):
+                repairable_weak_fulfillment = (
+                    section.get("fulfillment_status") == "weak"
+                    and any(
+                        marker in section.get("fulfillment_reason", "").lower()
+                        for marker in ("evidence density", "heading drift")
+                    )
+                )
+                if (
+                    section.get("fulfillment_status") == "unsupported" or repairable_weak_fulfillment
+                ) and not section.get("_brand_fulfillment_repair_attempted"):
                     section["_brand_fulfillment_repair_attempted"] = True
                     repair_plan = dict(execution_plan or {})
                     repair_feedback = [
@@ -4007,6 +4176,8 @@ class AsyncWorkflowController:
                         "- Rewrite only the offending unsupported parts while preserving the section structure.",
                         "- Use the [RAW BRAND SOURCE BLOCKS] and [SECTION BRAND UNDERSTANDING] as the evidence boundary.",
                         "- If relevant_projects exist, mention at least one observed project/client name exactly.",
+                        "- Keep each brand-owned paragraph anchored to observed services, projects, technologies, workflow steps, or source-backed boundaries.",
+                        "- Do not turn service or feature headings into generic buyer-advice criteria.",
                         "- If no raw evidence supports pricing, geography, trust, certification, timelines, guarantees, or market leadership, remove that claim.",
                     ]
                     repair_plan["structure_rule"] = "\n".join(
@@ -4150,6 +4321,7 @@ class AsyncWorkflowController:
                             max_external=2,
                         )
                         candidate_final = self.validator.enforce_paragraph_structure(candidate_content)
+                        candidate_final = self._ensure_required_table_content(candidate_final, section, state)
                         candidate_report = self._evaluate_brand_owned_section_fulfillment(section, candidate_final, state)
                         if candidate_report.get("fulfillment_status") != "unsupported":
                             final_content = candidate_final
@@ -4157,6 +4329,8 @@ class AsyncWorkflowController:
                             found_links = re.findall(r'\[.*?\]\((https?://.*?)\)', final_content)
                             section["fulfillment_status"] = candidate_report.get("fulfillment_status", "satisfied")
                             section["fulfillment_reason"] = candidate_report.get("fulfillment_reason", "")
+                            section["evidence_density"] = candidate_report.get("evidence_density", {})
+                            section["heading_fidelity"] = candidate_report.get("heading_fidelity", {})
                             logger.info(
                                 "[brand_fulfillment] corrective rewrite accepted section='%s' status='%s'.",
                                 section.get("heading_text", ""),
@@ -4419,7 +4593,14 @@ class AsyncWorkflowController:
                 from src.services.brand_evidence_service import apply_brand_claim_gate
                 claim_gate_brief = dict(state.get("brand_writing_brief") or {})
                 claim_gate_brief["brand_name"] = claim_gate_brief.get("brand_name") or state.get("brand_name", "")
-                claim_gate_brief["brand_offer_contract"] = state.get("brand_offer_contract", {})
+                claim_gate_brief["brand_offer_contract"] = {
+                    "observed_services": section_brand_understanding.get("relevant_services", []),
+                    "observed_projects": section_brand_understanding.get("relevant_projects", []),
+                    "observed_process_steps": section_brand_understanding.get("relevant_process_steps", []),
+                    "observed_technologies": section_brand_understanding.get("relevant_technologies", []),
+                    "explicit_geography": section_brand_understanding.get("relevant_geography", []),
+                    "observed_ctas": section_brand_understanding.get("relevant_ctas", []),
+                }
                 claim_gate_brief["section_source_text"] = section_source_text
                 if state.get("brand_aliases"):
                     claim_gate_brief["brand_aliases"] = state.get("brand_aliases")
@@ -5146,12 +5327,21 @@ class AsyncWorkflowController:
         # Override for specific section types
         if section_type == "introduction":
             plan["writing_mode"] = "hooks-driven"
+            if content_type == "brand_commercial":
+                plan["structure_rule"] = (
+                    "EXACTLY 2-3 PARAGRAPHS. Use simple buyer language. "
+                    "Mention at most 1-2 broad observed brand capabilities; do not dump technical catalogs in the introduction."
+                )
 
         elif section_type == "conclusion":
             plan["writing_mode"] = "summary-driven"
             if content_type == "brand_commercial":
                 plan["cta_eligible"] = True
                 plan["cta_type"] = "strong"
+                plan["structure_rule"] = (
+                    "EXACTLY 2 PARAGRAPHS. Make this a strong sales close grounded in observed brand capabilities. "
+                    "End with a clear next step; do not reopen generic market education."
+                )
                 section["cta_eligible"] = True
                 section["cta_type"] = "strong"
 
