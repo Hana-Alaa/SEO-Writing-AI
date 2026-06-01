@@ -55,6 +55,9 @@ Your task is to generate only the heading structure layer of an article outline 
     7. **How it works / Process** (`section_type: process`): Numbered steps. Reduces friction and objection.
     8. **FAQ section** (`section_type: faq`): Focus on objections and pricing/process questions specifically.
     9. **Strong conclusion + CTA** (`section_type: conclusion`): This is the main conversion point. Direct and confident.
+  - Assign the implied commercial role through `coverage_role` when possible:
+    `offer_clarity`, `features_or_included`, `differentiators`, `proof`, `comparison`, `process_or_how`, `faq`, `conclusion`.
+  - Keep these roles distinct. Do not make a features section repeat the service catalog, and do not make proof/projects duplicate earlier sections.
   - **FLEXIBILITY & EXPANSION RULE (CRITICAL)**: While the 9 pillars above MUST be covered, you are STRONGLY ENCOURAGED to ADD 1-2 extra domain-specific H2 sections (e.g., Legal Rules, Location/Area Guides, Licensing Requirements, Specific Use Cases) between these pillars if observed in the SERP brief or if highly necessary for the topic.
   - For these custom added sections, you may use `section_type: "core"` or `section_type: "location"`.
   - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field:

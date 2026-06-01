@@ -345,6 +345,28 @@ def _extract_explicit_brand_geography(text: str, page_type: str = "") -> List[st
     return list(dict.fromkeys(candidates))[:8]
 
 
+def _extract_project_location_metadata(text: str) -> List[str]:
+    """Extract project/location metadata without treating it as brand presence."""
+    candidates: List[str] = []
+    patterns = [
+        r"\b(?:location|project location|market|country|city)\s*:?\s*([A-Z][A-Za-z\s.'-]{2,70}(?:,\s*[A-Z][A-Za-z\s.'-]{2,70})?)",
+        r"(?:\u0627\u0644\u0645\u0648\u0642\u0639|\u0645\u0648\u0642\u0639 \u0627\u0644\u0645\u0634\u0631\u0648\u0639|\u0627\u0644\u0645\u062f\u064a\u0646\u0629|\u0627\u0644\u062f\u0648\u0644\u0629)\s*:?\s*([\u0600-\u06FF\s]{2,70})",
+    ]
+    for pattern in patterns:
+        for match in re.finditer(pattern, text or "", re.IGNORECASE):
+            value = re.split(
+                r"[;|\n]|\s+\b(?:sector|services|scope|technology|target|audience|status|objective)\b\s*:?",
+                match.group(1).strip(),
+                maxsplit=1,
+                flags=re.IGNORECASE,
+            )[0]
+            value = re.sub(r"\s+", " ", value).strip(" .,:-")
+            cleaned = _sanitize_evidence_item(value, category="geography")
+            if cleaned and 1 <= len(cleaned.split()) <= 6:
+                candidates.append(cleaned)
+    return list(dict.fromkeys(candidates))[:8]
+
+
 def _clean_evidence_items(
     values: Any,
     *,
@@ -819,6 +841,66 @@ class BrandEvidenceService:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
 
+        def is_probable_error_page(status_code: int, html: str, title: str = "") -> bool:
+            """Reject CDN/server error pages so they do not become brand evidence."""
+            combined = f"{title} {html[:2000]}".casefold()
+            if status_code >= 400:
+                return True
+            return any(
+                marker in combined
+                for marker in [
+                    "web server is down",
+                    "error code 521",
+                    "cloudflare ray id",
+                    "origin is unreachable",
+                    "temporarily unavailable",
+                    "service unavailable",
+                ]
+            )
+
+        async def discover_sitemap_links(client: httpx.AsyncClient) -> List[tuple]:
+            """Use robots.txt/sitemaps as a neutral fallback when homepage links are sparse."""
+            sitemap_urls = {urljoin(homepage + "/", "sitemap.xml")}
+            try:
+                robots_url = urljoin(homepage + "/", "robots.txt")
+                robots_res = await client.get(robots_url, headers=headers)
+                if robots_res.status_code == 200:
+                    for line in robots_res.text.splitlines():
+                        if line.lower().startswith("sitemap:"):
+                            sitemap_url = line.split(":", 1)[1].strip()
+                            if sitemap_url:
+                                sitemap_urls.add(sitemap_url)
+            except Exception:
+                pass
+
+            discovered: List[tuple] = []
+            seen_sitemaps = set()
+            queue = list(sitemap_urls)[:5]
+            while queue and len(seen_sitemaps) < 12:
+                sitemap_url = queue.pop(0)
+                if sitemap_url in seen_sitemaps:
+                    continue
+                seen_sitemaps.add(sitemap_url)
+                try:
+                    res = await client.get(sitemap_url, headers=headers)
+                    if res.status_code != 200 or not res.text.strip():
+                        continue
+                    locs = re.findall(r"<loc>\s*([^<]+?)\s*</loc>", res.text, flags=re.IGNORECASE)
+                    for loc in locs:
+                        loc = loc.strip()
+                        canon = canonicalize_url(loc)
+                        if not is_valid_internal(canon):
+                            continue
+                        if canon.lower().endswith(".xml"):
+                            if canon not in seen_sitemaps and len(queue) < 20:
+                                queue.append(canon)
+                            continue
+                        if canon != homepage:
+                            discovered.append((canon, "sitemap"))
+                except Exception:
+                    continue
+            return list(dict.fromkeys(discovered))
+
         # 3. Helper to scrape a single page
         async def scrape_page(url: str, anchor_text: str = "") -> Optional[dict]:
             logger.info(f"[brand_site_evidence] Fetching: {url}")
@@ -834,6 +916,9 @@ class BrandEvidenceService:
                     
                     # Page properties
                     title = soup.title.string.strip() if soup.title else ""
+                    if is_probable_error_page(r.status_code, r.text, title):
+                        logger.warning("[brand_site_evidence] Error/CDN page rejected for %s", url)
+                        return None
                     
                     # Meta description
                     meta_desc = ""
@@ -908,7 +993,7 @@ class BrandEvidenceService:
                 logger.error(f"[brand_site_evidence] Failed scraping {url}: {e}")
                 return None
 
-        # 4. Fetch homepage first
+        # 4. Fetch homepage first, while keeping a client available for sitemap fallback.
         home_res = await scrape_page(homepage)
         internal_links_map = {}
         if home_res:
@@ -917,6 +1002,17 @@ class BrandEvidenceService:
             for link, txt in home_res.pop("extracted_links", []):
                 if link not in crawled_urls and link not in internal_links_map:
                     internal_links_map[link] = txt
+
+        if len(internal_links_map) < 3:
+            try:
+                async with httpx.AsyncClient(timeout=8.0, follow_redirects=True, verify=False) as client:
+                    for link, txt in await discover_sitemap_links(client):
+                        if link not in crawled_urls and link not in internal_links_map:
+                            internal_links_map[link] = txt
+                if internal_links_map:
+                    logger.info("[brand_site_evidence] Sitemap fallback added %s candidate URLs.", len(internal_links_map))
+            except Exception as e:
+                logger.info("[brand_site_evidence] Sitemap fallback unavailable: %s", e)
 
         # 5. Topic-aware crawl queue. Keep the page limit, but spend it on pages
         # that can actually help the current article and on project/service details.
@@ -3333,6 +3429,8 @@ def _section_should_receive_brand_evidence(section: dict, state: dict) -> bool:
     """Return True when a commercial section should receive brand evidence."""
     section = section or {}
     state = state or {}
+    if state.get("brand_evidence_failure_mode"):
+        return False
     if _section_visibly_references_brand(section, state):
         return True
 
@@ -3952,10 +4050,21 @@ def build_brand_source_chunks(state: Dict[str, Any]) -> List[Dict[str, Any]]:
     
     max_chunks_per_page = 25
     max_total_brand_chunks = 120
+
+    def has_real_page_body(res: Dict[str, Any]) -> bool:
+        """Manual link labels are routing hints, not crawled page content."""
+        if res.get("semantic_sections"):
+            return True
+        for key in ("page_text_full", "page_text", "body_text", "content", "html_text"):
+            if str(res.get(key) or "").strip():
+                return True
+        return False
     
     for res in resources:
         url = res.get("link") or res.get("url") or ""
         title = res.get("title") or res.get("text") or "Untitled Page"
+        if not has_real_page_body(res):
+            continue
         
         # Build semantic sections
         sections = res.get("semantic_sections")
@@ -3964,7 +4073,7 @@ def build_brand_source_chunks(state: Dict[str, Any]) -> List[Dict[str, Any]]:
         
         if not sections:
             # Fallback if no parsed sections are present (backward compatibility & plain text test fixtures)
-            text_content = res.get("page_text_full") or res.get("page_text") or res.get("text") or ""
+            text_content = res.get("page_text_full") or res.get("page_text") or res.get("body_text") or res.get("content") or ""
             if text_content:
                 sections = [{
                     "heading": "Introduction",
@@ -4395,6 +4504,654 @@ def build_brand_page_briefs(state: Dict[str, Any]) -> List[Dict[str, Any]]:
     return briefs[:24]
 
 
+def _narrative_layout_noise_line(line: str) -> bool:
+    """Remove obvious page chrome without deleting semantic headings/details."""
+    text = re.sub(r"\s+", " ", str(line or "")).strip()
+    if not text:
+        return True
+    folded = text.casefold()
+    exact_noise = {
+        "home", "about", "about us", "services", "portfolio", "projects",
+        "blog", "contact", "contact us", "main menu", "menu", "footer",
+        "privacy policy", "terms of use", "terms and conditions",
+        "all rights reserved", "copyright", "skip to content", "scroll to top",
+        "facebook", "instagram", "linkedin", "twitter", "x-twitter",
+        "subscribe", "newsletter", "subscribe newsletter", "subscribe newsletters",
+        "let's talk", "lets talk", "view project", "read more",
+    }
+    if folded in exact_noise:
+        return True
+    if _BRAND_EVIDENCE_DATE_RE.fullmatch(text):
+        return True
+    chrome_hits = sum(
+        1
+        for marker in [
+            "main menu", "all rights reserved", "privacy policy", "terms of use",
+            "subscribe", "newsletter", "facebook", "instagram", "linkedin",
+            "scroll to top", "skip to content",
+        ]
+        if marker in folded
+    )
+    evidence_present = any(
+        pattern.search(text)
+        for pattern in [
+            _SERVICE_HINT_RE,
+            _PROJECT_CONTEXT_RE,
+            _PROCESS_HINT_RE,
+            _PRICING_CONTEXT_RE,
+            _TRUST_CONTEXT_RE,
+            _GEOGRAPHY_CONTEXT_RE,
+        ]
+    )
+    if chrome_hits >= 2 and not evidence_present:
+        return True
+    if len(text.split()) <= 2 and _BRAND_EVIDENCE_JUNK_RE.match(text):
+        return True
+    return False
+
+
+def _convert_metadata_to_narrative(text: str) -> str:
+    """Convert legacy key-value structured lists into natural narrative sentences."""
+    pattern = r'(Client|Location|Sector|Services Provided|Services|Technology Stack|Technologies|Project Name|Project)\s*:\s*([^:\n|]+)(?=\s*(?:Client|Location|Sector|Services Provided|Services|Technology Stack|Technologies|Project Name|Project|$))'
+    matches = re.findall(pattern, text, re.IGNORECASE)
+    if matches:
+        fields = {}
+        for key, val in matches:
+            key_clean = key.strip().title()
+            val_clean = val.strip().strip(" |,-")
+            if val_clean:
+                fields[key_clean] = val_clean
+        
+        name = fields.get("Client") or fields.get("Project Name") or fields.get("Project")
+        loc = fields.get("Location")
+        sector = fields.get("Sector")
+        svcs = fields.get("Services Provided") or fields.get("Services")
+        tech = fields.get("Technology Stack") or fields.get("Technologies")
+        
+        parts = []
+        if name:
+            parts.append(f"the {name} project")
+        else:
+            parts.append("a project")
+            
+        if loc and loc != "-":
+            parts.append(f"in {loc}")
+            
+        if sector and sector != "-":
+            parts.append(f"within the {sector} sector")
+            
+        details = []
+        if svcs and svcs != "-":
+            details.append(f"services including {svcs}")
+        if tech and tech != "-":
+            details.append(f"technologies including {tech}")
+            
+        if details:
+            parts.append(f"featuring " + " and ".join(details))
+            
+        sentence = "This page presents " + " ".join(parts) + "."
+        return sentence[0].upper() + sentence[1:]
+    return text
+
+
+def _split_narrative_segments(text: str) -> List[str]:
+    """Split page text into compact, readable evidence segments."""
+    raw_parts = re.split(r"(?<=[.!?\u061f])\s+|[\n\r]+", _clean_page_narrative_text(str(text or "")))
+    segments: List[str] = []
+    seen = set()
+    for raw in raw_parts:
+        item = re.sub(r"\s+", " ", raw).strip(" -|")
+        if _narrative_layout_noise_line(item):
+            continue
+        # Case-insensitive standalone metadata row checking (trailing punctuation removed)
+        normalized_item = re.sub(r"[:\s\-]+$", "", item.casefold()).strip()
+        if normalized_item in {
+            "screenshots", "technology stack", "technologies used", "scope of work",
+            "services provided", "target", "b2c", "b2b", "name", "location",
+            "sector", "objective", "brief", "publish date", "real estate target",
+            "b2cservices provided", "b2bservices provided", "client", "project name", "project",
+        }:
+            continue
+        if len(item) < 12 and not any(pattern.search(item) for pattern in [_SERVICE_HINT_RE, _PROJECT_CONTEXT_RE]):
+            continue
+        key = item.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        
+        # Check for metadata key-value block to convert it to a natural narrative sentence
+        if re.search(r'(Client|Location|Sector|Services Provided|Services|Technology Stack|Technologies|Project Name|Project)\s*:\s*([^:\n|]+)', item, re.IGNORECASE):
+            item = _convert_metadata_to_narrative(item)
+            
+        segments.append(item)
+    return segments
+
+
+def _clean_page_narrative_text(text: str) -> str:
+    """Remove layout clutter and adjacent repetition while preserving page facts."""
+    cleaned = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not cleaned:
+        return ""
+
+    layout_patterns = [
+        r"\b(?:lets?\s+talk|let'?s\s+talk|scroll\s+to\s+top|view\s+project|read\s+more)\b",
+        r"(?:\u0634\u0627\u0647\u062f\s+\u0627\u0644\u0645\u0634\u0631\u0648\u0639|\u062a\u0648\u0627\u0635\u0644\s+\u0645\u0639\u0646\u0627)",
+        r"\b(?:all\s+rights\s+reserved|main\s+menu|subscribe\s+newsletter?)\b",
+        r"\b(?:completed\s+projects|happy\s+clients|countries\s+served)\s+0\+\s+0\s+\+?",
+        r"\bic_[a-z0-9_]+(?:created\s+with\s+sketch)?\b",
+    ]
+    for pattern in layout_patterns:
+        cleaned = re.sub(pattern, " ", cleaned, flags=re.IGNORECASE)
+
+    # Collapse adjacent repeated labels/sentences caused by card grids and page animations.
+    for _ in range(4):
+        previous = cleaned
+        cleaned = re.sub(
+            r"\b([A-Za-z][A-Za-z0-9&/().'-]*(?:\s+[A-Za-z][A-Za-z0-9&/().'-]*){0,5})\s+\1\b",
+            r"\1",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(r"(.{18,180}?)(?:\s+\1\b)+", r"\1", cleaned, flags=re.IGNORECASE)
+        if cleaned == previous:
+            break
+
+    # Keep category labels once when useful, but remove noisy leading runs.
+    cleaned = re.sub(
+        r"^(?:(?:websites?|mobile app|design services|seo|all)\s+){2,}",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return re.sub(r"\s+", " ", cleaned).strip(" -|")
+
+
+def _build_page_narrative_text(
+    *,
+    page_type: str,
+    title: str,
+    headings: List[str],
+    text: str,
+    services: List[str],
+    technologies: List[str],
+    projects: List[str],
+    process_steps: List[str],
+    geography: List[str],
+    project_locations: List[str],
+    pricing: List[str],
+    trust: List[str],
+) -> str:
+    """Create a dense, page-scoped narrative brief without field-dump wording."""
+    clean_title = re.sub(r"\s+", " ", str(title or "")).strip() or "Untitled page"
+    page_label = (page_type or "brand").replace("_", " ")
+    cleaned_text = _clean_page_narrative_text(text)
+    segments = _split_narrative_segments(cleaned_text)
+
+    # Rich pages get a larger budget so useful names/tools are not compressed
+    # into generic marketing prose.
+    rich = len(cleaned_text) > 900 or len(projects) + len(services) + len(technologies) >= 5
+    # Keep enough page detail for the writer to understand the page, while still
+    # avoiding a raw full-page dump in the prompt.
+    max_chars = 3800 if rich else 1800
+    selected: List[str] = []
+    current_len = 0
+    for segment in segments:
+        priority = any(
+            pattern.search(segment)
+            for pattern in [
+                _SERVICE_HINT_RE,
+                _PROJECT_CONTEXT_RE,
+                _PROCESS_HINT_RE,
+                _GEOGRAPHY_CONTEXT_RE,
+            ]
+        )
+        if current_len + len(segment) + 1 > max_chars:
+            if priority and len(selected) < 8:
+                selected.append(segment[:260].strip())
+            break
+        selected.append(segment)
+        current_len += len(segment) + 1
+        if current_len >= max_chars:
+            break
+
+    core_text = " ".join(selected).strip()
+    narrative_parts = [
+        f"This {page_label} page is titled \"{clean_title}\" and should be treated as a page-scoped brand source.",
+    ]
+    if core_text:
+        narrative_parts.append(f"The page content says: {core_text}")
+    return _clean_page_narrative_text(" ".join(part for part in narrative_parts if part))
+
+
+def _area_priority_terms_from_state(state: Dict[str, Any]) -> List[str]:
+    """Return target-area aliases used only for evidence ranking, not claims."""
+    state = state or {}
+    raw_terms: List[str] = []
+    for key in ["area", "target_area"]:
+        if str(state.get(key) or "").strip():
+            raw_terms.append(str(state.get(key)).strip())
+    for key in ["area_aliases", "target_area_aliases", "area_priority_terms"]:
+        aliases = state.get(key) or []
+        if isinstance(aliases, str):
+            aliases = [aliases]
+        raw_terms.extend(str(item).strip() for item in aliases if str(item).strip())
+
+    query_scope_info = state.get("query_scope_info") or {}
+    if isinstance(query_scope_info, dict):
+        for key in ["parent_entity", "dominant_child_entity"]:
+            if str(query_scope_info.get(key) or "").strip():
+                raw_terms.append(str(query_scope_info.get(key)).strip())
+
+    alias_groups = [
+        {
+            "saudi", "saudi arabia", "ksa", "kingdom of saudi arabia",
+            "السعودية", "المملكة العربية السعودية", "المملكة", "السعودي",
+            "riyadh", "الرياض", "jeddah", "جدة", "dammam", "الدمام", "khobar", "الخبر",
+        },
+        {"egypt", "مصر", "cairo", "القاهرة", "giza", "الجيزة", "alexandria", "الإسكندرية", "الاسكندرية"},
+        {"qatar", "قطر", "doha", "الدوحة"},
+        {"uae", "united arab emirates", "emirates", "الإمارات", "الامارات", "dubai", "دبي", "abu dhabi", "أبوظبي", "ابوظبي"},
+        {"iraq", "العراق", "baghdad", "بغداد"},
+        {"kuwait", "الكويت"},
+        {"bahrain", "البحرين"},
+        {"oman", "عمان", "muscat", "مسقط"},
+        {"gulf", "gcc", "الخليج", "خليجي", "الخليج العربي"},
+    ]
+
+    folded_raw = {re.sub(r"\s+", " ", term.casefold()).strip() for term in raw_terms if str(term).strip()}
+    expanded = set(folded_raw)
+    common_alias_groups = [
+        {
+            "saudi", "saudi arabia", "ksa", "kingdom of saudi arabia",
+            "\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629",
+            "\u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629",
+            "\u0627\u0644\u0645\u0645\u0644\u0643\u0629",
+            "\u0627\u0644\u0631\u064a\u0627\u0636", "riyadh", "\u062c\u062f\u0629", "jeddah",
+            "\u0627\u0644\u062f\u0645\u0627\u0645", "dammam", "\u0627\u0644\u062e\u0628\u0631", "khobar",
+        },
+        {"egypt", "\u0645\u0635\u0631", "cairo", "\u0627\u0644\u0642\u0627\u0647\u0631\u0629", "giza", "\u0627\u0644\u062c\u064a\u0632\u0629", "alexandria", "\u0627\u0644\u0625\u0633\u0643\u0646\u062f\u0631\u064a\u0629"},
+        {"qatar", "\u0642\u0637\u0631", "doha", "\u0627\u0644\u062f\u0648\u062d\u0629"},
+        {"uae", "united arab emirates", "emirates", "\u0627\u0644\u0625\u0645\u0627\u0631\u0627\u062a", "dubai", "\u062f\u0628\u064a", "abu dhabi", "\u0623\u0628\u0648\u0638\u0628\u064a"},
+        {"iraq", "\u0627\u0644\u0639\u0631\u0627\u0642", "baghdad", "\u0628\u063a\u062f\u0627\u062f"},
+        {"kuwait", "\u0627\u0644\u0643\u0648\u064a\u062a"},
+        {"bahrain", "\u0627\u0644\u0628\u062d\u0631\u064a\u0646"},
+        {"oman", "\u0639\u0645\u0627\u0646", "muscat", "\u0645\u0633\u0642\u0637"},
+        {"gulf", "gcc", "\u0627\u0644\u062e\u0644\u064a\u062c", "\u062e\u0644\u064a\u062c\u064a", "\u0627\u0644\u062e\u0644\u064a\u062c \u0627\u0644\u0639\u0631\u0628\u064a"},
+    ]
+    for group in common_alias_groups:
+        if any(term in folded_raw for term in group):
+            expanded.update(group)
+    for group in alias_groups:
+        if any(term in folded_raw for term in group):
+            expanded.update(group)
+
+    return [
+        term for term in dict.fromkeys(expanded)
+        if len(term.strip()) >= 3
+    ]
+
+
+def _area_relevance_score_for_text(text: str, state: Dict[str, Any]) -> int:
+    folded = re.sub(r"\s+", " ", str(text or "").casefold()).strip()
+    if not folded:
+        return 0
+    
+    # 1. Exact target area / alias
+    exact_raw = []
+    for key in ["area", "target_area"]:
+        val = str(state.get(key) or "").strip()
+        if val:
+            exact_raw.append(val)
+    exact_aliases = state.get("target_area_aliases") or state.get("area_aliases") or []
+    if isinstance(exact_aliases, str):
+        exact_aliases = [exact_aliases]
+    exact_raw.extend(str(a).strip() for a in exact_aliases if str(a).strip())
+    exact_terms = {re.sub(r"\s+", " ", t.casefold()).strip() for t in exact_raw if str(t).strip()}
+
+    # 2. Same country alias
+    alias_groups = [
+        {
+            "saudi", "saudi arabia", "ksa", "kingdom of saudi arabia",
+            "السعودية", "المملكة العربية السعودية", "المملكة", "السعودي",
+            "riyadh", "الرياض", "jeddah", "جدة", "dammam", "الدمام", "khobar", "الخبر",
+        },
+        {"egypt", "مصر", "cairo", "القاهرة", "giza", "الجيزة", "alexandria", "الإسكندرية", "الاسكندرية"},
+        {"qatar", "قطر", "doha", "الدوحة"},
+        {"uae", "united arab emirates", "emirates", "الإمارات", "الامارات", "dubai", "دبي", "abu dhabi", "أبوظبي", "ابوظبي"},
+        {"iraq", "العراق", "baghdad", "بغداد"},
+        {"kuwait", "الكويت"},
+        {"bahrain", "البحرين"},
+        {"oman", "عمان", "muscat", "مسقط"},
+        {"gulf", "gcc", "الخليج", "خليجي", "الخليج العربي"},
+    ]
+    same_country_terms = set()
+    for group in alias_groups:
+        if any(term in exact_terms for term in group):
+            same_country_terms.update(group - exact_terms)
+
+    # 3. Configured regional aliases
+    all_priority_terms = set(_area_priority_terms_from_state(state))
+    configured_regional_terms = all_priority_terms - exact_terms - same_country_terms
+
+    score = 0
+    # Level 1: exact target area
+    for term in exact_terms:
+        if term and term in folded:
+            score += 1000
+    # Level 2: same country
+    for term in same_country_terms:
+        if term and term in folded:
+            score += 500
+    # Level 3: configured regional aliases
+    for term in configured_regional_terms:
+        if term and term in folded:
+            score += 100
+
+    return score
+
+
+def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Build page-scoped narrative briefs for writer-facing brand context.
+
+    Unlike the older structured page briefs, these are natural-language,
+    terminology-preserving summaries of each crawled page. Structured values
+    remain only as routing/debug metadata; the writer should primarily read the
+    narrative text.
+    """
+    state = state or {}
+    chunks = state.get("brand_source_chunks")
+    if chunks is None:
+        try:
+            chunks = build_brand_source_chunks(state)
+        except Exception:
+            chunks = []
+    if not isinstance(chunks, list) or not chunks:
+        return []
+
+    brand_names = [str(state.get("brand_name") or "").strip()]
+    brand_names.extend(str(alias or "").strip() for alias in state.get("brand_aliases") or [])
+    brand_names = [name for name in brand_names if name]
+
+    grouped: Dict[str, Dict[str, Any]] = {}
+    for chunk in chunks:
+        if not isinstance(chunk, dict):
+            continue
+        url = _source_chunk_url(chunk)
+        if not url:
+            continue
+        heading = _chunk_heading_text(chunk)
+        body = _chunk_body_text(chunk)
+        if _narrative_layout_noise_line(f"{heading} {body}".strip()):
+            continue
+        classified = classify_page_type(url, chunk.get("page_title") or heading, [heading])
+        source_type = _source_chunk_page_type(chunk)
+        page_type = classified if classified != "other" else (source_type or "other")
+        entry = grouped.setdefault(
+            url,
+            {
+                "source_url": url,
+                "url": url,
+                "page_type": page_type,
+                "page_title": str(chunk.get("page_title") or heading or "Brand page").strip(),
+                "headings": [],
+                "texts": [],
+            },
+        )
+        if heading and not _narrative_layout_noise_line(heading) and heading not in entry["headings"]:
+            entry["headings"].append(heading)
+        if body:
+            entry["texts"].append(body)
+
+    briefs: List[Dict[str, Any]] = []
+    for url, entry in grouped.items():
+        text = "\n".join(entry.get("texts") or [])
+        if not text.strip():
+            continue
+        page_type = str(entry.get("page_type") or "other").lower()
+        headings = entry.get("headings") or []
+        services = _extract_services_from_text(text)
+        technologies = _extract_technologies_from_text(text)
+        projects = _extract_projects_from_text(text, headings, page_type, url, brand_names)
+        process_steps = _extract_process_steps_from_text(text)
+        geography = _extract_explicit_brand_geography(text, page_type)
+        project_locations = _extract_project_location_metadata(text) if page_type in {"portfolio", "projects", "case_study", "case-study"} else []
+        pricing = _clean_evidence_items(
+            [
+                sentence.strip()
+                for sentence in re.split(r"(?<=[.!?])\s+|\n", text)
+                if _has_explicit_pricing_evidence(sentence, page_type)
+            ],
+            category="pricing",
+            limit=8,
+        )
+        trust = _clean_evidence_items(
+            [
+                sentence.strip()
+                for sentence in re.split(r"(?<=[.!?])\s+|\n", text)
+                if _TRUST_CONTEXT_RE.search(sentence)
+            ],
+            category="trust",
+            limit=8,
+        )
+        narrative = _build_page_narrative_text(
+            page_type=page_type,
+            title=entry.get("page_title", ""),
+            headings=headings,
+            text=text,
+            services=services,
+            technologies=technologies,
+            projects=projects,
+            process_steps=process_steps,
+            geography=geography,
+            project_locations=project_locations,
+            pricing=pricing,
+            trust=trust,
+        )
+        if not narrative:
+            continue
+        briefs.append(
+            {
+                "source_url": url,
+                "url": url,
+                "page_type": page_type,
+                "page_title": entry.get("page_title", ""),
+                "headings": headings[:8],
+                "narrative_brief": narrative,
+                "claim_boundaries": [
+                    item
+                    for item in [
+                        "" if pricing else "No explicit pricing/packages observed on this page.",
+                        "" if geography else (
+                            "Project location may be present, but no general brand geography/local presence is observed on this page."
+                            if project_locations
+                            else "No explicit geography/local presence observed on this page."
+                        ),
+                        "" if trust else "No explicit testimonials, awards, certifications, guarantees, or response-time claims observed on this page.",
+                    ]
+                    if item
+                ],
+                # Routing/debug only. Do not render these as writer-truth lists.
+                "routing_signals": {
+                    "services": services[:12],
+                    "technologies": technologies[:12],
+                    "projects": projects[:12],
+                    "process_steps": process_steps[:10],
+                    "explicit_geography": geography[:8],
+                    "project_locations": project_locations[:8],
+                    "has_pricing": bool(pricing),
+                    "has_trust": bool(trust),
+                },
+            }
+        )
+
+    def rank(brief: Dict[str, Any]) -> tuple:
+        page_type = str(brief.get("page_type") or "")
+        signals = brief.get("routing_signals") if isinstance(brief.get("routing_signals"), dict) else {}
+        area_blob = " ".join(
+            [
+                str(brief.get("page_title") or ""),
+                str(brief.get("narrative_brief") or ""),
+                str(brief.get("source_url") or ""),
+                " ".join(str(item) for item in signals.get("project_locations") or []),
+                " ".join(str(item) for item in signals.get("explicit_geography") or []),
+            ]
+        )
+        area_score = _area_relevance_score_for_text(area_blob, state)
+        signal_count = sum(
+            len(signals.get(key) or [])
+            for key in ["services", "technologies", "projects", "process_steps", "explicit_geography", "project_locations"]
+        )
+        priority = {
+            "services": 6,
+            "product": 6,
+            "portfolio": 6,
+            "projects": 6,
+            "case_study": 6,
+            "case-study": 6,
+            "pricing": 5,
+            "home": 4,
+            "about": 3,
+            "contact": 2,
+        }.get(page_type, 1)
+        return (-area_score, -priority, -signal_count, str(brief.get("source_url") or ""))
+
+    briefs.sort(key=rank)
+    return briefs[:30]
+
+
+def select_section_page_narrative_briefs(section: dict, state: dict, max_briefs: int = 3) -> List[Dict[str, Any]]:
+    """Select narrative page briefs for a section without exposing all pages."""
+    if max_briefs <= 0:
+        return []
+    section = section or {}
+    state = state or {}
+    section_type = str(section.get("section_type") or "").casefold()
+    heading_level = str(section.get("heading_level") or "").upper()
+    is_intro_or_conclusion = section_type in {"introduction", "intro", "conclusion"} or heading_level == "INTRO"
+    if not is_intro_or_conclusion and not _section_should_receive_brand_evidence(section, state):
+        return []
+
+    briefs = state.get("brand_page_narrative_briefs")
+    if briefs is None:
+        try:
+            briefs = build_brand_page_narrative_briefs(state)
+        except Exception:
+            briefs = []
+    if not isinstance(briefs, list) or not briefs:
+        return []
+
+    purpose = " ".join([
+        str(section.get("heading_text") or ""),
+        str(section.get("content_goal") or ""),
+        str(section.get("section_intent") or ""),
+        str(section.get("taxonomy_axis") or ""),
+        " ".join(str(item) for item in section.get("subheadings", []) or []),
+    ]).casefold()
+    wants_projects = _section_heading_mentions_projects(purpose) or section_type in {"proof", "case_study", "case-study"}
+    wants_pricing = _section_heading_mentions_pricing(purpose) or section_type in {"pricing", "packages"}
+    wants_process = _section_heading_mentions_process(purpose) or section_type in {"process", "process_or_how"}
+    wants_services = section_type in {"offer", "services", "core_or_benefits"} or any(
+        term in purpose for term in ["service", "services", "solution", "solutions", "offer", "provides", "capabilities"]
+    )
+    wants_differentiation = section_type in {"features", "differentiation", "differentiators", "brand_support", "brand"}
+
+    if section_type == "faq" and not _section_visibly_references_brand(section, state):
+        return []
+
+    area_terms = _area_priority_terms_from_state(state)
+
+    def is_project_brief(brief: Dict[str, Any]) -> bool:
+        page_type = str(brief.get("page_type") or "").casefold()
+        url_path = urlparse(str(brief.get("source_url") or brief.get("url") or "")).path.casefold()
+        signals = brief.get("routing_signals") if isinstance(brief.get("routing_signals"), dict) else {}
+        return (
+            page_type in {"portfolio", "projects", "case_study", "case-study"}
+            or any(segment in url_path for segment in ["/projects", "/project", "/portfolio", "/case"])
+            or bool(signals.get("projects"))
+        )
+
+    def score(brief: Dict[str, Any]) -> int:
+        page_type = str(brief.get("page_type") or "").casefold()
+        source_path = urlparse(str(brief.get("source_url") or brief.get("url") or "")).path.casefold().rstrip("/")
+        project_listing_page = source_path.endswith(("/projects", "/portfolio", "/case-studies", "/cases"))
+        narrative = str(brief.get("narrative_brief") or "")
+        signals = brief.get("routing_signals") if isinstance(brief.get("routing_signals"), dict) else {}
+        haystack = " ".join([
+            str(brief.get("page_title") or ""),
+            narrative,
+            " ".join(brief.get("headings") or []),
+        ]).casefold()
+        tokens = {
+            token for token in re.findall(r"[\w\u0600-\u06FF]+", purpose, flags=re.UNICODE)
+            if len(token) > 2 and token not in {"the", "and", "for", "with", "how", "why", "what"}
+        }
+        value = sum(1 for token in tokens if token in haystack)
+        if wants_projects:
+            if is_project_brief(brief):
+                value += 60
+                value += 30 if not project_listing_page else -10
+            if signals.get("projects"):
+                value += 25
+            value += _area_relevance_score_for_text(haystack, state)
+        else:
+            if is_project_brief(brief):
+                value -= 40
+        if wants_services or is_intro_or_conclusion:
+            if page_type in {"services", "product", "home", "about"}:
+                value += 25
+            if signals.get("services") or signals.get("technologies"):
+                value += 18
+        if wants_process:
+            if signals.get("process_steps"):
+                value += 35
+            if page_type in {"services", "about", "home", "process"}:
+                value += 8
+        if wants_pricing:
+            if signals.get("has_pricing"):
+                value += 50
+            else:
+                return 0
+        if wants_differentiation:
+            if page_type in {"services", "about", "home"}:
+                value += 18
+            if signals.get("process_steps") or signals.get("services"):
+                value += 15
+        return value
+
+    scored: List[tuple[int, int, Dict[str, Any]]] = []
+    for idx, brief in enumerate(briefs):
+        if not isinstance(brief, dict):
+            continue
+        if is_project_brief(brief) and not (wants_projects or wants_differentiation):
+            continue
+        value = score(brief)
+        if value <= 0:
+            continue
+        compact = dict(brief)
+        compact["narrative_brief"] = _compact_brand_page_text(str(compact.get("narrative_brief") or ""), max_chars=3200)
+        scored.append((value, idx, compact))
+
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    selected: List[Dict[str, Any]] = []
+    seen_urls = set()
+    project_briefs_used = 0
+    for _, _, brief in scored:
+        url = brief.get("source_url") or brief.get("url")
+        if url in seen_urls:
+            continue
+        project_brief = is_project_brief(brief)
+        if wants_differentiation and not wants_projects and project_brief:
+            if project_briefs_used >= 1:
+                continue
+            project_briefs_used += 1
+        seen_urls.add(url)
+        selected.append(brief)
+        if len(selected) >= max_briefs:
+            break
+    return selected
+
+
 def select_section_brand_page_briefs(section: dict, state: dict, max_briefs: int = 3) -> List[Dict[str, Any]]:
     """
     Select page-level brand briefs for the current section.
@@ -4435,6 +5192,9 @@ def select_section_brand_page_briefs(section: dict, state: dict, max_briefs: int
         section_type in {"offer", "services", "core_or_benefits"}
         or any(term in purpose for term in ["service", "services", "offer", "solution", "provides"])
     )
+    allows_project_context = wants_projects or section_type in {
+        "proof", "case_study", "case-study", "differentiation", "features", "brand_support"
+    }
 
     if wants_pricing and not any(brief.get("observed_pricing") for brief in briefs if isinstance(brief, dict)):
         return []
@@ -4448,6 +5208,15 @@ def select_section_brand_page_briefs(section: dict, state: dict, max_briefs: int
         if not isinstance(brief, dict):
             continue
         page_type = str(brief.get("page_type") or "").casefold()
+        source_url = str(brief.get("source_url") or brief.get("url") or "")
+        source_path = urlparse(source_url).path.casefold()
+        project_like_page = (
+            page_type in {"portfolio", "projects", "case_study", "case-study"}
+            or any(segment in source_path for segment in ["/projects", "/project", "/portfolio", "/case"])
+            or bool(brief.get("observed_projects"))
+        )
+        if project_like_page and not allows_project_context:
+            continue
         haystack = " ".join([
             str(brief.get("page_title") or ""),
             str(brief.get("grounded_summary") or ""),
@@ -4659,6 +5428,10 @@ def select_section_raw_brand_blocks(section: dict, state: dict, max_blocks: int 
         for term in ["trust", "certified", "certification", "reviews", "testimonials", "why choose", "Ù„Ù…Ø§Ø°Ø§", "Ø«Ù‚Ø©", "Ù…Ø¹ØªÙ…Ø¯"]
     )
 
+    allows_project_context = wants_projects or section_type in {
+        "proof", "case_study", "case-study", "differentiation", "features", "brand_support"
+    }
+
     if wants_pricing and not inventory.get("pricing_available"):
         return []
 
@@ -4673,6 +5446,16 @@ def select_section_raw_brand_blocks(section: dict, state: dict, max_blocks: int 
 
     def raw_text(chunk: Dict[str, Any]) -> str:
         return re.sub(r"\s+", " ", str(chunk.get("text") or chunk.get("body_text") or "")).strip()
+
+    def is_project_like_chunk(chunk: Dict[str, Any]) -> bool:
+        page_type = chunk_page_type(chunk)
+        url_path = urlparse(chunk_url(chunk)).path.casefold()
+        text = raw_text(chunk)
+        return (
+            page_type in {"portfolio", "projects", "case_study", "case-study"}
+            or any(segment in url_path for segment in ["/projects", "/project", "/portfolio", "/case"])
+            or re.search(r"\b(?:client|project|case study)\s*:", text, re.IGNORECASE) is not None
+        )
 
     def is_explicit_pricing_text(text: str, page_type: str) -> bool:
         if page_type == "pricing":
@@ -4831,6 +5614,8 @@ def select_section_raw_brand_blocks(section: dict, state: dict, max_blocks: int 
     scored: List[tuple[int, int, Dict[str, Any]]] = []
     for idx, chunk in enumerate(chunks):
         if not isinstance(chunk, dict) or is_noisy_chunk(chunk):
+            continue
+        if is_project_like_chunk(chunk) and not allows_project_context:
             continue
         score = score_chunk(chunk)
         if score > 0:
@@ -5285,11 +6070,13 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         "section_intent": intent,
         "relevant_services": [],
         "relevant_projects": [],
+        "relevant_project_records": [],
         "relevant_project_families": [],
         "relevant_process_steps": [],
         "relevant_technologies": [],
         "relevant_geography": [],
         "relevant_ctas": [],
+        "selected_page_narratives": [],
         "useful_source_snippets": [],
         "not_supported_for_this_section": [],
         "recommended_angle": {
@@ -5304,11 +6091,15 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     if not raw_blocks:
         raw_blocks = select_section_raw_brand_blocks(section, state)
 
+    page_narratives = section.get("section_page_narrative_briefs")
+    if not isinstance(page_narratives, list) or not page_narratives:
+        page_narratives = select_section_page_narrative_briefs(section, state)
+
     page_briefs = section.get("section_brand_page_briefs")
     if not isinstance(page_briefs, list) or not page_briefs:
         page_briefs = select_section_brand_page_briefs(section, state)
 
-    if not raw_blocks and not page_briefs:
+    if not raw_blocks and not page_briefs and not page_narratives:
         brief["recommended_angle"]["focus_types"] = ["general industry criteria", "editorial advice"]
         brief["recommended_angle"]["avoid_types"] = ["unsupported brand claims", "mock statistics"]
         brief["recommended_angle"]["best_evidence_categories"] = ["market_standards"]
@@ -5319,26 +6110,44 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     brand_aliases = state.get("brand_aliases") or []
     brand_names_set = {brand_name.casefold()} | {str(alias).casefold() for alias in brand_aliases if alias}
 
+    narrative_texts = [
+        str(page.get("narrative_brief") or "")
+        for page in page_narratives or []
+        if isinstance(page, dict)
+    ]
+    # Legacy page briefs are retained only as a fallback for older callers. If
+    # narrative briefs are present, avoid letting old extracted label lists
+    # become the writer-facing truth again.
+    legacy_page_briefs = [] if narrative_texts else (page_briefs or [])
     page_summary_texts = [
         str(page.get("grounded_summary") or "")
-        for page in page_briefs or []
+        for page in legacy_page_briefs
         if isinstance(page, dict)
     ]
     page_snippets = [
         str(snippet or "")
-        for page in page_briefs or []
+        for page in legacy_page_briefs
         if isinstance(page, dict)
         for snippet in (page.get("source_snippets") or [])
     ]
-    raw_texts = [block["observed_text"] for block in raw_blocks] + page_summary_texts + page_snippets
+    raw_texts = [block["observed_text"] for block in raw_blocks] + narrative_texts + page_summary_texts + page_snippets
     raw_facts = [fact for block in raw_blocks for fact in block.get("observed_facts", [])]
     raw_headings = [block.get("heading", "") for block in raw_blocks] + [
         str(page.get("page_title") or "")
-        for page in page_briefs or []
+        for page in (page_narratives or legacy_page_briefs)
         if isinstance(page, dict)
     ]
     combined_corpus = "\n".join(raw_texts + raw_facts + raw_headings)
     combined_lower = combined_corpus.casefold()
+    brief["selected_page_narratives"] = [
+        {
+            "source_url": page.get("source_url") or page.get("url") or "",
+            "page_type": page.get("page_type") or "other",
+            "page_title": page.get("page_title") or "",
+        }
+        for page in page_narratives or []
+        if isinstance(page, dict)
+    ][:5]
 
     noisy_exact = {
         "brief", "technologies used", "s 0", "on time", "management", "delivering",
@@ -5383,6 +6192,12 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             item,
             flags=re.IGNORECASE,
         ).strip(" :-|")
+        item = re.sub(
+            r"(?:location|sector|audience|expertise|services\s+provided|technologies\s+used|technology\s+stack|publish\s+date|published\s+date|view\s+project|scope\s+of\s+work|deliverables|quality\s+assurance)\s*:?.*$",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
         if not item:
             return ""
         folded = item.casefold()
@@ -5423,6 +6238,12 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             item,
             flags=re.IGNORECASE,
         ).strip(" :-|")
+        item = re.sub(
+            r"(?:location|sector|audience|expertise|services\s+provided|technologies\s+used|technology\s+stack|publish\s+date|published\s+date|view\s+project|scope\s+of\s+work|deliverables|quality\s+assurance)\s*:?.*$",
+            "",
+            item,
+            flags=re.IGNORECASE,
+        ).strip(" :-|")
         cleaned = _sanitize_evidence_item(item, "project_explicit")
         return cleaned or ""
 
@@ -5444,7 +6265,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             ]
             if item in folded
         )
-        if footer_noise_hits >= 3:
+        if footer_noise_hits >= 3 and not explicit_project_signal:
             return True
         if heading_value.casefold() in {
             "subscribe newsletters", "subscribe newsletter", "about us", "history",
@@ -5489,7 +6310,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     brief["relevant_technologies"] = list(dict.fromkeys(brief["relevant_technologies"]))
 
     service_candidates: List[str] = []
-    for page in page_briefs or []:
+    for page in legacy_page_briefs:
         if not isinstance(page, dict):
             continue
         service_candidates.extend(page.get("observed_services") or [])
@@ -5512,7 +6333,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     add_clean(brief["relevant_services"], service_candidates, "service", 14)
 
     process_candidates: List[str] = []
-    for page in page_briefs or []:
+    for page in legacy_page_briefs:
         if isinstance(page, dict):
             process_candidates.extend(page.get("observed_process_steps") or [])
     for step in [
@@ -5525,7 +6346,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         process_candidates.append(match.group(1).strip())
     add_clean(brief["relevant_process_steps"], process_candidates, "process", 10)
 
-    for page in page_briefs or []:
+    for page in legacy_page_briefs:
         if isinstance(page, dict):
             brief["relevant_ctas"].extend(str(item) for item in (page.get("observed_ctas") or []) if str(item).strip())
     for cta in ["quote", "contact", "call", "form", "whatsapp", "phone", "email", "booking"]:
@@ -5536,7 +6357,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     brief["relevant_ctas"] = list(dict.fromkeys(brief["relevant_ctas"]))
 
     geo_candidates: List[str] = []
-    for page in page_briefs or []:
+    for page in legacy_page_briefs:
         if isinstance(page, dict):
             geo_candidates.extend(page.get("explicit_geography") or [])
     geo_patterns = [
@@ -5552,7 +6373,7 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     add_clean(brief["relevant_geography"], geo_candidates, "geography", 8)
 
     page_project_candidates: List[str] = []
-    for page in page_briefs or []:
+    for page in legacy_page_briefs:
         if isinstance(page, dict):
             page_project_candidates.extend(page.get("observed_projects") or [])
 
@@ -5572,10 +6393,203 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             or (block.get("heading") and not is_noisy_label(block.get("heading")))
         ):
             project_blocks.append(block)
+    if not project_blocks and _section_heading_mentions_projects(_section_understanding_heading_text(section)):
+        for block in raw_blocks:
+            source_path = urlparse(str(block.get("source_url") or "")).path.casefold()
+            strong_project_source = (
+                block.get("page_type") in {"portfolio", "projects", "case_study", "case-study"}
+                or any(segment in source_path for segment in ["/projects", "/project", "/portfolio", "/case"])
+            )
+            if strong_project_source and not is_noisy_project_block(block):
+                project_blocks.append(block)
     project_text = "\n".join(
         "\n".join([block.get("heading", ""), block.get("observed_text", ""), "\n".join(block.get("observed_facts", []))])
         for block in project_blocks
     )
+
+    project_field_labels = [
+        "Project Name", "Client Name", "Client", "Name", "Case Study",
+        "Location", "Sector", "Audience", "Expertise", "Services Provided",
+        "Scope of Work", "Deliverables", "Technology Stack", "Technologies Used",
+        "Publish Date", "Published Date", "Objective", "Brief", "Quality Assurance",
+        "Creation", "Created", "Project",
+    ]
+    label_regex = "|".join(re.escape(label).replace(r"\ ", r"\s+") for label in project_field_labels)
+
+    def extract_project_field(text: str, labels: List[str]) -> str:
+        label_part = "|".join(re.escape(label).replace(r"\ ", r"\s+") for label in labels)
+        pattern = rf"(?:^|[\s\n]|(?<=[a-z0-9]))(?:{label_part})\s*:?\s*(.+?)(?=(?:{label_regex})\s*:?\s*|$)"
+        match = re.search(pattern, text or "", re.IGNORECASE | re.DOTALL)
+        if not match:
+            return ""
+        value = re.sub(r"\s+", " ", match.group(1)).strip(" .:-|")
+        return value[:180].strip()
+
+    def split_project_field_values(value: str, *, category: str = "snippet") -> List[str]:
+        values: List[str] = []
+        for part in re.split(r"\s*(?:,|;|\||/| and |&|\+)\s*", value or "", flags=re.IGNORECASE):
+            item = re.sub(r"\s+", " ", part).strip(" .:-|")
+            if not item:
+                continue
+            cleaned = _sanitize_evidence_item(item, category=category, allow_promotional=True)
+            if cleaned:
+                values.append(cleaned)
+        return list(dict.fromkeys(values))
+
+    def strip_known_location_suffix(project_name: str, locations: List[str]) -> str:
+        cleaned = re.sub(r"\s+", " ", str(project_name or "")).strip(" .:-|")
+        for location in locations:
+            for part in re.split(r"\s*,\s*", str(location or "")):
+                part = re.sub(r"\s+", " ", part).strip(" .:-|")
+                if not part or len(part) < 3:
+                    continue
+                cleaned = re.sub(rf"\s+{re.escape(part)}$", "", cleaned, flags=re.IGNORECASE).strip(" .:-|")
+        return cleaned
+
+    project_records_by_key: Dict[str, Dict[str, Any]] = {}
+
+    def merge_project_record(record: Dict[str, Any]) -> None:
+        name = normalize_project_candidate(record.get("name", ""))
+        if not name:
+            return
+        key = name.casefold()
+        existing = project_records_by_key.setdefault(
+            key,
+            {
+                "name": name,
+                "variants": [],
+                "location": "",
+                "sector": "",
+                "services": [],
+                "technologies": [],
+                "source_url": record.get("source_url", ""),
+                "source_heading": record.get("source_heading", ""),
+            },
+        )
+        for field in ["location", "sector", "source_url", "source_heading"]:
+            value = str(record.get(field) or "").strip()
+            if value and not existing.get(field):
+                existing[field] = value
+        for field in ["services", "technologies", "variants"]:
+            merged = list(existing.get(field) or [])
+            for value in record.get(field) or []:
+                text = re.sub(r"\s+", " ", str(value or "")).strip()
+                if text and text.casefold() not in {item.casefold() for item in merged}:
+                    merged.append(text)
+            existing[field] = merged[:8]
+
+    def is_project_narrative_page(page: Dict[str, Any]) -> bool:
+        page_type = str(page.get("page_type") or "").casefold()
+        source_path = urlparse(str(page.get("source_url") or page.get("url") or "")).path.casefold()
+        signals = page.get("routing_signals") if isinstance(page.get("routing_signals"), dict) else {}
+        return (
+            page_type in {"portfolio", "projects", "case_study", "case-study"}
+            or any(segment in source_path for segment in ["/project", "/portfolio", "/case"])
+            or bool(signals.get("projects"))
+        )
+
+    def project_name_from_narrative_page(page: Dict[str, Any]) -> str:
+        title = re.sub(r"\s*[-|]\s*Creative Minds.*$", "", str(page.get("page_title") or ""), flags=re.IGNORECASE)
+        title = re.sub(r"\s*[-|]\s*.*Company.*$", "", title, flags=re.IGNORECASE).strip(" .:-|")
+        for brand in brand_names_set:
+            if brand:
+                title = re.sub(rf"\s*[-|]\s*{re.escape(brand)}.*$", "", title, flags=re.IGNORECASE).strip(" .:-|")
+        source_path = urlparse(str(page.get("source_url") or page.get("url") or "")).path.casefold()
+        listing_page = source_path.rstrip("/").endswith(("/projects", "/portfolio", "/case-studies", "/cases"))
+        if title and not listing_page and title.casefold() not in {"projects", "portfolio", "our work", "case studies"}:
+            cleaned_title = normalize_project_candidate(title)
+            if cleaned_title and not is_noisy_label(cleaned_title):
+                return cleaned_title
+        signals = page.get("routing_signals") if isinstance(page.get("routing_signals"), dict) else {}
+        for candidate in signals.get("projects") or []:
+            cleaned = normalize_project_candidate(candidate)
+            if cleaned and not is_noisy_label(cleaned):
+                return cleaned
+        return ""
+
+    # Page Narrative Briefs are the first writer-facing truth. Build project
+    # records from selected project pages before falling back to raw labels.
+    for page in page_narratives or []:
+        if not isinstance(page, dict) or not is_project_narrative_page(page):
+            continue
+        narrative_blob = "\n".join([
+            str(page.get("page_title") or ""),
+            " ".join(str(item) for item in page.get("headings") or []),
+            str(page.get("narrative_brief") or ""),
+        ])
+        record_name = project_name_from_narrative_page(page)
+        if not record_name:
+            continue
+        location_value = extract_project_field(narrative_blob, ["Location"])
+        sector_value = extract_project_field(narrative_blob, ["Sector"])
+        services_value = (
+            extract_project_field(narrative_blob, ["Services Provided"])
+            or extract_project_field(narrative_blob, ["Scope of Work", "Expertise", "Deliverables"])
+        )
+        tech_value = extract_project_field(narrative_blob, ["Technology Stack", "Technologies Used"])
+        signals = page.get("routing_signals") if isinstance(page.get("routing_signals"), dict) else {}
+        services = split_project_field_values(services_value, category="service")
+        for service in signals.get("services") or []:
+            cleaned_service = _sanitize_evidence_item(service, category="service", allow_promotional=True)
+            if cleaned_service and cleaned_service.casefold() not in {item.casefold() for item in services}:
+                services.append(cleaned_service)
+        technologies = split_project_field_values(tech_value, category="capability")
+        for tech in signals.get("technologies") or []:
+            cleaned_tech = _sanitize_evidence_item(tech, category="capability", allow_promotional=True)
+            if cleaned_tech and cleaned_tech.casefold() not in {item.casefold() for item in technologies}:
+                technologies.append(cleaned_tech)
+        merge_project_record(
+            {
+                "name": record_name,
+                "variants": [clean_project_variant(page.get("page_title", ""))],
+                "location": location_value,
+                "sector": sector_value,
+                "services": services,
+                "technologies": technologies,
+                "source_url": page.get("source_url") or page.get("url") or "",
+                "source_heading": page.get("page_title", ""),
+            }
+        )
+
+    for block in project_blocks:
+        block_blob = "\n".join([
+            str(block.get("heading") or ""),
+            str(block.get("observed_text") or ""),
+            "\n".join(str(fact) for fact in block.get("observed_facts", []) or []),
+        ])
+        heading_value = str(block.get("heading") or "").strip()
+        name_value = (
+            extract_project_field(block_blob, ["Project Name", "Client Name", "Client", "Name", "Case Study"])
+            or extract_project_field(block_blob, ["Project"])
+        )
+        if not name_value and heading_value and not is_noisy_label(heading_value):
+            name_value = heading_value
+        location_value = extract_project_field(block_blob, ["Location"])
+        sector_value = extract_project_field(block_blob, ["Sector"])
+        services_value = (
+            extract_project_field(block_blob, ["Services Provided"])
+            or extract_project_field(block_blob, ["Scope of Work", "Expertise", "Deliverables"])
+        )
+        tech_value = extract_project_field(block_blob, ["Technology Stack", "Technologies Used"])
+        tech_values = split_project_field_values(tech_value, category="capability")
+        for tech in tech_keywords:
+            if re.search(r"\b" + re.escape(tech) + r"\b", block_blob.casefold()):
+                tech_values.append(tech_capitalization.get(tech, tech.title()))
+        record_name = normalize_project_candidate(name_value)
+        if record_name:
+            merge_project_record(
+                {
+                    "name": record_name,
+                    "variants": [clean_project_variant(heading_value)] if heading_value else [],
+                    "location": location_value,
+                    "sector": sector_value,
+                    "services": split_project_field_values(services_value, category="service"),
+                    "technologies": list(dict.fromkeys(tech_values)),
+                    "source_url": block.get("source_url", ""),
+                    "source_heading": heading_value,
+                }
+            )
+
     project_candidates: List[str] = list(page_project_candidates)
     for pattern in [
         r"\b(?:name|client|project|case study)\s*[:\-]\s*([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)(?=(?:[.;\n]\s*(?:name|client|project|case study|sector|audience|expertise|location)\s*[:\-])|[.;\n]|$)",
@@ -5605,6 +6619,35 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             heading_value = str(block.get("heading") or "").strip()
             if heading_value and heading_value.casefold() not in {"projects", "portfolio", "our work"}:
                 project_candidates.append(heading_value)
+    for block in raw_blocks:
+        source_path = urlparse(str(block.get("source_url") or "")).path.casefold()
+        project_like_source = (
+            block.get("page_type") in {"portfolio", "projects", "case_study", "case-study"}
+            or any(segment in source_path for segment in ["/projects", "/project", "/portfolio", "/case"])
+        )
+        if not project_like_source:
+            continue
+        blob = "\n".join([
+            str(block.get("heading") or ""),
+            str(block.get("observed_text") or ""),
+            "\n".join(str(fact) for fact in block.get("observed_facts", []) or []),
+        ])
+        folded_blob = blob.casefold()
+        if (
+            sum(1 for marker in ["subscribe", "facebook", "instagram", "main menu", "all rights reserved", "scroll to top"] if marker in folded_blob) >= 3
+            and not re.search(r"\b(?:client|project|case study|project name|name)\s*:?", blob, re.IGNORECASE)
+        ):
+            continue
+        for match in re.finditer(
+            r"\b(?:client|project\s+name|name|case\s+study)\s*:?\s*([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)(?=(?:location|sector|audience|expertise|services provided|scope of work|technology stack|publish date|objective|brief|quality assurance)\s*:?\s*|[.;\n]|$)",
+            blob,
+            re.IGNORECASE,
+        ):
+            project_candidates.append(match.group(1).strip())
+        heading_value = str(block.get("heading") or "").strip()
+        if heading_value and not is_noisy_label(heading_value) and heading_value.casefold() not in {"projects", "portfolio", "our work"}:
+            project_candidates.append(heading_value)
+    project_candidates.extend(record["name"] for record in project_records_by_key.values())
 
     seen_projects = set()
     expanded_project_candidates: List[str] = []
@@ -5647,6 +6690,89 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         if any(noise in folded for noise in ["terms of", "privacy policy", "contact us", "about us", "home page"]):
             continue
         cleaned = _sanitize_evidence_item(item, "project_explicit")
+        if cleaned:
+            cleaned = strip_known_location_suffix(
+                cleaned,
+                [record.get("location", "") for record in project_records_by_key.values()],
+            )
+            cleaned = _sanitize_evidence_item(cleaned, "project_explicit")
+        if cleaned and project_records_by_key:
+            cleaned_folded_for_meta = cleaned.casefold()
+            known_project_names = {
+                str(record.get("name") or "").casefold()
+                for record in project_records_by_key.values()
+                if str(record.get("name") or "").strip()
+            }
+            metadata_values: List[str] = []
+            for record in project_records_by_key.values():
+                metadata_values.extend([
+                    str(record.get("location") or ""),
+                    str(record.get("sector") or ""),
+                ])
+                metadata_values.extend(str(item or "") for item in record.get("services") or [])
+                metadata_values.extend(str(item or "") for item in record.get("technologies") or [])
+            metadata_values = [
+                re.sub(r"\s+", " ", value).strip().casefold()
+                for value in metadata_values
+                if len(re.sub(r"\s+", " ", value).strip()) >= 3
+            ]
+            if cleaned_folded_for_meta not in known_project_names and any(
+                cleaned_folded_for_meta == value
+                or cleaned_folded_for_meta in value
+                for value in metadata_values
+            ):
+                continue
+        if cleaned and project_records_by_key:
+            cleaned_tokens = {
+                token for token in re.findall(r"[\w\u0600-\u06FF]+", cleaned.casefold(), flags=re.UNICODE)
+                if len(token) > 2
+            }
+            known_names = [
+                str(record.get("name") or "")
+                for record in project_records_by_key.values()
+                if str(record.get("name") or "").strip()
+            ]
+            known_names.extend(
+                str(variant)
+                for record in project_records_by_key.values()
+                for variant in (record.get("variants") or [])
+                if str(variant or "").strip()
+            )
+            is_record_fragment = False
+            for known in known_names:
+                known_tokens = {
+                    token for token in re.findall(r"[\w\u0600-\u06FF]+", known.casefold(), flags=re.UNICODE)
+                    if len(token) > 2
+                }
+                if not known_tokens or not cleaned_tokens:
+                    continue
+                overlap = cleaned_tokens & known_tokens
+                cleaned_folded = cleaned.casefold()
+                known_folded = known.casefold()
+                suffix_extra = ""
+                if cleaned_folded != known_folded and known_folded.startswith(cleaned_folded + " "):
+                    suffix_extra = known_folded[len(cleaned_folded):].strip()
+                allowed_project_suffix = suffix_extra in {
+                    "integration", "implementation", "development", "migration", "redesign"
+                }
+                if (
+                    cleaned_folded != known_folded
+                    and cleaned_folded in known_folded
+                    and len(cleaned_tokens) <= len(known_tokens)
+                    and not allowed_project_suffix
+                ):
+                    is_record_fragment = True
+                    break
+                if (
+                    cleaned_folded != known_folded
+                    and len(overlap) >= 2
+                    and len(overlap) / max(len(cleaned_tokens), 1) >= 0.67
+                    and not allowed_project_suffix
+                ):
+                    is_record_fragment = True
+                    break
+            if is_record_fragment:
+                continue
         if not cleaned or cleaned.casefold() in seen_projects:
             if cleaned and variant:
                 project_family_variants.setdefault(cleaned.casefold(), set()).add(variant)
@@ -5698,22 +6824,28 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
             filtered_projects.append(project)
         brief["relevant_projects"] = filtered_projects
 
-    area_terms = [
-        str(state.get("area") or "").strip(),
-        str(state.get("target_area") or "").strip(),
-        str(state.get("primary_keyword") or "").strip(),
-    ]
+    area_terms = _area_priority_terms_from_state(state)
+    query_scope_info = state.get("query_scope_info") or {}
+    if isinstance(query_scope_info, dict):
+        for key in ["parent_entity", "dominant_child_entity"]:
+            if str(query_scope_info.get(key) or "").strip():
+                area_terms.append(str(query_scope_info.get(key)).strip())
+        area_terms.extend(str(item).strip() for item in query_scope_info.get("candidate_child_entities", []) or [] if str(item).strip())
     area_terms.extend(str(item).strip() for item in brief.get("relevant_geography", []) if str(item).strip())
-    area_terms = [term for term in area_terms if term]
+    area_terms = [term for term in dict.fromkeys(area_terms) if term]
 
     def project_country_relevance_score(project: str) -> int:
         folded_project = _fulfillment_text(project)
         score = 0
+        record = project_records_by_key.get(str(project or "").casefold(), {})
+        record_location = _fulfillment_text(record.get("location", ""))
         for term in area_terms:
             folded_term = _fulfillment_text(term)
             if not folded_term or len(folded_term) < 3:
                 continue
             if folded_term in folded_project:
+                score += 120
+            if record_location and folded_term in record_location:
                 score += 80
         for block in project_blocks:
             block_blob = "\n".join([
@@ -5731,10 +6863,110 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         return score
 
     original_project_order = {project.casefold(): idx for idx, project in enumerate(brief["relevant_projects"])}
+    def direct_area_rank(project: str) -> int:
+        project_folded = str(project or "").casefold()
+        record = project_records_by_key.get(project_folded, {})
+        if not record and 'fallback_records_by_key' in locals():
+            record = fallback_records_by_key.get(project_folded, {})
+        location_folded = str(record.get("location") or "").casefold()
+
+        # 1. Exact target area / alias
+        exact_raw = []
+        for key in ["area", "target_area"]:
+            val = str(state.get(key) or "").strip()
+            if val:
+                exact_raw.append(val)
+        exact_aliases = state.get("target_area_aliases") or state.get("area_aliases") or []
+        if isinstance(exact_aliases, str):
+            exact_aliases = [exact_aliases]
+        exact_raw.extend(str(a).strip() for a in exact_aliases if str(a).strip())
+        exact_terms = {re.sub(r"\s+", " ", t.casefold()).strip() for t in exact_raw if str(t).strip()}
+
+        # 2. Same country alias
+        alias_groups = [
+            {
+                "saudi", "saudi arabia", "ksa", "kingdom of saudi arabia",
+                "السعودية", "المملكة العربية السعودية", "المملكة", "السعودي",
+                "riyadh", "الرياض", "jeddah", "جدة", "dammam", "الدمام", "khobar", "الخبر",
+            },
+            {"egypt", "مصر", "cairo", "القاهرة", "giza", "الجيزة", "alexandria", "الإسكندرية", "الاسكندرية"},
+            {"qatar", "قطر", "doha", "الدوحة"},
+            {"uae", "united arab emirates", "emirates", "الإمارات", "الامارات", "dubai", "دبي", "abu dhabi", "أبوظبي", "ابوظبي"},
+            {"iraq", "العراق", "baghdad", "بغداد"},
+            {"kuwait", "الكويت"},
+            {"bahrain", "البحرين"},
+            {"oman", "عمان", "muscat", "مسقط"},
+            {"gulf", "gcc", "الخليج", "خليجي", "الخليج العربي"},
+        ]
+        same_country_terms = set()
+        for group in alias_groups:
+            if any(term in exact_terms for term in group):
+                same_country_terms.update(group - exact_terms)
+
+        # 3. Configured regional aliases
+        all_priority_terms = set(_area_priority_terms_from_state(state))
+        configured_regional_terms = all_priority_terms - exact_terms - same_country_terms
+
+        rank = 0
+        haystack = f"{project_folded} {location_folded}"
+        # Level 1: exact target area
+        for term in exact_terms:
+            if term and term in haystack:
+                rank += 1000
+        # Level 2: same country
+        for term in same_country_terms:
+            if term and term in haystack:
+                rank += 500
+        # Level 3: configured regional aliases
+        for term in configured_regional_terms:
+            if term and term in haystack:
+                rank += 100
+        return rank
+
     brief["relevant_projects"] = sorted(
         brief["relevant_projects"],
-        key=lambda project: (-project_country_relevance_score(project), original_project_order.get(project.casefold(), 999)),
+        key=lambda project: (
+            -direct_area_rank(project),
+            -project_country_relevance_score(project),
+            original_project_order.get(project.casefold(), 999),
+        ),
     )[:8]
+    priority_terms = _area_priority_terms_from_state(state)
+    if priority_terms:
+        priority_projects: List[str] = []
+        other_projects: List[str] = []
+        for project in brief["relevant_projects"]:
+            record = project_records_by_key.get(project.casefold(), {})
+            blob = " ".join([
+                str(project or ""),
+                str(record.get("location") or ""),
+                str(record.get("sector") or ""),
+            ]).casefold()
+            if any(term in blob for term in priority_terms):
+                priority_projects.append(project)
+            else:
+                other_projects.append(project)
+        brief["relevant_projects"] = priority_projects + other_projects
+    if not brief["relevant_projects"] and project_records_by_key:
+        brief["relevant_projects"] = sorted(
+            [record["name"] for record in project_records_by_key.values() if str(record.get("name") or "").strip()],
+            key=lambda project: (
+                -direct_area_rank(project),
+                -project_country_relevance_score(project),
+            ),
+        )[:8]
+    brief["relevant_project_records"] = []
+    for project in brief["relevant_projects"]:
+        key = project.casefold()
+        record = dict(project_records_by_key.get(key) or {"name": project})
+        record["name"] = project
+        if project_family_variants.get(key):
+            record["variants"] = [
+                variant for variant in sorted(project_family_variants.get(key, set()))
+                if variant and variant.casefold() != key
+            ][:6]
+        record["target_area_relevance"] = "explicit" if project_country_relevance_score(project) > 0 else "general"
+        brief["relevant_project_records"].append(record)
     brief["relevant_project_families"] = [
         {
             "name": project,
@@ -5747,8 +6979,111 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         for project in brief["relevant_projects"]
     ]
 
+    if not brief["relevant_projects"] and _section_heading_mentions_projects(_section_understanding_heading_text(section)):
+        fallback_records_by_key: Dict[str, Dict[str, Any]] = {}
+        footer_like_headings = {
+            "subscribe newsletters", "subscribe newsletter", "main menu",
+            "footer", "contact us", "about us",
+        }
+        for block in raw_blocks:
+            source_path = urlparse(str(block.get("source_url") or "")).path.casefold()
+            project_like_source = (
+                block.get("page_type") in {"portfolio", "projects", "case_study", "case-study"}
+                or any(segment in source_path for segment in ["/projects", "/project", "/portfolio", "/case"])
+            )
+            if not project_like_source:
+                continue
+            blob = "\n".join([
+                str(block.get("heading") or ""),
+                str(block.get("observed_text") or ""),
+                "\n".join(str(fact) for fact in block.get("observed_facts", []) or []),
+            ])
+            explicit_project_signal = bool(
+                re.search(r"\b(?:client|project|project\s+name|client\s+name|case\s+study|name)\s*:?", blob, re.IGNORECASE)
+            )
+            folded_blob = blob.casefold()
+            footer_noise_hits = sum(
+                1
+                for marker in ["subscribe", "facebook", "instagram", "main menu", "all rights reserved", "scroll to top"]
+                if marker in folded_blob
+            )
+            heading_value = str(block.get("heading") or "").strip()
+            if not explicit_project_signal and (
+                footer_noise_hits >= 3 or heading_value.casefold() in footer_like_headings
+            ):
+                continue
+
+            candidates: List[str] = []
+            for match in re.finditer(
+                r"\b(?:client|project\s+name|client\s+name|project|case\s+study|name)\s*:?\s*"
+                r"([A-Z][A-Za-z0-9&.'\-\s]{2,80}?)"
+                r"(?=(?:location|sector|audience|expertise|services provided|scope of work|"
+                r"technology stack|technologies used|publish date|objective|brief|quality assurance)\s*:?\s*|[.;\n]|$)",
+                blob,
+                re.IGNORECASE,
+            ):
+                candidates.append(match.group(1))
+            if heading_value and heading_value.casefold() not in {"projects", "portfolio", "our work"}:
+                candidates.append(heading_value)
+
+            location_value = extract_project_field(blob, ["Location"])
+            sector_value = extract_project_field(blob, ["Sector"])
+            services_value = (
+                extract_project_field(blob, ["Services Provided"])
+                or extract_project_field(blob, ["Scope of Work", "Expertise", "Deliverables"])
+            )
+            tech_value = extract_project_field(blob, ["Technology Stack", "Technologies Used"])
+            for candidate in candidates:
+                cleaned = normalize_project_candidate(candidate)
+                cleaned = _sanitize_evidence_item(cleaned, "project_explicit")
+                if not cleaned or is_noisy_label(cleaned):
+                    continue
+                key = cleaned.casefold()
+                if key in fallback_records_by_key:
+                    continue
+                fallback_records_by_key[key] = {
+                    "name": cleaned,
+                    "variants": [],
+                    "location": location_value,
+                    "sector": sector_value,
+                    "services": split_project_field_values(services_value, category="service"),
+                    "technologies": split_project_field_values(tech_value, category="capability"),
+                    "source_url": block.get("source_url", ""),
+                    "source_heading": heading_value,
+                }
+
+        if fallback_records_by_key:
+            fallback_projects = list(record["name"] for record in fallback_records_by_key.values())
+            fallback_projects = sorted(
+                fallback_projects,
+                key=lambda project: (
+                    -direct_area_rank(project),
+                    -project_country_relevance_score(project),
+                ),
+            )[:8]
+            brief["relevant_projects"] = fallback_projects
+            brief["relevant_project_records"] = []
+            for project in fallback_projects:
+                record = dict(fallback_records_by_key.get(project.casefold()) or {"name": project})
+                record["target_area_relevance"] = "explicit" if project_country_relevance_score(project) > 0 else "general"
+                brief["relevant_project_records"].append(record)
+            brief["relevant_project_families"] = [
+                {
+                    "name": project,
+                    "variants": [],
+                    "target_area_relevance": "explicit" if project_country_relevance_score(project) > 0 else "general",
+                }
+                for project in fallback_projects
+            ]
+
     snippets: List[str] = []
-    for page in page_briefs or []:
+    for page in page_narratives or []:
+        if not isinstance(page, dict):
+            continue
+        narrative = str(page.get("narrative_brief") or "").strip()
+        if narrative:
+            snippets.append(_compact_brand_page_text(narrative, max_chars=500))
+    for page in legacy_page_briefs:
         if not isinstance(page, dict):
             continue
         summary = str(page.get("grounded_summary") or "").strip()
@@ -5770,7 +7105,17 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
     brief["useful_source_snippets"] = list(dict.fromkeys(snippets))[:4]
 
     support_flags = _section_understanding_support_flags(raw_blocks)
-    if page_briefs:
+    if page_narratives:
+        support_flags = dict(support_flags)
+        for page in page_narratives:
+            if not isinstance(page, dict):
+                continue
+            signals = page.get("routing_signals") if isinstance(page.get("routing_signals"), dict) else {}
+            support_flags["projects"] = support_flags.get("projects") or bool(signals.get("projects"))
+            support_flags["pricing"] = support_flags.get("pricing") or bool(signals.get("has_pricing"))
+            support_flags["process"] = support_flags.get("process") or bool(signals.get("process_steps"))
+            support_flags["geography"] = support_flags.get("geography") or bool(signals.get("explicit_geography"))
+    elif page_briefs:
         support_flags = dict(support_flags)
         support_flags["projects"] = support_flags.get("projects") or any(
             bool(page.get("observed_projects")) for page in page_briefs if isinstance(page, dict)

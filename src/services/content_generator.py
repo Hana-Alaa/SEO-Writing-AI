@@ -1201,6 +1201,8 @@ class SectionWriter:
         writing_blueprint: str = "",
         market_angle: str = "",
         section_brand_page_briefs: List[Dict[str, Any]] = None,
+        section_page_narrative_briefs: List[Dict[str, Any]] = None,
+        brand_page_knowledge_pack_context: str = "",
         section_raw_brand_blocks: List[Dict[str, Any]] = None,
         section_brand_understanding: Dict[str, Any] = None
     ) -> Dict[str, Any]:
@@ -1244,6 +1246,8 @@ class SectionWriter:
             "cta_position": section.get("cta_position", "none"),
             "cta_type": cta_type, 
             "cta_allowed": section.get("cta_eligible", section.get("cta_allowed", False)),
+            "brand_usage_policy": section.get("brand_usage_policy", "neutral_market"),
+            "commercial_section_role": section.get("commercial_section_role", ""),
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
             "localized_angle": section.get("localized_angle", ""),
@@ -1388,6 +1392,8 @@ class SectionWriter:
             writing_blueprint=writing_blueprint or "",
             market_angle=market_angle or "",
             section_brand_page_briefs=section_brand_page_briefs or [],
+            section_page_narrative_briefs=section_page_narrative_briefs or [],
+            brand_page_knowledge_pack_context=brand_page_knowledge_pack_context or "",
             section_raw_brand_blocks=section_raw_brand_blocks or [],
             section_brand_understanding=section_brand_understanding,
         )

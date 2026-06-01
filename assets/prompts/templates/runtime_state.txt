@@ -3,106 +3,52 @@
 ## 1. LIVE COUNTS & METADATA 
 - **Current Section Index**: {{ section_index | default(0) }} of {{ total_sections | default(1) }}
 - **Section Type / Intent**: Type: "{{ (section | default({})).get('section_type', 'core') }}" | Intent: "{{ (section | default({})).get('section_intent', 'Informational') }}"
+- **Commercial Section Role**: "{{ (section | default({})).get('commercial_section_role', 'informational') }}"
+- **Brand Usage Policy For This Section**: "{{ (section | default({})).get('brand_usage_policy', 'neutral_market') }}"
 - **Primary Keyword**: "{{ primary_keyword }}"
 - **Brand Identity**: Brand Name: "{{ brand_name }}" | Brand URL: "{{ brand_url }}" | Context: "{{ brand_context | default('') }}"
 - **Mandatory Section Facts**: {{ ((section | default({})).get('mandatory_facts', [])) | tojson }}
 - **External Validation Sources**: {{ (external_sources | default([])) | tojson }}
 - **CTA Eligibility**: {{ (section | default({})).get('cta_eligible', false) | lower }} | Type: {{ cta_type | default('none') }} | Total CTAs placed so far: {{ ctas_placed | default(0) }}
 
-## 1b. BRAND EVIDENCE SPECIFICS
-{% set section_brand_evidence = section_source_text | default('') %}
-{% set brand_page_briefs = section_brand_page_briefs | default([]) %}
-{% set raw_brand_blocks = section_raw_brand_blocks | default([]) %}
-
-[BRAND PAGE BRIEFS - PRIMARY BRAND CONTEXT]
-{% if brand_page_briefs %}
-{% for brief in brand_page_briefs %}
-Source URL: {{ brief.get('source_url') or brief.get('url') or '' }}
-Page type: {{ brief.get('page_type', 'other') }}
-Page title: {{ brief.get('page_title', '') }}
-Grounded summary:
-{{ brief.get('grounded_summary', '') }}
-{% if brief.get('observed_services') %}
-Observed services/capabilities: {{ brief.get('observed_services') | join(', ') }}
-{% endif %}
-{% if brief.get('observed_projects') %}
-Observed projects/clients: {{ brief.get('observed_projects') | join(', ') }}
-{% endif %}
-{% if brief.get('observed_technologies') %}
-Observed terminology/technology: {{ brief.get('observed_technologies') | join(', ') }}
-{% endif %}
-{% if brief.get('observed_process_steps') %}
-Observed process/workflow: {{ brief.get('observed_process_steps') | join(', ') }}
-{% endif %}
-{% if brief.get('explicit_geography') %}
-Explicit geography: {{ brief.get('explicit_geography') | join(', ') }}
-{% endif %}
-{% if brief.get('observed_pricing') %}
-Observed pricing/package evidence: {{ brief.get('observed_pricing') | join(', ') }}
-{% endif %}
-{% if brief.get('claim_boundaries') %}
-Claim boundaries:
-{% for boundary in brief.get('claim_boundaries') %}
-- {{ boundary }}
-{% endfor %}
-{% endif %}
-
-{% endfor %}
+## 1b. BRAND FACTUAL SOURCE
+{% if brand_page_knowledge_pack_context %}
+{{ brand_page_knowledge_pack_context }}
 {% else %}
-No brand page briefs selected.
-{% endif %}
-
-[RAW BRAND SOURCE BLOCKS]
-{% if raw_brand_blocks %}
-{% for block in raw_brand_blocks %}
-Source URL: {{ block.get('source_url') or block.get('url') or '' }}
-Page type: {{ block.get('page_type', 'other') }}
-Heading: {{ block.get('heading', '') }}
-Observed text:
-{{ block.get('observed_text') or block.get('text') or '' }}
-Observed facts:
-{% if block.get('observed_facts') %}
-{% for fact in block.get('observed_facts') %}
-- {{ fact }}
-{% endfor %}
-{% else %}
-- No structured facts extracted from this block.
-{% endif %}
-
-{% endfor %}
-{% else %}
-No raw brand source blocks selected.
-Do not add brand proof claims.
-{% endif %}
-
-[SECTION BRAND UNDERSTANDING]
-{{ section_brand_understanding | default({}) | tojson }}
-
-{% if section_brand_evidence %}
-{% if '[SECTION-SPECIFIC BRAND EVIDENCE]' in section_brand_evidence %}
-{{ section_brand_evidence }}
-{% else %}
-[SECTION-SPECIFIC BRAND EVIDENCE]
-{{ section_brand_evidence }}
-{% endif %}
-{% else %}
-[SECTION-SPECIFIC BRAND EVIDENCE]
-No section-specific brand evidence selected.
-Do not add brand proof claims.
+[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]
+No full page-by-page brand knowledge pack is available for this run.
 {% endif %}
 
 Rules for writer:
-- Brand-owned sections must answer the heading using the brand page briefs first, then raw observed text and the structured understanding block.
-- Treat `brand_page_briefs` as grounded compression of source pages. Preserve exact terminology and named examples from it.
-- Do not use brand evidence cards, generic headings, menu labels, or slogans as claim truth.
-- If a project section has `relevant_projects`, mention the observed project/client names naturally.
-- If a project section has no `relevant_projects`, do not invent projects or case studies.
-- If raw blocks are empty, do not create brand proof claims.
-- If a section mentions the brand, use observable facts from these blocks.
-- Prefer descriptive operational language.
+- The brand page knowledge pack above is the ONLY writer-facing truth for brand facts.
+- The pack is available as background context, not as an instruction to mention the brand in every section.
+- Commercial roles decide the job of the section:
+  - `informational`: teach the reader without brand promotion.
+  - `service_explanation`: explain the service/product clearly before any brand tie-in.
+  - `features_included`: show what is included or what the buyer gets; do not turn it into another service catalog.
+  - `brand_differentiator`: explain observed brand-specific value only.
+  - `proof`: use projects, case studies, examples, or proof details; avoid repeating the same project elsewhere.
+  - `comparison`: compare real options or decision paths; if the options do not differ, use bullets instead of a fake table.
+  - `process`: use numbered steps.
+  - `faq`: answer objections directly.
+  - `cta`: close with a direct action.
+- Follow `Brand Usage Policy For This Section` strictly:
+  - `neutral_market`: answer the section as buyer education or market guidance. Do not mention the brand, projects, tools, or brand capabilities unless the visible heading explicitly asks about the brand.
+  - `brand_light`: explain the service/product in plain language first. Mention the brand at most once and only to connect a broad observed capability to the reader's need. Do not use project examples unless the heading asks for proof.
+  - `brand_owned`: this section may use observed brand facts from the pack, but every claim must stay page-backed and specific.
+  - `soft_intro_brand`: use simple buyer language; mention the brand once in the solution paragraph and avoid technical catalogs.
+  - `brand_cta`: close commercially with one clear CTA using only observed brand capabilities.
+  - `no_brand_facts`: brand name only; no service, proof, process, price, geography, or trust claims.
+- Do not use `section_page_narrative_briefs`, `section_brand_page_briefs`, `section_raw_brand_blocks`, `section_brand_understanding`, `section_source_text`, evidence cards, inventory fields, `observed_projects`, `grounded_summary`, extracted label lists, headings, menus, slogans, or old contracts as facts.
+- If a brand fact is not clearly present in the knowledge pack, do not write it.
+- For project/proof sections, use only projects and page details that appear in the knowledge pack. Do not turn labels such as Screenshots, Technology Stack, B2C, Location, Name, or Scope of Work into projects.
+- Do not repeat the same project across unrelated sections. Use project examples mainly in project/proof sections, and at most one relevant proof example in a differentiation section.
+- If the pack does not support a target-area project or local-presence claim, do not make the heading/body sound local to that area.
 - Do not invent pricing, packages, guarantees, timelines, certifications, partnerships, project counts, testimonials, market leadership, geography, or local presence.
-- General market guidance may use market research only in non-brand sections. Brand-owned pricing, packages, timelines, geography, guarantees, or trust claims require explicit brand evidence in this block.
-- Intro must avoid technical catalog dumps; use simple buyer language and at most 1-2 broad observed capabilities.
+- Do not write numeric price ranges, delivery timelines, response times, guarantee periods, or support promises unless an exact observed number appears in the knowledge pack or in a supplied live market snippet for this exact section.
+- General market guidance may use market research only in non-brand sections. Brand-owned pricing, packages, timelines, geography, guarantees, or trust claims require explicit wording in the knowledge pack.
+- Intro must avoid technical catalog dumps; use simple buyer language and at most 1-2 broad observed capabilities from the knowledge pack.
+- Write for a non-technical buyer. Use technical terms only when they are useful, observed, and paired with a plain-language benefit. Avoid tool-stack lists outside proof/project or genuinely technical sections.
 
 ## 2. SEO KEYWORD COUNTS 
 - **Exact Primary Keyword (PK) Count So Far**: {{ global_keyword_count | default(0) }} / 5

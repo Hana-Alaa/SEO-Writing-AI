@@ -802,7 +802,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         called_kwargs = controller.section_writer.write.call_args[1]
         self.assertIn("brand_context", called_kwargs)
         self.assertNotIn("[BRAND GENERATION GUARDRAILS]", called_kwargs["brand_context"])
-        self.assertIn("raw brand source blocks", called_kwargs["brand_context"])
+        # Pack-Only Writer Truth: brand_context now describes the knowledge pack, not raw source blocks
+        self.assertIn("page-by-page brand knowledge pack", called_kwargs["brand_context"])
 
     async def test_faq_enrichment_guard_on_low_confidence(self):
         """
@@ -1136,7 +1137,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         called_kwargs_writer = controller.section_writer.write.call_args[1]
         self.assertNotIn("[BRAND GENERATION GUARDRAILS", called_kwargs_writer["brand_context"])
         self.assertNotIn("[BRAND WRITING BRIEF", called_kwargs_writer["brand_context"])
-        self.assertIn("raw brand source blocks", called_kwargs_writer["brand_context"])
+        # Pack-Only Writer Truth: brand_context references the knowledge pack, not raw source blocks
+        self.assertIn("page-by-page brand knowledge pack", called_kwargs_writer["brand_context"])
 
         # Verify claim gate successfully gated key values in returned section
         self.assertNotIn("guarantees", ret_section["generated_content"])
@@ -1968,13 +1970,15 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             section_source_text=selected_source_text
         )
         
-        # Verify prompt visibility
+        # Pack-Only Writer Truth: the prompt now renders brand_page_knowledge_pack_context, not
+        # section_source_text or legacy [SECTION-SPECIFIC BRAND EVIDENCE] blocks.
         self.assertTrue(mock_ai.send.called)
         sent_prompt = mock_ai.send.call_args[0][0] if mock_ai.send.call_args[0] else mock_ai.send.call_args[1].get("prompt", "")
-        self.assertIn("[SECTION-SPECIFIC BRAND EVIDENCE]", sent_prompt)
-        self.assertGreaterEqual(sent_prompt.count("[SECTION-SPECIFIC BRAND EVIDENCE]"), 1)
-        self.assertIn("Source URL: https://dummy.com", sent_prompt)
-        self.assertIn("Custom Web Design", sent_prompt)
+        # The knowledge pack block is always present (fallback or real)
+        self.assertIn("[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]", sent_prompt)
+        # The contract section names these as routing-only diagnostics
+        self.assertIn("section_brand_page_briefs", sent_prompt)
+        self.assertIn("section_raw_brand_blocks", sent_prompt)
 
     async def test_writer_prompt_empty_brand_evidence(self):
         """Test that the empty brand evidence prompt case renders correctly."""
@@ -2002,11 +2006,12 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             section_source_text=""
         )
         
+        # Pack-Only Writer Truth: empty evidence case shows the knowledge-pack fallback text
         self.assertTrue(mock_ai.send.called)
         sent_prompt = mock_ai.send.call_args[0][0] if mock_ai.send.call_args[0] else mock_ai.send.call_args[1].get("prompt", "")
-        self.assertIn("[SECTION-SPECIFIC BRAND EVIDENCE]", sent_prompt)
-        self.assertIn("No section-specific brand evidence selected.", sent_prompt)
-        self.assertIn("Do not add brand proof claims.", sent_prompt)
+        # Knowledge pack block is present (fallback text when no pack available)
+        self.assertIn("[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]", sent_prompt)
+        self.assertIn("No full page-by-page brand knowledge pack is available", sent_prompt)
 
     async def test_outline_prompt_receives_compact_evidence_summary(self):
         """Test that _step_1_outline injects compact brand evidence without mutating canonical context."""
@@ -2968,9 +2973,13 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertGreaterEqual(controller.section_writer.write.call_count, 2)
         first_kwargs = controller.section_writer.write.call_args_list[0].kwargs
         repair_kwargs = controller.section_writer.write.call_args_list[1].kwargs
+        # Pack-Only Writer Truth firewall: writer receives empty dict for section_brand_understanding
+        # The populated understanding is stored on section["section_brand_understanding"] for audit/validation.
         self.assertIsNotNone(first_kwargs.get("section_brand_understanding"))
         self.assertIsNotNone(repair_kwargs.get("section_brand_understanding"))
-        self.assertIn("React", repair_kwargs["section_brand_understanding"]["relevant_technologies"])
+        # The section object itself retains the full understanding for downstream audit/validation
+        self.assertIn("relevant_technologies", section.get("section_brand_understanding", {}))
+        self.assertIn("React", section["section_brand_understanding"]["relevant_technologies"])
 
     def test_brand_commercial_offer_sections_without_visible_brand_stay_generic(self):
         """Generic brand-commercial offer sections should not become brand-owned catalogs."""
@@ -4358,15 +4367,16 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         )
 
         sent_prompt = mock_ai.send.call_args[0][0]
-        self.assertIn("[BRAND PAGE BRIEFS - PRIMARY BRAND CONTEXT]", sent_prompt)
-        self.assertIn("Grounded summary:", sent_prompt)
-        self.assertIn("No explicit pricing/packages observed", sent_prompt)
-        self.assertIn("[RAW BRAND SOURCE BLOCKS]", sent_prompt)
-        self.assertIn("Source URL: https://brand.test/portfolio", sent_prompt)
-        self.assertIn("Observed facts:", sent_prompt)
-        self.assertIn("Acumen Consulting Egypt", sent_prompt)
-        self.assertIn("[SECTION BRAND UNDERSTANDING]", sent_prompt)
-        self.assertIn("relevant_projects", sent_prompt)
+        # Pack-Only Writer Truth: the prompt renders brand_page_knowledge_pack_context
+        # as the sole writer-facing brand truth. Legacy structured block markers are gone.
+        self.assertIn("[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]", sent_prompt)
+        # The contract section clearly lists routing-only diagnostics (not rendered as brand facts)
+        self.assertIn("Routing-only diagnostics", sent_prompt)
+        self.assertIn("section_brand_page_briefs", sent_prompt)
+        self.assertIn("section_raw_brand_blocks", sent_prompt)
+        self.assertIn("section_brand_understanding", sent_prompt)
+        # Knowledge pack context is passed correctly (fallback text when no pack provided)
+        self.assertIn("ONLY writer-facing truth", sent_prompt)
 
     async def test_phase_19_step4_section_writer_receives_raw_brand_blocks(self):
         """Phase 1.9 Step 4: workflow passes selected raw blocks into SectionWriter.write."""
@@ -4438,12 +4448,15 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         )
 
         first_kwargs = controller.section_writer.write.call_args.kwargs
+        # Pack-Only Writer Truth firewall: writer receives empty lists/dict — brand objects are
+        # kept for audit/validation on the section object, not exposed to the writer prompt.
         self.assertIn("section_brand_page_briefs", first_kwargs)
-        self.assertEqual(first_kwargs["section_brand_page_briefs"][0]["source_url"], "https://brand.test/portfolio")
+        self.assertEqual(first_kwargs["section_brand_page_briefs"], [])
         self.assertIn("section_raw_brand_blocks", first_kwargs)
-        self.assertEqual(first_kwargs["section_raw_brand_blocks"][0]["source_url"], "https://brand.test/portfolio")
-        self.assertIn("Acumen Consulting Egypt", first_kwargs["section_source_text"])
-        self.assertIn("Acumen Consulting Egypt", first_kwargs["section_brand_understanding"]["relevant_projects"])
+        self.assertEqual(first_kwargs["section_raw_brand_blocks"], [])
+        # The section object retains the full understanding for audit/validation
+        self.assertIn("section_brand_understanding", section)
+        self.assertIn("Acumen Consulting Egypt", section["section_brand_understanding"]["relevant_projects"])
 
     async def test_phase_19_step4_generic_non_brand_section_receives_no_raw_blocks(self):
         """Phase 1.9 Step 4: generic non-brand sections do not get brand raw blocks."""
@@ -4493,8 +4506,10 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         )
 
         first_kwargs = controller.section_writer.write.call_args.kwargs
+        # Pack-Only Writer Truth firewall: writer receives empty lists/dict for non-brand sections
         self.assertEqual(first_kwargs["section_raw_brand_blocks"], [])
-        self.assertEqual(first_kwargs["section_brand_understanding"]["recommended_angle"]["preferred_section_style"], "general_guidance")
+        # writer_section_brand_understanding is an empty dict for non-brand sections (firewall)
+        self.assertEqual(first_kwargs["section_brand_understanding"], {})
 
     async def test_phase_19_step4_intro_prompt_includes_simple_language_guard(self):
         """Phase 1.9 Step 4: intro prompt includes the no technical catalog instruction."""
@@ -4539,13 +4554,15 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             with open(path, "r", encoding="utf-8") as handle:
                 texts[path] = handle.read()
 
-        self.assertIn("[RAW BRAND SOURCE BLOCKS]", texts["assets/prompts/templates/runtime_state.txt"])
-        self.assertIn("[BRAND PAGE BRIEFS - PRIMARY BRAND CONTEXT]", texts["assets/prompts/templates/runtime_state.txt"])
-        self.assertIn("[SECTION BRAND UNDERSTANDING]", texts["assets/prompts/templates/runtime_state.txt"])
+        # Pack-Only Writer Truth: runtime_state.txt now uses brand_page_knowledge_pack_context
+        # as the sole writer-facing brand truth. Legacy block markers have been removed.
+        self.assertIn("brand_page_knowledge_pack_context", texts["assets/prompts/templates/runtime_state.txt"])
+        self.assertIn("[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]", texts["assets/prompts/templates/runtime_state.txt"])
+        self.assertIn("ONLY writer-facing truth", texts["assets/prompts/templates/runtime_state.txt"])
+        # section_contract.txt names these as routing-only diagnostics (not writer evidence)
         self.assertIn("section_brand_page_briefs", texts["assets/prompts/templates/section_contract.txt"])
         self.assertIn("section_raw_brand_blocks", texts["assets/prompts/templates/section_contract.txt"])
-        self.assertIn("Brand Page Briefs First", texts["assets/prompts/templates/02_section_writer_brand_commercial_v2.txt"])
-        self.assertIn("Raw Evidence First", texts["assets/prompts/templates/02_section_writer_brand_commercial_v2.txt"])
+        self.assertIn("Routing-only diagnostics", texts["assets/prompts/templates/section_contract.txt"])
         self.assertIn("Intro must avoid technical catalog dumps", texts["assets/prompts/templates/02_section_writer_brand_commercial_v2.txt"])
 
     def test_phase_19_step5_outline_prompt_exposes_inventory_gate_rules(self):
@@ -4618,8 +4635,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertIn('"projects_available": true', sent_context)
         self.assertIn("Do not create brand pricing/packages headings unless pricing_available is true.", sent_context)
 
-    def test_brand_commercial_service_heading_is_brand_offer_even_when_generic(self):
-        """Brand commercial service headings should be grounded in the brand even without visible brand text."""
+    def test_brand_commercial_generic_service_heading_is_brand_light_not_brand_owned(self):
+        """Generic service headings stay buyer-facing and only allow light brand use."""
         controller = AsyncWorkflowController(work_dir=".")
         state = {
             "brand_name": "BrandCo",
@@ -4638,9 +4655,10 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         prepared = controller._prepare_outline_for_content(state, outline)
         offer = prepared["outline"][1]
 
-        self.assertEqual(offer["section_contract"]["brand_policy"], "commercial")
-        self.assertEqual(offer["taxonomy_axis"], "brand_offer")
-        self.assertEqual(offer.get("execution_mode"), "brand_service_catalog")
+        self.assertEqual(offer["section_contract"]["brand_policy"], "none")
+        self.assertNotEqual(offer["taxonomy_axis"], "brand_offer")
+        self.assertEqual(offer.get("brand_usage_policy"), "brand_light")
+        self.assertNotEqual(offer.get("execution_mode"), "brand_service_catalog")
 
     def test_generic_comparison_heading_stays_non_brand_owned(self):
         """Comparison sections remain market guidance unless they visibly reference the brand."""
@@ -4714,8 +4732,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("Countryland", proof["heading_text"])
         self.assertEqual(proof["taxonomy_axis"], "brand_projects")
 
-    def test_brand_owned_generic_service_heading_removes_unsupported_target_area(self):
-        """Brand-owned service headings should not keep target geography as brand presence proof."""
+    def test_generic_service_heading_keeps_market_area_without_brand_presence_claim(self):
+        """Generic service headings may keep market context but must not become brand presence proof."""
         controller = AsyncWorkflowController(work_dir=".")
         state = {
             "brand_name": "BrandCo",
@@ -4747,8 +4765,9 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         prepared = controller._prepare_outline_for_content(state, outline)
         offer = prepared["outline"][1]
 
-        self.assertNotIn("Saudi Arabia", offer["heading_text"])
-        self.assertEqual(offer["section_contract"]["brand_policy"], "commercial")
+        self.assertIn("Saudi Arabia", offer["heading_text"])
+        self.assertEqual(offer["section_contract"]["brand_policy"], "none")
+        self.assertEqual(offer.get("brand_usage_policy"), "brand_light")
 
     def test_phase_19_step5_removes_unsupported_arabic_prefixed_geography(self):
         """Arabic brand headings like 'بالسعودية' should lose unsupported geography."""
@@ -5361,7 +5380,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         result = controller._ensure_required_table_content(content, section, {"article_language": "ar"})
 
-        self.assertIn("| المعيار |", result)
+        self.assertTrue("| وجه المقارنة |" in result or "|وجه المقارنة|" in result)
         self.assertIn("|---|---|---|", result)
         self.assertTrue(controller._content_has_markdown_table(result))
 
@@ -5455,6 +5474,615 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["fulfillment_status"], "weak")
         self.assertIn("heading drift", report["fulfillment_reason"])
         self.assertTrue(report["heading_fidelity"]["drift_detected"])
+
+    def test_project_required_table_with_one_narrative_page_uses_prose_not_table(self):
+        """One valid narrative project page should produce a prose sentence, NOT a markdown table."""
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "proof",
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "requires_table": True,
+            "section_page_narrative_briefs": [
+                {
+                    "source_url": "https://brand.test/portfolio/baddel",
+                    "page_type": "portfolio",
+                    "page_title": "Baddel - BrandCo",
+                    "narrative_brief": "This page presents the Baddel project in Riyadh within the E-commerce sector.",
+                    "routing_signals": {
+                        "projects": ["Baddel"],
+                        "explicit_geography": ["Riyadh"],
+                        "services": ["Branding"],
+                        "project_locations": ["Riyadh"],
+                    },
+                }
+            ],
+            "section_brand_understanding": {},
+        }
+        content = "We need a visual project presentation here."
+        state = {
+            "article_language": "en",
+            "brand_page_narrative_briefs": section["section_page_narrative_briefs"],
+        }
+
+        result = controller._ensure_required_table_content(content, section, state)
+
+        # Must not render a table
+        self.assertNotIn("|---", result)
+        self.assertNotIn("| Project |", result)
+        # Must contain factual prose with the project name
+        self.assertIn("Baddel", result)
+
+    def test_project_required_table_with_two_narrative_pages_renders_table(self):
+        """Two or more valid narrative project pages must produce a markdown table."""
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "proof",
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "requires_table": True,
+            "section_page_narrative_briefs": [
+                {
+                    "source_url": "https://brand.test/portfolio/baddel",
+                    "page_type": "portfolio",
+                    "page_title": "Baddel - BrandCo",
+                    "narrative_brief": "This page presents the Baddel project in Riyadh within the E-commerce sector.",
+                    "routing_signals": {
+                        "projects": ["Baddel"],
+                        "explicit_geography": ["Riyadh"],
+                        "services": ["Branding"],
+                        "project_locations": ["Riyadh"],
+                    },
+                },
+                {
+                    "source_url": "https://brand.test/portfolio/retail-portal",
+                    "page_type": "portfolio",
+                    "page_title": "Retail Portal - BrandCo",
+                    "narrative_brief": "This page presents the Retail Portal project in Dubai within the Retail sector.",
+                    "routing_signals": {
+                        "projects": ["Retail Portal"],
+                        "explicit_geography": ["Dubai"],
+                        "services": ["Web Development"],
+                        "project_locations": ["Dubai"],
+                    },
+                },
+            ],
+            "section_brand_understanding": {},
+        }
+        content = "We need a visual project presentation here."
+        state = {
+            "article_language": "en",
+            "brand_page_narrative_briefs": section["section_page_narrative_briefs"],
+        }
+
+        result = controller._ensure_required_table_content(content, section, state)
+
+        self.assertIn("|---", result)
+        self.assertIn("Baddel", result)
+        self.assertIn("Retail Portal", result)
+
+    def test_brand_page_knowledge_pack_prompt_context_cleanliness(self):
+        """The writer prompt context must contain ONLY clean narrative page context and claim boundaries.
+        It must NOT contain: saved file paths, crawled URL counts, page read stats,
+        or any extraction list phrases."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_url": "https://brand.test",
+            "brand_page_knowledge_pack_path": "/some/output/path/brand_page_knowledge_pack.md",
+            "brand_crawl_report": {
+                "crawled_urls": ["https://brand.test", "https://brand.test/portfolio"],
+                "page_read_stats": [
+                    {"url": "https://brand.test", "page_type": "home", "text_chars": 1200, "semantic_sections_count": 4}
+                ],
+            },
+            "brand_page_narrative_briefs": [
+                {
+                    "page_title": "Baddel - BrandCo",
+                    "source_url": "https://brand.test/portfolio/baddel",
+                    "page_type": "portfolio",
+                    "narrative_brief": "This page presents the Baddel project in Riyadh, Saudi Arabia within the E-commerce sector.",
+                    "claim_boundaries": ["No explicit pricing observed on this page."],
+                    "routing_signals": {
+                        "projects": ["Baddel"],
+                        "services": ["Branding", "UX/UI"],
+                        "technologies": ["React"],
+                        "explicit_geography": ["Riyadh", "Saudi Arabia"],
+                        "process_steps": [],
+                        "project_locations": ["Riyadh"],
+                        "has_pricing": False,
+                        "has_trust": False,
+                    },
+                }
+            ],
+        }
+
+        context = controller._format_brand_page_knowledge_pack_for_prompt(state)
+
+        # Cleanliness: diagnostics must NOT appear in prompt context
+        self.assertNotIn("Saved file", context)
+        self.assertNotIn("Crawled URLs count", context)
+        self.assertNotIn("Crawled URLs:", context)
+        self.assertNotIn("Page read stats", context)
+
+        # Cleanliness: extraction list phrases must NOT appear in prompt context
+        self.assertNotIn("Project or client names visible include", context)
+        self.assertNotIn("Services or capabilities explicitly visible include", context)
+        self.assertNotIn("Technologies, tools, or platform terms explicitly visible include", context)
+        self.assertNotIn("Workflow or process terms visible", context)
+
+        # Correctness: clean narrative content MUST be present
+        self.assertIn("Baddel project", context)
+        self.assertIn("Claim boundaries", context)
+        self.assertIn("No explicit pricing observed", context)
+
+    def test_full_brand_page_knowledge_pack_prompt_context_is_not_truncated(self):
+        """Default writer context must include the full cleaned pack, not the first 12k chars only."""
+        controller = AsyncWorkflowController(work_dir=".")
+        briefs = []
+        for idx in range(1, 9):
+            briefs.append(
+                {
+                    "page_title": f"Detailed Service Page {idx}",
+                    "source_url": f"https://brand.test/services/{idx}",
+                    "page_type": "services",
+                    "narrative_brief": (
+                        f"This page explains Service Capability {idx}. "
+                        + "It preserves detailed observed page wording about UX/UI, React, Node.js, "
+                        + "WordPress, implementation planning, testing, launch support, and client handover. "
+                    ) * 18,
+                    "claim_boundaries": ["No explicit pricing observed on this page."],
+                    "routing_signals": {"services": [f"Service Capability {idx}"]},
+                }
+            )
+        state = {"brand_page_narrative_briefs": briefs}
+
+        context = controller._format_brand_page_knowledge_pack_for_prompt(state)
+
+        self.assertGreater(len(context), 12000)
+        self.assertNotIn("[TRUNCATED", context)
+        self.assertIn("Detailed Service Page 8", context)
+        self.assertIn("Service Capability 8", context)
+
+    def test_target_area_pages_are_ordered_before_farther_project_pages(self):
+        """Narrative pack ordering should prefer explicit target-area evidence without hardcoding a brand/article."""
+        from src.services.brand_evidence_service import build_brand_page_narrative_briefs
+
+        state = {
+            "area": "\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629",
+            "brand_name": "BrandCo",
+            "brand_source_chunks": [
+                {
+                    "source_url": "https://brand.test/projects/aqar",
+                    "page_type": "portfolio",
+                    "page_title": "Aqar Platform - BrandCo",
+                    "heading": "Project overview",
+                    "observed_text": (
+                        "This portfolio page presents the Aqar Platform project. "
+                        "Location: Egypt. Sector: Real Estate. Services Provided: UX/UI, Web Development. "
+                        "Technology Stack: React, Node.js, Figma."
+                    ),
+                },
+                {
+                    "source_url": "https://brand.test/projects/baddel",
+                    "page_type": "portfolio",
+                    "page_title": "Baddel - BrandCo",
+                    "heading": "Project overview",
+                    "observed_text": (
+                        "This portfolio page presents the Baddel project. "
+                        "Location: Riyadh, Saudi Arabia. Sector: E-commerce. Services Provided: Branding, UX/UI, Web Application. "
+                        "Technology Stack: React, Tailwind CSS, Node.js."
+                    ),
+                },
+            ],
+        }
+
+        briefs = build_brand_page_narrative_briefs(state)
+        titles = [brief["page_title"] for brief in briefs]
+
+        self.assertGreaterEqual(len(titles), 2)
+        self.assertLess(titles.index("Baddel - BrandCo"), titles.index("Aqar Platform - BrandCo"))
+
+    def test_page_narrative_brief_cleans_layout_noise_without_deleting_facts(self):
+        """Narrative compression should remove layout chrome and adjacent repetition while preserving facts."""
+        from src.services.brand_evidence_service import _build_page_narrative_text
+
+        narrative = _build_page_narrative_text(
+            page_type="portfolio",
+            title="Baddel - BrandCo",
+            headings=["Project overview"],
+            text=(
+                "Let's Talk Scroll to Top View Project "
+                "Baddel Baddel is an e-commerce project in Riyadh, Saudi Arabia. "
+                "Technology Stack: React React, Node.js, Tailwind CSS. "
+                "Services Provided: Branding, UX/UI, Web Application. "
+                "All rights reserved Subscribe Newsletter"
+            ),
+            services=["Branding", "UX/UI", "Web Application"],
+            technologies=["React", "Node.js", "Tailwind CSS"],
+            projects=["Baddel"],
+            process_steps=[],
+            geography=[],
+            project_locations=["Riyadh, Saudi Arabia"],
+            pricing=[],
+            trust=[],
+        )
+
+        self.assertNotIn("Let's Talk", narrative)
+        self.assertNotIn("Scroll to Top", narrative)
+        self.assertNotIn("All rights reserved", narrative)
+        self.assertIn("Baddel", narrative)
+        self.assertIn("Riyadh", narrative)
+        self.assertIn("React", narrative)
+        self.assertNotIn("React React", narrative)
+
+    def test_comparison_table_does_not_fall_back_to_location_template(self):
+        """Comparison sections must not inherit location/real-estate fallback tables from stale taxonomy."""
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "\u0645\u0642\u0627\u0631\u0646\u0629 \u0628\u064a\u0646 \u062e\u062f\u0645\u0627\u062a \u0627\u0644\u062a\u0635\u0645\u064a\u0645 \u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629",
+            "section_type": "comparison",
+            "taxonomy_axis": "location_area",
+            "requires_table": True,
+            "subheadings": ["Custom websites", "E-commerce websites"],
+        }
+        state = {
+            "article_language": "ar",
+            "primary_keyword": "\u0634\u0631\u0643\u0629 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639",
+            "raw_title": "\u0627\u0641\u0636\u0644 \u0634\u0631\u0643\u0629 \u062a\u0635\u0645\u064a\u0645 \u0645\u0648\u0627\u0642\u0639",
+        }
+
+        result = controller._ensure_required_table_content("\u0646\u0635 \u062a\u0645\u0647\u064a\u062f\u064a.", section, state)
+
+        self.assertIn("|---", result)
+        self.assertIn("Custom websites", result)
+        self.assertIn("E-commerce websites", result)
+        self.assertNotIn("\u0627\u0644\u0645\u0648\u0627\u0635\u0644\u0627\u062a", result)
+        self.assertNotIn("\u0646\u0645\u0637 \u0627\u0644\u0633\u0643\u0646", result)
+
+    def test_project_table_uses_clean_titles_and_target_area_ordering(self):
+        """Project fallback tables should use clean page titles and rank target-area project pages first."""
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "requires_table": True,
+            "section_page_narrative_briefs": [
+                {
+                    "source_url": "https://brand.test/projects/aqar",
+                    "page_type": "portfolio",
+                    "page_title": "Aqar Platform - BrandCo",
+                    "narrative_brief": "This page presents the Aqar Platform project in Egypt within the Real Estate sector.",
+                    "routing_signals": {
+                        "projects": ["Aqar Platform"],
+                        "explicit_geography": ["Egypt"],
+                        "project_locations": ["Egypt"],
+                        "services": ["UX/UI", "Web Development"],
+                        "technologies": ["React", "Node.js"],
+                    },
+                },
+                {
+                    "source_url": "https://brand.test/projects/noise",
+                    "page_type": "portfolio",
+                    "page_title": "Real EstateTarget - BrandCo",
+                    "narrative_brief": "This page contains a metadata label, not a real project record.",
+                    "routing_signals": {
+                        "projects": ["Real EstateTarget"],
+                        "project_locations": ["ing and on-site content. Web Application"],
+                        "services": [],
+                        "technologies": [],
+                    },
+                },
+                {
+                    "source_url": "https://brand.test/projects/baddel",
+                    "page_type": "portfolio",
+                    "page_title": "Baddel - BrandCo",
+                    "narrative_brief": "This page presents the Baddel project in Riyadh, Saudi Arabia within the E-commerce sector.",
+                    "routing_signals": {
+                        "projects": ["Baddel"],
+                        "explicit_geography": ["Riyadh", "Saudi Arabia"],
+                        "project_locations": ["Riyadh, Saudi Arabia"],
+                        "services": ["Branding", "UX/UI"],
+                        "technologies": ["React", "Tailwind CSS"],
+                    },
+                },
+            ],
+        }
+        state = {
+            "article_language": "en",
+            "area": "\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629",
+            "brand_page_narrative_briefs": section["section_page_narrative_briefs"],
+        }
+
+        result = controller._ensure_required_table_content("Project proof should be shown here.", section, state)
+
+        self.assertIn("|---", result)
+        self.assertIn("Baddel", result)
+        self.assertIn("Aqar Platform", result)
+        self.assertLess(result.index("Baddel"), result.index("Aqar Platform"))
+        self.assertNotIn("Real EstateTarget", result)
+        self.assertNotIn("ing and", result)
+
+    def test_project_table_replaces_noisy_writer_generated_table(self):
+        """Existing project tables should be replaced with deterministic clean project rows."""
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "requires_table": True,
+            "section_page_narrative_briefs": [
+                {
+                    "source_url": "https://brand.test/projects/aqar",
+                    "page_type": "portfolio",
+                    "page_title": "Aqar Platform - BrandCo",
+                    "narrative_brief": "This page presents the Aqar Platform project in Egypt within the Real Estate sector.",
+                    "routing_signals": {
+                        "projects": ["Aqar Platform"],
+                        "project_locations": ["ing"],
+                        "services": ["UX/UI", "Web Development"],
+                        "technologies": ["React", "Node.js"],
+                    },
+                },
+                {
+                    "source_url": "https://brand.test/projects/baddel",
+                    "page_type": "portfolio",
+                    "page_title": "Baddel - BrandCo",
+                    "narrative_brief": "This page presents the Baddel project in Riyadh, Saudi Arabia within the E-commerce sector.",
+                    "routing_signals": {
+                        "projects": ["Baddel"],
+                        "project_locations": ["ing"],
+                        "services": ["Branding", "UX/UI"],
+                        "technologies": ["React", "Tailwind CSS"],
+                    },
+                },
+            ],
+        }
+        state = {
+            "article_language": "en",
+            "area": "\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629",
+            "brand_page_narrative_briefs": section["section_page_narrative_briefs"],
+        }
+        noisy_content = (
+            "Intro.\n\n"
+            "| Project | Location | Details |\n"
+            "|---|---|---|\n"
+            "| Aqar Platform | ing | UX |\n"
+            "| Baddel | ing | UX |\n\n"
+            "After table."
+        )
+
+        result = controller._ensure_required_table_content(noisy_content, section, state)
+
+        self.assertIn("|---", result)
+        self.assertIn("Baddel", result)
+        self.assertIn("Riyadh, Saudi Arabia", result)
+        self.assertIn("Aqar Platform", result)
+        self.assertIn("Egypt", result)
+        self.assertLess(result.index("Baddel"), result.index("Aqar Platform"))
+        self.assertNotIn("| ing |", result)
+
+    def test_brand_usage_policy_keeps_generic_sections_neutral(self):
+        """Brand-commercial articles should not force brand discussion into every section."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {"content_type": "brand_commercial", "brand_name": "BrandCo"}
+
+        self.assertEqual(
+            controller._brand_usage_policy_for_section({"section_type": "faq", "heading_text": "Common questions"}, state),
+            "neutral_market",
+        )
+        self.assertEqual(
+            controller._brand_usage_policy_for_section({"section_type": "comparison", "heading_text": "Compare service options"}, state),
+            "neutral_market",
+        )
+        self.assertEqual(
+            controller._brand_usage_policy_for_section({"section_type": "offer", "heading_text": "Web design services"}, state),
+            "brand_light",
+        )
+        self.assertEqual(
+            controller._brand_usage_policy_for_section({"section_type": "differentiation", "heading_text": "Why BrandCo is different"}, state),
+            "brand_owned",
+        )
+        self.assertEqual(
+            controller._brand_usage_policy_for_section({"section_type": "conclusion", "heading_text": "Start now"}, state),
+            "brand_cta",
+        )
+
+    async def test_writer_prompt_exposes_brand_usage_policy_and_plain_language_guard(self):
+        """Writer prompt should tell neutral sections not to mention the brand just because the pack is present."""
+        from src.services.content_generator import SectionWriter
+        from unittest.mock import AsyncMock, MagicMock
+
+        mock_ai = MagicMock()
+        mock_ai.send = AsyncMock(return_value={"content": "{}", "metadata": {}})
+        writer = SectionWriter(mock_ai)
+
+        await writer.write(
+            title="Dummy Title",
+            global_keywords={"primary": "web design", "lsi": [], "semantic": []},
+            section={
+                "heading_text": "Compare service options",
+                "section_type": "comparison",
+                "section_intent": "Informational",
+                "brand_usage_policy": "neutral_market",
+            },
+            article_intent="Commercial",
+            seo_intelligence={"market_analysis": {"market_insights": {}}},
+            content_type="brand_commercial",
+            link_strategy="internal_only",
+            brand_url="https://brand.test",
+            brand_name="BrandCo",
+            brand_link_used=False,
+            brand_link_allowed=False,
+            allow_external_links=False,
+            execution_plan={},
+            area="Riyadh",
+            brand_page_knowledge_pack_context=(
+                "[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]\n"
+                "## Page 1: BrandCo\n"
+                "- What this page contains:\n"
+                "BrandCo provides UX/UI and React projects."
+            ),
+        )
+
+        sent_prompt = mock_ai.send.call_args[0][0]
+        self.assertIn('Brand Usage Policy For This Section', sent_prompt)
+        self.assertIn('neutral_market', sent_prompt)
+        self.assertIn('do not mention "BrandCo"', sent_prompt)
+        self.assertIn('Write for a normal business owner', sent_prompt)
+        self.assertIn('Do not create prices, ranges, durations', sent_prompt)
+
+    def test_commercial_section_roles_drive_brand_usage_policy(self):
+        """Domain-neutral commercial roles should keep generic sections from becoming brand-owned."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "primary_keyword": "best service provider",
+            "keywords": ["best service provider"],
+            "input_data": {"title": "best service provider", "keywords": ["best service provider"]},
+            "brand_evidence_inventory": {"services_available": True, "projects_available": True},
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio",
+                    "page_title": "Project One - BrandCo",
+                    "routing_signals": {"projects": ["Project One"]},
+                },
+                {
+                    "page_type": "portfolio",
+                    "page_title": "Project Two - BrandCo",
+                    "routing_signals": {"projects": ["Project Two"]},
+                },
+            ],
+        }
+        outline = [
+            {"section_type": "introduction", "heading_level": "INTRO", "heading_text": "Intro"},
+            {"section_type": "offer", "heading_text": "What the service includes"},
+            {"section_type": "features", "heading_text": "Key features included"},
+            {"section_type": "differentiation", "heading_text": "Why BrandCo is different"},
+            {"section_type": "proof", "heading_text": "Projects shown by BrandCo"},
+            {"section_type": "comparison", "heading_text": "Compare available options"},
+            {"section_type": "process", "heading_text": "How the process works"},
+            {"section_type": "faq", "heading_text": "Common questions"},
+            {"section_type": "conclusion", "heading_text": "Start now"},
+        ]
+
+        prepared = controller._prepare_outline_for_content(state, outline)
+        roles = [section["commercial_section_role"] for section in prepared["outline"]]
+        policies = [section["brand_usage_policy"] for section in prepared["outline"]]
+
+        self.assertEqual(
+            roles,
+            [
+                "intro",
+                "service_explanation",
+                "features_included",
+                "brand_differentiator",
+                "proof",
+                "comparison",
+                "process",
+                "faq",
+                "cta",
+            ],
+        )
+        self.assertEqual(policies[1], "brand_light")
+        self.assertEqual(policies[2], "brand_light")
+        self.assertEqual(policies[5], "neutral_market")
+        self.assertEqual(policies[7], "neutral_market")
+        self.assertEqual(policies[8], "brand_cta")
+
+    def test_brand_usage_policy_flags_project_examples_in_brand_light_sections(self):
+        """Service/features sections may mention the brand lightly but should not consume proof examples."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio",
+                    "page_title": "Acme Portal - BrandCo",
+                    "routing_signals": {"projects": ["Acme Portal"]},
+                }
+            ],
+        }
+        section = {
+            "heading_text": "What the service includes",
+            "section_type": "offer",
+            "commercial_section_role": "service_explanation",
+            "brand_usage_policy": "brand_light",
+        }
+
+        report = controller._evaluate_brand_usage_policy_fulfillment(
+            section,
+            "BrandCo explains the service through Acme Portal as a detailed proof example.",
+            state,
+        )
+
+        self.assertEqual(report["fulfillment_status"], "unsupported")
+        self.assertIn("brand_light", report["fulfillment_reason"])
+
+    def test_generic_comparison_table_has_real_contrast_not_placeholder(self):
+        """Comparison fallback tables should compare options, not repeat the same generic cell values."""
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "Compare available service options",
+            "section_type": "comparison",
+            "taxonomy_axis": "comparison",
+            "requires_table": True,
+            "commercial_section_role": "comparison",
+            "subheadings": ["Standard option", "Custom option"],
+        }
+        state = {"article_language": "en", "primary_keyword": "service provider", "raw_title": "service provider"}
+
+        result = controller._ensure_required_table_content("Intro paragraph.", section, state)
+
+        self.assertIn("Standard option", result)
+        self.assertIn("Custom option", result)
+        self.assertIn("Customization", result)
+        self.assertNotIn("Depends on the project need and scope", result)
+        self.assertNotIn("Outcomes, requirements, and service boundaries", result)
+
+    async def test_writer_prompt_exposes_commercial_section_role(self):
+        """Writer prompt should expose the commercial role separately from brand policy."""
+        from src.services.content_generator import SectionWriter
+        from unittest.mock import AsyncMock, MagicMock
+
+        mock_ai = MagicMock()
+        mock_ai.send = AsyncMock(return_value={"content": "{}", "metadata": {}})
+        writer = SectionWriter(mock_ai)
+
+        await writer.write(
+            title="Dummy Title",
+            global_keywords={"primary": "service provider", "lsi": [], "semantic": []},
+            section={
+                "heading_text": "What the service includes",
+                "section_type": "offer",
+                "section_intent": "Commercial",
+                "commercial_section_role": "service_explanation",
+                "brand_usage_policy": "brand_light",
+            },
+            article_intent="Commercial",
+            seo_intelligence={"market_analysis": {"market_insights": {}}},
+            content_type="brand_commercial",
+            link_strategy="internal_only",
+            brand_url="https://brand.test",
+            brand_name="BrandCo",
+            brand_link_used=False,
+            brand_link_allowed=False,
+            allow_external_links=False,
+            execution_plan={},
+            area="",
+            brand_page_knowledge_pack_context="[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]\nNo facts.",
+        )
+
+        sent_prompt = mock_ai.send.call_args[0][0]
+        self.assertIn("Commercial Section Role", sent_prompt)
+        self.assertIn("service_explanation", sent_prompt)
+        self.assertIn("Commercial Role Discipline", sent_prompt)
+
 
 if __name__ == '__main__':
     unittest.main()

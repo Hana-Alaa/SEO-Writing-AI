@@ -1,12 +1,19 @@
 import logging
+import os
 import numpy as np
 import torch
 from typing import List, Union
+
+os.environ.setdefault("USE_TF", "0")
+os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
+
 from sentence_transformers import SentenceTransformer, util
 
 logger = logging.getLogger(__name__)
 
 class SemanticService:
+    _MODEL_CACHE = {}
+
     def __init__(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
         """
         Initializes the Semantic Intelligence Layer using Sentence-Transformers.
@@ -16,7 +23,10 @@ class SemanticService:
             logger.info(f"Loading Semantic Model: {model_name}...")
             # Use CPU by default to avoid CUDA dependency issues in some environments
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            self.model = SentenceTransformer(model_name, device=device)
+            cache_key = (model_name, device)
+            if cache_key not in self._MODEL_CACHE:
+                self._MODEL_CACHE[cache_key] = SentenceTransformer(model_name, device=device)
+            self.model = self._MODEL_CACHE[cache_key]
             logger.info(f"Model loaded successfully on {device}.")
         except Exception as e:
             logger.error(f"Failed to load semantic model: {e}")
