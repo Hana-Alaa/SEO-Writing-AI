@@ -122,7 +122,8 @@ async def generate_article(
     heading_only_mode: bool = Form(False),
     content_only_mode: bool = Form(False),
     content_stage_only_mode: bool = Form(False),
-    approved_outline: str = Form(None)
+    approved_outline: str = Form(None),
+    disable_outline_repair: bool = Form(False)
 ):
     """
     Generate an SEO-optimized article based on the input parameters.
@@ -132,6 +133,10 @@ async def generate_article(
         f"Received generation request for title: '{title}', generate_images: {generate_images}, "
         f"heading_only_mode: {heading_only_mode}, content_only_mode: {content_only_mode}, "
         f"content_stage_only_mode: {content_stage_only_mode}"
+    )
+    logger.info(
+        "[diagnostic] disable_outline_repair=%s",
+        disable_outline_repair
     )
     print(f"\n[TRACER_V1] API received heading_only_mode: {heading_only_mode} (type: {type(heading_only_mode)})")
 
@@ -276,7 +281,8 @@ async def generate_article(
             "heading_only_mode": effective_heading_only_mode,
             "content_only_mode": content_only_mode,
             "content_stage_only_mode": effective_content_stage_only_mode,
-            "approved_outline": approved_outline
+            "approved_outline": approved_outline,
+            "disable_outline_repair": disable_outline_repair
         }
     }
     

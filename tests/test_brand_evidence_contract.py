@@ -5,6 +5,7 @@ import os
 import json
 import tempfile
 import re
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 from src.services.brand_evidence_service import (
     BrandEvidenceService,
@@ -4770,6 +4771,66 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Security and performance before deciding", criteria.get("subheadings", []))
         self.assertIn("Technical capabilities worth checking", criteria.get("subheadings", []))
 
+    def test_patch_2b_comparison_process_and_evaluation_headings_keep_distinct_roles(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "ar",
+            "primary_keyword": "\u0645\u0632\u0648\u062f \u062e\u062f\u0645\u0629",
+        }
+        cases = [
+            (
+                "\u0643\u064a\u0641 \u062a\u0642\u0627\u0631\u0646 \u0628\u064a\u0646 \u0627\u0644\u0628\u062f\u0627\u0626\u0644 \u0642\u0628\u0644 \u0627\u0644\u0627\u062e\u062a\u064a\u0627\u0631\u061f",
+                "comparison",
+                "comparison",
+            ),
+            (
+                "\u0643\u064a\u0641 \u062a\u0639\u0645\u0644 \u0627\u0644\u062e\u062f\u0645\u0629 \u0645\u0646 \u0627\u0644\u0637\u0644\u0628 \u0625\u0644\u0649 \u0627\u0644\u062a\u0633\u0644\u064a\u0645\u061f",
+                "process",
+                "process",
+            ),
+            (
+                "\u0643\u064a\u0641 \u062a\u062e\u062a\u0627\u0631 \u0627\u0644\u0645\u0632\u0648\u062f \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u061f",
+                "evaluation_criteria",
+                "criteria",
+            ),
+            (
+                "\u0643\u064a\u0641 \u062a\u0624\u062b\u0631 \u0627\u0644\u062c\u0648\u062f\u0629 \u0641\u064a \u0627\u0644\u0646\u062a\u064a\u062c\u0629\u061f",
+                "informational",
+                "criteria",
+            ),
+        ]
+
+        for heading, expected_role, expected_axis in cases:
+            with self.subTest(heading=heading):
+                section = {
+                    "heading_text": heading,
+                    "heading_level": "H2",
+                    "section_type": "core",
+                    "coverage_role": "custom_domain_topic",
+                    "subheadings": [],
+                }
+                self.assertEqual(
+                    controller._commercial_section_role_for_section(section, state),
+                    expected_role,
+                )
+                self.assertEqual(controller._infer_taxonomy_axis(section), expected_axis)
+                self.assertEqual(controller._generic_taxonomy_axis_for_section(section), expected_axis)
+
+    def test_patch_2b_comparison_signal_wins_over_choose_word(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {"content_type": "brand_commercial", "article_language": "en"}
+        section = {
+            "heading_text": "How to compare the available options before choosing",
+            "heading_level": "H2",
+            "section_type": "core",
+            "coverage_role": "custom_domain_topic",
+            "subheadings": [],
+        }
+
+        self.assertEqual(controller._commercial_section_role_for_section(section, state), "comparison")
+        self.assertEqual(controller._infer_taxonomy_axis(section), "comparison")
+
     def test_commercial_intro_contract_replaces_weak_first_paragraph(self):
         """Commercial intro first paragraph must carry the exact primary keyword and avoid brand-first openings."""
         controller = AsyncWorkflowController(work_dir=".")
@@ -4795,6 +4856,115 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn(state["primary_keyword"], first)
         self.assertNotIn("BrandCo", first)
+
+    def test_patch_2a_intro_cta_in_second_paragraph_is_not_duplicated(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "ar",
+            "primary_keyword": "\u0623\u0641\u0636\u0644 \u0645\u0632\u0648\u062f \u062e\u062f\u0645\u0629",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        section = {
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+        }
+        hook = (
+            "\u0627\u062e\u062a\u064a\u0627\u0631 \u0623\u0641\u0636\u0644 \u0645\u0632\u0648\u062f \u062e\u062f\u0645\u0629 \u064a\u0635\u0628\u062d \u0635\u0639\u0628\u0627 "
+            "\u0639\u0646\u062f\u0645\u0627 \u062a\u062a\u0634\u0627\u0628\u0647 \u0627\u0644\u0648\u0639\u0648\u062f \u0648\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0639\u064a\u0627\u0631 \u0648\u0627\u0636\u062d "
+            "\u064a\u0631\u0628\u0637 \u0627\u0644\u0627\u062d\u062a\u064a\u0627\u062c \u0628\u0627\u0644\u0646\u062a\u064a\u062c\u0629."
+        )
+        cta = (
+            "\u0644\u0628\u062f\u0621 \u062e\u0637\u0648\u0629 \u0639\u0645\u0644\u064a\u0629\u060c \u0631\u0627\u062c\u0639 "
+            "[\u0627\u0644\u0645\u0648\u0642\u0639 \u0627\u0644\u0631\u0633\u0645\u064a \u0644\u0640 BrandCo](https://brand.test)."
+        )
+
+        fixed = controller._ensure_commercial_intro_contract(f"{hook}\n\n{cta}", section, state)
+        paragraphs = [p.strip() for p in fixed.split("\n\n") if p.strip()]
+
+        self.assertEqual(len(paragraphs), 3)
+        self.assertEqual(fixed.count("https://brand.test"), 1)
+        self.assertTrue(controller._is_intro_brand_bridge(paragraphs[1], state))
+        self.assertFalse(controller._is_intro_cta(paragraphs[1], state))
+        self.assertTrue(controller._is_intro_cta(paragraphs[2], state))
+
+    def test_patch_2a_intro_cta_is_not_classified_as_brand_bridge(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        cta = "Review [BrandCo official website](https://brand.test) before choosing the next step."
+
+        self.assertTrue(controller._is_intro_cta(cta, state))
+        self.assertFalse(controller._is_intro_brand_bridge(cta, state))
+
+    def test_patch_2a_intro_contract_deduplicates_and_keeps_three_distinct_paragraphs(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "best service provider",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        section = {
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+        }
+        hook = (
+            "Choosing the best service provider becomes difficult when similar promises make it hard "
+            "to connect a real need with a practical and measurable outcome."
+        )
+        bridge = "BrandCo helps connect that need to a clear service scope without overwhelming the reader with technical detail."
+        cta = "Review [BrandCo official website](https://brand.test) to compare the available scope with your priorities."
+        content = "\n\n".join([hook, bridge, cta, cta])
+
+        fixed = controller._ensure_commercial_intro_contract(content, section, state)
+        paragraphs = [p.strip() for p in fixed.split("\n\n") if p.strip()]
+
+        self.assertEqual(len(paragraphs), 3)
+        self.assertEqual(len({controller._normalize_intro_paragraph(p) for p in paragraphs}), 3)
+        self.assertEqual(fixed.count("https://brand.test"), 1)
+
+    def test_patch_2a_intro_adds_keyword_without_replacing_valid_hook(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "best service provider",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        section = {
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+        }
+        original_hook = (
+            "Similar promises can make a high-stakes choice confusing, especially when the reader "
+            "cannot tell which option matches the real need and expected outcome."
+        )
+        bridge = "BrandCo helps readers connect that need to a clear service scope before discussing detailed capabilities."
+        cta = "Visit [BrandCo official website](https://brand.test) to review the available scope."
+
+        fixed = controller._ensure_commercial_intro_contract(
+            "\n\n".join([original_hook, bridge, cta]),
+            section,
+            state,
+        )
+        first = fixed.split("\n\n", 1)[0]
+
+        self.assertIn(state["primary_keyword"], first)
+        self.assertIn(original_hook, first)
+        self.assertNotEqual(first, controller._build_commercial_intro_hook(state, original_hook))
 
     async def test_phase_19_step5_outline_receives_inventory_without_brand_context_mutation(self):
         """Phase 1.9 Step 5: outline prompt context gets inventory while canonical brand_context stays unchanged."""
@@ -7032,6 +7202,192 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertIn("### هل الخيار مناسب؟", cleaned)
         self.assertIn("faq_repair_leak_removed", section.get("section_quality_issues", []))
 
+    def test_patch_2c_planning_detector_is_contextual(self):
+        controller = AsyncWorkflowController(work_dir=".")
+
+        self.assertTrue(controller._is_faq_planning_text("يجب أن يركز هذا القسم على الأسعار والاعتراضات."))
+        self.assertTrue(controller._is_faq_planning_text("Focus this section on pricing questions."))
+        self.assertTrue(controller._is_faq_planning_text("اذكر الأسعار في ثلاث نقاط."))
+        self.assertFalse(controller._is_faq_planning_text("ينبغي أن تقارن نطاق العمل قبل اتخاذ القرار."))
+        self.assertFalse(controller._is_faq_planning_text("You should compare the written scope before deciding."))
+
+    def test_patch_2c_faq_removes_first_answer_planning_leak_but_keeps_natural_advice(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "faq",
+            "heading_text": "الأسئلة الشائعة",
+            "section_type": "faq",
+            "commercial_section_role": "faq",
+        }
+        state = {"content_type": "brand_commercial", "article_language": "ar"}
+        content = (
+            "### كيف أقارن بين الخيارات؟\n"
+            "يجب أن يركز هذا القسم على المقارنة ويذكر ثلاثة أمثلة.\n\n"
+            "ينبغي أن تقارن النطاق المكتوب والمسؤوليات قبل اتخاذ القرار.\n\n"
+            "### ما الذي أراجعه قبل الاتفاق؟\n"
+            "راجع المشمول والاستثناءات وطريقة التسليم."
+        )
+
+        cleaned = controller._ensure_commercial_faq_depth(content, section, state)
+
+        self.assertNotIn("يجب أن يركز هذا القسم", cleaned)
+        self.assertIn("ينبغي أن تقارن النطاق", cleaned)
+        self.assertIn("faq_repair_leak_removed", section.get("section_quality_issues", []))
+
+    def test_patch_2c_unsupported_brand_pricing_question_downgrades_to_market_guidance(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "faq",
+            "heading_text": "الأسئلة الشائعة",
+            "section_type": "faq",
+            "commercial_section_role": "faq",
+        }
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "ar",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {"pricing_available": False},
+            "brand_page_knowledge_pack_context": "No explicit pricing or packages observed.",
+        }
+        content = (
+            "### ما سعر باقات BrandCo؟\n"
+            "تقدم BrandCo باقة تبدأ من 5000 ريال.\n\n"
+            "### كيف أختار النطاق المناسب؟\n"
+            "حدد الهدف والوظائف المطلوبة قبل مقارنة الخيارات."
+        )
+
+        cleaned = controller._ensure_commercial_faq_depth(content, section, state)
+
+        self.assertNotIn("ما سعر باقات BrandCo", cleaned)
+        self.assertNotIn("5000", cleaned)
+        self.assertIn("ما العوامل التي تؤثر على التكلفة؟", cleaned)
+        self.assertIn("faq_unsupported_brand_question_downgraded:pricing", section.get("section_quality_issues", []))
+        self.assertEqual(section["faq_evidence_actions"][0]["topic"], "pricing")
+
+    def test_patch_2c_general_market_pricing_question_is_allowed_without_brand_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "faq",
+            "heading_text": "Common questions",
+            "section_type": "faq",
+            "commercial_section_role": "faq",
+        }
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {"pricing_available": False},
+        }
+        content = (
+            "### What factors affect the cost?\n"
+            "Cost varies with scope, customization, integrations, and support requirements.\n\n"
+            "### How should the scope be reviewed?\n"
+            "Compare inclusions, exclusions, and responsibilities before deciding."
+        )
+
+        cleaned = controller._ensure_commercial_faq_depth(content, section, state)
+
+        self.assertIn("### What factors affect the cost?", cleaned)
+        self.assertIn("Cost varies with scope", cleaned)
+        self.assertNotIn("faq_unsupported_brand_question_downgraded:pricing", section.get("section_quality_issues", []))
+
+    def test_patch_2c_supported_brand_pricing_question_is_preserved(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "faq",
+            "heading_text": "Common questions",
+            "section_type": "faq",
+            "commercial_section_role": "faq",
+        }
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {"pricing_available": True},
+            "brand_page_knowledge_pack_context": "The pricing page lists BrandCo packages and their published fees.",
+        }
+        content = (
+            "### What packages does BrandCo offer?\n"
+            "BrandCo publishes a starter and advanced package on its pricing page.\n\n"
+            "### How should I compare them?\n"
+            "Compare the included scope and exclusions."
+        )
+
+        cleaned = controller._ensure_commercial_faq_depth(content, section, state)
+
+        self.assertIn("### What packages does BrandCo offer?", cleaned)
+        self.assertIn("starter and advanced package", cleaned)
+        self.assertNotIn("faq_unsupported_brand_question_downgraded:pricing", section.get("section_quality_issues", []))
+
+    def test_patch_2c_faq_removes_non_question_and_empty_answer_blocks(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "faq",
+            "heading_text": "Common questions",
+            "section_type": "faq",
+            "commercial_section_role": "faq",
+        }
+        state = {"content_type": "brand_commercial", "article_language": "en"}
+        content = (
+            "### Pricing overview\n"
+            "General text.\n\n"
+            "### What should be clarified?\n\n"
+            "### How should options be compared?\n"
+            "Compare scope, responsibilities, and exclusions."
+        )
+
+        cleaned = controller._ensure_commercial_faq_depth(content, section, state)
+
+        self.assertNotIn("Pricing overview", cleaned)
+        self.assertNotIn("What should be clarified", cleaned)
+        self.assertIn("How should options be compared?", cleaned)
+        self.assertIn("faq_non_question_heading_removed", section.get("section_quality_issues", []))
+        self.assertIn("faq_empty_answer_removed", section.get("section_quality_issues", []))
+
+    def test_patch_2c_content_stage_sanitizes_faq_before_writing_final_markdown(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            controller = AsyncWorkflowController(work_dir=tmpdir)
+            state = {
+                "content_type": "brand_commercial",
+                "article_language": "en",
+                "output_dir": tmpdir,
+                "include_tables": False,
+                "outline": [
+                    {
+                        "section_id": "faq",
+                        "heading_text": "Common questions",
+                        "heading_level": "H2",
+                        "section_type": "faq",
+                        "commercial_section_role": "faq",
+                    }
+                ],
+                "sections": {
+                    "faq": {
+                        "generated_content": (
+                            "Planning preamble.\n\n"
+                            "### How should options be compared?\n"
+                            "Focus this section on three comparison examples.\n\n"
+                            "Compare the written scope and responsibilities.\n\n"
+                            "### What affects cost?\n"
+                            "Cost depends on scope and complexity.\n\n"
+                            "### What should be clarified before agreement?\n"
+                            "Clarify inclusions and exclusions."
+                        )
+                    }
+                },
+            }
+
+            markdown = controller._build_content_stage_markdown(state, "Test article")
+
+            self.assertNotIn("Planning preamble", markdown)
+            self.assertNotIn("Focus this section", markdown)
+            self.assertIn("Compare the written scope", markdown)
+            self.assertIn("faq_repair_leak_removed", state["sections"]["faq"]["section_quality_issues"])
+            self.assertEqual(
+                Path(tmpdir, "article_final.md").read_text(encoding="utf-8"),
+                markdown,
+            )
+
     def test_role_fulfillment_detects_services_section_drifting_to_criteria(self):
         controller = AsyncWorkflowController(work_dir=".")
         section = {
@@ -7083,6 +7439,252 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
                 "project_proof_missed_target_relevant_evidence",
                 " ".join(state["content_stage_quality_report"]["warnings"]),
             )
+
+    def test_patch_2d_allows_market_cost_guidance_without_brand_pricing_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {"pricing_available": False, "explicit_geography": []},
+            "brand_page_knowledge_pack_context": "No explicit pricing or packages observed.",
+        }
+
+        text = "Cost depends on scope, customization, integrations, and support requirements."
+        cleaned, issues = controller._sanitize_unsupported_brand_claims(
+            text,
+            state,
+            context="body",
+            brand_sensitive=False,
+        )
+
+        self.assertEqual(cleaned, text)
+        self.assertEqual(issues, [])
+
+    def test_patch_2d_blocks_brand_packages_without_pricing_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "primary_keyword": "service options",
+            "brand_evidence_inventory": {"pricing_available": False, "explicit_geography": []},
+            "brand_page_knowledge_pack_context": "No explicit pricing or packages observed.",
+        }
+
+        cleaned, issues = controller._sanitize_unsupported_brand_claims(
+            "BrandCo offers packages starting at 500.",
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+
+        self.assertEqual(cleaned, "")
+        self.assertIn("pricing", issues)
+
+    def test_patch_2d_preserves_brand_packages_with_explicit_pricing_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {"pricing_available": True, "explicit_geography": []},
+            "brand_page_knowledge_pack_context": "The pricing page publishes BrandCo packages starting at 500.",
+        }
+        text = "BrandCo offers packages starting at 500."
+
+        cleaned, issues = controller._sanitize_unsupported_brand_claims(
+            text,
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+
+        self.assertEqual(cleaned, text)
+        self.assertEqual(issues, [])
+
+    def test_patch_2d_project_location_does_not_unlock_or_trigger_local_presence_claim(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "area": "Harbor City",
+            "brand_evidence_inventory": {"pricing_available": False, "explicit_geography": []},
+            "brand_page_knowledge_pack_context": (
+                "The Atlas project is located in Harbor City.\n"
+                "Project location may be present, but no general brand geography/local presence is observed."
+            ),
+        }
+        project_sentence = "BrandCo delivered the Atlas project in Harbor City."
+        local_claim = "BrandCo has local market expertise and local support in Harbor City."
+
+        kept, kept_issues = controller._sanitize_unsupported_brand_claims(
+            project_sentence,
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+        removed, removed_issues = controller._sanitize_unsupported_brand_claims(
+            local_claim,
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+
+        self.assertEqual(kept, project_sentence)
+        self.assertEqual(kept_issues, [])
+        self.assertEqual(removed, "")
+        self.assertIn("local_presence", removed_issues)
+        self.assertIn("local_support", removed_issues)
+
+    def test_patch_2d_preserves_explicit_local_presence_and_support(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {
+                "pricing_available": False,
+                "explicit_geography": ["Harbor City"],
+            },
+            "brand_page_knowledge_pack_context": (
+                "The contact page states that BrandCo operates in Harbor City "
+                "and provides local technical support."
+            ),
+        }
+        text = "BrandCo has a local presence and local technical support in Harbor City."
+
+        cleaned, issues = controller._sanitize_unsupported_brand_claims(
+            text,
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+
+        self.assertEqual(cleaned, text)
+        self.assertEqual(issues, [])
+
+    def test_patch_2d_blocks_testimonial_certification_and_award_claims_without_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {"pricing_available": False, "explicit_geography": []},
+            "brand_page_knowledge_pack_context": (
+                "No explicit testimonials, awards, certifications, or local presence observed."
+            ),
+        }
+
+        cleaned, issues = controller._sanitize_unsupported_brand_claims(
+            "BrandCo is award-winning and certified. Customer testimonials confirm its quality.",
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+
+        self.assertEqual(cleaned, "")
+        self.assertEqual(set(issues), {"award", "certification", "testimonial"})
+
+    def test_patch_2d_outline_heading_is_downgraded_without_claim_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "primary_keyword": "service options",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+            "brand_page_knowledge_pack_context": "No explicit pricing or testimonials observed.",
+        }
+        outline = [{
+            "section_id": "claims",
+            "heading_text": "BrandCo Packages and Customer Testimonials",
+            "section_type": "body",
+            "brand_policy": "commercial",
+            "taxonomy_axis": "brand_offer",
+            "subheadings": [],
+        }]
+
+        normalized = controller._normalize_outline_with_brand_evidence_inventory(outline, state)
+
+        heading = normalized[0]["heading_text"]
+        self.assertNotIn("Packages", heading)
+        self.assertNotIn("Testimonials", heading)
+        self.assertTrue(
+            any(
+                issue.startswith("unsupported_brand_claim_removed:")
+                for issue in normalized[0].get("section_quality_issues", [])
+            )
+        )
+
+    def test_patch_2d_final_output_sanitizes_title_and_meta_description(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "primary_keyword": "service options",
+            "input_data": {"title": "BrandCo Certified Packages"},
+            "seo_meta": {
+                "meta_title": "BrandCo Award-Winning Packages",
+                "meta_description": "BrandCo offers packages starting at 500.",
+            },
+            "brand_evidence_inventory": {"pricing_available": False, "explicit_geography": []},
+            "brand_page_knowledge_pack_context": (
+                "No explicit pricing, awards, certifications, or local presence observed."
+            ),
+            "final_output": {"final_markdown": "Draft"},
+        }
+
+        output = controller._assemble_final_output(state)
+
+        self.assertNotIn("Certified", output["title"])
+        self.assertNotIn("Packages", output["title"])
+        self.assertNotIn("Award-Winning", output["meta_title"])
+        self.assertNotIn("Packages", output["meta_title"])
+        self.assertNotIn("500", output["meta_description"])
+        self.assertTrue(state.get("unsupported_brand_claim_repairs"))
+
+    def test_patch_2d_content_stage_repairs_claim_and_marks_needs_revision(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            controller = AsyncWorkflowController(work_dir=tmpdir)
+            state = {
+                "content_type": "brand_commercial",
+                "brand_name": "BrandCo",
+                "primary_keyword": "service options",
+                "output_dir": tmpdir,
+                "include_tables": False,
+                "brand_evidence_inventory": {"pricing_available": False, "explicit_geography": []},
+                "brand_page_knowledge_pack_context": (
+                    "No explicit pricing, testimonials, awards, certifications, or local presence observed."
+                ),
+                "outline": [{
+                    "section_id": "brand",
+                    "heading_text": "BrandCo capabilities",
+                    "heading_level": "H2",
+                    "section_type": "body",
+                    "commercial_section_role": "brand_differentiator",
+                    "brand_usage_policy": "brand_owned",
+                }],
+                "sections": {
+                    "brand": {
+                        "generated_content": (
+                            "BrandCo provides implementation services. "
+                            "BrandCo has local market expertise and offers packages starting at 500."
+                        )
+                    }
+                },
+            }
+
+            markdown = controller._build_content_stage_markdown(state, "Service options")
+
+            self.assertIn("BrandCo provides implementation services.", markdown)
+            self.assertNotIn("local market expertise", markdown)
+            self.assertNotIn("500", markdown)
+            self.assertEqual(state["content_stage_status"], "needs_revision")
+            warnings = " ".join(state["content_stage_quality_report"]["warnings"])
+            self.assertIn("unsupported_brand_claim_removed", warnings)
 
 
 if __name__ == '__main__':

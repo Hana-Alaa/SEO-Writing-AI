@@ -1,6 +1,5 @@
 import logging
 from typing import Dict, Any, List, Optional
-from collections import Counter
 import re
 
 logger = logging.getLogger(__name__)
@@ -687,38 +686,37 @@ class OutlineRepairService:
         outline: List[Dict[str, Any]],
         primary_keyword: str,
         content_type: str,
-        brand_name: str = ""
+        brand_name: str = "",
+        brand_evidence_inventory: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Hardens the outline by enforcing strategic keyword mapping and coverage roles.
+        Normalize strategic keyword mapping and commercial coverage roles.
+
+        This pass is deliberately conservative: it may normalize or remove an
+        unsupported promise, but it must not invent missing commercial roles.
+        Evidence-aware buyer-journey coverage is handled later by the workflow.
+
         1. Ensures coverage_role is set for brand_commercial.
         2. Splitting PK requirement into:
            - contains_exact_primary_keyword (Heading visible match, exactly ONE H2)
-           - requires_primary_keyword (Body copy writing obligation, multiple slots)
+           - requires_primary_keyword (Intro, one suitable H2, and conclusion)
         3. Cleans PK from H3s.
-        4. Ensures total PK slots (requires_primary_keyword) >= 4.
+        4. Removes unsupported brand-proof promises when inventory disproves them.
         """
         if not outline:
             return outline
 
         is_commercial = content_type == "brand_commercial"
         pk_lower = str(primary_keyword or "").lower()
-        
-        # Step 0: Deduplicate H2 Headings
-        seen_h2 = set()
-        for section in outline:
-            if str(section.get("heading_level", "")).upper() == "H2":
-                text = section.get("heading_text", "").strip().lower()
-                if text in seen_h2:
-                    # Append a differentiator to the heading text
-                    suffix = " (تفاصيل إضافية)" if any("\u0600" <= c <= "\u06FF" for c in text) else " (Additional Details)"
-                    section["heading_text"] = section["heading_text"].strip() + suffix
-                seen_h2.add(section.get("heading_text", "").strip().lower())
+
+        # Step 0: Merge exact duplicate H2s instead of creating synthetic
+        # "(Additional Details)" headings that preserve the duplication.
+        outline = self._merge_duplicate_h2_sections(outline)
 
         # 0. Initialize PK flags
         for section in outline:
             section["contains_exact_primary_keyword"] = False
-            # We don't reset requires_primary_keyword here yet, we'll do it strategically
+            section["requires_primary_keyword"] = False
 
         # 1. Infer/Fix coverage roles and Clean H3s
         for section in outline:
@@ -773,185 +771,231 @@ class OutlineRepairService:
                             else:
                                 new_subs.append(cleaned_text)
                         else:
-                            fallback = "تفاصيل إضافية" if "ar" in h_text else "Details"
-                            new_subs.append(fallback)
+                            logger.info(
+                                "[OutlineRepairService] Removed empty H3 after primary-keyword cleanup in '%s'.",
+                                section.get("heading_text", ""),
+                            )
                     else:
                         new_subs.append(sub)
                 section["subheadings"] = new_subs
 
-        # 2. Strategic PK Stamping
-        pk_slots_count = 0
-        
-        # Slot 1: Introduction (always gets requires_primary_keyword=True, but NEVER contains_exact=True)
+        # 2. Normalize/remove unsupported commercial promises before assigning
+        # keyword slots so a removed proof section cannot take the sole H2 slot.
+        if is_commercial:
+            outline = self.finalize_brand_commercial_coverage_roles(
+                outline,
+                primary_keyword,
+                brand_name,
+                brand_evidence_inventory=brand_evidence_inventory,
+            )
+
+        # 3. Strategic PK Stamping. Keep this intentionally small so the
+        # writer is not forced to repeat the exact phrase across the article.
         for section in outline:
             if section.get("section_type") == "introduction":
                 section["requires_primary_keyword"] = True
                 section["contains_exact_primary_keyword"] = False
-                pk_slots_count += 1
                 break
-        
-        # Reset other sections to start fresh for strategic mapping
-        for section in outline:
-            if section.get("section_type") != "introduction":
-                section["requires_primary_keyword"] = False
 
-        # Slot 2: Exactly ONE visible H2 anchor (gets BOTH)
-        h2_anchor_found = False
-        # Prefer an H2 that already has the PK
-        for section in outline:
-            h_level = str(section.get("heading_level", "")).upper()
-            h_text = str(section.get("heading_text", "")).lower()
-            if h_level == "H2" and not h2_anchor_found:
-                if pk_lower and pk_lower in h_text:
-                    section["contains_exact_primary_keyword"] = True
-                    section["requires_primary_keyword"] = True
-                    h2_anchor_found = True
-                    pk_slots_count += 1
-        
-        # Fallback to the first available H2 if none had the PK
-        if not h2_anchor_found:
-            for section in outline:
-                if str(section.get("heading_level", "")).upper() == "H2":
-                    section["contains_exact_primary_keyword"] = True
-                    section["requires_primary_keyword"] = True
-                    h2_anchor_found = True
-                    pk_slots_count += 1
-                    break
-        
-        # Slots 3+: Body sections (assign requires_primary_keyword=True to middle sections)
-        if pk_slots_count < 4:
-            potential_body_sections = [
-                s for s in outline 
-                if s.get("section_type") not in ["introduction", "faq", "conclusion"]
-                and not s.get("requires_primary_keyword")
-            ]
-            for s in potential_body_sections:
-                if pk_slots_count >= 4:
-                    break
-                s["requires_primary_keyword"] = True
-                pk_slots_count += 1
-        
-        # Final Slot: Near conclusion if still under 5
-        if pk_slots_count < 5:
-             for i in range(len(outline)-1, -1, -1):
-                 s = outline[i]
-                 if s.get("section_type") == "conclusion":
-                     continue
-                 if not s.get("requires_primary_keyword") and s.get("section_type") != "introduction":
-                     s["requires_primary_keyword"] = True
-                     pk_slots_count += 1
-                     break
+        visible_h2s = [
+            section
+            for section in outline
+            if str(section.get("heading_level", "")).upper() == "H2"
+            and str(section.get("section_type", "")).lower() not in {"faq", "conclusion"}
+        ]
+        exact_h2 = next(
+            (
+                section
+                for section in visible_h2s
+                if pk_lower and pk_lower in str(section.get("heading_text", "")).lower()
+            ),
+            None,
+        )
+        h2_anchor = exact_h2 or next(
+            (
+                section
+                for section in visible_h2s
+                if section.get("coverage_role") in {"offer_clarity", "features_or_included"}
+            ),
+            visible_h2s[0] if visible_h2s else None,
+        )
+        if h2_anchor:
+            h2_anchor["requires_primary_keyword"] = True
+            h2_anchor["contains_exact_primary_keyword"] = bool(exact_h2 is h2_anchor)
 
-        # 4. Deterministic Coverage Role Finalization
-        if is_commercial:
-            outline = self.finalize_brand_commercial_coverage_roles(outline, primary_keyword, brand_name)
+        conclusion = next(
+            (
+                section
+                for section in reversed(outline)
+                if str(section.get("section_type", "")).lower() == "conclusion"
+            ),
+            None,
+        )
+        if conclusion:
+            conclusion["requires_primary_keyword"] = True
 
         return outline
+
+    @staticmethod
+    def _normalized_heading_key(value: Any) -> str:
+        text = re.sub(r"[^\w\s]", " ", str(value or "").casefold())
+        return re.sub(r"\s+", " ", text).strip()
+
+    def _merge_duplicate_h2_sections(
+        self,
+        outline: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Merge exact duplicate H2 promises without inventing new headings."""
+        merged: List[Dict[str, Any]] = []
+        seen_h2: Dict[str, int] = {}
+        list_fields = (
+            "subheadings",
+            "must_include_details",
+            "must_not_repeat",
+            "mandatory_facts",
+            "questions",
+        )
+
+        for original in outline:
+            section = dict(original)
+            for field in list_fields:
+                if isinstance(section.get(field), list):
+                    section[field] = list(section[field])
+
+            is_h2 = str(section.get("heading_level", "")).upper() == "H2"
+            heading_key = self._normalized_heading_key(section.get("heading_text")) if is_h2 else ""
+            if not heading_key or heading_key not in seen_h2:
+                if heading_key:
+                    seen_h2[heading_key] = len(merged)
+                merged.append(section)
+                continue
+
+            target = merged[seen_h2[heading_key]]
+            for field in list_fields:
+                incoming = section.get(field)
+                if not isinstance(incoming, list):
+                    continue
+                target.setdefault(field, [])
+                for item in incoming:
+                    item_key = self._normalized_heading_key(
+                        item.get("heading_text") if isinstance(item, dict) else item
+                    )
+                    existing_keys = {
+                        self._normalized_heading_key(
+                            existing.get("heading_text") if isinstance(existing, dict) else existing
+                        )
+                        for existing in target[field]
+                    }
+                    if item_key and item_key not in existing_keys:
+                        target[field].append(item)
+
+            for field in ("section_promise", "reader_takeaway", "content_goal"):
+                if not target.get(field) and section.get(field):
+                    target[field] = section[field]
+
+            logger.info(
+                "[OutlineRepairService] Merged duplicate H2 '%s' into section '%s'.",
+                section.get("heading_text", ""),
+                target.get("section_id", ""),
+            )
+
+        return merged
 
     def finalize_brand_commercial_coverage_roles(
         self, 
         outline: List[Dict[str, Any]], 
         primary_keyword: str, 
-        brand_name: str
+        brand_name: str,
+        brand_evidence_inventory: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Final deterministic pass to ensure all mandatory commercial roles are present.
+        Normalize existing commercial roles without manufacturing missing roles.
+
+        Missing buyer-journey coverage is intentionally left to the later
+        evidence-aware workflow planner. This method only removes promises that
+        explicit inventory cannot support and synchronizes role/type labels.
         """
         if not outline:
             return outline
 
-        mandatory_roles = [
-            "offer_clarity", "features_or_included", "differentiators", 
-            "proof", "comparison", "process_or_how", "faq", "conclusion"
-        ]
-        
-        # 1. Normalize and Infer
+        inventory = brand_evidence_inventory if isinstance(brand_evidence_inventory, dict) else None
+        proof_available = bool(
+            inventory
+            and (inventory.get("projects_available") or inventory.get("trust_available"))
+        )
+        pricing_available = bool(inventory and inventory.get("pricing_available"))
+        normalized: List[Dict[str, Any]] = []
+
         for section in outline:
-            h_text = str(section.get("heading_text", "")).lower()
-            goal = str(section.get("content_goal", "")).lower()
-            
-            # Ensure coverage_role exists (read from both field variants)
+            section = dict(section)
             role = section.get("coverage_role")
             if not role and section.get("coverage_roles"):
                 roles = section.get("coverage_roles")
                 role = roles[0] if isinstance(roles, list) and roles else None
-            
             if not role:
                 role = self._infer_coverage_role(section)
-            
+
+            if role in {"pricing", "price", "cost", "cost_value_roi"}:
+                role = "cost_value"
+
+            heading = str(section.get("heading_text", ""))
+            heading_lower = heading.casefold()
+            brand_visible = bool(brand_name and brand_name.casefold() in heading_lower)
+            pricing_heading = bool(
+                re.search(r"\b(price|pricing|cost|packages?|tiers?)\b", heading, re.IGNORECASE)
+                or re.search(r"سعر|أسعار|تكلفة|باقات|باقة", heading)
+            )
+
+            if role == "proof" and inventory is not None and not proof_available:
+                logger.warning(
+                    "[OutlineRepairService] Removed unsupported proof section '%s': "
+                    "inventory has no project or trust evidence.",
+                    heading,
+                )
+                continue
+
+            if brand_visible and pricing_heading and inventory is not None and not pricing_available:
+                role = "cost_value"
+                section["heading_text"] = (
+                    "التكلفة والقيمة المتوقعة قبل اتخاذ القرار"
+                    if re.search(r"[\u0600-\u06FF]", heading)
+                    else "Cost and expected value before making a decision"
+                )
+                section["brand_policy"] = "neutral_market"
+                logger.info(
+                    "[OutlineRepairService] Downgraded unsupported brand-pricing heading '%s'.",
+                    heading,
+                )
+
             section["coverage_role"] = role
+            role_to_type = {
+                "offer_clarity": "offer",
+                "features_or_included": "features",
+                "differentiators": "differentiation",
+                "proof": "proof",
+                "comparison": "comparison",
+                "process_or_how": "process",
+                "cost_value": "pricing",
+                "faq": "faq",
+                "conclusion": "conclusion",
+                "introduction": "introduction",
+            }
+            if role in role_to_type:
+                section["section_type"] = role_to_type[role]
+            normalized.append(section)
 
-        # 2. Check for missing mandatory roles
-        present_roles = {s.get("coverage_role") for s in outline if s.get("coverage_role")}
-        
-        # 3. Deterministic Reassignment & Heading Refinement
-        for role in mandatory_roles:
-            if role in present_roles:
-                continue
-
-            # Try to find a redundant section to reassign
-            # Strategy: 
-            # 1. Prefer sections that are NOT already one of the mandatory roles we've filled
-            # 2. Prefer 'offer_clarity' or 'process_or_how' if they are redundant
-            reassign_candidates = [
-                s for s in outline 
-                if s.get("coverage_role") not in mandatory_roles
-                and s.get("section_type") not in ["introduction", "faq", "conclusion"]
-            ]
-            
-            if not reassign_candidates:
-                # If everything is already a mandatory role, only reassign if we have duplicates of a role
-                role_counts = Counter(s.get("coverage_role") for s in outline)
-                reassign_candidates = [
-                    s for s in outline
-                    if role_counts[s.get("coverage_role")] > 1
-                    and s.get("section_type") not in ["introduction", "faq", "conclusion"]
-                ]
-
-            # Final fallback: ONLY pick a candidate if it's NOT a mandatory role or if we have duplicates
-            # (Prevent overwriting one mandatory role with another if we are short on sections)
-            target = next((s for s in reassign_candidates if s.get("coverage_role") != role), None)
-            
-            # If no target found, we skip this role (we've filled all we can without overwriting)
-            if not target:
-                continue
-
-            if target:
-                target["coverage_role"] = role
-                # Sync section_type for validator structure checks
-                role_to_type = {
-                    "offer_clarity": "offer",
-                    "features_or_included": "features",
-                    "differentiators": "differentiation",
-                    "proof": "proof",
-                    "comparison": "comparison",
-                    "process_or_how": "process",
-                    "faq": "faq",
-                    "conclusion": "conclusion"
-                }
-                target["section_type"] = role_to_type.get(role, target.get("section_type"))
-                
-                # REWRITE HEADING to make the role explicit (v5.0 Hardening)
-                if role == "features_or_included":
-                    target["heading_text"] = f"المزايا والخدمات التي تحصل عليها عند اختيار {primary_keyword}"
-                elif role == "differentiators":
-                    if brand_name:
-                        target["heading_text"] = f"ما الذي يميز {brand_name} عند البحث عن {primary_keyword}؟"
-                    else:
-                        target["heading_text"] = f"أهم ما يميز خدمتنا في {primary_keyword}"
-                elif role == "proof":
-                    target["heading_text"] = f"دليل الأسعار والعوامل المؤثرة على {primary_keyword}"
-                
-                present_roles.add(role)
-                logger.info(f"[OutlineRepairService] Finalized missing role '{role}' by reassigning section '{target.get('heading_text')}'")
-
-        # Debug Logging
-        missing = [r for r in mandatory_roles if r not in present_roles]
-        logger.info(f"[OutlineRepairService] brand_commercial_roles_present: {list(present_roles)}")
-        if missing:
-            logger.warning(f"[OutlineRepairService] brand_commercial_roles_MISSING: {missing}")
-
-        return outline
+        present_roles = sorted(
+            {
+                str(section.get("coverage_role"))
+                for section in normalized
+                if section.get("coverage_role")
+            }
+        )
+        logger.info(
+            "[OutlineRepairService] brand_commercial_roles_preserved: %s",
+            present_roles,
+        )
+        return normalized
 
     def _infer_coverage_role(self, section: Dict[str, Any]) -> str:
         s_type = str(section.get("section_type", "")).lower()
@@ -970,7 +1014,8 @@ class OutlineRepairService:
         # Text based inference for 'body' or mixed types
         if any(kw in h_text for kw in ["مميزات", "مزايا", "خصائص", "features", "amenities", "specifications", "مواصفات"]): return "features_or_included"
         if any(kw in h_text for kw in ["لماذا", "نتميز", "أفضل", "differentiator", "why us", "best", "الفوارق", "مميزاتنا"]): return "differentiators"
-        if any(kw in h_text for kw in ["سعر", "تكلفة", "أسعار", "price", "cost", "pricing", "حقائق", "واقع"]): return "proof"
+        if any(kw in h_text for kw in ["سعر", "تكلفة", "أسعار", "price", "cost", "pricing", "باقات", "packages"]): return "cost_value"
+        if any(kw in h_text for kw in ["دليل", "إثبات", "مشاريع", "أعمال", "نتائج", "proof", "projects", "portfolio", "case study"]): return "proof"
         if any(kw in h_text for kw in ["خطوات", "كيفية", "طريقة", "how", "process", "steps", "طرق", "إجراءات"]): return "process_or_how"
         if any(kw in h_text for kw in ["مقارنة", "الفرق", "vs", "compare", "comparison", "بين"]): return "comparison"
         if any(kw in h_text for kw in ["أنواع", "خدمات", "options", "types", "services", "نظرة", "overview"]): return "offer_clarity"

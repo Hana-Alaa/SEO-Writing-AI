@@ -988,6 +988,16 @@
                             <span class="slider"></span>
                         </label>
                     </div>
+                    <div class="workflow-option">
+                        <div>
+                            <label class="workflow-option-title" for="disable-outline-repair">Disable Outline Repair (Diagnostic)</label>
+                            <small>Bypass mutating/structural repair post-processing steps to diagnose raw outline generation quality.</small>
+                        </div>
+                        <label class="toggle-container">
+                            <input type="checkbox" id="disable-outline-repair">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
 
                 <div id="approved-outline-panel" class="approved-outline-panel">
@@ -1251,6 +1261,7 @@
             formData.append('content_only_mode', contentOnlyMode ? 'true' : 'false');
             formData.append('content_stage_only_mode', contentStageOnlyMode ? 'true' : 'false');
             formData.append('approved_outline', approvedOutline);
+            formData.append('disable_outline_repair', document.getElementById('disable-outline-repair').checked ? 'true' : 'false');
 
             if (currentMode === 'core') {
                 formData.append('article_language', document.getElementById('core-language').value);

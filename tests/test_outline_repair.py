@@ -231,9 +231,8 @@ class TestOutlineRepairService(unittest.TestCase):
         repaired = self.repair_service.clean_conclusion_heading(outline, "")
         self.assertEqual(repaired[1]["heading_text"], "خلاصة ونصائح قبل الزيارة")
 
-    def test_finalize_brand_commercial_coverage_roles_injects_missing(self):
-        """Verify that missing mandatory roles are injected/reassigned."""
-        # Outline with only intro, offer, and conclusion (missing features, differentiators, proof, etc.)
+    def test_finalize_brand_commercial_coverage_roles_does_not_inject_missing(self):
+        """Missing roles must not be manufactured by reassigning existing sections."""
         outline = [
             {"section_id": "sec_01", "section_type": "introduction", "heading_text": "Intro", "coverage_role": "introduction"},
             {"section_id": "sec_02", "section_type": "offer", "heading_text": "Offer 1", "coverage_role": "offer_clarity"},
@@ -244,63 +243,425 @@ class TestOutlineRepairService(unittest.TestCase):
         ]
         
         repaired = self.repair_service.finalize_brand_commercial_coverage_roles(
-            outline, 
-            primary_keyword="شقق للايجار", 
-            brand_name="قولدن هوست"
+            outline,
+            primary_keyword="business service",
+            brand_name="Example Brand",
+            brand_evidence_inventory={
+                "projects_available": False,
+                "trust_available": False,
+                "pricing_available": False,
+            },
         )
-        
+
         roles = [s.get("coverage_role") for s in repaired]
-        # It should have reassigned redundant offers
-        self.assertIn("features_or_included", roles)
-        self.assertIn("differentiators", roles)
-        self.assertIn("proof", roles)
+        self.assertEqual(roles.count("offer_clarity"), 4)
+        self.assertNotIn("features_or_included", roles)
+        self.assertNotIn("differentiators", roles)
+        self.assertNotIn("proof", roles)
+        self.assertEqual([s["heading_text"] for s in repaired], [s["heading_text"] for s in outline])
+
+    def test_finalize_removes_unsupported_proof_section(self):
+        outline = [
+            {"section_id": "intro", "section_type": "introduction", "heading_text": "Intro"},
+            {
+                "section_id": "proof",
+                "section_type": "proof",
+                "heading_text": "Projects completed by Example Brand",
+                "coverage_role": "proof",
+            },
+            {"section_id": "end", "section_type": "conclusion", "heading_text": "Next step"},
+        ]
+
+        repaired = self.repair_service.finalize_brand_commercial_coverage_roles(
+            outline,
+            primary_keyword="business service",
+            brand_name="Example Brand",
+            brand_evidence_inventory={
+                "projects_available": False,
+                "trust_available": False,
+                "pricing_available": False,
+            },
+        )
+
+        self.assertNotIn("proof", [section.get("coverage_role") for section in repaired])
+        self.assertNotIn("proof", [section.get("section_id") for section in repaired])
+
+    def test_finalize_preserves_supported_proof_section(self):
+        outline = [
+            {
+                "section_id": "proof",
+                "section_type": "proof",
+                "heading_text": "Projects completed by Example Brand",
+                "coverage_role": "proof",
+            },
+        ]
+
+        repaired = self.repair_service.finalize_brand_commercial_coverage_roles(
+            outline,
+            primary_keyword="business service",
+            brand_name="Example Brand",
+            brand_evidence_inventory={
+                "projects_available": True,
+                "trust_available": False,
+                "pricing_available": False,
+            },
+        )
+
+        self.assertEqual(len(repaired), 1)
+        self.assertEqual(repaired[0]["coverage_role"], "proof")
+        self.assertEqual(repaired[0]["heading_text"], outline[0]["heading_text"])
+
+    def test_brand_pricing_heading_is_downgraded_without_pricing_evidence(self):
+        outline = [
+            {
+                "section_id": "pricing",
+                "section_type": "pricing",
+                "heading_text": "Example Brand packages and pricing",
+            },
+        ]
+
+        repaired = self.repair_service.finalize_brand_commercial_coverage_roles(
+            outline,
+            primary_keyword="business service",
+            brand_name="Example Brand",
+            brand_evidence_inventory={
+                "projects_available": True,
+                "trust_available": False,
+                "pricing_available": False,
+            },
+        )
+
+        self.assertEqual(repaired[0]["coverage_role"], "cost_value")
+        self.assertEqual(repaired[0]["section_type"], "pricing")
+        self.assertEqual(repaired[0]["brand_policy"], "neutral_market")
+        self.assertNotIn("Example Brand", repaired[0]["heading_text"])
+
+    def test_pricing_is_cost_value_not_proof(self):
+        section = {
+            "section_type": "core",
+            "heading_text": "Pricing and cost factors",
+        }
+        self.assertEqual(self.repair_service._infer_coverage_role(section), "cost_value")
+
+    def test_removed_proof_section_does_not_consume_keyword_anchor(self):
+        primary_keyword = "business service"
+        outline = [
+            {"heading_level": "INTRO", "heading_text": "Intro", "section_type": "introduction"},
+            {
+                "heading_level": "H2",
+                "heading_text": f"{primary_keyword} project results",
+                "section_type": "proof",
+                "coverage_role": "proof",
+            },
+            {
+                "heading_level": "H2",
+                "heading_text": "Service scope",
+                "section_type": "offer",
+                "coverage_role": "offer_clarity",
+            },
+            {"heading_level": "H2", "heading_text": "Next step", "section_type": "conclusion"},
+        ]
+
+        repaired = self.repair_service.apply_strategic_map_and_roles(
+            outline,
+            primary_keyword=primary_keyword,
+            content_type="brand_commercial",
+            brand_name="Example Brand",
+            brand_evidence_inventory={
+                "projects_available": False,
+                "trust_available": False,
+                "pricing_available": False,
+            },
+        )
+
+        self.assertNotIn("proof", [section.get("coverage_role") for section in repaired])
+        service = next(section for section in repaired if section.get("coverage_role") == "offer_clarity")
+        self.assertTrue(service["requires_primary_keyword"])
+        self.assertFalse(service["contains_exact_primary_keyword"])
         
     def test_apply_strategic_map_and_roles_pk_anchoring(self):
-        """Verify PK anchoring: exactly one H2 has contains_exact_primary_keyword=True."""
+        """Use the exact PK in intro, one suitable H2, and conclusion only."""
+        pk = "الكلمة الرئيسية"
         outline = [
-            {"heading_level": "H2", "heading_text": "Section 1", "section_type": "core"},
+            {"heading_level": "INTRO", "heading_text": "Intro", "section_type": "introduction"},
+            {"heading_level": "H2", "heading_text": f"خدمات {pk}", "section_type": "offer"},
             {"heading_level": "H2", "heading_text": "Section 2", "section_type": "benefits"},
             {"heading_level": "H2", "heading_text": "Section 3", "section_type": "extra"},
-            {"heading_level": "H2", "heading_text": "Section 4", "section_type": "more"},
-            {"heading_level": "H3", "heading_text": "Sub 1", "section_type": "detail"}
+            {"heading_level": "H3", "heading_text": "Sub 1", "section_type": "detail"},
+            {"heading_level": "H2", "heading_text": "Conclusion", "section_type": "conclusion"},
         ]
-        
-        pk = "الكلمة الرئيسية"
+
         repaired = self.repair_service.apply_strategic_map_and_roles(
-            outline, 
-            primary_keyword=pk, 
-            content_type="brand_commercial"
+            outline,
+            primary_keyword=pk,
+            content_type="brand_commercial",
+            brand_evidence_inventory={
+                "projects_available": False,
+                "trust_available": False,
+                "pricing_available": False,
+            },
         )
-        
+
         # Check PK flags
         pk_h2_count = sum(1 for s in repaired if s.get("contains_exact_primary_keyword") is True)
         self.assertEqual(pk_h2_count, 1, "Exactly one H2 must be the PK anchor")
-        
+
         # Check H3 doesn't have it
         h3_pk = any(s.get("contains_exact_primary_keyword") for s in repaired if s.get("heading_level") == "H3")
         self.assertFalse(h3_pk, "H3 must not be the PK anchor")
-        
-        # Check body writing flags (requires_primary_keyword)
+
+        # The exact phrase is reserved for intro, one H2, and conclusion.
         writing_pk_count = sum(1 for s in repaired if s.get("requires_primary_keyword") is True)
-        self.assertGreaterEqual(writing_pk_count, 4, "Should have at least 4 body writing slots")
+        self.assertEqual(writing_pk_count, 3)
 
     def test_h2_deduplication(self):
-        """Verify that duplicate H2 headings are resolved."""
+        """Exact duplicate H2s are merged instead of renamed."""
         outline = [
-            {"heading_level": "H2", "heading_text": "المميزات", "section_id": "sec_1"},
-            {"heading_level": "H2", "heading_text": "المميزات", "section_id": "sec_2"},
+            {
+                "heading_level": "H2",
+                "heading_text": "المميزات",
+                "section_id": "sec_1",
+                "subheadings": ["الميزة الأولى"],
+            },
+            {
+                "heading_level": "H2",
+                "heading_text": "المميزات",
+                "section_id": "sec_2",
+                "subheadings": ["الميزة الثانية"],
+            },
             {"heading_level": "H3", "heading_text": "فرعي", "section_id": "sec_3"}
         ]
-        
+
         repaired = self.repair_service.apply_strategic_map_and_roles(
-            outline, 
-            primary_keyword="تيست", 
-            content_type="brand_commercial"
+            outline,
+            primary_keyword="تيست",
+            content_type="brand_commercial",
+            brand_evidence_inventory={
+                "projects_available": False,
+                "trust_available": False,
+                "pricing_available": False,
+            },
         )
-        
+
         h2_texts = [s["heading_text"] for s in repaired if s["heading_level"] == "H2"]
-        self.assertEqual(len(set(h2_texts)), 2, "H2 headings must be unique after repair")
-        self.assertNotEqual(h2_texts[0], h2_texts[1])
+        self.assertEqual(h2_texts, ["المميزات"])
+        self.assertEqual(
+            repaired[0]["subheadings"],
+            ["الميزة الأولى", "الميزة الثانية"],
+        )
+        self.assertNotIn("تفاصيل إضافية", " ".join(h2_texts))
+
+
+
+class TestOutlineRepairDiagnosticMode(unittest.IsolatedAsyncioTestCase):
+    async def test_diagnostic_mode_behavior(self):
+        from src.services.workflow_controller import AsyncWorkflowController
+        from unittest.mock import AsyncMock, MagicMock
+        
+        # Test Case 1: disable_outline_repair = False (default / normal behavior)
+        controller = AsyncWorkflowController()
+        
+        mock_outline = [
+            {"section_type": "introduction", "heading_level": "INTRO", "heading_text": "Intro"},
+            {"section_type": "faq", "heading_level": "H2", "heading_text": "FAQ", "subheadings": ["Q1"]}
+        ]
+        controller.outline_gen.generate = AsyncMock(return_value={
+            "outline": mock_outline,
+            "metadata": {"prompt": "p", "response": "r", "tokens": 10, "model": "m"}
+        })
+        
+        # Mock validator to bypass validation checks
+        controller.validator.consolidate_faq = MagicMock(side_effect=lambda outline: outline)
+        controller.validator.prune_unsupported_optional_subheadings = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.validator.repair_outline_deterministic = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.validator.enforce_intent_distribution = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller.validator.inject_local_seo = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller.validator.validate_outline_quality = MagicMock(return_value=[])
+        controller.validator.validate_heading_outline_quality = MagicMock(return_value=[])
+        
+        # Mock outline_repair_service methods
+        controller.outline_repair_service.promote_visitor_intents = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.outline_repair_service.dedupe_faq_against_h2 = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.outline_repair_service.refill_faq_after_dedupe = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.outline_repair_service.enrich_brand_utility_faq = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.outline_repair_service.normalize_heading_only_section_types = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.outline_repair_service.clean_echo_and_repetition = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.outline_repair_service.apply_strategic_map_and_roles = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller.outline_repair_service.clean_conclusion_heading = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        
+        state_normal = {
+            "input_data": {
+                "title": "Test Title",
+                "keywords": ["test"],
+                "disable_outline_repair": False
+            },
+            "brand_context": "",
+            "intent": "informational",
+            "content_type": "informational"
+        }
+        
+        state_normal_res = await controller._step_1_outline(state_normal)
+        self.assertIsNotNone(state_normal_res)
+        
+        controller.outline_repair_service.promote_visitor_intents.assert_called()
+        controller.outline_repair_service.dedupe_faq_against_h2.assert_called()
+        controller.outline_repair_service.refill_faq_after_dedupe.assert_called()
+        controller.outline_repair_service.enrich_brand_utility_faq.assert_called()
+        controller.outline_repair_service.normalize_heading_only_section_types.assert_called()
+        controller.outline_repair_service.clean_echo_and_repetition.assert_called()
+        controller.outline_repair_service.apply_strategic_map_and_roles.assert_called()
+        controller.outline_repair_service.clean_conclusion_heading.assert_called()
+
+        # Test Case 2: disable_outline_repair = True, heading_only_mode = False
+        controller_diag = AsyncWorkflowController()
+        controller_diag.outline_gen.generate = AsyncMock(return_value={
+            "outline": mock_outline,
+            "metadata": {"prompt": "p", "response": "r", "tokens": 10, "model": "m"}
+        })
+        
+        controller_diag.validator.consolidate_faq = MagicMock(side_effect=lambda outline: outline)
+        controller_diag.validator.prune_unsupported_optional_subheadings = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.validator.repair_outline_deterministic = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.validator.enforce_intent_distribution = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller_diag.validator.inject_local_seo = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller_diag.validator.validate_outline_quality = MagicMock(return_value=[])
+        controller_diag.validator.validate_heading_outline_quality = MagicMock(return_value=[])
+        
+        controller_diag.outline_repair_service.promote_visitor_intents = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.outline_repair_service.dedupe_faq_against_h2 = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.outline_repair_service.refill_faq_after_dedupe = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.outline_repair_service.enrich_brand_utility_faq = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.outline_repair_service.normalize_heading_only_section_types = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.outline_repair_service.clean_echo_and_repetition = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.outline_repair_service.apply_strategic_map_and_roles = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag.outline_repair_service.clean_conclusion_heading = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        
+        state_diag = {
+            "input_data": {
+                "title": "Test Title",
+                "keywords": ["test"],
+                "disable_outline_repair": True
+            },
+            "brand_context": "",
+            "intent": "informational",
+            "content_type": "informational"
+        }
+        
+        state_diag_res = await controller_diag._step_1_outline(state_diag)
+        self.assertIsNotNone(state_diag_res)
+        
+        # Mutating operations skipped
+        controller_diag.outline_repair_service.promote_visitor_intents.assert_not_called()
+        controller_diag.outline_repair_service.refill_faq_after_dedupe.assert_not_called()
+        controller_diag.outline_repair_service.enrich_brand_utility_faq.assert_not_called()
+        controller_diag.outline_repair_service.clean_echo_and_repetition.assert_not_called()
+        controller_diag.outline_repair_service.apply_strategic_map_and_roles.assert_not_called()
+        controller_diag.outline_repair_service.clean_conclusion_heading.assert_not_called()
+        
+        # Stability / normalizations executed
+        controller_diag.outline_repair_service.dedupe_faq_against_h2.assert_called()
+        controller_diag.outline_repair_service.normalize_heading_only_section_types.assert_called()
+        
+        self.assertEqual(state_diag_res.get("outline"), mock_outline)
+
+        # Test Case 3: disable_outline_repair = True, heading_only_mode = True
+        controller_diag_head = AsyncWorkflowController()
+        controller_diag_head.outline_gen.generate = AsyncMock(return_value={
+            "outline": mock_outline,
+            "metadata": {"prompt": "p", "response": "r", "tokens": 10, "model": "m"}
+        })
+        
+        controller_diag_head.validator.consolidate_faq = MagicMock(side_effect=lambda outline: outline)
+        controller_diag_head.validator.prune_unsupported_optional_subheadings = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.validator.repair_outline_deterministic = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.validator.enforce_intent_distribution = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller_diag_head.validator.inject_local_seo = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller_diag_head.validator.validate_outline_quality = MagicMock(return_value=[])
+        controller_diag_head.validator.validate_heading_outline_quality = MagicMock(return_value=[])
+        
+        controller_diag_head.outline_repair_service.promote_visitor_intents = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.outline_repair_service.dedupe_faq_against_h2 = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.outline_repair_service.refill_faq_after_dedupe = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.outline_repair_service.enrich_brand_utility_faq = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.outline_repair_service.normalize_heading_only_section_types = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.outline_repair_service.clean_echo_and_repetition = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.outline_repair_service.apply_strategic_map_and_roles = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_head.outline_repair_service.clean_conclusion_heading = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        
+        state_diag_head = {
+            "input_data": {
+                "title": "Test Title",
+                "keywords": ["test"],
+                "disable_outline_repair": True,
+                "heading_only_mode": True
+            },
+            "brand_context": "",
+            "intent": "informational",
+            "content_type": "informational"
+        }
+        
+        state_diag_head_res = await controller_diag_head._step_1_outline(state_diag_head)
+        self.assertIsNotNone(state_diag_head_res)
+        
+        # Mutating operations skipped
+        controller_diag_head.outline_repair_service.enrich_brand_utility_faq.assert_not_called()
+        controller_diag_head.outline_repair_service.clean_conclusion_heading.assert_not_called()
+        
+        # Stability / normalizations executed
+        controller_diag_head.outline_repair_service.dedupe_faq_against_h2.assert_called()
+        controller_diag_head.outline_repair_service.normalize_heading_only_section_types.assert_called()
+        
+        self.assertEqual(state_diag_head_res.get("outline"), mock_outline)
+
+        # Test Case 4: disable_outline_repair = True, content_stage_only_mode = True
+        controller_diag_content = AsyncWorkflowController()
+        controller_diag_content.outline_gen.generate = AsyncMock(return_value={
+            "outline": mock_outline,
+            "metadata": {"prompt": "p", "response": "r", "tokens": 10, "model": "m"}
+        })
+        
+        controller_diag_content.validator.consolidate_faq = MagicMock(side_effect=lambda outline: outline)
+        controller_diag_content.validator.prune_unsupported_optional_subheadings = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.validator.repair_outline_deterministic = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.validator.enforce_intent_distribution = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller_diag_content.validator.inject_local_seo = MagicMock(side_effect=lambda outline, *args, **kwargs: (outline, []))
+        controller_diag_content.validator.validate_outline_quality = MagicMock(return_value=[])
+        controller_diag_content.validator.validate_heading_outline_quality = MagicMock(return_value=[])
+        
+        controller_diag_content.outline_repair_service.promote_visitor_intents = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.outline_repair_service.dedupe_faq_against_h2 = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.outline_repair_service.refill_faq_after_dedupe = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.outline_repair_service.enrich_brand_utility_faq = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.outline_repair_service.normalize_heading_only_section_types = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.outline_repair_service.clean_echo_and_repetition = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.outline_repair_service.apply_strategic_map_and_roles = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        controller_diag_content.outline_repair_service.clean_conclusion_heading = MagicMock(side_effect=lambda outline, *args, **kwargs: outline)
+        
+        state_diag_content = {
+            "input_data": {
+                "title": "Test Title",
+                "keywords": ["test"],
+                "disable_outline_repair": True,
+                "content_stage_only_mode": True
+            },
+            "brand_context": "",
+            "intent": "informational",
+            "content_type": "informational"
+        }
+        
+        state_diag_content_res = await controller_diag_content._step_1_outline(state_diag_content)
+        self.assertIsNotNone(state_diag_content_res)
+        
+        # Mutating operations skipped
+        controller_diag_content.outline_repair_service.enrich_brand_utility_faq.assert_not_called()
+        controller_diag_content.outline_repair_service.clean_conclusion_heading.assert_not_called()
+        
+        # Stability / normalizations executed
+        controller_diag_content.outline_repair_service.dedupe_faq_against_h2.assert_called()
+        controller_diag_content.outline_repair_service.normalize_heading_only_section_types.assert_called()
+        
+        self.assertEqual(state_diag_content_res.get("outline"), mock_outline)
+
 
 if __name__ == "__main__":
     unittest.main()

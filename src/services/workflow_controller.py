@@ -1080,6 +1080,9 @@ class AsyncWorkflowController:
         """Generates the article outline with a soft retry loop for validation failures."""
 
         input_data = state.get("input_data", {})
+        disable_repair = input_data.get("disable_outline_repair", False)
+        if disable_repair:
+            logger.warning("[outline_repair] STRUCTURAL REPAIR DISABLED for diagnostic run")
         title = input_data.get("title") or "Untitled"
         keywords = input_data.get("keywords") or []
         urls_raw = input_data.get("urls", [])
@@ -1377,49 +1380,57 @@ class AsyncWorkflowController:
                 errors.extend(local_errors)
 
                 # TASK 2: Deterministic Repairs (Visitor Intent Promotion)
-                outline = self.outline_repair_service.promote_visitor_intents(
-                    outline,
-                    primary_keyword=state.get("primary_keyword", ""),
-                    entity_phrase=entity_phrase,
-                    serp_brief=state.get("serp_outline_brief")
-                )
+                if not disable_repair:
+                    outline = self.outline_repair_service.promote_visitor_intents(
+                        outline,
+                        primary_keyword=state.get("primary_keyword", ""),
+                        entity_phrase=entity_phrase,
+                        serp_brief=state.get("serp_outline_brief")
+                    )
 
-                # TASK 3: FAQ De-duplication
+                # TASK 3: FAQ De-duplication (safe/normalization operation: kept enabled)
                 outline = self.outline_repair_service.dedupe_faq_against_h2(outline)
                 # TASK 3b: FAQ Refill (restore minimum 4 FAQs after dedupe)
-                outline = self.outline_repair_service.refill_faq_after_dedupe(
-                    outline,
-                    entity_phrase=entity_phrase
-                )
-
-                # TASK 3c: Deterministic FAQ Enrichment (Brand Utility)
-                if state.get("brand_generation_guardrails", {}).get("brand_section_policy") != "do_not_create_dedicated_brand_proof_or_why_choose_sections":
-                    outline = self.outline_repair_service.enrich_brand_utility_faq(
+                if not disable_repair:
+                    outline = self.outline_repair_service.refill_faq_after_dedupe(
                         outline,
-                        serp_brief=state.get("serp_outline_brief", {}),
-                        brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
-                        content_type=content_type,
                         entity_phrase=entity_phrase
                     )
+
+                # TASK 3c: Deterministic FAQ Enrichment (Brand Utility)
+                if not disable_repair:
+                    if state.get("brand_generation_guardrails", {}).get("brand_section_policy") != "do_not_create_dedicated_brand_proof_or_why_choose_sections":
+                        outline = self.outline_repair_service.enrich_brand_utility_faq(
+                            outline,
+                            serp_brief=state.get("serp_outline_brief", {}),
+                            brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
+                            content_type=content_type,
+                            entity_phrase=entity_phrase
+                        )
+                # (safe/normalization operation: kept enabled)
                 outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
 
                 # Apply Anti-Echo and Strategic Map Repairs
-                outline = self.outline_repair_service.clean_echo_and_repetition(
-                    outline, 
-                    title=state.get("title", ""),
-                    primary_keyword=state.get("primary_keyword", "")
-                )
-                outline = self.outline_repair_service.apply_strategic_map_and_roles(
-                    outline,
-                    primary_keyword=state.get("primary_keyword", ""),
-                    content_type=content_type
-                )
+                if not disable_repair:
+                    outline = self.outline_repair_service.clean_echo_and_repetition(
+                        outline, 
+                        title=state.get("title", ""),
+                        primary_keyword=state.get("primary_keyword", "")
+                    )
+                    outline = self.outline_repair_service.apply_strategic_map_and_roles(
+                        outline,
+                        primary_keyword=state.get("primary_keyword", ""),
+                        content_type=content_type,
+                        brand_name=state.get("brand_name", "") or state.get("display_brand_name", ""),
+                        brand_evidence_inventory=self._brand_evidence_inventory_for_outline(state),
+                    )
 
                 # TASK 4: Conclusion Cleanup
-                outline = self.outline_repair_service.clean_conclusion_heading(
-                    outline,
-                    entity_phrase=entity_phrase
-                )
+                if not disable_repair:
+                    outline = self.outline_repair_service.clean_conclusion_heading(
+                        outline,
+                        entity_phrase=entity_phrase
+                    )
 
                 # 3. Quality (Thin, Duplicates, CTAs)
                 if outline_heading_v2_mode:
@@ -1449,19 +1460,21 @@ class AsyncWorkflowController:
                 # heavy validation is relaxed. These do not force a regeneration and
                 # protect practical visitor intents such as brand-assisted booking.
                 outline = self.outline_repair_service.dedupe_faq_against_h2(outline)
-                if state.get("brand_generation_guardrails", {}).get("brand_section_policy") != "do_not_create_dedicated_brand_proof_or_why_choose_sections":
-                    outline = self.outline_repair_service.enrich_brand_utility_faq(
+                if not disable_repair:
+                    if state.get("brand_generation_guardrails", {}).get("brand_section_policy") != "do_not_create_dedicated_brand_proof_or_why_choose_sections":
+                        outline = self.outline_repair_service.enrich_brand_utility_faq(
+                            outline,
+                            serp_brief=state.get("serp_outline_brief", {}),
+                            brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
+                            content_type=content_type,
+                            entity_phrase=entity_phrase,
+                        )
+                outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
+                if not disable_repair:
+                    outline = self.outline_repair_service.clean_conclusion_heading(
                         outline,
-                        serp_brief=state.get("serp_outline_brief", {}),
-                        brand_context=state.get("brand_name", "") or state.get("display_brand_name", ""),
-                        content_type=content_type,
                         entity_phrase=entity_phrase,
                     )
-                outline = self.outline_repair_service.normalize_heading_only_section_types(outline)
-                outline = self.outline_repair_service.clean_conclusion_heading(
-                    outline,
-                    entity_phrase=entity_phrase,
-                )
 
             last_validation_errors = list(errors)
 
@@ -3112,6 +3125,24 @@ class AsyncWorkflowController:
         def has(*patterns: str) -> bool:
             return any(re.search(pattern, heading, re.IGNORECASE) for pattern in patterns)
 
+        is_comparison_heading = has(
+            r"\b(compare|comparison|versus|difference between| vs )\b",
+            "\u0645\u0642\u0627\u0631\u0646",
+            "\u0642\u0627\u0631\u0646",
+            "\u062a\u0642\u0627\u0631\u0646",
+            "\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646",
+            "\u0645\u0642\u0627\u0628\u0644",
+        )
+        is_process_heading = has(
+            r"\b(process|steps|stages|workflow|how it works|how does .+ work)\b",
+            "\u062e\u0637\u0648\u0627\u062a",
+            "\u0645\u0631\u0627\u062d\u0644",
+            "\u0633\u064a\u0631 \u0627\u0644\u0639\u0645\u0644",
+            "\u0622\u0644\u064a\u0629 \u0627\u0644\u0639\u0645\u0644",
+            "\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u0639\u0645\u0644",
+            "\u0643\u064a\u0641 (?:\u064a\u0639\u0645\u0644|\u062a\u0639\u0645\u0644|\u064a\u062a\u0645|\u062a\u062a\u0645)",
+        )
+
         if section_type in {"introduction", "intro"} or str(section.get("heading_level") or "").upper() == "INTRO":
             return "intro"
         if section_type in {"conclusion"} or coverage_role == "conclusion" or has(
@@ -3124,28 +3155,24 @@ class AsyncWorkflowController:
             return "cta"
         if section_type == "faq" or coverage_role == "faq":
             return "faq"
+        if section_type in {"proof", "case_study", "case-study"} or coverage_role == "proof" or axis in {"brand_projects", "projects"}:
+            return "proof"
+        if section_type == "comparison" or coverage_role == "comparison" or axis == "comparison" or is_comparison_heading:
+            return "comparison"
+        if (
+            section_type in {"process", "process_or_how", "how_it_works"}
+            or coverage_role == "process_or_how"
+            or is_process_heading
+        ):
+            return "process"
         if section_type == "core" and coverage_role == "custom_domain_topic" and has(
             r"\b(criteria|evaluate|evaluation|choose|choosing|checklist)\b",
             "\u0645\u0639\u0627\u064a\u064a\u0631",
             "\u062a\u0642\u064a\u064a\u0645",
             "\u0627\u062e\u062a\u064a\u0627\u0631",
+            "\u062a\u062e\u062a\u0627\u0631",
         ):
             return "evaluation_criteria"
-        if section_type in {"proof", "case_study", "case-study"} or coverage_role == "proof" or axis in {"brand_projects", "projects"}:
-            return "proof"
-        if section_type == "comparison" or coverage_role == "comparison" or axis == "comparison" or has(
-            r"\b(compare|comparison|versus| vs )\b",
-            "\u0645\u0642\u0627\u0631\u0646",
-            "\u0645\u0642\u0627\u0628\u0644",
-        ):
-            return "comparison"
-        if section_type in {"process", "process_or_how", "how_it_works"} or coverage_role == "process_or_how" or has(
-            r"\b(process|steps|workflow|how it works)\b",
-            "\u062e\u0637\u0648\u0627\u062a",
-            "\u0645\u0631\u0627\u062d\u0644",
-            "\u0643\u064a\u0641",
-        ):
-            return "process"
         if section_type in {"pricing", "packages"} or axis == "pricing" or has(
             r"\b(price|pricing|cost|budget|investment|value)\b",
             "\u0633\u0639\u0631",
@@ -3455,6 +3482,35 @@ class AsyncWorkflowController:
             str(section.get("heading_text") or ""),
             " ".join(self._subheading_text(item) for item in section.get("subheadings", []) or []),
         ]).lower()
+        clean_comparison_signal = bool(
+            re.search(
+                r"\b(compare|comparison|versus|difference between| vs )\b|"
+                r"\u0645\u0642\u0627\u0631\u0646|\u0642\u0627\u0631\u0646|\u062a\u0642\u0627\u0631\u0646|"
+                r"\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646|\u0645\u0642\u0627\u0628\u0644",
+                heading_blob,
+                re.IGNORECASE,
+            )
+        )
+        clean_process_signal = bool(
+            re.search(
+                r"\b(process|steps|stages|workflow|how it works|how does .+ work)\b|"
+                r"\u062e\u0637\u0648\u0627\u062a|\u0645\u0631\u0627\u062d\u0644|"
+                r"\u0633\u064a\u0631 \u0627\u0644\u0639\u0645\u0644|\u0622\u0644\u064a\u0629 \u0627\u0644\u0639\u0645\u0644|"
+                r"\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u0639\u0645\u0644|"
+                r"\u0643\u064a\u0641 (?:\u064a\u0639\u0645\u0644|\u062a\u0639\u0645\u0644|\u064a\u062a\u0645|\u062a\u062a\u0645)",
+                heading_blob,
+                re.IGNORECASE,
+            )
+        )
+        clean_evaluation_signal = bool(
+            re.search(
+                r"\b(criteria|evaluate|evaluation|choose|choosing|checklist)\b|"
+                r"\u0645\u0639\u0627\u064a\u064a\u0631|\u062a\u0642\u064a\u064a\u0645|"
+                r"\u0627\u062e\u062a\u064a\u0627\u0631|\u062a\u062e\u062a\u0627\u0631",
+                heading_blob,
+                re.IGNORECASE,
+            )
+        )
 
         if section_type == "faq":
             return "faq"
@@ -3481,6 +3537,10 @@ class AsyncWorkflowController:
                 return "brand_offer"
             if section_type in {"features", "differentiation", "differentiators", "brand_support", "brand"}:
                 return "brand_features" if section_type == "features" else "brand_support"
+        if section_type == "comparison" or clean_comparison_signal:
+            return "comparison"
+        if section_type in {"process", "process_or_how", "how_it_works"} or clean_process_signal:
+            return "process"
         if section_type in {"differentiators", "brand_support", "brand", "testimonials"}:
             return "brand_support"
         if any(term in heading_blob for term in ("سعر", "أسعار", "تكلفة", "ميزانية", "price", "pricing", "cost", "budget", "fee")):
@@ -3492,6 +3552,10 @@ class AsyncWorkflowController:
             return "location_area"
         if any(term in heading_blob for term in ("أنواع", "نوع", "خيارات", "تصنيفات", "فئات", "types", "options", "categories")):
             return "category_or_type"
+        if clean_evaluation_signal:
+            return "criteria"
+        if re.search(r"\bhow\b|\u0643\u064a\u0641", heading_blob, re.IGNORECASE):
+            return "criteria"
         if section_type in {"process", "process_or_how"} or any(
             term in heading_blob for term in ("خطوات", "طريقة", "كيف", "process", "steps", "how")
         ):
@@ -4341,10 +4405,47 @@ class AsyncWorkflowController:
             str(section.get("heading_text") or ""),
             " ".join(self._subheading_text(item) for item in section.get("subheadings", []) or []),
         ]).lower()
+        comparison_signal = bool(
+            re.search(
+                r"\b(compare|comparison|versus|difference between| vs )\b|"
+                r"\u0645\u0642\u0627\u0631\u0646|\u0642\u0627\u0631\u0646|\u062a\u0642\u0627\u0631\u0646|"
+                r"\u0627\u0644\u0641\u0631\u0642 \u0628\u064a\u0646|\u0645\u0642\u0627\u0628\u0644",
+                heading_blob,
+                re.IGNORECASE,
+            )
+        )
+        process_signal = bool(
+            re.search(
+                r"\b(process|steps|stages|workflow|how it works|how does .+ work)\b|"
+                r"\u062e\u0637\u0648\u0627\u062a|\u0645\u0631\u0627\u062d\u0644|"
+                r"\u0633\u064a\u0631 \u0627\u0644\u0639\u0645\u0644|\u0622\u0644\u064a\u0629 \u0627\u0644\u0639\u0645\u0644|"
+                r"\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u0639\u0645\u0644|"
+                r"\u0643\u064a\u0641 (?:\u064a\u0639\u0645\u0644|\u062a\u0639\u0645\u0644|\u064a\u062a\u0645|\u062a\u062a\u0645)",
+                heading_blob,
+                re.IGNORECASE,
+            )
+        )
+        evaluation_signal = bool(
+            re.search(
+                r"\b(criteria|evaluate|evaluation|choose|choosing|checklist)\b|"
+                r"\u0645\u0639\u0627\u064a\u064a\u0631|\u062a\u0642\u064a\u064a\u0645|"
+                r"\u0627\u062e\u062a\u064a\u0627\u0631|\u062a\u062e\u062a\u0627\u0631",
+                heading_blob,
+                re.IGNORECASE,
+            )
+        )
         if section_type == "faq":
             return "faq"
         if section_type == "conclusion":
             return "conclusion"
+        if section_type == "comparison" or comparison_signal:
+            return "comparison"
+        if section_type in {"process", "process_or_how", "how_it_works"} or process_signal:
+            return "process"
+        if evaluation_signal:
+            return "criteria"
+        if re.search(r"\bhow\b|\u0643\u064a\u0641", heading_blob, re.IGNORECASE):
+            return "criteria"
         if section_type == "process" or any(term in heading_blob for term in ("process", "steps", "how", "خطوات", "مراحل")):
             return "process"
         if section_type == "comparison" or any(term in heading_blob for term in ("comparison", "compare", "versus", " vs ", "مقارنة")):
@@ -4401,6 +4502,15 @@ class AsyncWorkflowController:
                 continue
 
             original_heading = str(section.get("heading_text") or "")
+            section["heading_text"], claim_issues = self._sanitize_unsupported_brand_claims(
+                original_heading,
+                state,
+                section=section,
+                context="heading",
+                brand_sensitive=self._section_visibly_references_brand(section, state),
+            )
+            for issue in claim_issues:
+                self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
             section["heading_text"] = self._fulfill_and_downgrade_heading(section, state)
             if section["heading_text"] != original_heading:
                 visible_brand = self._section_visibly_references_brand(section, state)
@@ -4605,6 +4715,10 @@ class AsyncWorkflowController:
             for item in section.get("subheadings", []) or []
             if self._subheading_text(item)
         }
+        is_faq = (
+            str(section.get("section_type") or "").lower() == "faq"
+            or str(section.get("commercial_section_role") or "").lower() == "faq"
+        )
         kept = []
         removed = []
         for line in content.splitlines():
@@ -4615,7 +4729,9 @@ class AsyncWorkflowController:
             if re.match(r"^#{3,6}\s+", stripped):
                 heading_text = re.sub(r"^#{3,6}\s+", "", stripped).strip()
                 normalized = re.sub(r"\s+", " ", heading_text).lower()
-                if approved_h3 and normalized in approved_h3:
+                if is_faq and self._faq_heading_is_question(stripped):
+                    kept.append(f"### {heading_text}")
+                elif approved_h3 and normalized in approved_h3:
                     kept.append(f"### {heading_text}")
                 else:
                     removed.append(stripped)
@@ -4837,15 +4953,298 @@ class AsyncWorkflowController:
             return []
         return safe[: max(1, min(limit, len(safe)))]
 
+    def _brand_claim_support_flags(self, state: Dict[str, Any]) -> Dict[str, bool]:
+        """Return category-specific support flags from the brand knowledge pack."""
+        inventory = self._brand_evidence_inventory_for_outline(state)
+        pack = self._positive_brand_pack_text(state)
+
+        def has(pattern: str) -> bool:
+            return bool(re.search(pattern, pack, re.IGNORECASE))
+
+        # Inventory geography excludes portfolio/project locations, so it is
+        # the safe signal for general brand presence.
+        local_presence = bool(inventory.get("explicit_geography"))
+        return {
+            "pricing": bool(inventory.get("pricing_available")),
+            "testimonial": has(
+                r"\b(?:testimonial|client review|customer review|client feedback|customer feedback)\b|"
+                r"(?:\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
+                r"\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
+                r"\u0634\u0647\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621)"
+            ),
+            "certification": has(
+                r"\b(?:certified|certification|accredited|accreditation|licensed)\b|"
+                r"(?:\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|"
+                r"\u0645\u0631\u062e\u0635|\u0634\u0647\u0627\u062f\u0629 \u0645\u0647\u0646\u064a\u0629)"
+            ),
+            "award": has(
+                r"\b(?:award-winning|awarded|won (?:an? )?award|recipient of)\b|"
+                r"(?:\u062d\u0627\u0626\u0632 \u0639\u0644\u0649|\u062d\u0635\u0644 \u0639\u0644\u0649 \u062c\u0627\u0626\u0632\u0629|"
+                r"\u062c\u0648\u0627\u0626\u0632 \u0645\u0648\u062b\u0642\u0629)"
+            ),
+            "local_presence": local_presence,
+            "local_support": local_presence and has(
+                r"\b(?:local support|local customer support|local technical support|on-site support)\b|"
+                r"(?:\u062f\u0639\u0645 \u0645\u062d\u0644\u064a|\u062f\u0639\u0645 \u0641\u0646\u064a \u0645\u062d\u0644\u064a|"
+                r"\u062f\u0639\u0645 \u0645\u064a\u062f\u0627\u0646\u064a)"
+            ),
+        }
+
+    def _unsupported_brand_claim_categories(
+        self,
+        text: str,
+        state: Dict[str, Any],
+        *,
+        brand_sensitive: bool = False,
+    ) -> List[str]:
+        """Classify unsupported brand claims without blocking neutral market guidance."""
+        value = re.sub(r"\s+", " ", str(text or "")).strip()
+        if not value:
+            return []
+
+        brand_context = brand_sensitive or self._brand_name_in_text(value, state) or bool(
+            re.search(
+                r"\b(?:our company|our brand|our packages|the company(?:'s)?|the brand(?:'s)?)\b|"
+                r"(?:\u0634\u0631\u0643\u062a\u0646\u0627|\u0628\u0631\u0627\u0646\u062f\u0646\u0627|"
+                r"\u0628\u0627\u0642\u0627\u062a\u0646\u0627|\u0627\u0644\u0634\u0631\u0643\u0629 \u062a\u0642\u062f\u0645|"
+                r"\u0627\u0644\u0628\u0631\u0627\u0646\u062f \u064a\u0642\u062f\u0645)",
+                value,
+                re.IGNORECASE,
+            )
+        )
+        if not brand_context:
+            return []
+
+        support = self._brand_claim_support_flags(state)
+        issues: List[str] = []
+
+        if re.search(
+            r"\b(?:testimonials?|client experiences?|customer stories|client reviews?|customer reviews?)\b|"
+            r"(?:\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
+            r"\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
+            r"\u0634\u0647\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621)",
+            value,
+            re.IGNORECASE,
+        ) and not support["testimonial"]:
+            issues.append("testimonial")
+
+        brand_pricing_claim = re.search(
+            r"\b(?:our packages?|our prices?|company packages?|brand packages?|"
+            r"offers? (?:a |its )?(?:package|plan)|packages? (?:start|include|available)|"
+            r"prices? (?:start|begin)|pricing (?:starts?|is|at)|fees? (?:start|are)|"
+            r"package (?:starts?|costs?|priced))\b|"
+            r"(?:\u0628\u0627\u0642\u0627\u062a\u0646\u0627|\u0623\u0633\u0639\u0627\u0631\u0646\u0627|"
+            r"\u0628\u0627\u0642\u0627\u062a \u0627\u0644\u0634\u0631\u0643\u0629|"
+            r"\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0634\u0631\u0643\u0629|"
+            r"\u062a\u0642\u062f\u0645 .{0,60}\u0628\u0627\u0642\u0627\u062a|"
+            r"\u062a\u0628\u062f\u0623 \u0627\u0644\u0623\u0633\u0639\u0627\u0631|"
+            r"\u062a\u0628\u062f\u0623 \u0627\u0644\u0628\u0627\u0642\u0627\u062a|"
+            r"\u0628\u0627\u0642\u0629 .{0,30}(?:\u0628\u0633\u0639\u0631|\u062a\u0643\u0644\u0641))",
+            value,
+            re.IGNORECASE,
+        )
+        heading_like_pricing = bool(
+            len(value) <= 140
+            and self._brand_name_in_text(value, state)
+            and re.search(
+                r"\b(?:pricing|prices?|packages?|plans?)\b|"
+                r"(?:\u0623\u0633\u0639\u0627\u0631|\u0628\u0627\u0642\u0627\u062a|\u0628\u0627\u0642\u0629)",
+                value,
+                re.IGNORECASE,
+            )
+        )
+        if (brand_pricing_claim or heading_like_pricing) and not support["pricing"]:
+            issues.append("pricing")
+
+        if re.search(
+            r"\b(?:certified|certification|accredited|accreditation|licensed)\b|"
+            r"(?:\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|"
+            r"\u0645\u0631\u062e\u0635|\u0634\u0647\u0627\u062f\u0629 \u0645\u0647\u0646\u064a\u0629)",
+            value,
+            re.IGNORECASE,
+        ) and not support["certification"]:
+            issues.append("certification")
+
+        if re.search(
+            r"\b(?:award-winning|awarded|won (?:an? )?award|industry awards?)\b|"
+            r"(?:\u062d\u0627\u0626\u0632 \u0639\u0644\u0649|\u062d\u0635\u0644 \u0639\u0644\u0649 \u062c\u0627\u0626\u0632\u0629|"
+            r"\u0627\u0644\u062d\u0627\u0626\u0632 \u0639\u0644\u0649 \u062c\u0648\u0627\u0626\u0632)",
+            value,
+            re.IGNORECASE,
+        ) and not support["award"]:
+            issues.append("award")
+
+        if re.search(
+            r"\b(?:local support|local customer support|local technical support|on-site support)\b|"
+            r"(?:\u062f\u0639\u0645 \u0645\u062d\u0644\u064a|\u062f\u0639\u0645 \u0641\u0646\u064a \u0645\u062d\u0644\u064a|"
+            r"\u062f\u0639\u0645 \u0645\u064a\u062f\u0627\u0646\u064a)",
+            value,
+            re.IGNORECASE,
+        ) and not support["local_support"]:
+            issues.append("local_support")
+
+        if re.search(
+            r"\b(?:local presence|local team|local office|local branch|local market expertise|"
+            r"expertise in the local market|understands? the local market|"
+            r"deep understanding of the local market|based in|headquartered in|office in|branch in)\b|"
+            r"(?:\u062d\u0636\u0648\u0631 \u0645\u062d\u0644\u064a|\u0641\u0631\u064a\u0642 \u0645\u062d\u0644\u064a|"
+            r"\u0645\u0643\u062a\u0628 \u0645\u062d\u0644\u064a|\u0641\u0631\u0639 \u0645\u062d\u0644\u064a|"
+            r"\u062e\u0628\u0631\u0629 \u0641\u064a \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u062d\u0644\u064a|"
+            r"\u0641\u0647\u0645 \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u062d\u0644\u064a|"
+            r"\u064a\u0641\u0647\u0645 \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u062d\u0644\u064a|"
+            r"\u0645\u0642\u0631\u0647\u0627 \u0641\u064a|\u0644\u062f\u064a\u0647\u0627 \u0645\u0643\u062a\u0628 \u0641\u064a|"
+            r"\u0644\u062f\u064a\u0647\u0627 \u0641\u0631\u0639 \u0641\u064a)",
+            value,
+            re.IGNORECASE,
+        ) and not support["local_presence"]:
+            issues.append("local_presence")
+
+        return list(dict.fromkeys(issues))
+
+    def _sanitize_unsupported_brand_claims(
+        self,
+        text: str,
+        state: Dict[str, Any],
+        *,
+        section: Optional[Dict[str, Any]] = None,
+        context: str = "body",
+        brand_sensitive: Optional[bool] = None,
+    ) -> tuple[str, List[str]]:
+        """Remove unsupported brand claims while preserving neutral market guidance."""
+        value = str(text or "")
+        if not value or str(state.get("content_type") or "").lower() != "brand_commercial":
+            return value, []
+
+        if brand_sensitive is None:
+            policy = ""
+            if section:
+                policy = str(
+                    section.get("brand_usage_policy")
+                    or self._brand_usage_policy_for_section(section, state)
+                ).lower()
+            brand_sensitive = policy in {"brand_owned", "brand_cta", "soft_intro_brand"}
+
+        heading_context = context in {"heading", "title", "h1", "meta_title"}
+
+        def category_issues(fragment: str) -> List[str]:
+            return self._unsupported_brand_claim_categories(
+                fragment,
+                state,
+                brand_sensitive=bool(brand_sensitive),
+            )
+
+        if heading_context:
+            issues = category_issues(value)
+            if not issues:
+                return value, []
+
+            cleaned = value
+            removal_patterns = {
+                "testimonial": (
+                    r"\b(?:and\s+)?(?:customer testimonials?|client testimonials?|client experiences?|"
+                    r"customer stories|client reviews?|customer reviews?|testimonials?)\b|"
+                    r"\s*(?:\u0648)?\s*(?:\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
+                    r"\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
+                    r"\u0634\u0647\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621)"
+                ),
+                "pricing": (
+                    r"\b(?:and\s+)?(?:pricing|prices?|packages?|plans?)\b|"
+                    r"\s*(?:\u0648)?\s*(?:\u0627\u0644\u0623\u0633\u0639\u0627\u0631|"
+                    r"\u0623\u0633\u0639\u0627\u0631|\u0627\u0644\u0628\u0627\u0642\u0627\u062a|"
+                    r"\u0628\u0627\u0642\u0627\u062a|\u0628\u0627\u0642\u0629)"
+                ),
+                "certification": (
+                    r"\b(?:and\s+)?(?:certified|certification|accredited|accreditation|licensed)\b|"
+                    r"\s*(?:\u0648)?\s*(?:\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|"
+                    r"\u0645\u0631\u062e\u0635|\u0634\u0647\u0627\u062f\u0629 \u0645\u0647\u0646\u064a\u0629)"
+                ),
+                "award": (
+                    r"\b(?:and\s+)?(?:award-winning|awarded|industry awards?)\b|"
+                    r"\s*(?:\u0648)?\s*(?:\u062d\u0627\u0626\u0632 \u0639\u0644\u0649 \u062c\u0648\u0627\u0626\u0632|"
+                    r"\u0627\u0644\u062d\u0627\u0626\u0632 \u0639\u0644\u0649 \u062c\u0648\u0627\u0626\u0632)"
+                ),
+                "local_support": (
+                    r"\b(?:and\s+)?(?:local support|local customer support|local technical support|on-site support)\b|"
+                    r"\s*(?:\u0648)?\s*(?:\u062f\u0639\u0645 \u0645\u062d\u0644\u064a|"
+                    r"\u062f\u0639\u0645 \u0641\u0646\u064a \u0645\u062d\u0644\u064a|\u062f\u0639\u0645 \u0645\u064a\u062f\u0627\u0646\u064a)"
+                ),
+                "local_presence": (
+                    r"\b(?:and\s+)?(?:local presence|local team|local office|local branch|"
+                    r"local market expertise|expertise in the local market|understanding the local market)\b|"
+                    r"\s*(?:\u0648)?\s*(?:\u062d\u0636\u0648\u0631 \u0645\u062d\u0644\u064a|"
+                    r"\u0641\u0631\u064a\u0642 \u0645\u062d\u0644\u064a|\u0645\u0643\u062a\u0628 \u0645\u062d\u0644\u064a|"
+                    r"\u0641\u0631\u0639 \u0645\u062d\u0644\u064a|\u062e\u0628\u0631\u0629 \u0641\u064a \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u062d\u0644\u064a|"
+                    r"\u0641\u0647\u0645 \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u062d\u0644\u064a)"
+                ),
+            }
+            for issue in issues:
+                cleaned = re.sub(removal_patterns[issue], " ", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s+", " ", cleaned)
+            cleaned = re.sub(r"\s*([|:,-])\s*(?=$|[|:,-])", " ", cleaned)
+            cleaned = re.sub(r"\b(?:and|or)\s*$", "", cleaned, flags=re.IGNORECASE)
+            cleaned = cleaned.strip(" -,:|")
+            brand_name = str(state.get("display_brand_name") or state.get("brand_name") or "").strip()
+            if not cleaned or cleaned.casefold() == brand_name.casefold():
+                base = str(state.get("primary_keyword") or state.get("raw_title") or "").strip()
+                cleaned = base or (
+                    "\u0623\u062f\u0644\u0629 \u0648\u0642\u062f\u0631\u0627\u062a \u0645\u0648\u062b\u0642\u0629"
+                    if str(state.get("article_language") or "").lower().startswith("ar")
+                    else "Documented Capabilities and Evidence"
+                )
+                if context in {"title", "h1", "meta_title"} and brand_name and brand_name.casefold() not in cleaned.casefold():
+                    cleaned = f"{cleaned} | {brand_name}"
+            return cleaned, issues
+
+        issues: List[str] = []
+        sentence_split_re = re.compile(r"(?<=[.!?\u061f])\s+")
+        processed_lines: List[str] = []
+        for line in value.splitlines():
+            if not line.strip():
+                processed_lines.append("")
+                continue
+            heading_match = re.match(r"^(\s*#{1,6}\s+)(.*)$", line)
+            if heading_match:
+                clean_heading, heading_issues = self._sanitize_unsupported_brand_claims(
+                    heading_match.group(2),
+                    state,
+                    section=section,
+                    context="heading",
+                    brand_sensitive=brand_sensitive,
+                )
+                issues.extend(heading_issues)
+                processed_lines.append(heading_match.group(1) + clean_heading)
+                continue
+
+            kept_sentences: List[str] = []
+            for sentence in sentence_split_re.split(line):
+                sentence_issues = category_issues(sentence)
+                if sentence_issues:
+                    issues.extend(sentence_issues)
+                    continue
+                kept_sentences.append(sentence.strip())
+            if kept_sentences:
+                processed_lines.append(" ".join(kept_sentences))
+
+        cleaned_lines: List[str] = []
+        for line in processed_lines:
+            if not line and (not cleaned_lines or not cleaned_lines[-1]):
+                continue
+            cleaned_lines.append(line)
+        cleaned = "\n".join(cleaned_lines).strip()
+        if context == "meta_description" and not cleaned and issues:
+            topic = str(state.get("primary_keyword") or state.get("raw_title") or "").strip()
+            is_ar = str(state.get("article_language") or "").lower().startswith("ar")
+            if topic:
+                cleaned = (
+                    f"\u062f\u0644\u064a\u0644 \u0639\u0645\u0644\u064a \u062d\u0648\u0644 {topic} \u0644\u0641\u0647\u0645 \u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a \u0648\u0627\u0644\u0645\u0639\u0627\u064a\u064a\u0631 \u0642\u0628\u0644 \u0627\u062a\u062e\u0627\u0630 \u0627\u0644\u0642\u0631\u0627\u0631."
+                    if is_ar
+                    else f"A practical guide to {topic}, the available options, and the criteria to review before deciding."
+                )
+        return cleaned, list(dict.fromkeys(issues))
+
     def _pack_has_explicit_testimonial_evidence(self, state: Dict[str, Any]) -> bool:
         """Detect explicit testimonial/review evidence in the page knowledge pack only."""
-        pack = str(state.get("brand_page_knowledge_pack_context") or "")
-        if not pack and state.get("brand_page_narrative_briefs"):
-            pack = "\n".join(str(brief.get("narrative_brief") or "") for brief in state.get("brand_page_narrative_briefs") or [])
-        return bool(
-            re.search(r"\b(testimonial|testimonials|review|reviews|client feedback|customer feedback)\b", pack, re.IGNORECASE)
-            or re.search(r"تقييمات|مراجعات|آراء العملاء|تجارب العملاء|شهادات العملاء", pack)
-        )
+        return self._brand_claim_support_flags(state)["testimonial"]
 
     def _downgrade_unsupported_testimonial_heading(self, section: Dict[str, Any], state: Dict[str, Any]) -> None:
         """Remove testimonial/client-experience wording when the pack does not support testimonials."""
@@ -4872,7 +5271,137 @@ class AsyncWorkflowController:
         if issue not in issues:
             issues.append(issue)
 
-    def _sanitize_commercial_faq_content(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+    def _is_faq_planning_text(self, text: str) -> bool:
+        """Detect leaked writing instructions without treating normal advice as planning text."""
+        value = re.sub(r"\s+", " ", str(text or "")).strip()
+        if not value:
+            return False
+        if re.search(
+            r"^\s*(?:\u0627\u0643\u062a\u0628|\u0627\u0630\u0643\u0631|"
+            r"\u0642\u0645 \u0628(?:\u062a\u0648\u0636\u064a\u062d|\u0625\u0636\u0627\u0641\u0629|\u0643\u062a\u0627\u0628\u0629)|"
+            r"\u0631\u0643\u0632 \u0639\u0644\u0649|\u062a\u062c\u0646\u0628 \u0630\u0643\u0631|"
+            r"write|mention|writer should|section should|the section must|focus (?:this section )?on)\b",
+            value,
+            re.IGNORECASE,
+        ):
+            return True
+        meta = re.search(
+            r"\b(?:writer|section|outline|heading|instruction|prompt|article|draft|response|answer|content)\b|"
+            r"\u0627\u0644\u0643\u0627\u062a\u0628|\u0647\u0630\u0627 \u0627\u0644\u0642\u0633\u0645|\u0627\u0644\u0633\u0643\u0634\u0646|"
+            r"\u0627\u0644\u0639\u0646\u0648\u0627\u0646|\u0627\u0644\u0645\u062e\u0637\u0637|\u0627\u0644\u062a\u0639\u0644\u064a\u0645\u0627\u062a|"
+            r"\u0627\u0644\u0628\u0631\u0648\u0645\u0628\u062a|\u0627\u0644\u0645\u0642\u0627\u0644|\u0627\u0644\u0625\u062c\u0627\u0628\u0629|\u0627\u0644\u0645\u062d\u062a\u0648\u0649",
+            value,
+            re.IGNORECASE,
+        )
+        directive = re.search(
+            r"\b(?:should|must|include|avoid|focus|write|mention|explain|ensure|add)\b|"
+            r"\u064a\u062c\u0628 \u0623\u0646|\u064a\u0646\u0628\u063a\u064a \u0623\u0646|\u0623\u0636\u0641|"
+            r"\u0648\u0636\u062d|\u0627\u0630\u0643\u0631|\u062a\u062c\u0646\u0628|\u0631\u0643\u0632",
+            value,
+            re.IGNORECASE,
+        )
+        formatting = re.search(
+            r"\b(?:h[1-6]|bullet points?|paragraphs?|word count|cta|format)\b|"
+            r"\u0641\u0642\u0631\u0627\u062a|\u0646\u0642\u0627\u0637|\u0639\u062f\u062f \u0627\u0644\u0643\u0644\u0645\u0627\u062a|\u062a\u0646\u0633\u064a\u0642",
+            value,
+            re.IGNORECASE,
+        )
+        return bool((meta and directive) or (formatting and directive))
+
+    def _faq_sensitive_topic(self, question: str) -> str:
+        patterns = (
+            ("pricing", r"\b(?:price|pricing|cost|fee|quote|packages?|plans?)\b|\u0633\u0639\u0631|\u0623\u0633\u0639\u0627\u0631|\u062a\u0643\u0644\u0641|\u062a\u0633\u0639\u064a\u0631|\u0628\u0627\u0642\u0627\u062a?"),
+            ("timeline", r"\b(?:timeline|delivery time|turnaround|how long|duration)\b|\u0645\u062f\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630|\u0645\u062f\u0629 \u0627\u0644\u062a\u0633\u0644\u064a\u0645|\u0643\u0645 \u064a\u0633\u062a\u063a\u0631\u0642"),
+            ("guarantee", r"\b(?:guarantee|guaranteed|warrant(?:y|ies))\b|\u0636\u0645\u0627\u0646|\u0645\u0636\u0645\u0648\u0646"),
+            ("support", r"\b(?:technical support|customer support|maintenance|aftercare|after launch)\b|\u062f\u0639\u0645 \u0641\u0646\u064a|\u0635\u064a\u0627\u0646\u0629|\u062f\u0639\u0645 \u0628\u0639\u062f"),
+            ("client_count", r"\b(?:number of clients|how many clients|client count|projects completed|how many projects)\b|\u0639\u062f\u062f \u0627\u0644\u0639\u0645\u0644\u0627\u0621|\u0643\u0645 \u0639\u0645\u064a\u0644|\u0639\u062f\u062f \u0627\u0644\u0645\u0634\u0627\u0631\u064a\u0639|\u0643\u0645 \u0645\u0634\u0631\u0648\u0639"),
+            ("certification", r"\b(?:certified|certification|accredited|licensed|awards?)\b|\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|\u0634\u0647\u0627\u062f\u0627\u062a?|\u062c\u0648\u0627\u0626\u0632?"),
+            ("testimonial", r"\b(?:testimonials?|reviews?|ratings?|client feedback)\b|\u062a\u0642\u064a\u064a\u0645\u0627\u062a|\u0645\u0631\u0627\u062c\u0639\u0627\u062a|\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621"),
+        )
+        for topic, pattern in patterns:
+            if re.search(pattern, str(question or ""), re.IGNORECASE):
+                return topic
+        return ""
+
+    def _faq_question_references_brand(self, question: str, state: Dict[str, Any]) -> bool:
+        return self._brand_name_in_text(question, state) or bool(
+            re.search(
+                r"\b(?:your company|your brand|do you|does the company|company's)\b|"
+                r"\u0644\u062f\u064a\u0643\u0645|\u0639\u0646\u062f\u0643\u0645|\u0627\u0644\u0634\u0631\u0643\u0629|\u0627\u0644\u0628\u0631\u0627\u0646\u062f",
+                str(question or ""),
+                re.IGNORECASE,
+            )
+        )
+
+    def _positive_brand_pack_text(self, state: Dict[str, Any]) -> str:
+        pack = str(state.get("brand_page_knowledge_pack_context") or "")
+        if not pack and state.get("brand_page_narrative_briefs"):
+            pack = "\n".join(
+                str(item.get("narrative_brief") or "")
+                for item in state.get("brand_page_narrative_briefs") or []
+                if isinstance(item, dict)
+            )
+        negative = re.compile(
+            r"\b(?:no explicit|not observed|not stated|not found|without explicit|absent|unsupported)\b|"
+            r"\u0644\u0627 \u064a\u0648\u062c\u062f|\u063a\u064a\u0631 \u0645\u0630\u0643\u0648\u0631|\u0644\u0645 \u064a\u0630\u0643\u0631|\u063a\u064a\u0631 \u0645\u062f\u0639\u0648\u0645",
+            re.IGNORECASE,
+        )
+        return "\n".join(line for line in pack.splitlines() if line.strip() and not negative.search(line))
+
+    def _faq_has_supporting_evidence(self, topic: str, state: Dict[str, Any]) -> bool:
+        inventory = self._brand_evidence_inventory_for_outline(state)
+        if topic == "pricing":
+            return bool(inventory.get("pricing_available"))
+        pack = self._positive_brand_pack_text(state)
+        patterns = {
+            "timeline": r"\b(?:delivery timeline|turnaround|delivered within|delivery time)\b|\u0645\u062f\u0629 \u0627\u0644\u062a\u0633\u0644\u064a\u0645|\u0645\u062f\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630|\u062e\u0644\u0627\u0644 \d+",
+            "guarantee": r"\b(?:guarantee|guaranteed|warranty)\b|\u0636\u0645\u0627\u0646|\u0645\u0636\u0645\u0648\u0646",
+            "support": r"\b(?:technical support|customer support|maintenance|aftercare|post-launch support)\b|\u062f\u0639\u0645 \u0641\u0646\u064a|\u0635\u064a\u0627\u0646\u0629|\u062f\u0639\u0645 \u0628\u0639\u062f",
+            "client_count": r"\b\d+\+?\s+(?:clients?|projects?)\b|\d+\+?\s*(?:\u0639\u0645\u064a\u0644|\u0645\u0634\u0631\u0648\u0639)",
+            "certification": r"\b(?:certified|certification|accredited|licensed|award-winning|awarded)\b|\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|\u0645\u0631\u062e\u0635|\u062c\u0627\u0626\u0632\u0629",
+            "testimonial": r"\b(?:testimonial|client review|customer review|client feedback)\b|\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
+        }
+        pattern = patterns.get(topic)
+        return bool(pattern and re.search(pattern, pack, re.IGNORECASE))
+
+    def _faq_market_guidance_replacement(self, topic: str, state: Dict[str, Any]) -> tuple[str, str]:
+        is_ar = str(state.get("article_language") or "").lower().startswith("ar")
+        if is_ar:
+            replacements = {
+                "pricing": ("\u0645\u0627 \u0627\u0644\u0639\u0648\u0627\u0645\u0644 \u0627\u0644\u062a\u064a \u062a\u0624\u062b\u0631 \u0639\u0644\u0649 \u0627\u0644\u062a\u0643\u0644\u0641\u0629\u061f", "\u062a\u062a\u0623\u062b\u0631 \u0627\u0644\u062a\u0643\u0644\u0641\u0629 \u0628\u0646\u0637\u0627\u0642 \u0627\u0644\u0639\u0645\u0644\u060c \u0648\u0627\u0644\u062a\u062e\u0635\u064a\u0635\u060c \u0648\u0627\u0644\u062a\u0643\u0627\u0645\u0644\u0627\u062a\u060c \u0648\u0627\u0644\u062f\u0639\u0645\u061b \u0644\u0630\u0644\u0643 \u064a\u0641\u0636\u0644 \u0645\u0642\u0627\u0631\u0646\u0629 \u0646\u0637\u0627\u0642 \u0645\u0643\u062a\u0648\u0628 \u0628\u062f\u0644\u0627 \u0645\u0646 \u0631\u0642\u0645 \u0639\u0627\u0645."),
+                "timeline": ("\u0645\u0627 \u0627\u0644\u0639\u0648\u0627\u0645\u0644 \u0627\u0644\u062a\u064a \u062a\u0624\u062b\u0631 \u0639\u0644\u0649 \u0645\u062f\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630\u061f", "\u062a\u0639\u062a\u0645\u062f \u0627\u0644\u0645\u062f\u0629 \u0639\u0644\u0649 \u0627\u0644\u0646\u0637\u0627\u0642\u060c \u0648\u0633\u0631\u0639\u0629 \u0627\u0644\u0627\u0639\u062a\u0645\u0627\u062f\u060c \u0648\u0627\u0644\u062a\u0643\u0627\u0645\u0644\u0627\u062a\u060c \u0648\u062c\u0648\u0644\u0627\u062a \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629\u060c \u0648\u064a\u0646\u0628\u063a\u064a \u062a\u062b\u0628\u064a\u062a\u0647\u0627 \u0641\u064a \u062e\u0637\u0629 \u0627\u0644\u0645\u0634\u0631\u0648\u0639."),
+                "guarantee": ("\u0645\u0627 \u0627\u0644\u0630\u064a \u064a\u062c\u0628 \u062a\u0648\u0636\u064a\u062d\u0647 \u0628\u0634\u0623\u0646 \u0627\u0644\u0636\u0645\u0627\u0646\u061f", "\u0648\u0636\u062d \u0645\u0627 \u064a\u063a\u0637\u064a\u0647 \u0627\u0644\u0627\u062a\u0641\u0627\u0642\u060c \u0648\u0627\u0644\u0627\u0633\u062a\u062b\u0646\u0627\u0621\u0627\u062a\u060c \u0648\u0645\u0633\u0624\u0648\u0644\u064a\u0629 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0623\u0648 \u0627\u0644\u0635\u064a\u0627\u0646\u0629 \u0628\u0639\u062f \u0627\u0644\u062a\u0633\u0644\u064a\u0645."),
+                "support": ("\u0645\u0627 \u0627\u0644\u0630\u064a \u064a\u062c\u0628 \u062a\u0648\u0636\u064a\u062d\u0647 \u0628\u0634\u0623\u0646 \u0627\u0644\u062f\u0639\u0645 \u0628\u0639\u062f \u0627\u0644\u062a\u0633\u0644\u064a\u0645\u061f", "\u0648\u0636\u062d \u0646\u0637\u0627\u0642 \u0627\u0644\u062f\u0639\u0645\u060c \u0648\u0642\u0646\u0648\u0627\u062a \u0627\u0644\u062a\u0648\u0627\u0635\u0644\u060c \u0648\u0645\u0627 \u064a\u0639\u062f \u0635\u064a\u0627\u0646\u0629 \u0636\u0645\u0646 \u0627\u0644\u0646\u0637\u0627\u0642 \u0623\u0648 \u0639\u0645\u0644\u0627 \u0625\u0636\u0627\u0641\u064a\u0627."),
+                "client_count": ("\u0645\u0627 \u0627\u0644\u0623\u062f\u0644\u0629 \u0627\u0644\u062a\u064a \u062a\u0633\u0627\u0639\u062f \u0639\u0644\u0649 \u062a\u0642\u064a\u064a\u0645 \u062e\u0628\u0631\u0629 \u0627\u0644\u0645\u0632\u0648\u062f\u061f", "\u0642\u064a\u0645 \u0627\u0644\u062e\u0628\u0631\u0629 \u0645\u0646 \u062e\u0644\u0627\u0644 \u0623\u0645\u062b\u0644\u0629 \u0645\u0648\u062b\u0642\u0629\u060c \u0648\u0648\u0636\u0648\u062d \u0627\u0644\u0646\u0637\u0627\u0642\u060c \u0648\u062c\u0648\u062f\u0629 \u0627\u0644\u0645\u062e\u0631\u062c\u0627\u062a\u060c \u0644\u0627 \u0628\u0639\u062f\u062f \u0639\u0627\u0645 \u063a\u064a\u0631 \u0645\u0648\u062b\u0642."),
+                "certification": ("\u0643\u064a\u0641 \u064a\u0645\u0643\u0646 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0627\u0639\u062a\u0645\u0627\u062f\u0627\u062a\u061f", "\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0645\u0635\u062f\u0631 \u0627\u0644\u0631\u0633\u0645\u064a\u060c \u0648\u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0629\u060c \u0648\u0639\u0644\u0627\u0642\u0629 \u0627\u0644\u0627\u0639\u062a\u0645\u0627\u062f \u0628\u0646\u0637\u0627\u0642 \u0627\u0644\u062e\u062f\u0645\u0629."),
+                "testimonial": ("\u0643\u064a\u0641 \u064a\u0645\u0643\u0646 \u062a\u0642\u064a\u064a\u0645 \u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621 \u0628\u0635\u0648\u0631\u0629 \u0645\u0648\u062b\u0648\u0642\u0629\u061f", "\u0627\u0628\u062d\u062b \u0639\u0646 \u062a\u062c\u0627\u0631\u0628 \u0645\u0646\u0633\u0648\u0628\u0629 \u0625\u0644\u0649 \u0645\u0635\u0627\u062f\u0631 \u0648\u0627\u0636\u062d\u0629 \u0648\u062a\u0641\u0627\u0635\u064a\u0644 \u0642\u0627\u0628\u0644\u0629 \u0644\u0644\u062a\u062d\u0642\u0642."),
+            }
+        else:
+            replacements = {
+                "pricing": ("What factors affect the cost?", "Cost depends on scope, customization, integrations, and support, so compare a written scope rather than a generic figure."),
+                "timeline": ("What factors affect the implementation timeline?", "The timeline depends on scope, approval speed, integrations, and review rounds, and should be confirmed in a project plan."),
+                "guarantee": ("What should be clarified about guarantees?", "Clarify coverage, exclusions, correction periods, and post-delivery responsibility."),
+                "support": ("What should be clarified about support after delivery?", "Clarify support scope, contact channels, and which maintenance is included or separately billed."),
+                "client_count": ("What evidence helps evaluate a provider's experience?", "Use documented examples, clear scope, and output quality rather than an unverified headline count."),
+                "certification": ("How can certifications be verified?", "Check the issuing source, validity, and relevance to the service."),
+                "testimonial": ("How can customer experiences be evaluated reliably?", "Look for attributable experiences with clear sources and verifiable details."),
+            }
+        return replacements.get(topic, ("What should be clarified before choosing?", "Compare the written scope, evidence, responsibilities, and exclusions before deciding."))
+
+    def _faq_heading_is_question(self, heading: str) -> bool:
+        value = re.sub(r"^\s*#{3,6}\s+", "", str(heading or "")).strip()
+        if value.endswith(("?", "\u061f", "ØŸ")):
+            return True
+        return bool(
+            re.match(
+                r"^(?:what|why|how|when|where|who|which|is|are|can|does|do|should|"
+                r"\u0645\u0627|\u0645\u0627\u0630\u0627|\u0644\u0645\u0627\u0630\u0627|\u0643\u064a\u0641|\u0645\u062a\u0649|\u0623\u064a\u0646|\u0647\u0644|\u0645\u0646|\u0623\u064a|\u0643\u0645)",
+                value,
+                re.IGNORECASE,
+            )
+        )
+
+    def _sanitize_commercial_faq_content_legacy(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
         """Remove leaked FAQ planning lines while preserving H3 question/answer blocks."""
         if not content or not self._is_commercial_faq_section(section, state):
             return content
@@ -4928,6 +5457,100 @@ class AsyncWorkflowController:
 
         return "\n".join(sanitized_lines).strip()
 
+    def _sanitize_commercial_faq_content(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
+        """Sanitize FAQ blocks, remove planning leakage, and downgrade unsupported brand questions."""
+        if not content or not self._is_commercial_faq_section(section, state):
+            return content
+        if not re.search(r"(?m)^#{3,6}\s+", content):
+            self._record_section_quality_issue(section, "faq_missing_h3_blocks")
+            return content
+
+        lines = str(content).splitlines()
+        first_h3_idx = next((idx for idx, line in enumerate(lines) if re.match(r"^\s*#{3,6}\s+", line)), None)
+        if first_h3_idx is None:
+            return content
+        if first_h3_idx > 0:
+            self._record_section_quality_issue(section, "faq_preamble_removed")
+
+        blocks: List[List[str]] = []
+        current: List[str] = []
+        for line in lines[first_h3_idx:]:
+            if re.match(r"^\s*#{3,6}\s+", line) and current:
+                blocks.append(current)
+                current = [line]
+            else:
+                current.append(line)
+        if current:
+            blocks.append(current)
+
+        legacy_leak_pattern = re.compile(
+            r"^\s*(?:Ø§Ø¨Ø¯Ø£|ÙˆØ¶Ø­|Ù‚Ø§Ø±Ù†|Ø§Ø³Ø£Ù„|Ø±Ø§Ø¬Ø¹|Ø­Ø¯Ø¯|ØªØ£ÙƒØ¯|"
+            r"\u0627\u0628\u062f\u0623|\u0627\u0628\u062f\u0626|\u0648\u0636\u062d|\u0642\u0627\u0631\u0646|"
+            r"\u0627\u0633\u0623\u0644|\u0627\u0633\u0626\u0644|\u0631\u0627\u062c\u0639|\u062d\u062f\u062f|\u062a\u0623\u0643\u062f|"
+            r"start|clarify|compare|ask|review|define|check)\b",
+            re.IGNORECASE,
+        )
+        seen_answers: set[str] = set()
+        seen_questions: set[str] = set()
+        sanitized_blocks: List[str] = []
+
+        for block in blocks:
+            heading = block[0].strip() if block else ""
+            question = re.sub(r"^\s*#{3,6}\s+", "", heading).strip()
+            if not self._faq_heading_is_question(heading):
+                self._record_section_quality_issue(section, "faq_non_question_heading_removed")
+                continue
+            if not question.endswith(("?", "\u061f", "ØŸ")):
+                question += "\u061f" if re.search(r"[\u0600-\u06FF]", question) else "?"
+                heading = f"### {question}"
+            question_key = re.sub(r"[^\w\u0600-\u06FF]+", " ", question).strip().casefold()
+            if not question_key or question_key in seen_questions:
+                self._record_section_quality_issue(section, "faq_duplicate_question_removed")
+                continue
+
+            body_text = "\n".join(block[1:]).strip()
+            paragraphs = [item.strip() for item in re.split(r"\n\s*\n", body_text) if item.strip()]
+            kept: List[str] = []
+            for idx, paragraph in enumerate(paragraphs):
+                answer_key = re.sub(r"\s+", " ", paragraph).strip().casefold()
+                if not answer_key or answer_key in seen_answers:
+                    self._record_section_quality_issue(section, "faq_duplicate_answer_removed")
+                    continue
+                if self._is_faq_planning_text(paragraph) or (kept and legacy_leak_pattern.search(paragraph)):
+                    self._record_section_quality_issue(section, "faq_repair_leak_removed")
+                    continue
+                seen_answers.add(answer_key)
+                kept.append(paragraph)
+
+            topic = self._faq_sensitive_topic(question)
+            brand_question = self._faq_question_references_brand(question, state)
+            answer_mentions_brand = any(self._brand_name_in_text(item, state) for item in kept)
+            if topic and (brand_question or answer_mentions_brand) and not self._faq_has_supporting_evidence(topic, state):
+                replacement_question, replacement_answer = self._faq_market_guidance_replacement(topic, state)
+                heading = f"### {replacement_question}"
+                question_key = re.sub(r"[^\w\u0600-\u06FF]+", " ", replacement_question).strip().casefold()
+                kept = [replacement_answer]
+                self._record_section_quality_issue(section, f"faq_unsupported_brand_question_downgraded:{topic}")
+                action = {"action": "downgraded_to_market_guidance", "topic": topic, "original_question": question}
+                if action not in section.setdefault("faq_evidence_actions", []):
+                    section["faq_evidence_actions"].append(action)
+                logger.warning(
+                    "[commercial_faq_evidence_gate] Downgraded unsupported brand FAQ topic=%s question='%s'.",
+                    topic,
+                    question,
+                )
+
+            if not kept:
+                self._record_section_quality_issue(section, "faq_empty_answer_removed")
+                continue
+            if question_key in seen_questions:
+                self._record_section_quality_issue(section, "faq_duplicate_question_removed")
+                continue
+            seen_questions.add(question_key)
+            sanitized_blocks.append(f"{heading}\n" + "\n\n".join(kept))
+
+        return "\n\n".join(sanitized_blocks).strip()
+
     def _evaluate_section_role_fulfillment(self, section: Dict[str, Any], content: str, state: Dict[str, Any]) -> Dict[str, Any]:
         """Small deterministic semantic gate for section job fulfillment."""
         if str(state.get("content_type") or "").lower() != "brand_commercial":
@@ -4972,6 +5595,16 @@ class AsyncWorkflowController:
                 }
 
         if self._is_commercial_faq_section(section, state):
+            faq_body_lines = [
+                line.strip()
+                for line in text.splitlines()
+                if line.strip() and not re.match(r"^\s*#{3,6}\s+", line)
+            ]
+            if any(self._is_faq_planning_text(line) for line in faq_body_lines):
+                return {
+                    "fulfillment_status": "unsupported",
+                    "fulfillment_reason": "faq repair leak remains in final content",
+                }
             if re.search(r"faq_preamble_removed|faq_repair_leak_removed|faq_duplicate_answer_removed", " ".join(section.get("section_quality_issues", []))):
                 return {
                     "fulfillment_status": "weak",
@@ -4980,6 +5613,15 @@ class AsyncWorkflowController:
             h3_count = len(re.findall(r"(?m)^#{3,6}\s+", text))
             if h3_count < 3:
                 return {"fulfillment_status": "weak", "fulfillment_reason": "faq section has too few H3 question blocks"}
+            for block in re.split(r"(?m)(?=^#{3,6}\s+)", text):
+                if not re.match(r"^\s*#{3,6}\s+", block):
+                    continue
+                lines = block.splitlines()
+                if not self._faq_heading_is_question(lines[0]) or not "\n".join(lines[1:]).strip():
+                    return {
+                        "fulfillment_status": "weak",
+                        "fulfillment_reason": "faq section contains a malformed question or empty answer",
+                    }
 
         if role == "comparison" or str(section.get("section_type") or "").lower() == "comparison":
             if not any(self._is_decision_useful_markdown_table(block) for _, _, block in self._extract_markdown_tables(text)):
@@ -5249,6 +5891,66 @@ class AsyncWorkflowController:
         text = re.sub(r"([^\s])(\u0644\u0627\s+\u064a)", r"\1 \2", str(text or ""))
         return text
 
+    def _normalize_intro_paragraph(self, paragraph: str) -> str:
+        """Normalize an intro paragraph for stable duplicate detection."""
+        normalized = str(paragraph or "")
+        normalized = re.sub(r"\[([^\]]+)\]\((?:https?://|www\.)[^)]+\)", r"\1", normalized, flags=re.IGNORECASE)
+        normalized = re.sub(r"(?:https?://|www\.)\S+", "", normalized, flags=re.IGNORECASE)
+        normalized = re.sub(r"[*_`#>]+", " ", normalized)
+        normalized = re.sub(r"[\u064B-\u065F\u0670]", "", normalized)
+        normalized = re.sub(r"[^\w\u0600-\u06FF]+", " ", normalized, flags=re.UNICODE)
+        return re.sub(r"\s+", " ", normalized).strip().casefold()
+
+    def _is_intro_cta(self, paragraph: str, state: Dict[str, Any]) -> bool:
+        """Return True when a paragraph asks the reader to take a practical next step."""
+        text = str(paragraph or "")
+        folded = text.casefold()
+        brand_url = str(state.get("brand_url") or "").strip().casefold()
+        has_link = bool(re.search(r"\[[^\]]+\]\((?:https?://|www\.)[^)]+\)", text, flags=re.IGNORECASE))
+        has_url = bool(re.search(r"(?:https?://|www\.)\S+", text, flags=re.IGNORECASE))
+        if has_link or has_url or (brand_url and brand_url in folded):
+            return True
+
+        cta_patterns = (
+            r"(?:^|\s)(?:\u0631\u0627\u062c\u0639|\u0627\u0628\u062f\u0623|\u0627\u0628\u062f\u0626|\u062a\u0648\u0627\u0635\u0644|\u0632\u0631|\u0627\u0637\u0644\u0628|\u0627\u062d\u062c\u0632|\u0627\u0643\u062a\u0634\u0641|\u062a\u0639\u0631\u0641|\u0642\u0627\u0631\u0646)(?:\s|$)",
+            r"\b(?:visit|review|explore|contact|start|request|book|call|compare)\b",
+        )
+        return any(re.search(pattern, folded, flags=re.IGNORECASE) for pattern in cta_patterns)
+
+    def _is_intro_brand_bridge(self, paragraph: str, state: Dict[str, Any]) -> bool:
+        """Identify a non-CTA paragraph that lightly connects the brand to the reader's need."""
+        text = str(paragraph or "")
+        if not self._brand_name_in_text(text, state) or self._is_intro_cta(text, state):
+            return False
+
+        bridge_patterns = (
+            r"(?:\u062d\u0644|\u064a\u0633\u0627\u0639\u062f|\u062a\u0633\u0627\u0639\u062f|\u064a\u0642\u062f\u0645|\u062a\u0642\u062f\u0645|\u064a\u0648\u0641\u0631|\u062a\u0648\u0641\u0631|\u064a\u062f\u0639\u0645|\u062a\u062f\u0639\u0645|\u0627\u062d\u062a\u064a\u0627\u062c|\u062e\u062f\u0645\u0629|\u062f\u0648\u0631)",
+            r"\b(?:solution|help|helps|provide|provides|offer|offers|support|supports|need|service|role)\b",
+        )
+        return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in bridge_patterns)
+
+    def _dedupe_intro_paragraphs(self, paragraphs: List[str]) -> List[str]:
+        """Remove repeated intro paragraphs while preserving their first occurrence."""
+        seen: set[str] = set()
+        deduped: List[str] = []
+        for paragraph in paragraphs:
+            key = self._normalize_intro_paragraph(paragraph)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            deduped.append(paragraph.strip())
+        return deduped
+
+    def _inject_keyword_into_intro_hook(self, hook: str, primary_keyword: str, state: Dict[str, Any]) -> str:
+        """Add a missing primary keyword without replacing an otherwise useful hook."""
+        if not hook or not primary_keyword or self._text_contains_keyword(hook, primary_keyword):
+            return hook
+        lang = str(state.get("article_language") or state.get("input_data", {}).get("article_language") or "").lower()
+        is_ar = lang.startswith("ar") or bool(re.search(r"[\u0600-\u06FF]", primary_keyword + " " + hook))
+        if is_ar:
+            return f"\u0639\u0646\u062f \u0627\u0644\u0628\u062d\u062b \u0639\u0646 {primary_keyword}\u060c {hook}"
+        return f"When considering {primary_keyword}, {hook}"
+
     def _build_commercial_intro_brand_bridge(self, state: Dict[str, Any], content: str = "") -> str:
         brand_name = str(state.get("display_brand_name") or state.get("brand_name") or "").strip()
         if not brand_name:
@@ -5311,48 +6013,68 @@ class AsyncWorkflowController:
         ]
         if not paragraphs:
             return content
-        first = paragraphs[0].strip()
+        original_paragraphs = list(paragraphs)
+        paragraphs = self._dedupe_intro_paragraphs(paragraphs)
+
+        hook = next(
+            (
+                paragraph
+                for paragraph in paragraphs
+                if not self._is_intro_cta(paragraph, state)
+                and not self._is_intro_brand_bridge(paragraph, state)
+                and not self._brand_name_in_text(paragraph, state)
+                and len(paragraph.split()) >= 12
+            ),
+            "",
+        )
+        if not hook:
+            hook = self._build_commercial_intro_hook(state, content)
+        hook = self._inject_keyword_into_intro_hook(hook, primary_keyword, state)
+
+        brand_bridge = next(
+            (
+                paragraph
+                for paragraph in paragraphs
+                if self._is_intro_brand_bridge(paragraph, state) and len(paragraph.split()) <= 80
+            ),
+            "",
+        )
+        if not brand_bridge:
+            brand_bridge = self._build_commercial_intro_brand_bridge(state, content)
+
+        cta = next((paragraph for paragraph in paragraphs if self._is_intro_cta(paragraph, state)), "")
+        if not cta:
+            cta = self._build_commercial_intro_cta(state, content)
+
+        final_paragraphs = self._dedupe_intro_paragraphs([hook, brand_bridge, cta])
+        fallback_builders = (
+            self._build_commercial_intro_hook(state, content),
+            self._build_commercial_intro_brand_bridge(state, content),
+            self._build_commercial_intro_cta(state, content),
+        )
+        for fallback in fallback_builders:
+            if len(final_paragraphs) >= 3:
+                break
+            if fallback:
+                final_paragraphs = self._dedupe_intro_paragraphs([*final_paragraphs, fallback])
+        final_paragraphs = final_paragraphs[:3]
+
+        first = final_paragraphs[0] if final_paragraphs else ""
         first_has_keyword = self._text_contains_keyword(first, primary_keyword)
         first_mentions_brand = self._brand_name_in_text(first, state)
-
-        hook = self._build_commercial_intro_hook(state, content)
-        changed = False
-        if hook and (not first_has_keyword or first_mentions_brand or len(first.split()) < 18):
-            paragraphs[0] = hook
-            changed = True
-
-        brand_bridge = self._build_commercial_intro_brand_bridge(state, content)
-        cta = self._build_commercial_intro_cta(state, content)
-        if len(paragraphs) < 2:
-            if brand_bridge:
-                paragraphs.append(brand_bridge)
-            changed = True
-        else:
-            second = paragraphs[1]
-            if not self._brand_name_in_text(second, state) or len(second.split()) > 80:
-                if brand_bridge:
-                    paragraphs[1] = brand_bridge
-                    changed = True
-
-        if len(paragraphs) < 3:
-            if cta:
-                paragraphs.append(cta)
-            changed = True
-        else:
-            third = paragraphs[2]
-            if state.get("brand_url") and str(state.get("brand_url")) not in third:
-                if cta:
-                    paragraphs[2] = cta
-                    changed = True
-
-        paragraphs = paragraphs[:3]
-        if len(paragraphs) == 3 and (changed or not first_has_keyword or first_mentions_brand):
+        changed = [self._normalize_intro_paragraph(p) for p in original_paragraphs] != [
+            self._normalize_intro_paragraph(p) for p in final_paragraphs
+        ]
+        if len(final_paragraphs) == 3 and changed:
             logger.info(
-                "[commercial_intro_contract] Enforced intro contract. keyword_present=%s brand_in_first_paragraph=%s",
+                "[commercial_intro_contract] Enforced intro contract. keyword_present=%s "
+                "brand_in_first_paragraph=%s bridge_detected=%s cta_detected=%s",
                 first_has_keyword,
                 first_mentions_brand,
+                any(self._is_intro_brand_bridge(paragraph, state) for paragraph in original_paragraphs),
+                any(self._is_intro_cta(paragraph, state) for paragraph in original_paragraphs),
             )
-        return "\n\n".join(paragraph.strip() for paragraph in paragraphs if paragraph.strip()).strip()
+        return "\n\n".join(paragraph.strip() for paragraph in final_paragraphs if paragraph.strip()).strip()
 
     def _is_commercial_process_section(self, section: Dict[str, Any], state: Dict[str, Any]) -> bool:
         if str(state.get("content_type") or "").lower() != "brand_commercial":
@@ -5478,6 +6200,14 @@ class AsyncWorkflowController:
         content = self._ensure_commercial_process_depth(content, section, state)
         content = self._ensure_commercial_faq_depth(content, section, state)
         content = self._ensure_commercial_conclusion_cta(content, section, state)
+        content, claim_issues = self._sanitize_unsupported_brand_claims(
+            content,
+            state,
+            section=section,
+            context="body",
+        )
+        for issue in claim_issues:
+            self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
         content = self._normalize_ordered_lists(content)
         return content
 
@@ -7270,7 +8000,7 @@ class AsyncWorkflowController:
                 section.get("fulfillment_status") == "weak"
                 and any(
                     marker in section.get("fulfillment_reason", "").lower()
-                    for marker in ("evidence density", "heading drift", "brand usage policy", "role drift", "faq repair leak", "comparison section")
+                    for marker in ("evidence density", "heading drift", "brand usage policy", "role drift", "faq repair leak", "faq section", "comparison section")
                 )
             )
             if section["fulfillment_status"] == "unsupported" or repairable_weak_fulfillment:
@@ -7298,7 +8028,7 @@ class AsyncWorkflowController:
                     section.get("fulfillment_status") == "weak"
                     and any(
                         marker in section.get("fulfillment_reason", "").lower()
-                        for marker in ("evidence density", "heading drift", "brand usage policy", "role drift", "faq repair leak", "comparison section")
+                        for marker in ("evidence density", "heading drift", "brand usage policy", "role drift", "faq repair leak", "faq section", "comparison section")
                     )
                 )
                 if (
@@ -8207,6 +8937,44 @@ class AsyncWorkflowController:
             logger.warning(f"H1 length invalid ({len(h1)} chars). Falling back to explicit title.")
             meta_json["h1"] = state.get("input_data", {}).get("title", h1)
 
+        meta_claim_repairs: List[str] = []
+        for field, context in (
+            ("h1", "h1"),
+            ("meta_title", "meta_title"),
+            ("meta_description", "meta_description"),
+        ):
+            original = str(meta_json.get(field) or "")
+            if not original:
+                continue
+            cleaned, issues = self._sanitize_unsupported_brand_claims(
+                original,
+                state,
+                context=context,
+                brand_sensitive=self._brand_name_in_text(original, state),
+            )
+            meta_json[field] = cleaned
+            meta_claim_repairs.extend(f"{field}:{issue}" for issue in issues)
+
+        article_schema = meta_json.get("article_schema")
+        if isinstance(article_schema, dict):
+            for field, context in (("headline", "h1"), ("description", "meta_description")):
+                original = str(article_schema.get(field) or "")
+                if not original:
+                    continue
+                cleaned, issues = self._sanitize_unsupported_brand_claims(
+                    original,
+                    state,
+                    context=context,
+                    brand_sensitive=self._brand_name_in_text(original, state),
+                )
+                article_schema[field] = cleaned
+                meta_claim_repairs.extend(f"article_schema.{field}:{issue}" for issue in issues)
+
+        if meta_claim_repairs:
+            existing_repairs = state.setdefault("unsupported_brand_claim_repairs", [])
+            existing_repairs.extend(item for item in meta_claim_repairs if item not in existing_repairs)
+            logger.warning("[unsupported_brand_claim_guard] meta_repairs=%s", meta_claim_repairs)
+
         state["seo_meta"] = meta_json
         return state
 
@@ -8508,7 +9276,15 @@ class AsyncWorkflowController:
         quality_warnings: List[str] = []
         rendered_section_contents: Dict[str, str] = {}
 
-        parts = [f"# {title}"]
+        safe_title, title_claim_issues = self._sanitize_unsupported_brand_claims(
+            title,
+            state,
+            context="title",
+            brand_sensitive=self._brand_name_in_text(title, state),
+        )
+        parts = [f"# {safe_title}"]
+        for issue in title_claim_issues:
+            quality_warnings.append(f"title: unsupported_brand_claim_removed:{issue}")
         for outline_section in outline:
             section_id = outline_section.get("section_id")
             generated_section = sections_dict.get(section_id, {}) if section_id else {}
@@ -8519,10 +9295,38 @@ class AsyncWorkflowController:
                 outline_section,
             )
             # content = self._apply_commercial_section_quality_gates(content, section, state)
+            if is_commercial and self._is_commercial_faq_section(section, state):
+                content = self._ensure_commercial_faq_depth(content, section, state)
+                if isinstance(generated_section, dict):
+                    generated_section["generated_content"] = content
+                    generated_section["section_quality_issues"] = list(section.get("section_quality_issues", []))
+            if is_commercial:
+                content, claim_issues = self._sanitize_unsupported_brand_claims(
+                    content,
+                    state,
+                    section=section,
+                    context="body",
+                )
+                for issue in claim_issues:
+                    self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
+                if isinstance(generated_section, dict):
+                    generated_section["generated_content"] = content
+                    generated_section["section_quality_issues"] = list(section.get("section_quality_issues", []))
             content = self._normalize_ordered_lists(content)
 
             section_type = (outline_section.get("section_type") or "").lower()
             heading = str(outline_section.get("heading_text") or "").strip()
+            if is_commercial and heading:
+                heading, heading_claim_issues = self._sanitize_unsupported_brand_claims(
+                    heading,
+                    state,
+                    section=section,
+                    context="heading",
+                    brand_sensitive=self._section_visibly_references_brand(section, state),
+                )
+                for issue in heading_claim_issues:
+                    self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
+                outline_section["heading_text"] = heading
             heading_level = str(outline_section.get("heading_level") or "H2").upper()
 
             if section_type != "introduction" and heading:
@@ -8599,6 +9403,7 @@ class AsyncWorkflowController:
         critical_semantic_markers = (
             "project_proof_missed_target_relevant_evidence",
             "unsupported_testimonial_heading",
+            "unsupported_brand_claim_removed",
             "role drift",
             "faq_repair_leak",
             "unsupported fulfillment",
@@ -8669,6 +9474,33 @@ class AsyncWorkflowController:
                     candidate = f"{meta_title} | {brand_name}"
                     if len(candidate) <= 65:
                         meta_title = candidate
+
+        raw_title, title_claim_issues = self._sanitize_unsupported_brand_claims(
+            raw_title,
+            state,
+            context="title",
+            brand_sensitive=self._brand_name_in_text(raw_title, state),
+        )
+        meta_title, meta_title_claim_issues = self._sanitize_unsupported_brand_claims(
+            meta_title,
+            state,
+            context="meta_title",
+            brand_sensitive=self._brand_name_in_text(meta_title, state),
+        )
+        meta_description, meta_description_claim_issues = self._sanitize_unsupported_brand_claims(
+            seo_meta.get("meta_description", ""),
+            state,
+            context="meta_description",
+            brand_sensitive=self._brand_name_in_text(seo_meta.get("meta_description", ""), state),
+        )
+        final_claim_repairs = [
+            *(f"title:{issue}" for issue in title_claim_issues),
+            *(f"meta_title:{issue}" for issue in meta_title_claim_issues),
+            *(f"meta_description:{issue}" for issue in meta_description_claim_issues),
+        ]
+        if final_claim_repairs:
+            existing_repairs = state.setdefault("unsupported_brand_claim_repairs", [])
+            existing_repairs.extend(item for item in final_claim_repairs if item not in existing_repairs)
 
         if state.get("heading_only_mode"):
             outline = state.get("outline", [])
@@ -8778,7 +9610,7 @@ class AsyncWorkflowController:
 
             # SEO
             "meta_title": meta_title,
-            "meta_description": seo_meta.get("meta_description", ""),
+            "meta_description": meta_description,
             "meta_keywords": seo_meta.get("meta_keywords", ""),
             "article_schema": seo_meta.get("article_schema", {}),
             "faq_schema": seo_meta.get("faq_schema", {}),
