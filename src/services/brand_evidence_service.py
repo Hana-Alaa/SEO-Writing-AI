@@ -367,6 +367,150 @@ def _extract_project_location_metadata(text: str) -> List[str]:
     return list(dict.fromkeys(candidates))[:8]
 
 
+_PORTFOLIO_CARD_CATEGORY_RE = (
+    r"mobile\s+app|web\s+apps?|websites?|design\s+services?|seo|"
+    r"case\s+stud(?:y|ies)|product\s+design|e-?commerce|"
+    r"تطبيقات?|مواقع|خدمات\s+التصميم|مشاريع|أعمال"
+)
+
+
+def _portfolio_listing_record_count(text: str) -> int:
+    text = str(text or "")
+    if not text.strip():
+        return 0
+    client_records = len(re.findall(r"\bClient\s*:", text, re.IGNORECASE))
+    brief_records = len(re.findall(r"\bBrief\b\s+(?:Client|Project)\s*:", text, re.IGNORECASE))
+    return max(client_records, brief_records)
+
+
+def _metadata_value(body: str, labels: List[str]) -> str:
+    label_pattern = "|".join(re.escape(label) for label in labels)
+    stop_labels = (
+        r"Client|Location|Sector|Audience|Target\s+Audience|Expertise|"
+        r"Services\s+Provided|Services|Technology\s+Stack|Technologies\s+Used|"
+        r"Technologies|Project|Brief|Objective|Scope\s+of\s+Work"
+    )
+    pattern = rf"\b(?:{label_pattern})\s*:\s*(.+?)(?=\s+\b(?:{stop_labels})\s*:|\s+Technologies\s+Used\b|$)"
+    match = re.search(pattern, body or "", re.IGNORECASE | re.DOTALL)
+    if not match:
+        return ""
+    value = re.sub(r"\s+", " ", match.group(1)).strip(" .,:;-")
+    return value
+
+
+def _clean_project_card_title(raw_title: str, brand_names: List[str]) -> str:
+    title = re.sub(r"\s+", " ", str(raw_title or "")).strip(" .,:;-|")
+    for _ in range(8):
+        cleaned = re.sub(
+            rf"^(?:{_PORTFOLIO_CARD_CATEGORY_RE}|all)\s+",
+            "",
+            title,
+            flags=re.IGNORECASE,
+        ).strip(" .,:;-|")
+        if cleaned == title:
+            break
+        title = cleaned
+    title = re.sub(r"\b(?:Brief|Technologies Used)\b.*$", "", title, flags=re.IGNORECASE).strip(" .,:;-|")
+    if not title or _is_noise_label(title):
+        return ""
+    if any(brand and brand.casefold() in title.casefold() for brand in brand_names):
+        return ""
+    return _sanitize_evidence_item(title, category="project_explicit")
+
+
+def _extract_portfolio_listing_records(text: str, brand_names: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """Extract repeated project cards from portfolio listing pages without promoting labels to projects."""
+    text = re.sub(r"\s+", " ", str(text or "")).strip()
+    if _portfolio_listing_record_count(text) < 2:
+        return []
+
+    brand_names = brand_names or []
+    brief_matches = list(re.finditer(r"\bBrief\b\.?\s+(?=(?:Client|Project)\s*:)", text, re.IGNORECASE))
+    records: List[Dict[str, Any]] = []
+    seen = set()
+    for idx, match in enumerate(brief_matches):
+        prefix = text[max(0, match.start() - 260):match.start()]
+        category_matches = list(re.finditer(rf"\b({_PORTFOLIO_CARD_CATEGORY_RE})\b", prefix, re.IGNORECASE))
+        if not category_matches:
+            continue
+        category = ""
+        title = ""
+        for category_match in reversed(category_matches):
+            candidate_title = _clean_project_card_title(prefix[category_match.end():], brand_names)
+            if candidate_title:
+                category = re.sub(r"\s+", " ", category_match.group(1)).strip()
+                title = candidate_title
+                break
+        if not title:
+            continue
+        body_end = brief_matches[idx + 1].start() if idx + 1 < len(brief_matches) else len(text)
+        tail_stop = re.search(r"\b(?:Load\s+More|Subscribe|Subscribe\s+Newsletters?)\b", text[match.end():body_end], re.IGNORECASE)
+        if tail_stop:
+            body_end = match.end() + tail_stop.start()
+        body = re.sub(r"\s+", " ", text[match.end():body_end]).strip()
+        client = _metadata_value(body, ["Client"])
+        location = _metadata_value(body, ["Location"])
+        sector = _metadata_value(body, ["Sector"])
+        audience = _metadata_value(body, ["Audience", "Target Audience"])
+        services = _metadata_value(body, ["Services Provided", "Expertise", "Services"])
+        tech_text = ""
+        tech_match = re.search(r"\bTechnologies\s+Used\b\s*(.+)$", body, re.IGNORECASE | re.DOTALL)
+        if tech_match:
+            tech_text = tech_match.group(1)
+
+        name = title or _clean_project_card_title(client, brand_names)
+        if not name:
+            continue
+        key = name.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+
+        record_text = " ".join([name, client, location, sector, audience, services, tech_text])
+        records.append(
+            {
+                "name": name,
+                "category": category,
+                "client": _sanitize_evidence_item(client, category="project_explicit") or client.strip(),
+                "location": _sanitize_evidence_item(location, category="geography"),
+                "sector": re.sub(r"\s+", " ", sector).strip(" .,:;-"),
+                "audience": re.sub(r"\s+", " ", audience).strip(" .,:;-"),
+                "services": _clean_evidence_items(
+                    [part.strip() for part in re.split(r"\s*(?:,|;|\||/| and |&|\+)\s*", services) if part.strip()],
+                    category="service",
+                    limit=8,
+                ),
+                "technologies": _extract_technologies_from_text(record_text),
+            }
+        )
+        if len(records) >= 24:
+            break
+    return records
+
+
+def _portfolio_record_sentence(record: Dict[str, Any]) -> str:
+    name = str(record.get("name") or "").strip()
+    if not name:
+        return ""
+    parts = [name]
+    location = str(record.get("location") or "").strip()
+    sector = str(record.get("sector") or "").strip()
+    category = str(record.get("category") or "").strip()
+    services = [str(item).strip() for item in record.get("services") or [] if str(item).strip()]
+    technologies = [str(item).strip() for item in record.get("technologies") or [] if str(item).strip()]
+    if location:
+        parts.append(f"location: {location}")
+    if sector:
+        parts.append(f"sector: {sector}")
+    if category:
+        parts.append(f"category: {category}")
+    if services:
+        parts.append("services/expertise: " + ", ".join(services[:5]))
+    if technologies:
+        parts.append("technologies: " + ", ".join(technologies[:6]))
+    return " - ".join(parts)
+
+
 def _clean_evidence_items(
     values: Any,
     *,
@@ -707,7 +851,7 @@ class BrandEvidenceService:
     def __init__(self):
         pass
 
-    async def enrich_brand_internal_resources(self, state: Dict[str, Any], max_pages: int = 6) -> Dict[str, Any]:
+    async def enrich_brand_internal_resources(self, state: Dict[str, Any], max_pages: int = 10) -> Dict[str, Any]:
         """
         Enriches state["internal_resources"] by crawling high-value same-domain pages of the brand site.
         Non-mutating on errors and fully self-contained.
@@ -799,7 +943,13 @@ class BrandEvidenceService:
             haystack = re.sub(r"[-_/]+", " ", f"{url_lower} {anchor_text or ''}").casefold()
             page_type = classify_page_type(url, anchor_text, [])
             score = sum(6 for token in topic_tokens if token in haystack)
-
+            trust_terms = [
+                "testimonial", "testimonials", "reviews", "clients", "client",
+                "trusted", "awards", "certifications", "partners", "success-stories",
+                "آراء", "اراء", "تقييمات", "شهادات", "عملاؤنا", "عملائنا", "جوائز"
+            ]
+            if any(term in haystack for term in trust_terms):
+                score += 32
             if page_type in {"services", "product"}:
                 score += 36
             if page_type in {"portfolio", "projects", "case_study", "case-study"}:
@@ -1003,7 +1153,8 @@ class BrandEvidenceService:
                 if link not in crawled_urls and link not in internal_links_map:
                     internal_links_map[link] = txt
 
-        if len(internal_links_map) < 3:
+        # if len(internal_links_map) < 3:
+        if len(internal_links_map) < 3 or state.get("content_type") == "brand_commercial":
             try:
                 async with httpx.AsyncClient(timeout=8.0, follow_redirects=True, verify=False) as client:
                     for link, txt in await discover_sitemap_links(client):
@@ -2430,6 +2581,225 @@ def _legacy_apply_brand_claim_gate_unpatched(text: str, brief: dict) -> str:
     return "\n".join(final_lines).strip()
 
 
+_PROJECT_NAME_NOISE = {
+    "project",
+    "projects",
+    "portfolio",
+    "case study",
+    "case studies",
+    "client",
+    "clients",
+    "name",
+    "project name",
+    "client name",
+    "location",
+    "sector",
+    "target",
+    "audience",
+    "b2b",
+    "b2c",
+    "b2b & b2c",
+    "brief",
+    "objective",
+    "objectives",
+    "scope of work",
+    "deliverables",
+    "technology stack",
+    "technologies used",
+    "screenshots",
+    "quality assurance",
+    "services provided",
+    "web application",
+    "mobile app",
+    "website creation",
+    "ux/ui design",
+    "ui/ux design",
+    "seo",
+    "branding",
+    "digital marketing",
+}
+
+
+def _project_name_key(value: Any) -> str:
+    text = re.sub(r"[\u2018\u2019\u201c\u201d\"'`]+", "", str(value or ""))
+    text = re.sub(r"\b(?:project|client|case study|name)\b\s*[:\-]?", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+", " ", text).strip(" .:-|")
+    return text.casefold()
+
+
+def _clean_candidate_project_name(value: Any) -> str:
+    text = re.sub(r"[\u2018\u2019\u201c\u201d\"'`]+", "", str(value or ""))
+    text = re.sub(
+        r"^(?:project|client|case study|project name|client name|name)\s*[:\-]?\s*",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r"^(?:\u0645\u0634\u0631\u0648\u0639|\u0639\u0645\u064a\u0644|\u0627\u0633\u0645\s+\u0627\u0644\u0645\u0634\u0631\u0648\u0639)\s*[:\-]?\s*",
+        "",
+        text,
+    )
+    text = re.sub(r"\s+", " ", text).strip(" .:-|")
+    text = re.sub(r"\s*-\s*(?:creative minds|brandco).*$", "", text, flags=re.IGNORECASE).strip(" .:-|")
+    return text
+
+
+def _looks_like_project_name(value: Any) -> bool:
+    text = _clean_candidate_project_name(value)
+    if not text or len(text) < 3 or len(text) > 90:
+        return False
+    key = _project_name_key(text)
+    if key in _PROJECT_NAME_NOISE:
+        return False
+    if re.fullmatch(r"[-\s\d/.,]+", text):
+        return False
+    if re.fullmatch(r"(?:riyadh|saudi arabia|egypt|qatar|uae|cairo|jeddah|ksa)", key):
+        return False
+    if re.fullmatch(r"(?:real estate|construction|education|e-commerce|marketing|software|technology)", key):
+        return False
+    if not re.search(r"[A-Za-z\u0600-\u06FF]", text):
+        return False
+    word_count = len(text.split())
+    has_upper_name = bool(re.search(r"[A-Z][A-Za-z0-9]+", text))
+    has_arabic = bool(re.search(r"[\u0600-\u06FF]", text))
+    return word_count <= 9 and (has_upper_name or has_arabic)
+
+
+def _extract_candidate_project_names(text: str) -> List[str]:
+    """Extract project/client-like names from generated text without inferring facts."""
+    if not text:
+        return []
+
+    candidates: List[str] = []
+
+    # Quoted names are the most common way section writers surface projects.
+    for match in re.finditer(r"[\u201c\u201d\"'«»]([^\"'«»\u201c\u201d]{3,90})[\u201c\u201d\"'«»]", text):
+        candidates.append(match.group(1))
+
+    # Explicit project/client markers in English and Arabic.
+    marker_pattern = re.compile(
+        r"(?:\b(?:project|client|case study)\b|(?:\u0645\u0634\u0631\u0648\u0639|\u0639\u0645\u064a\u0644))"
+        r"\s*[:\-]?\s*([\u0600-\u06FFA-Z][\u0600-\u06FFA-Za-z0-9&.,'’\-\s]{2,90})",
+        re.IGNORECASE,
+    )
+    for match in marker_pattern.finditer(text):
+        raw = re.split(r"[.;،\n]|(?:\s+-\s+)", match.group(1), maxsplit=1)[0]
+        candidates.append(raw)
+
+    # Markdown tables usually place project names in the first column.
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or re.fullmatch(r"\|[\s:\-|]+\|", stripped):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if cells:
+            candidates.append(cells[0])
+
+    result: List[str] = []
+    seen = set()
+    for candidate in candidates:
+        cleaned = _clean_candidate_project_name(candidate)
+        key = _project_name_key(cleaned)
+        if key and key not in seen and _looks_like_project_name(cleaned):
+            seen.add(key)
+            result.append(cleaned)
+    return result
+
+
+def _project_name_is_supported(candidate: str, observed_names: List[str], allowed_sources: List[str]) -> bool:
+    candidate_key = _project_name_key(candidate)
+    if not candidate_key:
+        return True
+
+    for observed in observed_names:
+        observed_key = _project_name_key(observed)
+        if not observed_key:
+            continue
+        if candidate_key == observed_key:
+            return True
+        if len(candidate_key) >= 6 and len(observed_key) >= 6 and (
+            candidate_key in observed_key or observed_key in candidate_key
+        ):
+            return True
+
+    for source in allowed_sources:
+        source_key = _project_name_key(source)
+        if candidate_key and candidate_key in source_key:
+            return True
+
+    return False
+
+
+def find_unsupported_brand_project_names(
+    text: str,
+    observed_project_names: Optional[List[str]] = None,
+    allowed_sources: Optional[List[str]] = None,
+) -> List[str]:
+    """
+    Return generated project/client names that are not observed in supplied brand evidence.
+
+    This deliberately does not judge general advice. It only validates explicit
+    project/client-like facts surfaced by name.
+    """
+    observed = [str(item).strip() for item in (observed_project_names or []) if str(item).strip()]
+    sources = [str(item).strip() for item in (allowed_sources or []) if str(item).strip()]
+    unsupported: List[str] = []
+    for candidate in _extract_candidate_project_names(text or ""):
+        if not _project_name_is_supported(candidate, observed, sources):
+            unsupported.append(candidate)
+    return list(dict.fromkeys(unsupported))
+
+
+def collect_observed_brand_project_names(
+    state: Optional[Dict[str, Any]] = None,
+    section_brand_understanding: Optional[Dict[str, Any]] = None,
+    section_raw_brand_blocks: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Collect observed project/client names from page-scoped brand evidence."""
+    names: List[str] = []
+
+    understanding = section_brand_understanding or {}
+    if isinstance(understanding, dict):
+        names.extend(str(item).strip() for item in (understanding.get("relevant_projects") or []) if str(item).strip())
+        for record in understanding.get("relevant_project_records") or []:
+            if isinstance(record, dict) and str(record.get("name") or "").strip():
+                names.append(str(record["name"]).strip())
+
+    for block in section_raw_brand_blocks or []:
+        if not isinstance(block, dict):
+            continue
+        block_text = "\n".join([
+            str(block.get("heading") or ""),
+            str(block.get("observed_text") or block.get("text") or ""),
+            "\n".join(str(item) for item in (block.get("observed_facts") or [])),
+        ])
+        names.extend(_extract_candidate_project_names(block_text))
+
+    state = state or {}
+    for brief in state.get("brand_page_narrative_briefs", []) or []:
+        if not isinstance(brief, dict):
+            continue
+        signals = brief.get("routing_signals") if isinstance(brief.get("routing_signals"), dict) else {}
+        names.extend(str(item).strip() for item in (signals.get("projects") or []) if str(item).strip())
+        page_type = str(brief.get("page_type") or "").casefold()
+        title = str(brief.get("page_title") or "").strip()
+        if page_type in {"portfolio", "projects", "case_study", "case-study"}:
+            title = re.sub(r"\s*-\s*(?:creative minds|brandco).*$", "", title, flags=re.IGNORECASE).strip()
+            if title:
+                names.append(title)
+
+    result: List[str] = []
+    seen = set()
+    for name in names:
+        cleaned = _clean_candidate_project_name(name)
+        key = _project_name_key(cleaned)
+        if key and key not in seen and _looks_like_project_name(cleaned):
+            seen.add(key)
+            result.append(cleaned)
+    return result
+
+
 def apply_brand_claim_gate(text: str, brief: dict) -> str:
     """
     Deterministic claim gate for brand copy.
@@ -2476,6 +2846,16 @@ def apply_brand_claim_gate(text: str, brief: dict) -> str:
     allowed_values.extend(iter_strings(brief.get("section_source_text") or ""))
 
     allowed_norm = [value.casefold() for value in allowed_values if str(value).strip()]
+    observed_project_names = list(dict.fromkeys(
+        str(item).strip()
+        for item in iter_strings(brief.get("observed_project_names") or [])
+        if str(item).strip()
+    ))
+    brand_sensitive_by_policy = bool(
+        brief.get("brand_sensitive")
+        or brief.get("section_brand_sensitive")
+        or str(brief.get("brand_usage_policy") or "").casefold() in {"brand_owned", "brand_cta", "soft_intro_brand"}
+    )
 
     token_re = re.compile(r"[\w\u0600-\u06FF$%+/]+", re.UNICODE)
     stop_words = {
@@ -2646,11 +3026,25 @@ def apply_brand_claim_gate(text: str, brief: dict) -> str:
 
         return False
 
-    def sentence_violates(sentence: str) -> bool:
+    project_context_re = re.compile(
+        r"\b(?:project|projects|client|clients|portfolio|case study|case studies)\b|"
+        r"(?:\u0645\u0634\u0631\u0648\u0639|\u0645\u0634\u0627\u0631\u064a\u0639|\u0639\u0645\u064a\u0644|\u0639\u0645\u0644\u0627\u0621|\u0646\u0645\u0627\u0630\u062c|\u0623\u0639\u0645\u0627\u0644)",
+        re.IGNORECASE,
+    )
+
+    def sentence_violates(sentence: str, *, brand_sensitive: bool = False) -> bool:
         for category in forbidden_categories:
             if any(re.search(pattern, sentence, re.IGNORECASE) for pattern in category["patterns"]):
                 if not category_is_supported(sentence, category):
                     return True
+        if brand_sensitive or project_context_re.search(sentence or ""):
+            unsupported_projects = find_unsupported_brand_project_names(
+                sentence,
+                observed_project_names=observed_project_names,
+                allowed_sources=allowed_values,
+            )
+            if unsupported_projects:
+                return True
         return False
 
     sentence_split_re = re.compile(r"(?<=[.!?\u061f])\s+")
@@ -2687,8 +3081,8 @@ def apply_brand_claim_gate(text: str, brief: dict) -> str:
             clean_sentence = sentence.strip()
             if not clean_sentence:
                 continue
-            is_sensitive = is_brand_sensitive_line or mentions_brand(clean_sentence)
-            if is_sensitive and sentence_violates(clean_sentence):
+            is_sensitive = is_brand_sensitive_line or mentions_brand(clean_sentence) or brand_sensitive_by_policy
+            if is_sensitive and sentence_violates(clean_sentence, brand_sensitive=is_sensitive):
                 continue
             kept.append(clean_sentence)
 
@@ -4070,10 +4464,10 @@ def build_brand_source_chunks(state: Dict[str, Any]) -> List[Dict[str, Any]]:
         sections = res.get("semantic_sections")
         headings = res.get("headings", [])
         page_type = res.get("page_type") or classify_page_type(url, title, headings)
+        text_content = res.get("page_text_full") or res.get("page_text") or res.get("body_text") or res.get("content") or ""
         
         if not sections:
             # Fallback if no parsed sections are present (backward compatibility & plain text test fixtures)
-            text_content = res.get("page_text_full") or res.get("page_text") or res.get("body_text") or res.get("content") or ""
             if text_content:
                 sections = [{
                     "heading": "Introduction",
@@ -4099,6 +4493,27 @@ def build_brand_source_chunks(state: Dict[str, Any]) -> List[Dict[str, Any]]:
                     "page_title": sec.get("page_title") or title,
                     "page_type": sec.get("page_type") or page_type
                 })
+
+        # Portfolio listing pages are often represented poorly by semantic
+        # sections because every card can be a shallow div. If the full page
+        # text contains more repeated project records than the parsed sections,
+        # keep the full listing as an additional source of truth for the
+        # knowledge pack.
+        if text_content and page_type in {"portfolio", "projects", "case_study", "case-study"}:
+            section_record_count = _portfolio_listing_record_count(
+                " ".join(str(sec.get("body_text") or "") for sec in sections)
+            )
+            full_record_count = _portfolio_listing_record_count(text_content)
+            if full_record_count >= 2 and full_record_count > section_record_count:
+                full_chunks = chunk_text(text_content, max_tokens=1600, overlap_tokens=120)
+                for chunk in full_chunks:
+                    page_chunks.append({
+                        "text": chunk,
+                        "url": url,
+                        "heading": "Full portfolio listing",
+                        "page_title": title,
+                        "page_type": page_type,
+                    })
                 
         # Limit to max_chunks_per_page (25)
         all_chunks.extend(page_chunks[:max_chunks_per_page])
@@ -4680,6 +5095,7 @@ def _build_page_narrative_text(
     project_locations: List[str],
     pricing: List[str],
     trust: List[str],
+    project_records: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
     """Create a dense, page-scoped narrative brief without field-dump wording."""
     clean_title = re.sub(r"\s+", " ", str(title or "")).strip() or "Untitled page"
@@ -4718,6 +5134,18 @@ def _build_page_narrative_text(
     narrative_parts = [
         f"This {page_label} page is titled \"{clean_title}\" and should be treated as a page-scoped brand source.",
     ]
+    if project_records and len(project_records) >= 2:
+        record_sentences = [
+            sentence for sentence in (_portfolio_record_sentence(record) for record in project_records[:16])
+            if sentence
+        ]
+        if record_sentences:
+            narrative_parts.append(
+                "This is a portfolio listing page with multiple project cards. "
+                "Project cards shown on the page include: "
+                + "; ".join(record_sentences)
+                + "."
+            )
     if core_text:
         narrative_parts.append(f"The page content says: {core_text}")
     return _clean_page_narrative_text(" ".join(part for part in narrative_parts if part))
@@ -4912,10 +5340,57 @@ def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, A
         headings = entry.get("headings") or []
         services = _extract_services_from_text(text)
         technologies = _extract_technologies_from_text(text)
+        project_records = (
+            _extract_portfolio_listing_records(text, brand_names)
+            if page_type in {"portfolio", "projects", "case_study", "case-study", "portfolio_listing"}
+            else []
+        )
+        if project_records:
+            project_records = sorted(
+                project_records,
+                key=lambda record: -_area_relevance_score_for_text(
+                    " ".join(
+                        str(record.get(key) or "")
+                        for key in ["name", "client", "location", "sector", "category"]
+                    ),
+                    state,
+                ),
+            )
         projects = _extract_projects_from_text(text, headings, page_type, url, brand_names)
+        if project_records:
+            projects = _clean_evidence_items(
+                [record.get("name") for record in project_records] + projects,
+                category="project_explicit",
+                limit=24,
+            )
+            record_services = [
+                service
+                for record in project_records
+                for service in (record.get("services") or [])
+            ]
+            if record_services:
+                services = _clean_evidence_items(record_services + services, category="service", limit=18)
+            record_technologies = [
+                tech
+                for record in project_records
+                for tech in (record.get("technologies") or [])
+            ]
+            if record_technologies:
+                technologies = list(dict.fromkeys(record_technologies + technologies))[:18]
         process_steps = _extract_process_steps_from_text(text)
         geography = _extract_explicit_brand_geography(text, page_type)
         project_locations = _extract_project_location_metadata(text) if page_type in {"portfolio", "projects", "case_study", "case-study"} else []
+        if project_records:
+            project_locations = list(
+                dict.fromkeys(
+                    [
+                        str(record.get("location") or "").strip()
+                        for record in project_records
+                        if str(record.get("location") or "").strip()
+                    ]
+                    + project_locations
+                )
+            )[:16]
         pricing = _clean_evidence_items(
             [
                 sentence.strip()
@@ -4935,7 +5410,7 @@ def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, A
             limit=8,
         )
         narrative = _build_page_narrative_text(
-            page_type=page_type,
+            page_type="portfolio_listing" if len(project_records) >= 2 else page_type,
             title=entry.get("page_title", ""),
             headings=headings,
             text=text,
@@ -4947,6 +5422,7 @@ def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, A
             project_locations=project_locations,
             pricing=pricing,
             trust=trust,
+            project_records=project_records,
         )
         if not narrative:
             continue
@@ -4954,7 +5430,7 @@ def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, A
             {
                 "source_url": url,
                 "url": url,
-                "page_type": page_type,
+                "page_type": "portfolio_listing" if len(project_records) >= 2 else page_type,
                 "page_title": entry.get("page_title", ""),
                 "headings": headings[:8],
                 "narrative_brief": narrative,
@@ -4976,9 +5452,22 @@ def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, A
                     "services": services[:12],
                     "technologies": technologies[:12],
                     "projects": projects[:12],
+                    "project_records": [
+                        {
+                            "name": record.get("name", ""),
+                            "location": record.get("location", ""),
+                            "sector": record.get("sector", ""),
+                            "category": record.get("category", ""),
+                            "services": list(record.get("services") or [])[:8],
+                            "technologies": list(record.get("technologies") or [])[:8],
+                        }
+                        for record in (project_records or [])[:24]
+                        if isinstance(record, dict) and str(record.get("name") or "").strip()
+                    ],
                     "process_steps": process_steps[:10],
                     "explicit_geography": geography[:8],
                     "project_locations": project_locations[:8],
+                    "project_record_count": len(project_records),
                     "has_pricing": bool(pricing),
                     "has_trust": bool(trust),
                 },
@@ -5006,6 +5495,7 @@ def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, A
             "services": 6,
             "product": 6,
             "portfolio": 6,
+            "portfolio_listing": 6,
             "projects": 6,
             "case_study": 6,
             "case-study": 6,
@@ -5066,7 +5556,7 @@ def select_section_page_narrative_briefs(section: dict, state: dict, max_briefs:
         url_path = urlparse(str(brief.get("source_url") or brief.get("url") or "")).path.casefold()
         signals = brief.get("routing_signals") if isinstance(brief.get("routing_signals"), dict) else {}
         return (
-            page_type in {"portfolio", "projects", "case_study", "case-study"}
+            page_type in {"portfolio", "portfolio_listing", "projects", "case_study", "case-study"}
             or any(segment in url_path for segment in ["/projects", "/project", "/portfolio", "/case"])
             or bool(signals.get("projects"))
         )
@@ -5228,7 +5718,7 @@ def select_section_brand_page_briefs(section: dict, state: dict, max_briefs: int
         ]).casefold()
         score = sum(1 for token in query_tokens if token.casefold() in haystack)
         if wants_projects:
-            if page_type in {"portfolio", "projects", "case_study", "case-study"}:
+            if page_type in {"portfolio", "portfolio_listing", "projects", "case_study", "case-study"}:
                 score += 35
             if brief.get("observed_projects"):
                 score += 30
@@ -7429,6 +7919,11 @@ def evaluate_brand_section_fulfillment(
         + [str(item).strip() for item in (brief.get("relevant_technologies") or []) if str(item).strip()]
     ))
     projects = [str(item).strip() for item in (brief.get("relevant_projects") or []) if str(item).strip()]
+    observed_project_names = collect_observed_brand_project_names(
+        state=state,
+        section_brand_understanding=brief,
+        section_raw_brand_blocks=raw_blocks,
+    )
     process_steps = [str(item).strip() for item in (brief.get("relevant_process_steps") or []) if str(item).strip()]
     geography = [str(item).strip() for item in (brief.get("relevant_geography") or []) if str(item).strip()]
     ctas = [str(item).strip() for item in (brief.get("relevant_ctas") or []) if str(item).strip()]
@@ -7520,6 +8015,22 @@ def evaluate_brand_section_fulfillment(
         return attach_reports({
             "fulfillment_status": "unsupported",
             "fulfillment_reason": "; ".join(dict.fromkeys(unsupported_claims)),
+            "matched_evidence": [],
+        })
+
+    unsupported_project_names = find_unsupported_brand_project_names(
+        content or "",
+        observed_project_names=observed_project_names,
+        allowed_sources=[
+            raw_text,
+            str(state.get("brand_page_knowledge_pack_context") or ""),
+        ],
+    )
+    if unsupported_project_names:
+        return attach_reports({
+            "fulfillment_status": "unsupported",
+            "fulfillment_reason": "brand project/client names are not observed in brand evidence: "
+            + ", ".join(unsupported_project_names[:5]),
             "matched_evidence": [],
         })
 

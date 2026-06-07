@@ -1,3 +1,4 @@
+from openai.types.beta.realtime import conversation_item_input_audio_transcription_completed_event
 import os
 import logging
 import json
@@ -28,41 +29,77 @@ LOCKED_BRAND_CTA_PHILOSOPHY = (
     "Reserve the main CTA for the conclusion."
 )
 
+# LOCKED_BRAND_SECTION_ROLE_MAP = {
+#     "introduction": (
+#         "Start with a light, relevant hook that reflects the buyer's need. Naturally "
+#         "introduce the primary keyword. Briefly explain what the reader will "
+#         "understand or be able to decide after reading. Optionally include one soft "
+#         "brand mention and one very soft CTA only if it feels earned by the value "
+#         "already given. Avoid urgency, investment language, legal framing, or generic "
+#         "market commentary."
+#     ),
+#     "core_or_benefits": (
+#         "Combine offer clarity with key buyer-facing features. Explain what the "
+#         "offering is, what types or forms are available, and what the buyer "
+#         "practically gets, using simple and scannable language."
+#     ),
+#     "proof": (
+#         "Provide concrete product-tied proof such as pricing reality, value "
+#         "differences, availability, delivery status, or trust signals connected "
+#         "directly to the entity and location. Proof must stay tied to the product "
+#         "at the unit level or listing level, not abstract market conditions. Do "
+#         "not drift into broad market commentary, investment framing, or generic "
+#         "authority language unless the support is directly tied to the buyer's "
+#         "decision about the original entity."
+#     ),
+#     "process_or_how": (
+#         "Explain the practical buying journey step by step, from filtering and "
+#         "shortlisting to inquiry, viewing, and decision, without legal or "
+#         "contract-heavy framing unless explicitly justified."
+#     ),
+#     "faq": (
+#         "Answer beginner buyer questions and objections in simple language, "
+#         "especially around choosing, price, readiness, and the buying steps."
+#     ),
+#     "conclusion": (
+#         "Summarize the value clearly, reduce hesitation, and guide the reader to a "
+#         "confident next step with a direct but not pushy CTA."
+#     ),
+# }
+
 LOCKED_BRAND_SECTION_ROLE_MAP = {
     "introduction": (
-        "Start with a light, relevant hook that reflects the buyer's need. Naturally "
-        "introduce the primary keyword. Briefly explain what the reader will "
-        "understand or be able to decide after reading. Optionally include one soft "
-        "brand mention and one very soft CTA only if it feels earned by the value "
-        "already given. Avoid urgency, investment language, legal framing, or generic "
-        "market commentary."
+        "Start with a light, relevant hook that reflects the buyer's need. "
+        "Naturally introduce the primary keyword. Keep any brand mention soft."
     ),
-    "core_or_benefits": (
-        "Combine offer clarity with key buyer-facing features. Explain what the "
-        "offering is, what types or forms are available, and what the buyer "
-        "practically gets, using simple and scannable language."
+    "offer_clarity": (
+        "Explain what the service/product actually is. Do not turn this into benefits "
+        "or provider-selection criteria."
+    ),
+    "features": (
+        "Explain included features, deliverables, capabilities, or buyer-facing benefits. "
+        "Do not repeat offer_clarity."
+    ),
+    "differentiation": (
+        "Explain supported brand advantages only. Avoid generic best/top/trusted claims."
     ),
     "proof": (
-        "Provide concrete product-tied proof such as pricing reality, value "
-        "differences, availability, delivery status, or trust signals connected "
-        "directly to the entity and location. Proof must stay tied to the product "
-        "at the unit level or listing level, not abstract market conditions. Do "
-        "not drift into broad market commentary, investment framing, or generic "
-        "authority language unless the support is directly tied to the buyer's "
-        "decision about the original entity."
+        "Use only supported proof points such as observed projects, testimonials, "
+        "certifications, pricing examples, or results. If unsupported, keep it factual."
     ),
-    "process_or_how": (
-        "Explain the practical buying journey step by step, from filtering and "
-        "shortlisting to inquiry, viewing, and decision, without legal or "
-        "contract-heavy framing unless explicitly justified."
+    "comparison": (
+        "Compare realistic buyer options, approaches, service tiers, or scenarios. "
+        "Do not compare against named competitors."
+    ),
+    "process": (
+        "Explain the practical customer journey from inquiry to delivery."
     ),
     "faq": (
-        "Answer beginner buyer questions and objections in simple language, "
-        "especially around choosing, price, readiness, and the buying steps."
+        "Answer realistic buyer objections about scope, process, pricing/value, timing, "
+        "and decision concerns."
     ),
-    "conclusion": (
-        "Summarize the value clearly, reduce hesitation, and guide the reader to a "
-        "confident next step with a direct but not pushy CTA."
+    "conclusion_cta": (
+        "Summarize the decision value and close with one clear next step."
     ),
 }
 
@@ -914,9 +951,9 @@ class StrategyService:
             "pain_point_focus": [],
             "emotional_trigger": self._build_brand_emotional_trigger(),
             "depth_level": "comprehensive",
-            "authority_strategy": [],
-            "eeat_signals_to_include": [],
-            "differentiation_focus": [],
+            "supported_eeat_signals": [],
+            "supported_differentiators": [],
+            "supported_proof_points": [],
             "conversion_strategy": self._build_brand_conversion_strategy(),
             "cta_philosophy": LOCKED_BRAND_CTA_PHILOSOPHY,
             "local_strategy": self._build_brand_local_strategy(primary_keyword, area),
@@ -988,14 +1025,19 @@ class StrategyService:
         contracted["pain_point_focus"] = self._sanitize_brand_strategy_list(
             contracted.get("pain_point_focus"), allow_heavy_framing=allow_heavy_framing
         )
-        contracted["authority_strategy"] = self._sanitize_brand_strategy_list(
-            contracted.get("authority_strategy"), allow_heavy_framing=allow_heavy_framing
+        contracted["supported_eeat_signals"] = self._sanitize_brand_strategy_list(
+            contracted.get("supported_eeat_signals"),
+            allow_heavy_framing=allow_heavy_framing,
         )
-        contracted["eeat_signals_to_include"] = self._sanitize_brand_strategy_list(
-            contracted.get("eeat_signals_to_include"), allow_heavy_framing=allow_heavy_framing
+
+        contracted["supported_differentiators"] = self._sanitize_brand_strategy_list(
+            contracted.get("supported_differentiators"),
+            allow_heavy_framing=allow_heavy_framing,
         )
-        contracted["differentiation_focus"] = self._sanitize_brand_strategy_list(
-            contracted.get("differentiation_focus"), allow_heavy_framing=allow_heavy_framing
+
+        contracted["supported_proof_points"] = self._sanitize_brand_strategy_list(
+            contracted.get("supported_proof_points"),
+            allow_heavy_framing=allow_heavy_framing,
         )
 
         return contracted
@@ -1015,9 +1057,9 @@ class StrategyService:
             "pain_point_focus": [],
             "emotional_trigger": "Fear of losing leads due to weak digital presence",
             "depth_level": "comprehensive",
-            "authority_strategy": [],
-            "eeat_signals_to_include": [],
-            "differentiation_focus": [],
+            "supported_eeat_signals": [],
+            "supported_differentiators": [],
+            "supported_proof_points": [],
             "conversion_strategy": "Intro CTA bridge -> proof -> close CTA",
             "cta_philosophy": "One clear CTA early, one decisive CTA in conclusion",
             "local_strategy": f"Reflect market behavior, trust factors, and payment context in {area}" if area else "No local constraint",
@@ -1039,7 +1081,8 @@ class StrategyService:
         if isinstance(data, dict):
             out.update(data)
 
-        for list_key in ["pain_point_focus", "authority_strategy", "eeat_signals_to_include", "differentiation_focus"]:
+        # for list_key in ["pain_point_focus", "authority_strategy", "eeat_signals_to_include", "differentiation_focus"]:
+        for list_key in ["pain_point_focus", "supported_eeat_signals", "supported_differentiators", "supported_proof_points"]:
             if not isinstance(out.get(list_key), list):
                 out[list_key] = []
 
@@ -1063,7 +1106,7 @@ class StrategyService:
         required = [
             "primary_angle", "market_angle", "target_reader_state",
             "pain_point_focus", "emotional_trigger", "depth_level",
-            "authority_strategy", "eeat_signals_to_include", "differentiation_focus",
+            "supported_eeat_signals", "supported_differentiators", "supported_proof_points",
             "conversion_strategy", "cta_philosophy", "local_strategy", "cultural_peer_areas",
             "tone_direction", "section_role_map"
         ]

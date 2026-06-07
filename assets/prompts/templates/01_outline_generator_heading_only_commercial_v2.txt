@@ -14,6 +14,7 @@ Your task is to generate only the heading structure layer of an article outline 
 - Area: "{{ area | default('General') }}"
 - Brand Context: "{{ brand_context | default('') }}"
 - If Brand Context contains `[BRAND EVIDENCE INVENTORY - OUTLINE GATE]`, obey it as the hard availability map for brand-owned headings.
+- If Brand Context contains `[COMMERCIAL BUYER JOURNEY PLAN]`, use it as a domain-neutral role map for purchase-decision coverage. The role names are not headings and must not be copied into the outline.
 - Head Entity: "{{ head_entity | default('') }}"
 - Entity Phrase: "{{ entity_phrase | default('') }}"
 - Service/Object Phrase: "{{ service_phrase | default(entity_phrase | default('')) }}"
@@ -44,8 +45,8 @@ Your task is to generate only the heading structure layer of an article outline 
   - Do not create any intro subheadings.
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
-- If `content_type` is `brand_commercial`, the goal is to convert. The structure should build trust fast and guide the reader toward action.
-  - **CORE DECISION-COVERAGE PILLARS**: You MUST ensure the following 9 conversion pillars are covered and present in the outline. Order matters here:
+- If `content_type` is `brand_commercial`, the goal is to help the reader make a confident buying decision and then guide them toward action. Use the injected `[COMMERCIAL BUYER JOURNEY PLAN]` when present.
+  - **CORE DECISION-COVERAGE PILLARS**: Cover the commercial decision journey, but merge roles naturally so the article stays focused. Not every role needs a standalone H2 in every topic.
     1. **Intro**: Speak directly to the reader's problem or need. Primary keyword in first paragraph. One very soft CTA at the end of intro is acceptable here. (Unheaded `section_type: introduction`).
     2. **What the service/product is** (`section_type: offer`): The FIRST visible H2 MUST be the Offer section. Use the exact Primary Keyword. Brief but clear.
     3. **Key features or what's included** (`section_type: features`): Bullet points preferred over paragraphs. Scannable.
@@ -58,6 +59,8 @@ Your task is to generate only the heading structure layer of an article outline 
   - Assign the implied commercial role through `coverage_role` when possible:
     `offer_clarity`, `features_or_included`, `differentiators`, `proof`, `comparison`, `process_or_how`, `faq`, `conclusion`.
   - Keep these roles distinct. Do not make a features section repeat the service catalog, and do not make proof/projects duplicate earlier sections.
+  - The buyer-journey role map is domain-neutral. Do not hardcode structures from another industry, competitor article, country, or brand.
+  - Use optional roles only when they are relevant to the topic and evidence: security/performance, technology/capability, business impact, local fit, cost/value/ROI, or other domain-specific decision angles.
   - **FLEXIBILITY & EXPANSION RULE (CRITICAL)**: While the 9 pillars above MUST be covered, you are STRONGLY ENCOURAGED to ADD 1-2 extra domain-specific H2 sections (e.g., Legal Rules, Location/Area Guides, Licensing Requirements, Specific Use Cases) between these pillars if observed in the SERP brief or if highly necessary for the topic.
   - For these custom added sections, you may use `section_type: "core"` or `section_type: "location"`.
   - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field:
@@ -81,9 +84,7 @@ Your task is to generate only the heading structure layer of an article outline 
   - Do not create brand pricing/packages headings unless `pricing_available` is true.
   - Do not create dedicated brand-proof sections when inventory confidence is low.
   - Comparison is NOT a mandatory standalone section. If comparison is useful, it may be embedded inside the most relevant section (offer, features, proof/pricing, or location) unless it deserves a dedicated standalone H2.
-- The first visible core H2 MUST be decision-useful and specific, but if it is an offer section, it MUST describe available options/types directly and MUST NOT use 'how to choose' phrasing.
-  - Avoid: "أفضل مناطق شراء [entity] للبيع في [area]".
-  - Prefer: "أفضل مناطق شراء [entity] للبيع في [area] حسب ميزانيتك".
+- The first visible core H2 MUST be specific and useful for the buyer journey. If it is an offer/features section, it should describe what the solution includes or what options are available, not force 'how to choose' phrasing.
 - This first H2 must contain the full primary keyword exactly, or the closest natural phrasing that preserves the same full search intent.
 - **PRIMARY KEYWORD ANCHOR RULE**:
   - The exact full Primary Keyword may appear only in the designated anchor H2 (the first visible core H2).
@@ -162,13 +163,11 @@ Usually keep `subheadings` empty UNLESS meaningful segmentation exists.
 
 If pricing varies meaningfully by location, type, category, package, or scope, H3s MUST reflect the most decision-useful segmentation.
 
-- **DYNAMIC PRICING SEGMENTATION LOGIC**: To determine the primary pricing H3 segmentation, analyze the core entity's industry:
-  - Real Estate & Physical Property (e.g., apartments, offices): Segment by Location/Geography or Property Type.
-    - **REAL ESTATE REGIONAL PRICING MANDATE**: If the core entity is real estate, physical listings, or rentals in a target city (`area`), your H3 subheadings **MUST** strictly segment by the broad city zones/regions (e.g., شمال الرياض, شرق الرياض, غرب الرياض, جنوب الرياض) regardless of the H2 heading phrasing. You are strictly forbidden from segmenting by property/listing types (such as furnished vs unfurnished, or bedroom count) as H3 headings; these secondary dimensions **MUST** be detailed within the body/bullets of those regional H3 subheadings.
-
-  - Service Packages (e.g., SEO, consulting, cleaning): Segment by Scope/Tier or Service Type.
-  - Physical Products/Rentals (e.g., cars, equipment): Segment by Category/Model.
-- Choose the segmentation that acts as the strongest practical price driver in that specific industry. Never force location segmentation unless the industry heavily prices based on geography.
+- **DYNAMIC PRICING SEGMENTATION LOGIC**: To determine the primary pricing H3 segmentation, analyze what actually drives cost for this topic.
+  - Service or solution topics may segment by scope, tier, usage level, deliverables, complexity, or service type.
+  - Physical product or usage-based topics may segment by model, category, size, duration, condition, location, or usage pattern.
+  - Location/geography may be used only when SERP evidence, the query, or the industry clearly shows it is a primary cost driver.
+- Choose the segmentation that acts as the strongest practical price driver in that specific topic. Never force geography, package tiers, product types, or any industry-specific bucket without support.
 - If you segment by one dimension (e.g., Location), mention secondary variations (e.g., furnished/unfurnished) inside the body content of those H3s, rather than creating mixed H3s.
 - The pricing H2 MUST commit to a single primary segmentation dimension.
 - Avoid combining multiple primary dimensions in the pricing H2, such as "by type and area".
@@ -304,12 +303,12 @@ If no clear comparison angle exists:
 7. FAQ H2:
 H3s are allowed and should be real user questions.
 - FAQ Section: Obey the `section_role_map` for the FAQ H2. It MUST preserve the entity, intent, and location (if present). Every H3 under this section MUST be a real question starting with (ما / كيف / هل / كم). Use common buyer questions or PAA signals.
-- **RENTAL/LISTING FAQ PRIORITY**: For real estate rental topics, prioritize questions about: monthly vs yearly rent, furnished vs unfurnished differences, best areas/neighborhoods, average prices or price factors, viewing before contract, payment methods (installments vs full), and family vs individual suitability. Avoid generic paperwork questions unless strongly supported by SERP.
+- **FAQ PRIORITY**: Use objections and questions that are visible in SERP/PAA, the content strategy, or the commercial buyer journey for this exact topic. Do not import FAQ templates from another industry.
 - Legal FAQ Rule: Do not create legal, documentation, contract, or verification FAQ questions unless the primary keyword or observed SERP/PAA explicitly supports them. Do not infer legal FAQs from brand context alone.
 - Closing Section: If the article needs a closing section, place one conclusion-style H2 last using a useful next-step or takeaway angle, not the label "Conclusion".
 
 ### 3. GLOBAL HEADING RULE:
-- Every H2 MUST be decision-useful. A heading is INVALID if it is purely descriptive (e.g., "مميزات", "توزيع", "أنواع") or does not help the user choose, compare, or evaluate. A heading is VALID if it supports decision-making, adds clarity to user intent, or reduces ambiguity/choice friction.
+- Every H2 must have a clear job in the buyer journey. It may be descriptive when the section job is offer scope, included features, proof, process, FAQ, or CTA; reserve explicit "criteria/how to choose" framing for evaluation sections only. A heading is invalid only when it is vague, duplicated, or does not answer a distinct reader question.
 
 ---
 
@@ -328,21 +327,19 @@ H3s are allowed and should be real user questions.
 
 - **FEATURES SECTION (section_type: features)**:
 
-  Follow the GLOBAL RULE by expressing clear evaluation or comparison criteria relevant to the entity.
+  `features_included` means what the solution/service/product includes or what the reader receives. It is not the same as `evaluation_criteria`.
 
   The H2 MUST:
-  - include real decision criteria (e.g., price, size, location, quality, performance, usage, suitability)
-  - be clearly tied to the entity/service/action
-  - help the user compare or evaluate before taking action
+  - clarify included deliverables, capabilities, parts of the offer, service components, or concrete buyer benefits
+  - stay tied to the entity/service/action
+  - avoid becoming a second "how to choose" or "criteria" section
 
   The H2 MUST NOT:
-  - be generic or purely descriptive (e.g., "أهم المزايا", "مواصفات عامة")
-  - rely on vague phrasing like "المزايا التي تساعدك..." without concrete criteria
+  - be generic or purely decorative (e.g., "أهم المزايا", "مواصفات عامة")
+  - repeat evaluation criteria already owned by a criteria/checklist section
+  - turn included features into generic provider-selection advice
 
-  H3s, if present, MUST expand the evaluation criteria into real decision buckets.
-  They MUST reflect domain-relevant criteria such as price, size, quality, performance, usage, suitability, location, service level, or similar criteria inferred from the topic.
-  Avoid generic or abstract H3s.
-  If no strong decision-bucket H3s exist, return an empty subheadings array.
+  H3s, if present, MUST represent real included components, deliverables, or capability families. If the only possible H3s are criteria for choosing, keep this section without H3s or let the criteria section own them.
 
 ---
 
@@ -353,7 +350,7 @@ H3s are allowed and should be real user questions.
   The H2 MUST:
   - include a clear decision angle (budget, lifestyle, proximity, suitability, use case)
   - help the user choose between locations based on needs
-  - use natural decision language when possible (e.g., "لاختيار شقة" instead of overly formal phrasing like "لاستئجار الشقق")
+  - use natural decision language when possible (e.g., "لاختيار الخيار الأنسب" instead of overly formal phrasing)
 
   The H2 MUST NOT:
   - be purely descriptive of areas (e.g., "توزيع...", "أفضل مناطق..." without context)
@@ -362,12 +359,12 @@ H3s are allowed and should be real user questions.
   - it is paired with a decision factor (budget, usage, lifestyle, suitability)
   - it helps the user choose, not just list locations
 
-  Prefer broad city zones (e.g., north, east, west, south, central) over specific neighborhoods unless specific neighborhoods are clearly supported by search data or explicitly provided in the input.
+  Prefer the classification level that search data supports. This may be broad zones, specific clusters, service areas, branches, or usage contexts depending on the topic.
 
   - **TAXONOMICAL CONSISTENCY RULE**: You are STRICTLY FORBIDDEN from mixing broad city zones (e.g., North, East) with specific neighborhoods (e.g., Al-Malqa, Al-Rimal) as sibling H3s under the same Location H2.
     - Choose ONE classification level and stick to it:
-      * Level A (Highly Preferred): Broad city zones only (e.g., North Riyadh, East Riyadh, West Riyadh, Central/South Riyadh).
-      * Level B: Specific neighborhood clusters only (e.g., Luxury Neighborhoods, Economical Neighborhoods, Business-Central Neighborhoods).
+      * Level A: Broad zones or regions only.
+      * Level B: Specific clusters only.
     - If you choose Broad city zones (Level A), you MUST discuss specific neighborhoods (like Al-Malqa, Al-Rimal) inside the body/bullets of their respective city zone H3s, NOT as standalone sibling H3s.
     - You are STRICTLY FORBIDDEN from creating a generic catch-all sibling H3 like "أحياء أخرى". Every H3 must represent a specific, well-defined zone or cluster.
 
@@ -382,19 +379,19 @@ H3s are allowed and should be real user questions.
   Avoid pure geographic listing.
 
   Bad:
-  - شمال الرياض
-  - شرق الرياض
+  - North zone
+  - East zone
 
   Good:
-  - شقق للايجار في شمال الرياض: مناسبة للعائلات والمجمعات الحديثة
-  - شقق للايجار في شرق الرياض: خيارات اقتصادية ومساحات أكبر
+  - [entity/service] in [zone A]: suitable for [specific use case]
+  - [entity/service] in [zone B]: useful when [specific decision factor] matters
 
 ---
 
 - **PROCESS SECTION (section_type: process)**:
   - The Process H2 MUST include a clear action (buy, rent, book, choose, etc.)
   - MUST stay anchored to the entity/service
-  - MUST include brand context if brand_commercial
+  - Include brand context only when the section is brand-owned or the heading explicitly asks how the brand process works.
 
   Generic journey phrasing is FORBIDDEN:
   - "رحلة البحث"
@@ -402,7 +399,7 @@ H3s are allowed and should be real user questions.
   - "خطوات العثور"
 
   Correct pattern:
-  - "خطوات [action] لـ [entity/service] عبر [Brand]"
+  - "خطوات [action] لـ [entity/service]" or "كيف يعمل [Brand] في [process]" when brand-owned evidence supports it.
 
 ---
 
@@ -412,8 +409,8 @@ H3s are allowed and should be real user questions.
 
 - If the offer section answers "how to choose" or overlaps with evaluation criteria, it is INVALID and must be rewritten as concrete services.
 - Offer sections define what services/deliverables/options are available.
-- Features sections MUST define evaluation criteria only (HOW to evaluate).
-- They MUST describe how the user evaluates or chooses between options.
+- Features sections define what is included, what the buyer receives, or concrete capabilities/benefits. Evaluation criteria are owned by criteria/checklist sections.
+- They MUST NOT become a second criteria/checklist section.
 - They MUST NOT include direct comparisons (A vs B) or specific alternatives.
 - Offer and features MUST NOT answer the same question. If both headings are about choosing/evaluating the best provider, the offer section is missing and must be rewritten as concrete services/deliverables.
 
@@ -423,7 +420,7 @@ H3s are allowed and should be real user questions.
 
 ### CONFLICT PREVENTION
 
-- **HARD RULE: NO OFFER-FEATURES OVERLAP**: If the core topic makes the "Offer" section (e.g., types of apartments) and the "Features/Criteria" section (e.g., criteria to choose) overlap heavily or repeat the same concepts (like furnished/unfurnished, size, location), you MUST either OMIT the Offer section or MERGE them into a single H2. Do NOT output both if they will force repetitive body text.
+- **HARD RULE: NO OFFER-FEATURES OVERLAP**: If the offer/options section and the features/criteria section overlap heavily or repeat the same concepts, you MUST either OMIT one or MERGE them into a single H2. Do NOT output both if they will force repetitive body text.
 - If comparison would only repeat the features or offer section, it MUST be embedded or omitted, not promoted to a standalone H2.
 - If Features and Comparison sections overlap conceptually, the output is INVALID and must be regenerated with clearer separation.
 
@@ -544,5 +541,5 @@ Follow these role-specific instructions for each section type:
 - No markdown fences.
 - No explanation before or after the JSON.
 - Do not include body content.
-- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `visual_format`, `subheadings`.
+- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `coverage_role`, `visual_format`, `subheadings`.
 - `visual_format` MUST be one of: `compact_narrative`, `bulleted_list`, `table`. Default to `compact_narrative`, but prefer `table` for pricing and comparison sections.

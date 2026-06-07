@@ -2,6 +2,9 @@
 import unittest
 import copy
 import os
+import json
+import tempfile
+import re
 from unittest.mock import AsyncMock, MagicMock
 from src.services.brand_evidence_service import (
     BrandEvidenceService,
@@ -4572,9 +4575,226 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             text = handle.read()
 
         self.assertIn("[BRAND EVIDENCE INVENTORY - OUTLINE GATE]", text)
+        self.assertIn("[COMMERCIAL BUYER JOURNEY PLAN]", text)
+        self.assertIn("domain-neutral role map", text)
+        self.assertIn("The role names are not headings", text)
         self.assertIn("Do not mention the brand in every section", text)
         self.assertIn("Do not create brand project/case-study headings unless `projects_available` is true.", text)
         self.assertIn("Do not create brand pricing/packages headings unless `pricing_available` is true.", text)
+
+    def test_commercial_buyer_journey_plan_is_domain_neutral_and_evidence_gated(self):
+        """Buyer journey planning should be a reusable role map, not a web-design template."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "primary_keyword": "best web design company in Saudi Arabia",
+            "raw_title": "best web design company in Saudi Arabia",
+            "area": "Saudi Arabia",
+            "content_strategy": {"market_angle": "Help the reader compare providers by decision factors."},
+            "serp_outline_brief": {"observed_topics": ["security", "performance", "ROI"]},
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+
+        plan = controller._build_commercial_buyer_journey_plan(state)
+        plan_text = json.dumps(plan, ensure_ascii=False).lower()
+        role_names = [item["role"] for item in plan["selected_roles"]]
+        optional_names = [item["role"] for item in plan["optional_roles"]]
+
+        self.assertIn("service_scope", role_names)
+        self.assertIn("proof", role_names)
+        self.assertIn("security_performance", optional_names)
+        self.assertIn("business_impact", optional_names)
+        self.assertIn("local_market_fit", optional_names)
+        self.assertIn("brand pricing", " ".join(plan["disabled_claims"]))
+        self.assertIn("brand local office", " ".join(plan["disabled_claims"]))
+        self.assertNotIn("web design", plan_text)
+        self.assertNotIn("saudi arabia", plan_text)
+        self.assertNotIn("brandco", plan_text)
+
+    def test_commercial_buyer_journey_context_explains_roles_are_not_headings(self):
+        """The outline context should explicitly prevent copying role names as headings."""
+        controller = AsyncWorkflowController(work_dir=".")
+        context = controller._format_commercial_buyer_journey_context({
+            "content_type": "brand_commercial",
+            "primary_keyword": "service provider",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        })
+
+        self.assertIn("[COMMERCIAL BUYER JOURNEY PLAN]", context)
+        self.assertIn("role map", context)
+        self.assertIn("Role names must not appear as visible headings", context)
+        self.assertIn("Competitor-style structures may inspire missing decision angles", context)
+
+    def test_commercial_coverage_gate_adds_missing_roles_without_topic_bias(self):
+        """Missing commercial buyer-journey roles should be filled without web-design-specific headings."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "primary_keyword": "best business consulting provider for clinics",
+            "raw_title": "best business consulting provider for clinics",
+            "keywords": ["best business consulting provider for clinics"],
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "Opening", "heading_level": "INTRO", "section_type": "introduction"},
+            {
+                "section_id": "offer",
+                "heading_text": "best business consulting provider for clinics: what it includes",
+                "heading_level": "H2",
+                "section_type": "offer",
+                "coverage_role": "offer_clarity",
+                "contains_exact_primary_keyword": True,
+            },
+            {"section_id": "brand", "heading_text": "How BrandCo fits clinic workflows", "heading_level": "H2", "section_type": "differentiation"},
+            {"section_id": "faq", "heading_text": "Common questions", "heading_level": "H2", "section_type": "faq"},
+            {"section_id": "cta", "heading_text": "Start with BrandCo", "heading_level": "H2", "section_type": "conclusion"},
+        ]
+
+        prepared = controller._ensure_commercial_buyer_journey_coverage(copy.deepcopy(outline), state)
+        roles = [section.get("commercial_section_role") or controller._commercial_section_role_for_section(section, state) for section in prepared]
+        headings_blob = " ".join(section.get("heading_text", "") for section in prepared).lower()
+
+        self.assertIn("features_included", roles)
+        self.assertIn("evaluation_criteria", roles)
+        self.assertIn("comparison", roles)
+        self.assertIn("process", roles)
+        self.assertNotIn("proof", roles)
+        self.assertNotIn("security_performance", roles)
+        self.assertNotIn("technology_or_capability", roles)
+        self.assertNotIn("web design", headings_blob)
+        self.assertNotIn("تصميم مواقع", headings_blob)
+        self.assertEqual(roles[-1], "cta")
+
+    def test_commercial_coverage_gate_keeps_decision_factors_inside_criteria(self):
+        """Topic-specific decision factors should not become repeated standalone H2s."""
+        controller = AsyncWorkflowController(work_dir=".")
+        base_state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "primary_keyword": "best patient booking platform",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "Opening", "heading_level": "INTRO", "section_type": "introduction"},
+            {"section_id": "offer", "heading_text": "best patient booking platform: what it includes", "heading_level": "H2", "section_type": "offer", "contains_exact_primary_keyword": True},
+            {"section_id": "features", "heading_text": "What should be included", "heading_level": "H2", "section_type": "features"},
+            {"section_id": "criteria", "heading_text": "Practical criteria for choosing", "heading_level": "H2", "section_type": "core", "coverage_role": "custom_domain_topic"},
+            {"section_id": "comparison", "heading_text": "Compare available options", "heading_level": "H2", "section_type": "comparison"},
+            {"section_id": "process", "heading_text": "How the process works", "heading_level": "H2", "section_type": "process"},
+            {"section_id": "faq", "heading_text": "Common questions", "heading_level": "H2", "section_type": "faq"},
+            {"section_id": "cta", "heading_text": "Start now", "heading_level": "H2", "section_type": "conclusion"},
+        ]
+
+        no_signal = controller._ensure_commercial_buyer_journey_coverage(copy.deepcopy(outline), copy.deepcopy(base_state))
+        no_signal_roles = [section.get("commercial_section_role") or controller._commercial_section_role_for_section(section, base_state) for section in no_signal]
+
+        signaled_state = copy.deepcopy(base_state)
+        signaled_state["serp_outline_brief"] = {"observed_topics": ["security", "privacy compliance"]}
+        signaled = controller._ensure_commercial_buyer_journey_coverage(copy.deepcopy(outline), signaled_state)
+        signaled_roles = [section.get("commercial_section_role") or controller._commercial_section_role_for_section(section, signaled_state) for section in signaled]
+
+        self.assertNotIn("security_performance", no_signal_roles)
+        self.assertNotIn("security_performance", signaled_roles)
+
+    def test_commercial_decision_review_sections_are_merged(self):
+        """Overlapping criteria/security/technology sections should become one criteria block."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "primary_keyword": "service provider",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "Opening", "heading_level": "INTRO", "section_type": "introduction"},
+            {"section_id": "criteria", "heading_text": "Practical criteria for choosing", "heading_level": "H2", "section_type": "core", "coverage_role": "custom_domain_topic"},
+            {"section_id": "security", "heading_text": "Security and performance before deciding", "heading_level": "H2", "section_type": "core", "coverage_role": "custom_domain_topic"},
+            {"section_id": "tech", "heading_text": "Technical capabilities worth checking", "heading_level": "H2", "section_type": "core", "coverage_role": "custom_domain_topic"},
+            {"section_id": "faq", "heading_text": "Common questions", "heading_level": "H2", "section_type": "faq"},
+            {"section_id": "cta", "heading_text": "Start now", "heading_level": "H2", "section_type": "conclusion"},
+        ]
+
+        prepared = controller._ensure_commercial_buyer_journey_coverage(copy.deepcopy(outline), state)
+        roles = [section.get("commercial_section_role") for section in prepared]
+        criteria = next(section for section in prepared if section.get("section_id") == "criteria")
+
+        self.assertEqual(roles.count("evaluation_criteria"), 1)
+        self.assertNotIn("security_performance", roles)
+        self.assertNotIn("technology_or_capability", roles)
+        self.assertIn("Security and performance before deciding", criteria.get("subheadings", []))
+        self.assertIn("Technical capabilities worth checking", criteria.get("subheadings", []))
+
+    def test_commercial_intro_contract_replaces_weak_first_paragraph(self):
+        """Commercial intro first paragraph must carry the exact primary keyword and avoid brand-first openings."""
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "ar",
+            "primary_keyword": "\u0623\u0641\u0636\u0644 \u0645\u0632\u0648\u062f \u062e\u062f\u0645\u0629",
+            "brand_name": "BrandCo",
+        }
+        section = {
+            "section_id": "intro",
+            "heading_level": "INTRO",
+            "section_type": "introduction",
+            "commercial_section_role": "intro",
+        }
+        content = (
+            "\u062a\u0642\u062f\u0645 BrandCo \u062d\u0644\u0648\u0644\u0627 \u0639\u0645\u0644\u064a\u0629 \u0644\u0644\u0642\u0627\u0631\u0626.\n\n"
+            "\u0627\u0644\u0641\u0642\u0631\u0629 \u0627\u0644\u062b\u0627\u0646\u064a\u0629 \u062a\u0634\u0631\u062d \u0627\u0644\u062d\u0644."
+        )
+
+        result = controller._ensure_commercial_intro_contract(content, section, state)
+        first = result.split("\n\n", 1)[0]
+
+        self.assertIn(state["primary_keyword"], first)
+        self.assertNotIn("BrandCo", first)
 
     async def test_phase_19_step5_outline_receives_inventory_without_brand_context_mutation(self):
         """Phase 1.9 Step 5: outline prompt context gets inventory while canonical brand_context stays unchanged."""
@@ -4632,6 +4852,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result["brand_context"], "canonical brand context")
         self.assertIn("[BRAND EVIDENCE INVENTORY - OUTLINE GATE]", sent_context)
+        self.assertIn("[COMMERCIAL BUYER JOURNEY PLAN]", sent_context)
         self.assertIn('"projects_available": true', sent_context)
         self.assertIn("Do not create brand pricing/packages headings unless pricing_available is true.", sent_context)
 
@@ -4855,14 +5076,17 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             "brand_evidence_inventory": {"services_available": True, "projects_available": False, "pricing_available": False, "explicit_geography": [], "confidence": "medium"},
         }
 
-        general = controller._prepare_outline_for_content(state, [
+        general_outline = controller._prepare_outline_for_content(state, [
             {"section_id": "intro", "heading_text": "Introduction", "heading_level": "INTRO", "section_type": "introduction", "subheadings": []},
             {"section_id": "faq", "heading_text": "FAQ", "heading_level": "H2", "section_type": "faq", "subheadings": ["How do service costs vary?"]},
-        ])["outline"][1]
-        brand_question = controller._prepare_outline_for_content(state, [
+        ])["outline"]
+        brand_outline = controller._prepare_outline_for_content(state, [
             {"section_id": "intro", "heading_text": "Introduction", "heading_level": "INTRO", "section_type": "introduction", "subheadings": []},
             {"section_id": "faq", "heading_text": "FAQ", "heading_level": "H2", "section_type": "faq", "subheadings": ["How does BrandCo start a project?"]},
-        ])["outline"][1]
+        ])["outline"]
+
+        general = next(section for section in general_outline if section.get("section_id") == "faq")
+        brand_question = next(section for section in brand_outline if section.get("section_id") == "faq")
 
         self.assertEqual(general["section_contract"]["brand_policy"], "none")
         self.assertEqual(general["taxonomy_axis"], "faq")
@@ -5514,8 +5738,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         # Must contain factual prose with the project name
         self.assertIn("Baddel", result)
 
-    def test_project_required_table_with_two_narrative_pages_renders_table(self):
-        """Two or more valid narrative project pages must produce a markdown table."""
+    def test_project_required_table_with_two_narrative_pages_uses_proof_cards_by_default(self):
+        """Two or more valid narrative project pages should still use proof cards by default."""
         controller = AsyncWorkflowController(work_dir=".")
         section = {
             "section_id": "proof",
@@ -5559,7 +5783,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         result = controller._ensure_required_table_content(content, section, state)
 
-        self.assertIn("|---", result)
+        self.assertNotIn("|---", result)
+        self.assertNotIn("| Project |", result)
         self.assertIn("Baddel", result)
         self.assertIn("Retail Portal", result)
 
@@ -5684,6 +5909,89 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertGreaterEqual(len(titles), 2)
         self.assertLess(titles.index("Baddel - BrandCo"), titles.index("Aqar Platform - BrandCo"))
 
+    def test_portfolio_listing_page_preserves_all_project_cards_from_full_text(self):
+        """Portfolio listing pages must not collapse many project cards into one semantic section."""
+        from src.services.brand_evidence_service import build_brand_page_narrative_briefs
+
+        listing_text = """
+        Portfolio Design Services Mobile App SEO Websites All
+        Mobile App Acumen Consulting Egypt Brief
+        Client: Acumen Consulting Egypt Location: Egypt Sector: Management Consulting Audience: B2B & B2C Expertise: Branding & Positioning, UX/UI, Mobile App
+        Technologies Used swift laravel java figma
+        Mobile App Aqar Ya Masr Mob App Brief
+        Client: Aqar Ya Masr Location: Egypt Sector: Real Estate Audience: B2B & B2C Services Provided: Branding & Positioning, UX/UI Design
+        Technologies Used laravel swift java aws
+        Websites Aqar Ya Masr Web app Brief
+        Client: Aqar Ya Masr Location: Egypt Sector: Real Estate Target Audience: B2B & B2C Services Provided: Advertising, Branding & Positioning
+        Technologies Used laravel sass figma
+        Websites Arab Business Academy Brief
+        Client: Arab Business Academy Location: Iraq Sector: Banking & Financials Audience: B2B & B2C Expertise: Branding & Positioning, Ergonomy (UX/UI)
+        Technologies Used react js node js figma
+        Websites Baddel Brief
+        Client: Baddel Location: Riyadh, Saudi Arabia Sector: E-commerce Audience: B2C Expertise: Branding & Positioning, Ergonomy (UX/UI), Graphic Design, Web Application
+        Technologies Used react js node js shopify
+        Mobile App Billion Brief
+        Client: Billion Location: Riyadh, Saudi Arabia Sector: Marketing & Advertising Audience: B2B & B2C Expertise: Branding & Positioning, UX/UI, Graphic Design
+        Technologies Used figma react native node js adobe creative cloude
+        Design Services Bolaq Bookstore Brief
+        Client: Bolaq Bookstore Location: Egypt Sector: Publishing & Retail Target Audience: B2B & B2C Services Provided: Branding & Positioning, UX/UI
+        Technologies Used adobe creative cloude figma
+        Design Services Builders for Constructions and Real Estate Brief
+        Client: Builders for Constructions and Real Estate Location: Qatar Sector: Construction Audience: B2B & B2C Expertise: Branding & Positioning, Graphic Design
+        Technologies Used adobe creative cloude figma
+        Mobile App CITC mobile application Brief
+        Client: Communications and Technology Commission (CTC), Saudi Arabia Project: Mobile Application Development & Branding Package
+        Technologies Used swift kotlin node js
+        Load More Subscribe Newsletters
+        """
+        state = {
+            "area": "Saudi Arabia",
+            "brand_name": "BrandCo",
+            "internal_resources": [
+                {
+                    "link": "https://brand.test/projects",
+                    "title": "projects - BrandCo",
+                    "page_type": "portfolio",
+                    # Simulates a broken semantic-section extraction that captured only one card.
+                    "semantic_sections": [
+                        {
+                            "heading": "Design Services",
+                            "body_text": (
+                                "Design Services Builders for Constructions and Real Estate Brief. "
+                                "Client: Builders for Constructions and Real Estate Location: Qatar."
+                            ),
+                            "url": "https://brand.test/projects",
+                            "page_title": "projects - BrandCo",
+                            "page_type": "portfolio",
+                        }
+                    ],
+                    "page_text_full": listing_text,
+                }
+            ],
+        }
+
+        briefs = build_brand_page_narrative_briefs(state)
+        listing = next(brief for brief in briefs if brief["source_url"] == "https://brand.test/projects")
+        narrative = listing["narrative_brief"]
+        projects = listing["routing_signals"]["projects"]
+
+        self.assertEqual(listing["page_type"], "portfolio_listing")
+        self.assertIn("multiple project cards", narrative)
+        for project in [
+            "Baddel",
+            "Billion",
+            "CITC mobile application",
+            "Aqar Ya Masr Web app",
+            "Aqar Ya Masr Mob App",
+            "Acumen Consulting Egypt",
+            "Arab Business Academy",
+            "Builders for Constructions and Real Estate",
+        ]:
+            self.assertIn(project, narrative)
+            self.assertIn(project, projects)
+        self.assertLess(narrative.index("Baddel"), narrative.index("Aqar Ya Masr Web app"))
+        self.assertNotEqual(projects, ["Builders for Constructions and Real Estate"])
+
     def test_page_narrative_brief_cleans_layout_noise_without_deleting_facts(self):
         """Narrative compression should remove layout chrome and adjacent repetition while preserving facts."""
         from src.services.brand_evidence_service import _build_page_narrative_text
@@ -5741,8 +6049,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("\u0627\u0644\u0645\u0648\u0627\u0635\u0644\u0627\u062a", result)
         self.assertNotIn("\u0646\u0645\u0637 \u0627\u0644\u0633\u0643\u0646", result)
 
-    def test_project_table_uses_clean_titles_and_target_area_ordering(self):
-        """Project fallback tables should use clean page titles and rank target-area project pages first."""
+    def test_project_proof_uses_clean_titles_and_target_area_ordering_without_default_table(self):
+        """Project proof should use clean page titles, rank target-area records first, and avoid default tables."""
         controller = AsyncWorkflowController(work_dir=".")
         section = {
             "heading_text": "Projects shown by BrandCo",
@@ -5798,15 +6106,15 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         result = controller._ensure_required_table_content("Project proof should be shown here.", section, state)
 
-        self.assertIn("|---", result)
+        self.assertNotIn("|---", result)
         self.assertIn("Baddel", result)
         self.assertIn("Aqar Platform", result)
         self.assertLess(result.index("Baddel"), result.index("Aqar Platform"))
         self.assertNotIn("Real EstateTarget", result)
         self.assertNotIn("ing and", result)
 
-    def test_project_table_replaces_noisy_writer_generated_table(self):
-        """Existing project tables should be replaced with deterministic clean project rows."""
+    def test_project_proof_replaces_noisy_writer_generated_table(self):
+        """Existing project tables should be replaced with clean proof cards by default."""
         controller = AsyncWorkflowController(work_dir=".")
         section = {
             "heading_text": "Projects shown by BrandCo",
@@ -5856,7 +6164,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         result = controller._ensure_required_table_content(noisy_content, section, state)
 
-        self.assertIn("|---", result)
+        self.assertNotIn("|---", result)
         self.assertIn("Baddel", result)
         self.assertIn("Riyadh, Saudi Arabia", result)
         self.assertIn("Aqar Platform", result)
@@ -5984,6 +6292,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
                 "proof",
                 "comparison",
                 "process",
+                "evaluation_criteria",
                 "faq",
                 "cta",
             ],
@@ -5992,7 +6301,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(policies[2], "brand_light")
         self.assertEqual(policies[5], "neutral_market")
         self.assertEqual(policies[7], "neutral_market")
-        self.assertEqual(policies[8], "brand_cta")
+        self.assertEqual(policies[8], "neutral_market")
+        self.assertEqual(policies[9], "brand_cta")
 
     def test_brand_usage_policy_flags_project_examples_in_brand_light_sections(self):
         """Service/features sections may mention the brand lightly but should not consume proof examples."""
@@ -6082,6 +6392,697 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Commercial Section Role", sent_prompt)
         self.assertIn("service_explanation", sent_prompt)
         self.assertIn("Commercial Role Discipline", sent_prompt)
+
+    def test_claim_gate_blocks_unobserved_project_names_but_keeps_general_insight(self):
+        """General commercial insight is allowed, but named brand projects must be observed."""
+        from src.services.brand_evidence_service import apply_brand_claim_gate
+
+        text = (
+            "BrandCo helps teams decide which digital platform fits their workflow.\n"
+            "BrandCo built \"Observed Portal\" for a real client.\n"
+            "BrandCo also built \"Imaginary Saudi App\" as a regional proof point."
+        )
+        brief = {
+            "brand_name": "BrandCo",
+            "brand_sensitive": True,
+            "observed_project_names": ["Observed Portal"],
+            "section_source_text": "Portfolio page: Observed Portal. Services: UX/UI and web development.",
+        }
+
+        result = apply_brand_claim_gate(text, brief)
+
+        self.assertIn("which digital platform fits their workflow", result)
+        self.assertIn("Observed Portal", result)
+        self.assertNotIn("Imaginary Saudi App", result)
+
+    def test_brand_fulfillment_flags_unobserved_project_name(self):
+        """Brand-owned project sections must not introduce project names outside observed evidence."""
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        section = {
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "section_contract": {"brand_policy": "commercial", "taxonomy_axis": "brand_projects"},
+            "_visible_brand_reference": True,
+        }
+        understanding = {
+            "relevant_projects": ["Observed Portal"],
+            "relevant_project_records": [{"name": "Observed Portal", "services": ["UX/UI"]}],
+        }
+        raw_blocks = [
+            {
+                "source_url": "https://brand.test/portfolio/observed",
+                "page_type": "portfolio",
+                "heading": "Observed Portal",
+                "observed_text": "Project: Observed Portal. UX/UI and web development.",
+                "observed_facts": ["Project: Observed Portal"],
+            }
+        ]
+
+        report = evaluate_brand_section_fulfillment(
+            section=section,
+            content='BrandCo presents "Imaginary Saudi App" as a case study for regional buyers.',
+            section_brand_understanding=understanding,
+            section_raw_brand_blocks=raw_blocks,
+            state={
+                "content_type": "brand_commercial",
+                "brand_name": "BrandCo",
+                "brand_page_knowledge_pack_context": "Observed Portal is the only portfolio project in this fixture.",
+            },
+        )
+
+        self.assertEqual(report["fulfillment_status"], "unsupported")
+        self.assertIn("project/client names", report["fulfillment_reason"])
+
+    def test_phase_20_prompt_detox_removes_topic_specific_commercial_rules(self):
+        """Generic commercial prompts should not carry rental/listing or single-topic CTA rules."""
+        paths = [
+            "assets/prompts/templates/01_outline_generator_heading_only_commercial_v2.txt",
+            "assets/prompts/templates/02_section_writer_brand_commercial_v2.txt",
+            "assets/prompts/templates/runtime_state.txt",
+            "assets/prompts/templates/section_contract.txt",
+        ]
+        joined_parts = []
+        for path in paths:
+            with open(path, encoding="utf-8") as f:
+                joined_parts.append(f.read())
+        joined = "\n".join(joined_parts)
+
+        banned = [
+            "REAL ESTATE REGIONAL PRICING MANDATE",
+            "RENTAL/LISTING FAQ PRIORITY",
+            "apartments in Riyadh",
+            "قارن شقق الايجار",
+            "قولدن هوست",
+            "أسعار شقق",
+        ]
+        for phrase in banned:
+            self.assertNotIn(phrase, joined)
+        self.assertIn("`features_included` means what the solution/service/product includes", joined)
+        self.assertIn("Use concrete numbers only when the active section is explicitly about pricing", joined)
+
+    def test_phase_20_section_intent_snapshot_is_stable_and_domain_neutral(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "primary_keyword": "service provider",
+            "brand_evidence_inventory": {"services_available": True, "projects_available": True},
+        }
+        section = {
+            "heading_text": "Compare available options",
+            "section_type": "comparison",
+            "commercial_section_role": "comparison",
+        }
+
+        controller._apply_commercial_section_role(section, state, 2, 8)
+        snapshot = section["section_intent_snapshot"]
+
+        self.assertEqual(snapshot["buyer_question"], "which_options_are_different")
+        self.assertEqual(snapshot["section_job"], "comparison")
+        self.assertEqual(snapshot["brand_usage_policy"], "neutral_market")
+        self.assertEqual(snapshot["evidence_expectation"], "market")
+        self.assertIn(snapshot["table_policy"], {"allowed", "required"})
+        self.assertEqual(snapshot["project_usage"], "none")
+
+    def test_phase_20_role_collision_merges_duplicate_evaluation_sections(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {"content_type": "brand_commercial", "primary_keyword": "service provider"}
+        outline = [
+            {"heading_text": "Evaluation criteria", "commercial_section_role": "evaluation_criteria", "subheadings": []},
+            {"heading_text": "Security and performance checks", "commercial_section_role": "security_performance", "subheadings": ["Performance"]},
+            {"heading_text": "How the process works", "commercial_section_role": "process", "subheadings": []},
+        ]
+
+        resolved = controller._merge_duplicate_commercial_buyer_questions(outline, state)
+
+        self.assertEqual(len(resolved), 2)
+        self.assertEqual(resolved[0]["heading_text"], "Evaluation criteria")
+        self.assertIn("Performance", resolved[0].get("subheadings", []))
+        self.assertIn("commercial_role_collision_report", state)
+        self.assertEqual(state["commercial_role_collision_report"][0]["buyer_question"], "how_should_i_evaluate_the_option")
+
+    def test_phase_20_intro_gate_enforces_three_paragraphs_keyword_and_cta(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "ar",
+            "primary_keyword": "افضل مزود خدمة",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+            "input_data": {"title": "افضل مزود خدمة"},
+        }
+        section = {"section_type": "introduction", "heading_level": "INTRO", "commercial_section_role": "intro"}
+        bad_intro = "افضل مزود خدمةلا يبدأ بجملة واضحة عن القارئ."
+
+        fixed = controller._ensure_commercial_intro_contract(bad_intro, section, state)
+        paragraphs = [p.strip() for p in fixed.split("\n\n") if p.strip()]
+
+        self.assertEqual(len(paragraphs), 3)
+        self.assertIn("افضل مزود خدمة", paragraphs[0])
+        self.assertNotIn("BrandCo", paragraphs[0])
+        self.assertIn("BrandCo", paragraphs[1])
+        self.assertIn("https://brand.test", paragraphs[2])
+        self.assertNotIn("خدمةلا", fixed)
+
+    def test_phase_20_malformed_table_header_is_repaired(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "Compare available service options",
+            "section_type": "comparison",
+            "taxonomy_axis": "comparison",
+            "requires_table": True,
+            "commercial_section_role": "comparison",
+            "subheadings": ["Option A", "Option B"],
+        }
+        state = {"article_language": "en", "primary_keyword": "service provider", "raw_title": "service provider"}
+        malformed = "|---|---|\n| A | B |\n\nParagraph."
+
+        fixed = controller._ensure_required_table_content(malformed, section, state)
+
+        first_table = controller._extract_markdown_tables(fixed)[0][2]
+        self.assertTrue(controller._is_valid_markdown_table(first_table))
+        self.assertFalse(first_table.splitlines()[0].strip().startswith("|---"))
+
+    def test_phase_20_article_table_plan_adds_safe_table_and_blocks_unsafe_project_table(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "include_tables": True,
+            "brand_page_narrative_briefs": [
+                {"page_type": "portfolio", "page_title": "Single Project", "routing_signals": {"projects": ["Single Project"]}},
+            ],
+        }
+        outline = [
+            {
+                "heading_text": "Projects shown by BrandCo",
+                "section_type": "proof",
+                "commercial_section_role": "proof",
+                "taxonomy_axis": "brand_projects",
+                "requires_table": True,
+                "table_type": "project_evidence",
+            },
+            {
+                "heading_text": "Compare available options",
+                "section_type": "comparison",
+                "commercial_section_role": "comparison",
+                "taxonomy_axis": "comparison",
+            },
+        ]
+
+        planned = controller._ensure_article_table_plan(outline, state)
+
+        self.assertFalse(planned[0].get("requires_table"))
+        self.assertTrue(planned[1].get("requires_table"))
+        self.assertEqual(planned[1].get("table_type"), "decision_comparison")
+        self.assertEqual(planned[1]["section_intent_snapshot"]["table_policy"], "required")
+
+    def test_phase_20_content_stage_reports_needs_revision_when_table_floor_unmet(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "include_tables": True,
+                "primary_keyword": "service provider",
+                "raw_title": "service provider",
+                "output_dir": tmpdir,
+                "outline": [
+                    {"section_id": "intro", "section_type": "introduction", "heading_level": "INTRO"},
+                    {"section_id": "cta", "section_type": "conclusion", "heading_level": "H2", "heading_text": "Start now"},
+                ],
+                "sections": {
+                    "intro": {"generated_content": "service provider hook.\n\nBrand bridge.\n\nCTA."},
+                    "cta": {"generated_content": "Closing paragraph."},
+                },
+            }
+
+            controller._build_content_stage_markdown(state, "Draft")
+
+            self.assertEqual(state["content_stage_status"], "needs_revision")
+            self.assertLess(state["content_stage_quality_report"]["valid_table_count"], 1)
+
+    def test_phase_21_snapshot_adds_buyer_stage_and_separates_evaluation_job(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "primary_keyword": "service provider",
+        }
+        section = {
+            "heading_text": "Security and performance checks",
+            "section_type": "core",
+            "coverage_role": "custom_domain_topic",
+            "commercial_section_role": "security_performance",
+        }
+
+        controller._apply_commercial_section_role(section, state, 3, 9)
+        snapshot = section["section_intent_snapshot"]
+
+        self.assertEqual(snapshot["buyer_stage"], "evaluation")
+        self.assertEqual(snapshot["section_job"], "evaluation_criteria")
+        self.assertEqual(snapshot["buyer_question"], "how_should_i_evaluate_the_option")
+
+    def test_phase_21_low_usefulness_table_is_replaced(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "Compare available options",
+            "section_type": "comparison",
+            "taxonomy_axis": "comparison",
+            "requires_table": True,
+            "commercial_section_role": "comparison",
+            "subheadings": ["Option A", "Option B"],
+        }
+        state = {"article_language": "en", "content_type": "brand_commercial"}
+        weak_table = "\n".join(
+            [
+                "| Criteria | Option A | Option B |",
+                "|---|---|---|",
+                "| Goal | same | same |",
+                "| Fit | same | same |",
+                "",
+                "Paragraph after table.",
+            ]
+        )
+
+        fixed = controller._ensure_required_table_content(weak_table, section, state)
+        table = controller._extract_markdown_tables(fixed)[0][2]
+
+        self.assertTrue(controller._is_decision_useful_markdown_table(table))
+        self.assertIn("What to check", table)
+
+    def test_phase_21_project_proof_uses_narrative_project_records_from_single_listing_page(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "area": "Riyadh",
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio_listing",
+                    "page_title": "Portfolio",
+                    "routing_signals": {
+                        "projects": ["Project Egypt", "Project Riyadh"],
+                        "project_records": [
+                            {
+                                "name": "Project Egypt",
+                                "location": "Egypt",
+                                "sector": "Consulting",
+                                "services": ["Branding"],
+                                "technologies": ["Figma"],
+                            },
+                            {
+                                "name": "Project Riyadh",
+                                "location": "Riyadh, Saudi Arabia",
+                                "sector": "Commerce",
+                                "services": ["UX/UI"],
+                                "technologies": ["React"],
+                            },
+                        ],
+                    },
+                }
+            ],
+        }
+        section = {
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "commercial_section_role": "proof",
+            "requires_table": True,
+        }
+
+        self.assertTrue(controller._has_minimum_project_table_evidence(state, minimum=2))
+        proof = controller._build_required_section_table(section, state)
+
+        self.assertFalse(controller._content_has_markdown_table(proof))
+        self.assertIn("Project Riyadh", proof)
+        self.assertIn("Project Egypt", proof)
+        self.assertLess(proof.index("Project Riyadh"), proof.index("Project Egypt"))
+
+    def test_phase_21_explicit_safe_project_table_can_still_be_built(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "area": "Riyadh",
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio_listing",
+                    "page_title": "Portfolio",
+                    "routing_signals": {
+                        "project_records": [
+                            {
+                                "name": "Project Egypt",
+                                "location": "Egypt",
+                                "sector": "Consulting",
+                                "services": ["Branding"],
+                                "technologies": ["Figma"],
+                            },
+                            {
+                                "name": "Project Riyadh",
+                                "location": "Riyadh, Saudi Arabia",
+                                "sector": "Commerce",
+                                "services": ["UX/UI"],
+                                "technologies": ["React"],
+                            },
+                        ],
+                    },
+                }
+            ],
+        }
+        section = {
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "commercial_section_role": "proof",
+            "requires_table": True,
+            "table_type": "project_evidence_table",
+        }
+
+        table = controller._build_required_section_table(section, state)
+
+        self.assertTrue(controller._is_decision_useful_markdown_table(table))
+        self.assertLess(table.index("Project Riyadh"), table.index("Project Egypt"))
+
+    def test_phase_21_routing_signal_projects_alone_do_not_create_project_records(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio",
+                    "page_title": "Portfolio",
+                    "narrative_brief": "This page includes layout labels and tools but no complete project record.",
+                    "routing_signals": {
+                        "projects": ["Adobe Photoshop", "B2C Branding", "Technology Stack"],
+                    },
+                }
+            ],
+        }
+
+        records = controller._project_records_from_narrative_pack(state, limit=5)
+
+        self.assertEqual(records, [])
+        self.assertFalse(controller._has_minimum_project_table_evidence(state, minimum=1))
+
+    def test_phase_21_project_records_split_location_and_merge_variants(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "area": "Riyadh",
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio_listing",
+                    "page_title": "Portfolio",
+                    "routing_signals": {
+                        "project_records": [
+                            {
+                                "name": "Project Alpha Web App",
+                                "location": "Riyadh, Saudi Arabia",
+                                "sector": "Commerce",
+                                "services": ["UX/UI"],
+                                "technologies": ["React"],
+                            },
+                            {
+                                "name": "Project Alpha Mobile App",
+                                "location": "Riyadh, Saudi Arabia",
+                                "sector": "Commerce",
+                                "services": ["Branding"],
+                                "technologies": ["React Native"],
+                            },
+                            {
+                                "name": "Project Beta Riyadh",
+                                "location": "Riyadh, Saudi Arabia",
+                                "sector": "Retail",
+                                "services": ["Advertising"],
+                                "technologies": ["Figma"],
+                            },
+                        ],
+                    },
+                }
+            ],
+        }
+
+        records = controller._project_records_from_narrative_pack(state, limit=5)
+        names = [record["name"] for record in records]
+
+        self.assertIn("Project Alpha", names)
+        self.assertIn("Project Beta", names)
+        alpha = next(record for record in records if record["name"] == "Project Alpha")
+        self.assertIn("Project Alpha Mobile App", alpha["variants"])
+        beta = next(record for record in records if record["name"] == "Project Beta")
+        self.assertEqual(beta["location"], "Riyadh, Saudi Arabia")
+        self.assertNotIn("Project Beta Riyadh", names)
+
+    def test_phase_21_content_stage_reports_missing_process_faq_cta_without_auto_expansion(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "include_tables": True,
+                "article_language": "en",
+                "primary_keyword": "service provider",
+                "raw_title": "service provider",
+                "brand_name": "BrandCo",
+                "brand_url": "https://brand.test",
+                "output_dir": tmpdir,
+                "outline": [
+                    {
+                        "section_id": "intro",
+                        "section_type": "introduction",
+                        "heading_level": "INTRO",
+                        "commercial_section_role": "intro",
+                    },
+                    {
+                        "section_id": "comparison",
+                        "heading_text": "Compare available options",
+                        "section_type": "comparison",
+                        "heading_level": "H2",
+                        "commercial_section_role": "comparison",
+                        "taxonomy_axis": "comparison",
+                        "requires_table": True,
+                    },
+                    {
+                        "section_id": "process",
+                        "heading_text": "How the process works",
+                        "section_type": "process",
+                        "heading_level": "H2",
+                        "commercial_section_role": "process",
+                    },
+                    {
+                        "section_id": "faq",
+                        "heading_text": "Common questions",
+                        "section_type": "faq",
+                        "heading_level": "H2",
+                        "commercial_section_role": "faq",
+                    },
+                    {
+                        "section_id": "cta",
+                        "heading_text": "Start now",
+                        "section_type": "conclusion",
+                        "heading_level": "H2",
+                        "commercial_section_role": "cta",
+                    },
+                ],
+                "sections": {
+                    "intro": {"generated_content": "Short intro."},
+                    "comparison": {"generated_content": "Options paragraph."},
+                    "process": {"generated_content": "The process is simple."},
+                    "faq": {"generated_content": "### Is it suitable?\nYes."},
+                    "cta": {"generated_content": "Final recommendation."},
+                },
+            }
+
+            markdown = controller._build_content_stage_markdown(state, "Draft")
+            self.assertEqual(state["content_stage_status"], "needs_revision")
+            warnings_text = " ".join(state["content_stage_quality_report"]["warnings"])
+
+            self.assertIn("Commercial article has no decision-useful markdown table", warnings_text)
+            self.assertIn("Commercial conclusion does not contain a brand URL CTA", warnings_text)
+
+            self.assertLess(state["content_stage_quality_report"]["useful_table_count"], 1)
+            self.assertNotIn("https://brand.test", markdown)
+
+            # Content-stage assembly should not auto-expand weak sections anymore.
+            self.assertLess(len(re.findall(r"(?m)^\d+\.", markdown)), 4)
+            self.assertLess(markdown.count("### "), 4)
+
+    def test_truth_isolation_writer_payload_trace_uses_pack_only(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "proof",
+            "heading_text": "Observed project examples",
+            "commercial_section_role": "proof",
+            "brand_usage_policy": "brand_owned",
+        }
+        state = {
+            "content_type": "brand_commercial",
+            "brand_page_knowledge_pack_context": "[BRAND PAGE KNOWLEDGE PACK]\nProject Alpha in Riyadh.",
+            "section_truth_trace": [],
+        }
+
+        # Simulate the writer-facing firewall contract without invoking the AI writer.
+        writer_pack = state["brand_page_knowledge_pack_context"] if section["brand_usage_policy"] == "brand_owned" else ""
+        writer_trace = {
+            "section_id": section["section_id"],
+            "knowledge_pack_visible": bool(writer_pack),
+            "legacy_section_source_visible": False,
+            "legacy_page_briefs_visible": False,
+            "legacy_raw_blocks_visible": False,
+            "legacy_understanding_visible": False,
+        }
+        section["writer_truth_trace"] = writer_trace
+
+        self.assertTrue(section["writer_truth_trace"]["knowledge_pack_visible"])
+        self.assertFalse(section["writer_truth_trace"]["legacy_section_source_visible"])
+        self.assertFalse(section["writer_truth_trace"]["legacy_page_briefs_visible"])
+        self.assertFalse(section["writer_truth_trace"]["legacy_raw_blocks_visible"])
+        self.assertFalse(section["writer_truth_trace"]["legacy_understanding_visible"])
+
+    def test_project_proof_gate_injects_target_relevant_safe_records_without_table(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "ar",
+            "area": "Riyadh, Saudi Arabia",
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio_listing",
+                    "page_title": "Portfolio",
+                    "routing_signals": {
+                        "project_records": [
+                            {
+                                "name": "Project Cairo",
+                                "location": "Egypt",
+                                "sector": "Consulting",
+                                "services": ["UX/UI"],
+                                "technologies": ["Figma"],
+                            },
+                            {
+                                "name": "Project Riyadh",
+                                "location": "Riyadh, Saudi Arabia",
+                                "sector": "Commerce",
+                                "services": ["Web Application"],
+                                "technologies": ["React"],
+                            },
+                        ]
+                    },
+                }
+            ],
+        }
+        section = {
+            "section_id": "proof",
+            "heading_text": "نماذج من مشاريع البراند",
+            "section_type": "proof",
+            "commercial_section_role": "proof",
+            "taxonomy_axis": "brand_projects",
+        }
+
+        content = "يعرض هذا القسم أمثلة عامة على أعمال سابقة دون تسمية المشروع الأقرب."
+        updated = controller._ensure_project_proof_format(content, section, state)
+
+        self.assertIn("Project Riyadh", updated)
+        self.assertIn("project_proof_missed_target_relevant_evidence", section.get("section_quality_issues", []))
+        self.assertNotIn("|---|", updated)
+
+    def test_routing_projects_labels_alone_do_not_create_safe_project_records(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "area": "Riyadh",
+            "brand_page_narrative_briefs": [
+                {
+                    "page_type": "portfolio_listing",
+                    "page_title": "Portfolio",
+                    "routing_signals": {
+                        "projects": ["Adobe Photoshop", "B2C Branding", "Technology Stack"],
+                    },
+                }
+            ],
+        }
+
+        records = controller._project_records_from_narrative_pack(state, limit=5)
+
+        self.assertEqual(records, [])
+
+    def test_commercial_faq_gate_removes_leaked_planning_lines(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "faq",
+            "heading_text": "أسئلة شائعة",
+            "section_type": "faq",
+            "commercial_section_role": "faq",
+        }
+        state = {"content_type": "brand_commercial", "article_language": "ar"}
+        content = (
+            "مقدمة غير مطلوبة.\n\n"
+            "### هل الخيار مناسب؟\n"
+            "نعم إذا كان النطاق واضحًا.\n\n"
+            "ابدأ بمطابقة النطاق مع الهدف.\n\n"
+            "وضح المشمول والاستثناءات قبل الاتفاق.\n\n"
+            "### ما الذي يجب مراجعته؟\n"
+            "راجع النطاق وطريقة التسليم."
+        )
+
+        cleaned = controller._ensure_commercial_faq_depth(content, section, state)
+
+        self.assertNotIn("مقدمة غير مطلوبة", cleaned)
+        self.assertNotIn("ابدأ بمطابقة النطاق", cleaned)
+        self.assertNotIn("وضح المشمول", cleaned)
+        self.assertIn("### هل الخيار مناسب؟", cleaned)
+        self.assertIn("faq_repair_leak_removed", section.get("section_quality_issues", []))
+
+    def test_role_fulfillment_detects_services_section_drifting_to_criteria(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "section_id": "services",
+            "heading_text": "الخدمات المتاحة",
+            "section_type": "body",
+            "commercial_section_role": "offer_scope",
+            "section_intent_snapshot": {"section_job": "offer_scope"},
+        }
+        state = {"content_type": "brand_commercial"}
+        content = "تأكد من النطاق، قارن بين الخيارات، اسأل عن التفاصيل، وراجع المعايير قبل الاختيار."
+
+        report = controller._evaluate_section_role_fulfillment(section, content, state)
+
+        self.assertEqual(report["fulfillment_status"], "weak")
+        self.assertIn("role drift", report["fulfillment_reason"])
+
+    def test_content_stage_marks_semantic_critical_issue_as_needs_revision(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "include_tables": False,
+                "article_language": "en",
+                "primary_keyword": "service provider",
+                "raw_title": "service provider",
+                "output_dir": tmpdir,
+                "outline": [
+                    {
+                        "section_id": "proof",
+                        "heading_text": "Observed projects",
+                        "section_type": "proof",
+                        "heading_level": "H2",
+                        "commercial_section_role": "proof",
+                    }
+                ],
+                "sections": {
+                    "proof": {
+                        "generated_content": "Generic project proof.",
+                        "section_quality_issues": ["project_proof_missed_target_relevant_evidence"],
+                    }
+                },
+            }
+
+            controller._build_content_stage_markdown(state, "Draft")
+
+            self.assertEqual(state["content_stage_status"], "needs_revision")
+            self.assertIn(
+                "project_proof_missed_target_relevant_evidence",
+                " ".join(state["content_stage_quality_report"]["warnings"]),
+            )
 
 
 if __name__ == '__main__':

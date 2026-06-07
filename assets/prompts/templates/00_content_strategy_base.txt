@@ -33,19 +33,22 @@ Return ONLY this JSON structure:
   "pain_point_focus": [],
   "emotional_trigger": "",
   "depth_level": "intermediate | advanced | comprehensive",
-  "authority_strategy": [],
-  "eeat_signals_to_include": [],
-  "differentiation_focus": [],
+  "supported_eeat_signals": [],
+  "supported_differentiators": [],
+  "supported_proof_points": [],
   "conversion_strategy": "",
   "cta_philosophy": "",
   "local_strategy": "",
   "tone_direction": "",
   "section_role_map": {
     "introduction": "",
-    "core_or_benefits": "",
+    "offer_clarity": "",
+    "features": "",
+    "differentiation": "",
     "proof": "",
-    "process_or_how": "",
+    "comparison": "",
+    "process": "",
     "faq": "",
-    "conclusion": ""
+    "conclusion_cta": ""
   }
 }

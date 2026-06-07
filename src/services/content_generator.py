@@ -1248,6 +1248,7 @@ class SectionWriter:
             "cta_allowed": section.get("cta_eligible", section.get("cta_allowed", False)),
             "brand_usage_policy": section.get("brand_usage_policy", "neutral_market"),
             "commercial_section_role": section.get("commercial_section_role", ""),
+            "section_intent_snapshot": section.get("section_intent_snapshot", {}),
             "article_intent": article_intent,
             "content_angle": section.get("content_angle", ""),
             "localized_angle": section.get("localized_angle", ""),

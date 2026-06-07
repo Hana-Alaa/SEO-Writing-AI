@@ -75,12 +75,15 @@ STRICT RULES:
    - take the next step
 
 9. Keep section roles clean:
-   - `introduction`: start with a light, relevant hook, introduce the primary keyword naturally, explain what the reader will understand or decide, and keep any brand mention soft
-   - `core_or_benefits`: combine offer clarity with buyer-facing features
-   - `proof`: observed pricing, value, availability, delivery status, or trust signals tied to the entity only and kept at the product/unit/listing level
-   - `process_or_how`: practical buying path only, not legal-heavy process language
-   - `faq`: objections actually supported by the keyword or strong SERP observations
-   - `conclusion`: concise next-step closure
+   - introduction: hook the reader with the problem/need, include the primary keyword naturally, and allow only a soft brand bridge.
+   - offer_clarity: explain what the service/product actually is. Do not turn this into benefits or provider-selection criteria.
+   - features: explain included features, deliverables, capabilities, or buyer-facing benefits. Do not repeat offer_clarity.
+   - differentiation: explain only supported brand advantages. Do not use generic claims such as “best”, “leading”, “trusted”, or “top” unless explicitly supported.
+   - proof: include only supported proof points such as observed projects, case studies, testimonials, certifications, pricing examples, or results. If unsupported, keep it minimal and factual.
+   - comparison: compare realistic buyer options, approaches, service tiers, or scenarios. Do not compare against named competitors.
+   - process: explain the practical customer journey from inquiry to delivery.
+   - faq: answer realistic buyer objections about scope, process, pricing/value, timing, and decision concerns.
+   - conclusion_cta: summarize the decision value and close with one clear next step.
 
 10. Do NOT force these into the strategy unless strongly supported:
    - investment return
@@ -109,6 +112,66 @@ STRICT RULES:
    - close with a confident final CTA
    - Do NOT use funnel language, urgency pressure, or agency/service sales logic.
 
+COMMERCIAL ARTICLE STRUCTURE RULES:
+   For commercial/service/product content:
+   - introduction:
+   connect to the reader problem and introduce the primary keyword.
+   - offer_clarity:
+   explain clearly what the service/product is.
+   - features:
+   explain included features, deliverables, capabilities, or practical benefits.
+   - differentiation:
+   explain why the brand is a strong choice using only supported evidence.
+   - proof:
+   use observed evidence, projects, case studies, results, pricing examples, availability indicators, testimonials, certifications, or trust signals ONLY if supported by evidence.
+   - comparison:
+   compare practical options, service tiers, approaches, plans, packages, or buyer scenarios.
+   Never compare against named competitors.
+   - process:
+   explain how the customer moves from inquiry to delivery.
+   - faq:
+   answer realistic buyer objections.
+   - conclusion_cta:
+   close with a clear next step and commercial CTA.
+
+For commercial articles, the strategy should normally support these buyer-journey functions:
+   - offer_clarity
+   - features
+   - differentiation
+   - proof
+   - comparison
+   - process
+   - faq
+   - conclusion_cta
+
+A role may remain empty only if:
+   - there is genuinely insufficient evidence,
+   - and the role cannot be fulfilled safely.
+
+Do not remove a buyer-journey role just because evidence is limited.
+Instead, reduce the depth of that role and keep it factual.
+
+Evidence hierarchy:
+   1. Core recurring topics
+   2. High-confidence SERP observations
+   3. Brand evidence
+   4. Secondary mentions
+Weak signals must never create:
+- proof sections
+- differentiation sections
+- comparison sections
+
+Do NOT populate a section role unless supported by SERP evidence OR brand evidence.
+If no strong evidence exists:
+- leave the role empty
+- do not invent content
+
+CTA limitations:
+   - Keep CTAs persuasive but not pushy.
+   - One soft CTA is acceptable in the introduction for commercial content.
+   - The final CTA should be stronger and direct.
+   - Do not use urgency pressure, scarcity, exaggerated promises, or unsupported guarantees.
+
 OUTPUT FORMAT:
 You MUST return the output EXACTLY as a valid JSON object.
 Do NOT include any explanations, markdown formatting, or introductory text.
@@ -120,20 +183,23 @@ Return ONLY this JSON structure:
   "pain_point_focus": [],
   "emotional_trigger": "",
   "depth_level": "intermediate | advanced | comprehensive",
-  "authority_strategy": [],
-  "eeat_signals_to_include": [],
-  "differentiation_focus": [],
+  "supported_eeat_signals": [],
+  "supported_differentiators": [],
+  "supported_proof_points": [],
   "conversion_strategy": "",
   "cta_philosophy": "",
   "local_strategy": "",
   "tone_direction": "",
   "section_role_map": {
-    "introduction": "",
-    "core_or_benefits": "",
-    "proof": "",
-    "process_or_how": "",
-    "faq": "",
-    "conclusion": ""
+      "introduction": "",
+      "offer_clarity": "",
+      "features": "",
+      "differentiation": "",
+      "proof": "",
+      "comparison": "",
+      "process": "",
+      "faq": "",
+      "conclusion_cta": ""
   }
 }
 

@@ -5,6 +5,8 @@
 - **Section Type / Intent**: Type: "{{ (section | default({})).get('section_type', 'core') }}" | Intent: "{{ (section | default({})).get('section_intent', 'Informational') }}"
 - **Commercial Section Role**: "{{ (section | default({})).get('commercial_section_role', 'informational') }}"
 - **Brand Usage Policy For This Section**: "{{ (section | default({})).get('brand_usage_policy', 'neutral_market') }}"
+- **Section Intent Snapshot**: {{ ((section | default({})).get('section_intent_snapshot', {})) | tojson }}
+- **Buyer Stage**: "{{ ((section | default({})).get('section_intent_snapshot', {})).get('buyer_stage', 'awareness') }}"
 - **Primary Keyword**: "{{ primary_keyword }}"
 - **Brand Identity**: Brand Name: "{{ brand_name }}" | Brand URL: "{{ brand_url }}" | Context: "{{ brand_context | default('') }}"
 - **Mandatory Section Facts**: {{ ((section | default({})).get('mandatory_facts', [])) | tojson }}
@@ -43,6 +45,8 @@ Rules for writer:
 - If a brand fact is not clearly present in the knowledge pack, do not write it.
 - For project/proof sections, use only projects and page details that appear in the knowledge pack. Do not turn labels such as Screenshots, Technology Stack, B2C, Location, Name, or Scope of Work into projects.
 - Do not repeat the same project across unrelated sections. Use project examples mainly in project/proof sections, and at most one relevant proof example in a differentiation section.
+- In proof sections, do not just list project names. Turn each selected evidence point into a short proof story: what was observed, what service/scope/tool it shows, and why that matters to the reader's decision. Do not invent results.
+- Match the buyer stage: awareness sections clarify the problem, evaluation sections compare criteria/options, validation sections interpret evidence, and decision sections reduce friction and guide the next step.
 - If the pack does not support a target-area project or local-presence claim, do not make the heading/body sound local to that area.
 - Do not invent pricing, packages, guarantees, timelines, certifications, partnerships, project counts, testimonials, market leadership, geography, or local presence.
 - Do not write numeric price ranges, delivery timelines, response times, guarantee periods, or support promises unless an exact observed number appears in the knowledge pack or in a supplied live market snippet for this exact section.
@@ -65,7 +69,7 @@ Rules for writer:
 
 {% if seo_intelligence and seo_intelligence.get('serp_raw') and seo_intelligence.get('serp_raw').get('top_results') %}
 ## 5. LIVE MARKET RESEARCH & SERP DATA
-- **Market Intelligence**: The following facts and snippets were just retrieved from live search results. You MUST extract concrete data (prices, sizes, features, policies) from these snippets and include them naturally in your writing to fulfill the GLOBAL NUMERIC & DATA MANDATE. Do NOT mention competitor brand names found in the snippets.
+- **Market Intelligence**: The following facts and snippets were just retrieved from live search results. Use concrete data from these snippets only when this section is neutral-market and explicitly asks for pricing, measurable comparisons, cost/value, or market ranges. Do not force numbers into unrelated sections. Do NOT mention competitor brand names found in the snippets.
 {% for result in seo_intelligence.get('serp_raw').get('top_results')[:5] %}
   - **Snippet**: "{{ result.get('snippet', '') }}"
 {% endfor %}
