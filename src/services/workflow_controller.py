@@ -2965,13 +2965,8 @@ class AsyncWorkflowController:
 
     def _section_allows_project_proof(self, section: Dict[str, Any], state: Dict[str, Any]) -> bool:
         role = str(section.get("commercial_section_role") or self._commercial_section_role_for_section(section, state)).lower()
-        if role == "proof":
-            return True
-        heading = str(section.get("heading_text") or "")
-        return bool(
-            re.search(r"\b(project|projects|portfolio|case stud|client examples?)\b", heading, re.IGNORECASE)
-            or re.search("\u0645\u0634\u0627\u0631\u064a\u0639|\u0646\u0645\u0627\u0630\u062c|\u0623\u0639\u0645\u0627\u0644|\u0639\u0645\u0644\u0627\u0621", heading)
-        )
+        section_type = str(section.get("section_type") or "").lower()
+        return role == "proof" or section_type in {"proof", "case_study", "case-study"}
 
     def _section_table_policy(self, section: Dict[str, Any], state: Dict[str, Any]) -> str:
         section_type = str(section.get("section_type") or "").lower()
@@ -6581,17 +6576,14 @@ class AsyncWorkflowController:
         return any(self._is_valid_markdown_table(block) for _, _, block in self._extract_markdown_tables(content))
 
     def _is_project_like_section(self, section: Dict[str, Any]) -> bool:
-        """Return True for proof/portfolio sections without relying on article-specific wording."""
-        heading = str(section.get("heading_text") or "")
+        """Return True only for dedicated proof/portfolio sections (not differentiation headings)."""
         section_type = str(section.get("section_type") or "").lower()
+        role = str(section.get("commercial_section_role") or self._commercial_section_role_for_section(section, {})).lower()
         axis = str(section.get("taxonomy_axis") or "").lower()
-        role = str(section.get("commercial_section_role") or "").lower()
         return (
             role == "proof"
             or section_type in {"proof", "case_study", "case-study"}
             or axis in {"brand_projects", "projects"}
-            or bool(re.search(r"\b(project|projects|portfolio|case stud(?:y|ies)|client examples?)\b", heading, re.IGNORECASE))
-            or bool(re.search(r"[\u0645][\u0634][\u0627][\u0631][\u064a][\u0639]|[\u0646][\u0645][\u0627][\u0630][\u062c]|[\u0623][\u0639][\u0645][\u0627][\u0644]", heading))
         )
 
     def _extract_markdown_tables(self, content: str) -> List[tuple]:
@@ -6749,6 +6741,56 @@ class AsyncWorkflowController:
             lines = lines[:start] + bullets + lines[end:]
         return "\n".join(lines).strip()
 
+    _REPAIR_PLACEHOLDER_SUBSTRINGS: tuple = (
+        "اكتب النتيجة المطلوبة",
+        "حدد ما سيدخل في الخدمة",
+        "حدد ما سيدخل",
+        "define the outcome the reader expects",
+        "separate included work from items that need separate approval",
+    )
+
+    def _line_has_repair_placeholder_leak(self, line: str) -> bool:
+        """True when a line contains instructional repair/template text, not reader copy."""
+        folded = re.sub(r"\s+", " ", str(line or "")).strip().casefold()
+        if not folded:
+            return False
+        return any(token.casefold() in folded for token in self._REPAIR_PLACEHOLDER_SUBSTRINGS)
+
+    def _content_has_repair_placeholder_leak(self, content: str) -> bool:
+        return any(self._line_has_repair_placeholder_leak(line) for line in str(content or "").splitlines())
+
+    def _strip_repair_placeholder_leaks(self, content: str) -> tuple:
+        """Remove instructional placeholder lines; return (cleaned_content, changed)."""
+        lines = str(content or "").splitlines()
+        if not lines:
+            return content, False
+        kept: List[str] = []
+        removed = False
+        for line in lines:
+            if self._line_has_repair_placeholder_leak(line):
+                removed = True
+                continue
+            kept.append(line)
+        cleaned = "\n".join(kept).strip()
+        return cleaned, removed
+
+    def _sanitize_repair_placeholder_leaks(
+        self,
+        content: str,
+        section: Dict[str, Any],
+    ) -> str:
+        """Safe-repair: strip template leaks and flag; never inject replacement prose."""
+        cleaned, removed = self._strip_repair_placeholder_leaks(content)
+        if removed:
+            self._record_section_quality_issue(section, "repair_placeholder_leak_removed")
+            logger.info(
+                "[repair_placeholder_gate] Removed instructional placeholder lines from section '%s'.",
+                section.get("heading_text", ""),
+            )
+        if self._content_has_repair_placeholder_leak(cleaned):
+            self._record_section_quality_issue(section, "repair_placeholder_leak")
+        return cleaned
+
     def _section_body_integrity_issues(
         self,
         content: str,
@@ -6770,6 +6812,9 @@ class AsyncWorkflowController:
 
         if self._is_commercial_process_section(section, state) and self._count_ordered_list_items(text) < 2:
             issues.append("process_section_insufficient_steps")
+
+        if self._content_has_repair_placeholder_leak(text):
+            issues.append("repair_placeholder_leak")
 
         return list(dict.fromkeys(issues))
 
@@ -7311,34 +7356,17 @@ class AsyncWorkflowController:
         return len(re.findall(r"(?m)^\s*\d+\.\s+\S+", str(content or "")))
 
     def _ensure_commercial_process_depth(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
-        """Make commercial process sections concrete enough without inventing brand promises."""
+        """Flag short process sections without injecting instructional fallback prose."""
         if not content or not self._is_commercial_process_section(section, state):
             return content
         if self._count_ordered_list_items(content) >= 4:
             return content
-
-        lang = str(state.get("article_language") or section.get("article_language") or "").lower()
-        is_ar = lang.startswith("ar") or bool(re.search(r"[\u0600-\u06FF]", content))
-        if is_ar:
-            fallback = "\n".join(
-                [
-                    "1. **\u062a\u062d\u062f\u064a\u062f \u0627\u0644\u0627\u062d\u062a\u064a\u0627\u062c**: \u0627\u0643\u062a\u0628 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629 \u0648\u0645\u0627 \u064a\u062c\u0628 \u0623\u0646 \u064a\u062a\u063a\u064a\u0631 \u0628\u0639\u062f \u0627\u0644\u062a\u0646\u0641\u064a\u0630.",
-                    "2. **\u0645\u0631\u0627\u062c\u0639\u0629 \u0627\u0644\u0646\u0637\u0627\u0642**: \u062d\u062f\u062f \u0645\u0627 \u0633\u064a\u062f\u062e\u0644 \u0641\u064a \u0627\u0644\u062e\u062f\u0645\u0629 \u0648\u0645\u0627 \u0633\u064a\u062d\u062a\u0627\u062c \u0627\u062a\u0641\u0627\u0642\u064b\u0627 \u0645\u0646\u0641\u0635\u0644\u064b\u0627.",
-                    "3. **\u0627\u0639\u062a\u0645\u0627\u062f \u0627\u0644\u062a\u0635\u0648\u0631**: \u0631\u0627\u062c\u0639 \u0627\u0644\u0634\u0643\u0644 \u0623\u0648 \u0627\u0644\u062e\u0637\u0629 \u0642\u0628\u0644 \u0627\u0644\u0627\u0646\u062a\u0642\u0627\u0644 \u0644\u0644\u062a\u0646\u0641\u064a\u0630.",
-                    "4. **\u0627\u0644\u062a\u0633\u0644\u064a\u0645 \u0648\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629**: \u0627\u062a\u0641\u0642 \u0639\u0644\u0649 \u0645\u0646 \u064a\u0631\u0627\u062c\u0639 \u0643\u0644 \u0645\u0631\u062d\u0644\u0629 \u0648\u0645\u062a\u0649 \u064a\u062a\u0645 \u0627\u0644\u062a\u0639\u062f\u064a\u0644.",
-                ]
-            )
-        else:
-            fallback = "\n".join(
-                [
-                    "1. **Clarify the need**: Define the outcome the reader expects after implementation.",
-                    "2. **Review the scope**: Separate included work from items that need separate approval.",
-                    "3. **Approve the direction**: Review the proposed plan or concept before execution.",
-                    "4. **Deliver and review**: Agree who reviews each stage and how revisions are handled.",
-                ]
-            )
-        logger.info("[commercial_process_gate] Expanded short process section '%s'.", section.get("heading_text", ""))
-        return ((content or "").strip() + "\n\n" + fallback).strip()
+        self._record_section_quality_issue(section, "process_section_insufficient_steps")
+        logger.info(
+            "[commercial_process_gate] Short process section '%s' flagged; instructional fallback suppressed.",
+            section.get("heading_text", ""),
+        )
+        return content
 
     # def _ensure_commercial_faq_depth(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
     #     """Ensure commercial FAQ sections answer practical objections, not generic filler."""
@@ -7381,23 +7409,18 @@ class AsyncWorkflowController:
 
 
     def _ensure_commercial_conclusion_cta(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
-        """Ensure the commercial conclusion contains one clear brand URL CTA when available."""
+        """Flag missing conclusion CTA without injecting replacement copy."""
         if not content or not self._is_commercial_cta_section(section, state):
             return content
         brand_url = str(state.get("brand_url") or "").strip()
         if not brand_url or brand_url in content:
             return content
-        brand_name = str(state.get("display_brand_name") or state.get("brand_name") or "").strip()
-        lang = str(state.get("article_language") or section.get("article_language") or "").lower()
-        is_ar = lang.startswith("ar") or bool(re.search(r"[\u0600-\u06FF]", content))
-        if is_ar:
-            anchor = f"\u0627\u0628\u062f\u0623 \u0627\u0644\u062e\u0637\u0648\u0629 \u0627\u0644\u062a\u0627\u0644\u064a\u0629 \u0645\u0639 {brand_name}" if brand_name else "\u0627\u0628\u062f\u0623 \u0627\u0644\u062e\u0637\u0648\u0629 \u0627\u0644\u062a\u0627\u0644\u064a\u0629"
-            cta = f"\u0639\u0646\u062f\u0645\u0627 \u062a\u0643\u0648\u0646 \u062c\u0627\u0647\u0632\u064b\u0627 \u0644\u062a\u062d\u0648\u064a\u0644 \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629 \u0625\u0644\u0649 \u062e\u0637\u0648\u0629 \u0639\u0645\u0644\u064a\u0629\u060c [{anchor}]({brand_url})."
-        else:
-            anchor = f"start the next step with {brand_name}" if brand_name else "start the next step"
-            cta = f"When you are ready to turn comparison into action, [{anchor}]({brand_url})."
-        logger.info("[commercial_cta_gate] Added missing conclusion CTA for '%s'.", section.get("heading_text", ""))
-        return ((content or "").strip() + "\n\n" + cta).strip()
+        self._record_section_quality_issue(section, "conclusion_missing_brand_url_cta")
+        logger.info(
+            "[commercial_cta_gate] Missing conclusion CTA for '%s' (auto-inject suppressed).",
+            section.get("heading_text", ""),
+        )
+        return content
 
     def _apply_commercial_section_quality_gates(
         self,
@@ -7425,6 +7448,7 @@ class AsyncWorkflowController:
         content = self._normalize_ordered_lists(content)
         content = self._ensure_commercial_process_depth(content, section, state)
         content = self._normalize_ordered_lists(content)
+        content = self._sanitize_repair_placeholder_leaks(content, section)
         for issue in self._section_body_integrity_issues(content, section, state):
             self._record_section_quality_issue(section, issue)
         return content
@@ -7909,7 +7933,7 @@ class AsyncWorkflowController:
                     [
                         f"| \u0648\u062c\u0647 \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629 | {left} | {right} | \u0645\u0627 \u062a\u0641\u062d\u0635\u0647 \u0642\u0628\u0644 \u0627\u0644\u0642\u0631\u0627\u0631 |",
                         "|---|---|---|---|",
-                        "| \u0627\u0644\u0647\u062f\u0641 | \u064a\u0646\u0627\u0633\u0628 \u0627\u062d\u062a\u064a\u0627\u062c\u064b\u0627 \u0645\u062d\u062f\u062f\u064b\u0627 | \u064a\u0646\u0627\u0633\u0628 \u0627\u062d\u062a\u064a\u0627\u062c\u064b\u0627 \u0623\u0648\u0633\u0639 \u0623\u0648 \u0623\u0643\u062b\u0631 \u062a\u062e\u0635\u064a\u0635\u064b\u0627 | \u0645\u0627 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629 |",
+                        "| \u0627\u0644\u0647\u062f\u0641 | \u064a\u0646\u0627\u0633\u0628 \u0627\u062d\u062a\u064a\u0627\u062c\u064b\u0627 \u0645\u062d\u062f\u062f\u064b\u0627 | \u064a\u0646\u0627\u0633\u0628 \u0627\u062d\u062a\u064a\u0627\u062c\u064b\u0627 \u0623\u0648\u0633\u0639 \u0623\u0648 \u0623\u0643\u062b\u0631 \u062a\u062e\u0635\u064a\u0635\u064b\u0627 | \u0645\u0627 \u064a\u062a\u062d\u0642\u0642 \u0628\u0639\u062f \u0627\u0644\u062a\u0646\u0641\u064a\u0630 |",
                         "| \u0627\u0644\u062a\u062e\u0635\u064a\u0635 | \u0623\u0633\u0647\u0644 \u0641\u064a \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629 | \u064a\u062d\u062a\u0627\u062c \u0646\u0637\u0627\u0642\u064b\u0627 \u0648\u0645\u0631\u0627\u062c\u0639\u0629 \u0623\u0648\u0636\u062d | \u062d\u062f\u0648\u062f \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0648\u0627\u0644\u062a\u0648\u0633\u0639 |",
                         "| \u0627\u0644\u0623\u0646\u0633\u0628 \u0644\u0647 | \u0627\u062d\u062a\u064a\u0627\u062c \u0648\u0627\u0636\u062d \u0648\u0645\u0628\u0627\u0634\u0631 | \u0645\u0634\u0631\u0648\u0639 \u064a\u062d\u062a\u0627\u062c \u0645\u0631\u0648\u0646\u0629 \u0623\u0643\u0628\u0631 | \u0627\u0644\u0645\u0648\u0627\u0631\u062f \u0648\u0627\u0644\u0623\u0648\u0644\u0648\u064a\u0627\u062a |",
                     ]
@@ -7924,25 +7948,9 @@ class AsyncWorkflowController:
                 ]
             )
 
-        if is_ar:
-            return "\n".join(
-                [
-                    "| \u0648\u062c\u0647 \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629 | \u062e\u064a\u0627\u0631 \u0623\u0628\u0633\u0637 | \u062e\u064a\u0627\u0631 \u0623\u0643\u062b\u0631 \u062a\u062e\u0635\u064a\u0635\u064b\u0627 | \u0645\u0627 \u062a\u0641\u062d\u0635\u0647 \u0642\u0628\u0644 \u0627\u0644\u0642\u0631\u0627\u0631 |",
-                    "|---|---|---|---|",
-                    "| \u0627\u0644\u0647\u062f\u0641 | \u062d\u0644 \u0645\u0628\u0627\u0634\u0631 \u0644\u0627\u062d\u062a\u064a\u0627\u062c \u0648\u0627\u0636\u062d | \u0645\u0644\u0627\u0621\u0645\u0629 \u0627\u062d\u062a\u064a\u0627\u062c \u0623\u0643\u062b\u0631 \u062a\u0639\u0642\u064a\u062f\u064b\u0627 | \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629 |",
-                    "| \u0627\u0644\u0645\u0631\u0648\u0646\u0629 | \u0623\u0642\u0644 \u0644\u0643\u0646 \u0623\u0633\u0647\u0644 \u0641\u064a \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629 | \u0623\u0639\u0644\u0649 \u0644\u0643\u0646 \u062a\u062d\u062a\u0627\u062c \u0646\u0637\u0627\u0642\u064b\u0627 \u0623\u0648\u0636\u062d | \u062d\u062f\u0648\u062f \u0627\u0644\u062a\u062e\u0635\u064a\u0635 |",
-                    "| \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 | \u0623\u0628\u0633\u0637 \u0628\u0639\u062f \u0627\u0644\u0628\u062f\u0621 | \u062a\u062d\u062a\u0627\u062c \u0646\u0642\u0627\u0637 \u0627\u0639\u062a\u0645\u0627\u062f \u0623\u0643\u062b\u0631 | \u0645\u0646 \u064a\u0631\u0627\u062c\u0639 \u0643\u0644 \u0645\u0631\u062d\u0644\u0629 |",
-                ]
-            )
-        return "\n".join(
-            [
-                "| Comparison point | Simpler option | More customized option | What to check |",
-                "|---|---|---|---|",
-                "| Goal | Direct solution for a clear need | Fit for a more complex need | Desired outcome |",
-                "| Flexibility | Lower but easier to compare | Higher but needs clearer scope | Customization boundaries |",
-                "| Follow-up | Simpler after launch | Needs more review points | Who approves each stage |",
-            ]
-        )
+        if section_type == "comparison" or axis == "comparison" or role == "comparison":
+            return ""
+
         topic_blob = " ".join(
             str(value or "")
             for value in [
@@ -8360,25 +8368,19 @@ class AsyncWorkflowController:
             )
         records = self._project_records_from_narrative_pack(state, section, limit=5)
         section["safe_project_records_from_pack"] = records
-        proof_cards = self._build_project_proof_cards(records, state, section, limit=5)
         required_records = self._project_records_required_for_proof(records, state)
-        existing_tables = self._extract_markdown_tables(content or "")
-        if not existing_tables:
-            if required_records and not self._content_mentions_any_project_record(content or "", required_records):
-                self._record_section_quality_issue(section, "project_proof_missed_target_relevant_evidence")
-                logger.info(
-                    "[ProjectProofGate] Injecting target-relevant narrative proof cards for section '%s'. required=%s",
-                    section.get("heading_text", ""),
-                    [record.get("name") for record in required_records],
-                )
-                if proof_cards:
-                    return (proof_cards + "\n\n" + (content or "").strip()).strip()
-            return content
+        if required_records and not self._content_mentions_any_project_record(content or "", required_records):
+            self._record_section_quality_issue(section, "project_proof_missed_target_relevant_evidence")
+            logger.info(
+                "[ProjectProofGate] Missing target-relevant project proof for section '%s' (auto-inject suppressed). required=%s",
+                section.get("heading_text", ""),
+                [record.get("name") for record in required_records],
+            )
 
+        existing_tables = self._extract_markdown_tables(content or "")
         table_type = str(section.get("table_type") or "").lower()
         explicit_project_table = table_type in {"project_evidence_table", "project_table"}
-
-        if explicit_project_table and records:
+        if explicit_project_table and records and existing_tables:
             has_safe_table = any(
                 self._project_table_matches_safe_records(block, records)
                 and self._is_decision_useful_markdown_table(block)
@@ -8387,38 +8389,42 @@ class AsyncWorkflowController:
             if has_safe_table:
                 return content
             replacement = self._build_required_section_table(section, state)
-        else:
-            replacement = proof_cards
-
-        logger.info(
-            "[ProjectProofGate] Replacing project table with %s for section '%s'.",
-            "safe project table" if explicit_project_table and replacement and "|" in replacement else "narrative proof cards",
-            section.get("heading_text", ""),
-        )
-        replaced_content = self._replace_first_markdown_table_region(content or "", replacement)
-        if required_records and not self._content_mentions_any_project_record(replaced_content or "", required_records):
-            self._record_section_quality_issue(section, "project_proof_missed_target_relevant_evidence")
-            if proof_cards:
-                replaced_content = (proof_cards + "\n\n" + (replaced_content or "").strip()).strip()
-        return replaced_content
+            if replacement and not self._content_has_repair_placeholder_leak(replacement):
+                logger.info(
+                    "[ProjectProofGate] Replacing unsafe project table with safe table for section '%s'.",
+                    section.get("heading_text", ""),
+                )
+                return self._replace_first_markdown_table_region(content or "", replacement)
+        return content
 
     def _ensure_required_table_content(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
         """Insert a fallback table when the outline required one and none exists."""
         if not section.get("requires_table"):
             return content
         table = self._build_required_section_table(section, state)
+        if table and self._content_has_repair_placeholder_leak(table):
+            table = ""
+            self._record_section_quality_issue(section, "table_placeholder_blocked")
         if not table:
+            if section.get("requires_table") and not self._count_useful_markdown_tables(content or ""):
+                self._record_section_quality_issue(section, "table_incomplete_or_placeholder")
             return content
         existing_tables = self._extract_markdown_tables(content or "")
         has_valid_table = any(self._is_valid_markdown_table(block) for _, _, block in existing_tables)
         has_useful_table = any(self._is_decision_useful_markdown_table(block) for _, _, block in existing_tables)
         if existing_tables and not has_valid_table:
+            if self._content_has_repair_placeholder_leak(table):
+                self._record_section_quality_issue(section, "table_placeholder_blocked")
+                return content
             logger.info(
                 "[TableGate] Replacing malformed table in section '%s'.",
                 section.get("heading_text", ""),
             )
             return self._replace_first_markdown_table(content or "", table)
         if has_valid_table and not has_useful_table:
+            if self._content_has_repair_placeholder_leak(table):
+                self._record_section_quality_issue(section, "table_placeholder_blocked")
+                return content
             logger.info(
                 "[TableGate] Replacing low-usefulness table in section '%s'.",
                 section.get("heading_text", ""),
@@ -10738,12 +10744,18 @@ class AsyncWorkflowController:
                 if brand_url not in last_content:
                     quality_warnings.append("Commercial conclusion does not contain a brand URL CTA.")
 
+        if self._content_has_repair_placeholder_leak(final_markdown):
+            quality_warnings.append("repair_placeholder_leak in final article content")
+
         critical_semantic_markers = (
             "project_proof_missed_target_relevant_evidence",
             "unsupported_testimonial_heading",
             "unsupported_brand_claim_removed",
             "role drift",
             "faq_repair_leak",
+            "repair_placeholder_leak",
+            "table_placeholder_blocked",
+            "table_incomplete_or_placeholder",
             "heading_contract_body_rewrite_required",
             "intro_final_enforcement_failed",
             "Commercial introduction does not contain the primary keyword",
@@ -10752,6 +10764,7 @@ class AsyncWorkflowController:
             "Malformed markdown table",
             "empty_numbered_list_item",
             "process_section_insufficient_steps",
+            "conclusion_missing_brand_url_cta",
             "section_body_empty",
         )
         needs_revision = any(

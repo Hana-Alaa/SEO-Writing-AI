@@ -5873,6 +5873,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             "section_type": "comparison",
             "taxonomy_axis": "comparison",
             "requires_table": True,
+            "subheadings": ["المواقع المؤسسية", "المتاجر الإلكترونية"],
         }
         content = "هذا السكشن يشرح الفرق بين خيارين بحسب هدف المشروع وطريقة تفاعل المستخدم."
 
@@ -7211,7 +7212,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(section["writer_truth_trace"]["legacy_raw_blocks_visible"])
         self.assertFalse(section["writer_truth_trace"]["legacy_understanding_visible"])
 
-    def test_project_proof_gate_injects_target_relevant_safe_records_without_table(self):
+    def test_project_proof_gate_flags_missing_records_without_auto_inject(self):
         controller = AsyncWorkflowController(work_dir=".")
         state = {
             "content_type": "brand_commercial",
@@ -7253,7 +7254,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         content = "يعرض هذا القسم أمثلة عامة على أعمال سابقة دون تسمية المشروع الأقرب."
         updated = controller._ensure_project_proof_format(content, section, state)
 
-        self.assertIn("Project Riyadh", updated)
+        self.assertEqual(updated, content)
+        self.assertNotIn("Project Riyadh", updated)
         self.assertIn("project_proof_missed_target_relevant_evidence", section.get("section_quality_issues", []))
         self.assertNotIn("|---|", updated)
 
@@ -8333,7 +8335,7 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             "explicit",
         )
 
-    def test_patch_3c2_proof_gate_injects_stronger_target_area_projects(self):
+    def test_patch_3c2_proof_gate_flags_stronger_target_area_projects_without_auto_inject(self):
         controller = AsyncWorkflowController(work_dir=".")
         project_brief = {
             "source_url": "https://brand.test/portfolio",
@@ -8377,15 +8379,12 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             "brand_page_narrative_briefs": [project_brief],
         }
 
-        result = controller._ensure_project_proof_format(
-            "Distant Portal is one observed project example.",
-            section,
-            state,
-        )
+        original = "Distant Portal is one observed project example."
+        result = controller._ensure_project_proof_format(original, section, state)
 
-        self.assertIn("Harbor Retail", result)
-        self.assertIn("Coast Media", result)
-        self.assertLess(result.index("Harbor Retail"), result.index("Distant Portal"))
+        self.assertEqual(result, original)
+        self.assertNotIn("Harbor Retail", result)
+        self.assertNotIn("Coast Media", result)
         self.assertNotIn("|---", result)
         self.assertIn(
             "project_proof_missed_target_relevant_evidence",
@@ -9253,9 +9252,12 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             }
 
             markdown = controller._build_content_stage_markdown(state, "Test article")
+            warnings_text = " ".join(state["content_stage_quality_report"]["warnings"])
 
             self.assertNotRegex(markdown, r"(?m)^\s*3\.\s*$")
-            self.assertGreaterEqual(controller._count_ordered_list_items(markdown), 4)
+            self.assertLess(controller._count_ordered_list_items(markdown), 4)
+            self.assertIn("process_section_insufficient_steps", warnings_text)
+            self.assertEqual(state["content_stage_status"], "needs_revision")
 
     def test_patch_3c8_empty_numbered_list_item_marks_needs_revision(self):
         controller = AsyncWorkflowController(work_dir=".")
@@ -10057,6 +10059,105 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         )
         reason = str(report.get("fulfillment_reason") or "")
         self.assertNotIn("geography/market presence", reason)
+
+
+class TestSafeRepairPlaceholderGuard(unittest.TestCase):
+    """Patch Safe-Repair: repair detects and strips leaks; never injects instructional prose."""
+
+    def test_process_depth_never_injects_instructional_arabic_placeholders(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "كيف يتم تنفيذ المشروع؟",
+            "section_type": "process",
+            "commercial_section_role": "process",
+        }
+        state = {"content_type": "brand_commercial", "article_language": "ar"}
+        original = "خطوة واحدة فقط."
+        result = controller._ensure_commercial_process_depth(original, section, state)
+        self.assertEqual(result, original)
+        self.assertNotIn("اكتب النتيجة المطلوبة", result)
+        self.assertNotIn("حدد ما سيدخل", result)
+        self.assertIn("process_section_insufficient_steps", section.get("section_quality_issues", []))
+
+    def test_table_gate_blocks_generic_placeholder_comparison_table(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "مقارنة الخيارات",
+            "section_type": "comparison",
+            "taxonomy_axis": "comparison",
+            "requires_table": True,
+            "commercial_section_role": "comparison",
+        }
+        state = {"article_language": "ar", "primary_keyword": "شركة تصميم", "raw_title": "شركة تصميم"}
+        result = controller._ensure_required_table_content("فقرة مقارنة.", section, state)
+        self.assertEqual(result, "فقرة مقارنة.")
+        self.assertNotIn("|---", result)
+        self.assertIn("table_incomplete_or_placeholder", section.get("section_quality_issues", []))
+
+    def test_sanitize_strips_instructional_placeholder_lines(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {"heading_text": "العملية", "section_type": "process"}
+        content = (
+            "مقدمة قصيرة.\n"
+            "1. **تحديد الاحتياج**: اكتب النتيجة المطلوبة وما يجب أن يتغير بعد التنفيذ.\n"
+            "2. خطوة صحيحة من الكاتب."
+        )
+        cleaned = controller._sanitize_repair_placeholder_leaks(content, section)
+        self.assertNotIn("اكتب النتيجة المطلوبة", cleaned)
+        self.assertIn("خطوة صحيحة من الكاتب", cleaned)
+        self.assertIn("repair_placeholder_leak_removed", section.get("section_quality_issues", []))
+
+    def test_content_stage_flags_final_placeholder_leak_as_needs_revision(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "include_tables": False,
+                "article_language": "ar",
+                "primary_keyword": "شركة",
+                "raw_title": "شركة",
+                "brand_name": "BrandCo",
+                "brand_url": "https://brand.test",
+                "output_dir": tmpdir,
+                "outline": [
+                    {
+                        "section_id": "process",
+                        "heading_text": "العملية",
+                        "section_type": "process",
+                        "heading_level": "H2",
+                        "commercial_section_role": "process",
+                    },
+                    {
+                        "section_id": "cta",
+                        "heading_text": "ابدأ",
+                        "section_type": "conclusion",
+                        "heading_level": "H2",
+                        "commercial_section_role": "cta",
+                    },
+                ],
+                "sections": {
+                    "process": {
+                        "generated_content": "1. اكتب النتيجة المطلوبة وما يجب أن يتغير بعد التنفيذ.",
+                    },
+                    "cta": {
+                        "generated_content": "تواصل معنا عبر https://brand.test",
+                    },
+                },
+            }
+            controller._build_content_stage_markdown(state, "Draft")
+            warnings_text = " ".join(state["content_stage_quality_report"]["warnings"])
+            self.assertIn("repair_placeholder_leak", warnings_text)
+            self.assertEqual(state["content_stage_status"], "needs_revision")
+
+    def test_project_like_section_false_for_differentiation_heading_with_projects_word(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        section = {
+            "heading_text": "ما الذي يميزنا في مشاريع التصميم؟",
+            "section_type": "body",
+            "commercial_section_role": "differentiation",
+            "taxonomy_axis": "brand_offer",
+        }
+        self.assertFalse(controller._is_project_like_section(section))
 
 
 if __name__ == '__main__':
