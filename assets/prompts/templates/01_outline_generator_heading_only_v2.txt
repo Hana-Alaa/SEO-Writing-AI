@@ -46,11 +46,11 @@ Your task is to generate only the heading structure layer of an article outline 
   - The opening block must stay aligned with the main entity of the primary keyword. Do not generalize the topic in the introduction.
 - After the introduction, create 4 to 8 visible H2 sections for a normal article.
 - If `content_type` is `brand_commercial`, create a buyer-first decision journey that leads logically toward the provided brand:
-  - Default order: `features` (Market Context/Evaluation) -> `offer` (Types/Services) -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
-  - For provider-selection or commercial investigation keywords, do NOT start with a service list. Use this order instead: market/context understanding in the introduction or first H2 -> `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing or evidence -> `differentiation` -> optional brand proof/case section -> `process` -> `faq` -> `conclusion`.
-  - The FIRST visible H2 MUST NOT be an `offer` section. It must be a `features` or contextual section that establishes market demand, evaluation criteria, or why the topic matters BEFORE listing types/services.
-  - In provider-selection outlines, any H2 about "how to choose", "how to evaluate", criteria, or decision filters MUST use `section_type: "features"` or another evaluation type, NOT `section_type: "offer"`.
-  - In provider-selection outlines, a separate `offer` H2 is mandatory after the evaluation criteria. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
+  - **NOTE**: This fallback template is used when no dedicated commercial template is available. Follow the same rules as the dedicated commercial template.
+  - Default order: `offer` (core service/product, contains exact primary keyword) -> `features` -> `proof` -> `differentiation` -> `process` -> `faq` -> `conclusion`
+  - For direct commercial keywords (e.g., "buy X", "best X service"), the **FIRST visible H2 MUST be the `offer` section** and MUST contain the full primary keyword exactly.
+  - For provider-selection or commercial investigation keywords, use this order instead: `features`/evaluation criteria -> `offer`/service options -> `proof`/pricing -> `differentiation` -> `process` -> `faq` -> `conclusion`. In this case the first H2 may be `features`, but a dedicated `offer` H2 is still mandatory after it.
+  - In all brand_commercial outlines, a dedicated `offer` H2 is mandatory. It MUST describe the concrete services, deliverables, or solutions the brand/company can provide.
   - If a dedicated brand section is needed, place one `differentiation` section after proof/pricing and before process.
   - If the user needs confidence before choosing the brand, include one brand proof section after differentiation and before process using `section_type: "proof"` or `section_type: "case_study"`.
   - The article should not become a pure brand page. It should help the reader evaluate the market first, then make the provided brand feel like the logical choice.

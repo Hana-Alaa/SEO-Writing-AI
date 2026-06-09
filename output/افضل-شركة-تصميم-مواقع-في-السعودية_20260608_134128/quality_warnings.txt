@@ -1,0 +1,12 @@
+STATUS: needs_revision
+WARNING_COUNT: 9
+------------------------------------------------------------
+- sec_01: intro_final_enforcement_failed:intro_missing_hook,intro_missing_soft_cta
+- sec_01: unsupported fulfillment - brand geography/market presence promised without explicit raw brand geography evidence; brand trust/certification/leadership claim lacks explicit raw evidence
+- sec_04: unsupported fulfillment - brand trust/certification/leadership claim lacks explicit raw evidence
+- sec_05: project_proof_missed_target_relevant_evidence
+- sec_05: unsupported fulfillment - brand project/client names are not observed in brand evidence: الفعلية
+- sec_07: unsupported fulfillment - brand pricing/packages promised without explicit raw brand pricing evidence; brand geography/market presence promised without explicit raw brand geography evidence; brand trust/certification/leadership claim lacks explicit raw evidence
+- sec_08: faq_preamble_removed
+- sec_09: unsupported fulfillment - brand geography/market presence promised without explicit raw brand geography evidence; brand trust/certification/leadership claim lacks explicit raw evidence
+- Commercial introduction does not contain the primary keyword.

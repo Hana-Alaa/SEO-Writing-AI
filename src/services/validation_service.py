@@ -95,14 +95,36 @@ class ValidationService:
 
     COMMERCIAL_FLOW_SECTION_ALIASES: ClassVar[Dict[str, set[str]]] = {
         "introduction": {"introduction"},
-        "offer": {"offer", "core", "service_definition", "what_is", "definition", "offer_overview", "offer_clarity"},
-        "features": {"features", "key_features", "included", "features_benefits", "key_benefits", "features_or_included"},
-        "differentiation": {"differentiation", "brand_differentiation", "why_choose_us", "differentiators", "usp"},
+        "offer": {
+            "offer", "core", "service_definition", "what_is", "definition",
+            "offer_overview",
+            "offer_clarity",         # legacy label — kept for backward compat
+        },
+        "features": {
+            "features", "key_features", "included", "features_benefits",
+            "key_benefits",
+            "features_or_included",  # legacy label — already present
+        },
+        "differentiation": {
+            "differentiation", "brand_differentiation", "why_choose_us",
+            "usp",
+            "differentiators",       # legacy label — already present
+        },
         "proof": {"proof", "authority", "case_study", "proof_authority", "validation", "pricing"},
         "comparison": {"comparison", "comparison_logic", "comparison_utility", "alternatives", "options", "criteria"},
-        "process": {"process", "how_it_works", "implementation", "workflow", "process_workflow", "steps", "process_or_how"},
+        "process": {
+            "process", "how_it_works", "implementation", "workflow",
+            "process_workflow", "steps",
+            "process_or_how",        # legacy label — already present
+        },
         "faq": {"faq"},
         "conclusion": {"conclusion", "final_verdict"},
+        # Neutral stage: validation-neutral, does NOT fulfill buyer-journey role requirements.
+        # custom_domain_topic is the legacy label accepted for backward compat.
+        "custom": {
+            "custom", "custom_domain_topic", "legal_guide",
+            "technology", "use_case", "market_context",
+        },
     }
 
     COMPARISON_HEADING_SIGNALS: ClassVar[tuple[str, ...]] = (
@@ -125,9 +147,24 @@ class ValidationService:
         "موقع", "الموقع", "قرب", "القرب", "تشطيب", "التشطيب", "مساحة", "مساحات", "محور", "محاور", "التسعين",
     )
 
-    def __init__(self, ai_client=None, semantic_model=None):
+    def __init__(self, ai_client=None, semantic_model=None, is_property_domain: bool = False):
         self.ai_client = ai_client
         self.semantic_model = semantic_model
+        self.is_property_domain = is_property_domain
+
+    def set_property_domain_by_keyword(self, primary_keyword: str):
+        """Helper to automatically detect property domain based on primary keyword content."""
+        property_terms = {
+            "شقه", "شقق", "عقار", "عقارات", "وحده", "وحدات", "محل", "محلات", "مكتب", "مكاتب",
+            "فيلا", "فلل", "فيلات", "شاليه", "شاليهات", "ارض", "اراضي", "الأراضي",
+            "apartment", "apartments", "flat", "flats", "studio", "duplex", "penthouse",
+            "villa", "villas", "chalet", "chalets", "office", "offices", "property",
+            "properties", "real estate", "realestate"
+        }
+        normalized = self._normalize_heading_label(primary_keyword or "")
+        # Set self.is_property_domain to True if any property term is present in the normalized keyword
+        if any(term in normalized.split() for term in property_terms):
+            self.is_property_domain = True
 
         # Bootstrap default thresholds for tone intensity
         self.TONE_THRESHOLDS = {
@@ -492,6 +529,8 @@ class ValidationService:
         4. H3 Quality: Prunes multi-topic or granular subheadings.
         5. FAQ Cleanup: Prunes non-questions/unsupported.
         """
+        if primary_keyword:
+            self.set_property_domain_by_keyword(primary_keyword)
         keyword_profile = self._derive_keyword_profile(primary_keyword, area=area)
         normalized_pk = keyword_profile.get("normalized_keyword", "")
         head_entity = keyword_profile.get("head_entity", "")
@@ -1080,6 +1119,24 @@ class ValidationService:
         errors = []
         if not content:
             return False, ["Content is empty"]
+
+        # Step 3A-1: make the single source of truth visible to the validator in
+        # parallel with its existing inputs (availability + logging only). No
+        # validation decision below reads it yet - that is deferred to Step 3B.
+        _gt_state = kwargs.get("state") if isinstance(kwargs.get("state"), dict) else {}
+        if _gt_state:
+            try:
+                from src.services.brand_evidence_service import record_ground_truth_consumption
+                _already = "validator" in (_gt_state.get("ground_truth_consumption") or {})
+                _gt_record = record_ground_truth_consumption(_gt_state, "validator")
+                if not _already:
+                    logger.info(
+                        "[ground_truth] validator_ground_truth_used=%s chars=%s",
+                        str(_gt_record["used"]).lower(),
+                        _gt_record["markdown_chars"],
+                    )
+            except Exception:
+                pass
 
         heading_text = section.get('heading_text', 'Section')
         section_intent = section.get('section_intent', 'Informational').lower()
@@ -1784,6 +1841,7 @@ class ValidationService:
             }
         },
         "informational": {
+            # Flat fallback used when subtype cannot be determined.
             "mandatory": {
                 "introduction", "definition", "key_benefits", "core",
                 "examples_or_tips", "common_mistakes", "faq", "conclusion"
@@ -1795,6 +1853,26 @@ class ValidationService:
                 "who_should_choose_what", "faq", "conclusion"
             }
         }
+    }
+
+    # Subtype-specific mandatory sections for informational content.
+    # Resolved by deterministic inference from the outline; flat fallback used only
+    # when inference is inconclusive (see _infer_informational_subtype).
+    REQUIRED_STRUCTURE_BY_SUBTYPE: ClassVar[Dict[str, Dict]] = {
+        "educational": {
+            "mandatory": {
+                "introduction", "definition", "key_benefits", "core",
+                "examples_or_tips", "common_mistakes", "faq", "conclusion"
+            }
+        },
+        "comparative": {
+            # Comparative flow does not require a dedicated definition or key_benefits section.
+            "mandatory": {"introduction", "comparison", "faq", "conclusion"}
+        },
+        "experience_based": {
+            # Experience/destination topics don't require definition or common_mistakes sections.
+            "mandatory": {"introduction", "core", "faq", "conclusion"}
+        },
     }
 
     REQUIRED_COVERAGE_BY_TYPE = {
@@ -1947,14 +2025,89 @@ class ValidationService:
                 missing.add(required)
         return missing
 
+    def _infer_informational_subtype(self, outline: List[Dict[str, Any]], primary_keyword: str = "", title: str = "") -> str:
+        """
+        Deterministically infer the informational subtype from the outline structure and title.
+        Returns 'comparative', 'experience_based', or 'educational'.
+        Falls back to 'educational' if inference is inconclusive.
+        """
+        comparison_signals = {
+            "vs", "versus", "مقارنة", "مقارنه", "الفرق", "فروق", "difference", "differences",
+            "compare", "compared", "comparison",
+        }
+        experience_signals = {
+            "visit", "visitor", "venue", "destination", "attraction", "event", "tickets",
+            "mall", "museum", "park", "restaurant", "exhibition", "festival", "show", "city",
+            "زيارة", "زوار", "وجهة", "ترفيه", "تذاكر", "حجز", "مول", "متحف", "حديقة",
+            "مطعم", "مدينة", "منتزه", "معرض", "مسرح", "منتجع", "فندق",
+        }
+        blob = " ".join([
+            (primary_keyword or "").lower(),
+            (title or "").lower(),
+        ] + [
+            (s.get("heading_text") or "").lower() for s in outline
+        ])
+
+        # 1. Comparative detection: keyword or title contains comparison signal
+        pk_lower = (primary_keyword or "").lower()
+        if any(sig in pk_lower for sig in comparison_signals):
+            return "comparative"
+
+        # 2. Experience/destination detection: at least 2 experience signals in the full blob
+        experience_hit_count = sum(1 for sig in experience_signals if sig in blob)
+        if experience_hit_count >= 2:
+            return "experience_based"
+
+        # 3. Check for a comparison-type section in the outline
+        has_comparison_section = any(
+            (s.get("section_type") or "").lower() in {"comparison", "comparison_logic"}
+            for s in outline
+        )
+        if has_comparison_section:
+            return "comparative"
+
+        # 4. Inconclusive — fall back to educational
+        return "educational"
+
     def enforce_outline_structure(self, outline: List[Dict[str, Any]], content_type: str, primary_keyword: str = "", serp_brief: Optional[Dict[str, Any]] = None, content_strategy: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        if primary_keyword:
+            self.set_property_domain_by_keyword(primary_keyword)
         present_types = {(s.get("section_type") or "").lower().strip() for s in outline}
-        rules = self.REQUIRED_STRUCTURE_BY_TYPE.get(content_type)
-        if rules:
-            required = rules.get("mandatory", set())
-            missing = self._missing_required_sections(present_types, required)
-            if missing:
-                logger.error(f"[outline_validate] Missing mandatory sections for {content_type}: {missing}")
+
+        if content_type == "informational":
+            # 1. Prefer the LLM-declared subtype (from 3D-A-2 informational_subtype field)
+            declared_subtype = (outline[0].get("_informational_subtype") or "").strip() if outline else ""
+            if not declared_subtype:
+                # 2. Deterministic inference from outline/title
+                title = (content_strategy or {}).get("title", "")
+                declared_subtype = self._infer_informational_subtype(outline, primary_keyword, title)
+                logger.info("[outline_validate] Inferred informational_subtype='%s' for '%s'", declared_subtype, primary_keyword)
+            else:
+                logger.info("[outline_validate] Declared informational_subtype='%s' for '%s'", declared_subtype, primary_keyword)
+
+            subtype_rules = self.REQUIRED_STRUCTURE_BY_SUBTYPE.get(declared_subtype)
+            if subtype_rules:
+                required = subtype_rules.get("mandatory", set())
+                missing = self._missing_required_sections(present_types, required)
+                if missing:
+                    logger.error(
+                        "[outline_validate] Missing mandatory sections for informational/%s: %s",
+                        declared_subtype, missing
+                    )
+            else:
+                # 3. Final fallback: use flat informational rules
+                rules = self.REQUIRED_STRUCTURE_BY_TYPE.get("informational", {})
+                required = rules.get("mandatory", set())
+                missing = self._missing_required_sections(present_types, required)
+                if missing:
+                    logger.error("[outline_validate] Missing mandatory sections for informational (flat fallback): %s", missing)
+        else:
+            rules = self.REQUIRED_STRUCTURE_BY_TYPE.get(content_type)
+            if rules:
+                required = rules.get("mandatory", set())
+                missing = self._missing_required_sections(present_types, required)
+                if missing:
+                    logger.error(f"[outline_validate] Missing mandatory sections for {content_type}: {missing}")
 
         coverage = self.evaluate_outline_coverage(outline, content_type, primary_keyword=primary_keyword, serp_brief=serp_brief, content_strategy=content_strategy)
         if coverage.get("missing"):
@@ -1998,6 +2151,8 @@ class ValidationService:
         content_strategy: Optional[Dict[str, Any]] = None,
         seo_intelligence: Optional[Dict[str, Any]] = None,
     ) -> List[str]:
+        if primary_keyword:
+            self.set_property_domain_by_keyword(primary_keyword)
         errors = []
 
         if not outline:
@@ -2056,7 +2211,7 @@ class ValidationService:
             heading_level = (section.get("heading_level") or "").upper()
             section_type = (section.get("section_type") or "").lower()
             subheadings = section.get("subheadings", [])
-            stage = self._commercial_flow_stage(section)
+            stage = self._commercial_flow_stage(section, content_type)
 
             if section_type == "introduction":
                 intro_positions.append(idx)
@@ -2231,7 +2386,7 @@ class ValidationService:
                     topic for topic in self._detect_optional_section_topics(subheading_text)
                     if not self._optional_topic_is_justified(topic, support_blob)
                 ]
-                if self._commercial_flow_stage(section) == "comparison":
+                if self._commercial_flow_stage(section, content_type) == "comparison":
                     unsupported_child_topics = [
                         topic for topic in unsupported_child_topics
                         if topic != "financing_payment"
@@ -2313,6 +2468,8 @@ class ValidationService:
         return errors
 
     def validate_outline_quality(self, outline: List[Dict[str, Any]], content_type: str = "", primary_keyword: str = "", serp_brief: Optional[Dict[str, Any]] = None, content_strategy: Optional[Dict[str, Any]] = None) -> List[str]:
+        if primary_keyword:
+            self.set_property_domain_by_keyword(primary_keyword)
         errors = []
 
         # --- MANDATORY SECTION BRIEF CONTRACT FIELDS ---
@@ -2664,7 +2821,7 @@ class ValidationService:
         text = re.sub(r"[^\w\u0600-\u06FF\s]", " ", text)
         return " ".join(text.split())
 
-    def _expand_token_variants(self, token: str) -> set[str]:
+    def _expand_token_variants(self, token: str, is_property_domain: Optional[bool] = None) -> set[str]:
         if not token:
             return set()
         token = self._normalize_heading_label(token)
@@ -2679,26 +2836,29 @@ class ValidationService:
         if token.endswith("ون") or token.endswith("ين"):
             variants.add(token[:-2])
 
-        real_estate_map = {
-            "شقه": {"شقق"},
-            "شقق": {"شقه"},
-            "عقار": {"عقارات"},
-            "عقارات": {"عقار"},
-            "وحده": {"وحدات"},
-            "وحدات": {"وحده"},
-            "محل": {"محلات"},
-            "محلات": {"محل"},
-            "مكتب": {"مكاتب"},
-            "مكاتب": {"مكتب"},
-            "فيلا": {"فلل", "فيلات"},
-            "فلل": {"فيلا", "فيلات"},
-            "فيلات": {"فيلا", "فلل"},
-            "شاليه": {"شاليهات"},
-            "شاليهات": {"شاليه"},
-            "ارض": {"اراضي"},
-            "اراضي": {"ارض"},
-        }
-        variants.update(real_estate_map.get(token, set()))
+        # synonym expansion for property-related terms is gated behind is_property_domain
+        use_property_domain = is_property_domain if is_property_domain is not None else self.is_property_domain
+        if use_property_domain:
+            real_estate_map = {
+                "شقه": {"شقق"},
+                "شقق": {"شقه"},
+                "عقار": {"عقارات"},
+                "عقارات": {"عقار"},
+                "وحده": {"وحدات"},
+                "وحدات": {"وحده"},
+                "محل": {"محلات"},
+                "محلات": {"محل"},
+                "مكتب": {"مكاتب"},
+                "مكاتب": {"مكتب"},
+                "فيلا": {"فلل", "فيلات"},
+                "فلل": {"فيلا", "فيلات"},
+                "فيلات": {"فيلا", "فلل"},
+                "شاليه": {"شاليهات"},
+                "شاليهات": {"شاليه"},
+                "ارض": {"اراضي"},
+                "اراضي": {"ارض"},
+            }
+            variants.update(real_estate_map.get(token, set()))
 
         return variants
 
@@ -3029,19 +3189,33 @@ class ValidationService:
         }
         return section_type.lower() in allowed
 
-    def _commercial_flow_stage(self, section: Dict[str, Any]) -> str:
+    def _commercial_flow_stage(self, section: Dict[str, Any], content_type: str = "") -> str:
+        # Guard: informational content does not use commercial stage inference.
+        # Return the raw section_type to prevent false-positive commercial validator checks.
+        if content_type == "informational":
+            return (section.get("section_type") or "").lower().strip()
+
         # 1. Check explicit coverage_role first (preferred driver for commercial coverage)
         role = (section.get("coverage_role") or "").lower().strip()
         if role:
             role_to_stage = {
+                # Canonical labels
+                "offer": "offer",
+                "features": "features",
+                "differentiation": "differentiation",
+                "proof": "proof",
+                "comparison": "comparison",
+                "process": "process",
+                "faq": "faq",
+                "conclusion": "conclusion",
+                # Legacy labels — kept for backward compat with saved outlines
                 "offer_clarity": "offer",
                 "features_or_included": "features",
                 "differentiators": "differentiation",
-                "proof": "proof",
-                "comparison": "comparison",
                 "process_or_how": "process",
-                "faq": "faq",
-                "conclusion": "conclusion"
+                # Neutral custom stage — passes validation without commercial role checks
+                "custom": "custom",
+                "custom_domain_topic": "custom",  # legacy label
             }
             if role in role_to_stage:
                 return role_to_stage[role]

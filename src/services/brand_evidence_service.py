@@ -4,7 +4,7 @@ import re
 import asyncio
 import httpx
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -90,16 +90,345 @@ _TRUST_CONTEXT_RE = re.compile(
     re.IGNORECASE,
 )
 
+_NEGATED_EVIDENCE_RE = re.compile(
+    r"\b(?:no explicit|not observed|not provided|not available|without evidence|"
+    r"لا توجد|غير موجود|غير متاح|لم يرد|دون دليل)\b",
+    re.IGNORECASE,
+)
+
+
+def _extract_explicit_trust_evidence(text: str, page_type: str = "") -> Dict[str, List[str]]:
+    """Extract only source-explicit trust facts, excluding promotional positioning."""
+    categories = {
+        "testimonials": [],
+        "awards": [],
+        "certifications": [],
+        "partnerships": [],
+        "guarantees": [],
+        "delivery_timelines": [],
+    }
+    page_type_norm = str(page_type or "").casefold()
+    sentences = re.split(r"(?<=[.!?؟])\s+|\n+", str(text or ""))
+    patterns = {
+        "testimonials": [
+            r"\b(?:client|customer)\s+testimonials?\b",
+            r"\b(?:client|customer)\s+reviews?\b",
+            r"\bwhat\s+(?:our\s+)?clients?\s+say\b",
+            r"(?:شهادات|آراء|تقييمات)\s+العملاء",
+            r"(?:ماذا|ما)\s+يقول\s+عملاؤنا",
+        ],
+        "awards": [
+            r"\b(?:won|winner of|recipient of|awarded by)\b[^.\n]{0,100}\baward\b",
+            r"\baward\s*:\s*[A-Z][^.\n]{2,100}",
+            r"(?:فاز(?:ت)?|حصل(?:ت)?|حائز(?:ة)?)\s+[^.\n]{0,80}(?:جائزة|جوائز)",
+        ],
+        "certifications": [
+            r"\biso\s*\d{3,6}(?::\d{4})?\b",
+            r"\b(?:certified|accredited)\s+by\s+[A-Z][A-Za-z0-9& .'-]{2,80}",
+            r"\bholds?\s+(?:an?\s+)?[A-Z][A-Za-z0-9& .'-]{2,80}\s+certification\b",
+            r"(?:معتمد|حاصل على اعتماد|حاصل على شهادة)\s+(?:من|لدى)\s+[\u0600-\u06FFA-Za-z0-9& .'-]{2,80}",
+        ],
+        "partnerships": [
+            r"\b(?:official|certified|accredited|technology|solution)\s+partner\s+(?:of|with|for)\s+[A-Z][A-Za-z0-9& .'-]{2,80}",
+            r"\bmember\s+of\s+[A-Z][A-Za-z0-9& .'-]{2,80}\s+partner\s+program\b",
+            r"(?:شريك رسمي|شريك معتمد|شريك تقني)\s+(?:ل|مع)\s+[\u0600-\u06FFA-Za-z0-9& .'-]{2,80}",
+        ],
+        "guarantees": [
+            r"\b(?:money[- ]back|service|satisfaction)\s+guarantee\b",
+            r"(?:ضمان استرداد|ضمان خدمة|ضمان رضا)\s+[^.\n]{0,80}",
+        ],
+        "delivery_timelines": [
+            r"\b(?:delivery|delivered|launch)\s+(?:within|in)\s+\d+\s+(?:business\s+)?(?:days?|weeks?|months?)\b",
+            r"(?:تسليم|إطلاق)\s+(?:خلال|في)\s+\d+\s+(?:يوم|أيام|أسبوع|أسابيع|شهر|أشهر)",
+        ],
+    }
+
+    for sentence in sentences:
+        cleaned = re.sub(r"\s+", " ", sentence).strip()
+        if not cleaned or _NEGATED_EVIDENCE_RE.search(cleaned):
+            continue
+        for category, category_patterns in patterns.items():
+            if any(re.search(pattern, cleaned, re.IGNORECASE) for pattern in category_patterns):
+                categories[category].append(cleaned[:240])
+
+    if page_type_norm in {"testimonial", "testimonials", "reviews"}:
+        page_text = re.sub(r"\s+", " ", str(text or "")).strip()
+        if page_text and not _NEGATED_EVIDENCE_RE.search(page_text):
+            categories["testimonials"].append(page_text[:240])
+
+    return {
+        key: list(dict.fromkeys(values))[:8]
+        for key, values in categories.items()
+    }
+
 
 def _normalize_evidence_item(value: Any) -> str:
     item = re.sub(r"\s+", " ", str(value or "")).strip(" -–—:،؛|")
     return item
 
 
+# Structural template/field labels that appear on portfolio & case-study pages.
+# These are page-template scaffolding (NOT services, projects, or technologies) and
+# must never be extracted as brand facts. The list is domain-agnostic structural
+# metadata, not an industry keyword whitelist, so it does not re-introduce bias.
+_BRAND_TEMPLATE_LABELS = frozenset(
+    {
+        "project name", "client name", "client", "publish date", "published date",
+        "publication date", "objective", "objectives", "scope of work", "deliverables",
+        "key deliverables", "design tools used", "tools used", "technology tools used",
+        "technologies used", "tech stack", "quality assurance", "screenshots",
+        "introduction", "brief", "creation", "created", "details", "project details",
+        "overview", "the challenge", "the solution", "the results", "key results",
+        # Arabic equivalents
+        "اسم المشروع", "اسم العميل", "العميل", "تاريخ النشر", "موجز", "الهدف", "الأهداف",
+        "نطاق العمل", "المخرجات", "الأدوات المستخدمة", "التكنولوجيا والأدوات المستخدمة",
+        "التقنيات المستخدمة", "ضمان الجودة", "لقطات الشاشة", "مقدمة", "التحدي", "الحل",
+        "النتائج", "نظرة عامة",
+    }
+)
+
+
+def _is_brand_template_label(item: str) -> bool:
+    """True for portfolio/case-study template field labels (domain-agnostic noise)."""
+    if not item:
+        return False
+    normalized = re.sub(r"[&/|:،؛.\-–—_]+", " ", str(item))
+    normalized = re.sub(r"\s+", " ", normalized).strip().casefold()
+    if normalized in _BRAND_TEMPLATE_LABELS:
+        return True
+    # Bare publish-date tokens like "04-2018" / "12-2021".
+    if re.fullmatch(r"\d{1,2}\s*[-/]\s*\d{4}", str(item).strip()):
+        return True
+    return False
+
+
+# Structural metadata tokens that scaffold portfolio/case-study templates. When a
+# single string embeds two or more of these, it is a concatenated template row
+# (e.g. "Baddel Websites Publish Date 12-2021 Brief Objective"), not a real entity.
+# Counting >= 2 keeps legitimate single-label names safe (e.g. "Raw Client Name"
+# has only one). These are structural scaffolding on any CMS, so the rule is
+# domain-neutral (no industry keyword list).
+_TEMPLATE_ANY_TOKEN_RE = re.compile(
+    r"\b(?:publish(?:ed)?\s+date|publication\s+date|project\s+name|client\s+name|"
+    r"scope\s+of\s+work|scope|deliverables|quality\s+assurance|objectives?|brief|"
+    r"design\s+tools\s+used|tools\s+used|technologies?\s+used|introduction|screenshots)\b|"
+    r"(?:تاريخ\s+النشر|اسم\s+المشروع|اسم\s+العميل|نطاق\s+العمل|ضمان\s+الجودة|موجز|"
+    r"الهدف|المخرجات|لقطات\s+الشاشة|مقدمة)",
+    re.IGNORECASE,
+)
+# Strong anchors that, combined with an embedded publish-date, still mark a row.
+_TEMPLATE_STRONG_RE = re.compile(
+    r"\b(?:publish(?:ed)?\s+date|publication\s+date|scope\s+of\s+work|quality\s+assurance)\b|"
+    r"(?:تاريخ\s+النشر|نطاق\s+العمل|ضمان\s+الجودة)",
+    re.IGNORECASE,
+)
+
+
+def _is_template_metadata_chain(item: str) -> bool:
+    """True for multi-word strings that concatenate structural template tokens."""
+    text = str(item or "")
+    if len(text.split()) < 3:
+        return False
+    if len(_TEMPLATE_ANY_TOKEN_RE.findall(text)) >= 2:
+        return True
+    if _TEMPLATE_STRONG_RE.search(text) and re.search(r"\b\d{1,2}\s*[-/]\s*\d{4}\b", text):
+        return True
+    return False
+
+
+# Promotion/offer signals (structural, domain-neutral): a percentage, an explicit
+# discount/free/deal word, in English or Arabic. Used to route offers into a
+# Pricing/Offers bucket instead of mislabeling them as technologies/services.
+_OFFER_SIGNAL_RE = re.compile(
+    r"\d+\s*%|%\s*\d+|\b(?:off|discount|sale|deal|promo|promotion|free|save|coupon|voucher)\b|"
+    r"(?:عرض|عروض|خصم|خصومات|مجان|مجاني|مجانية|تخفيض|توفير|كوبون)",
+    re.IGNORECASE,
+)
+# Call-to-action / question lead-ins that are not standalone entities.
+_CTA_LEAD_RE = re.compile(
+    r"^\s*(?:need|want|looking|get|do\s+you|are\s+you|call|contact|order|buy|subscribe|"
+    r"let'?s|talk|تواصل|اتصل|اطلب|احجز|هل)\b|\?",
+    re.IGNORECASE,
+)
+
+
+# Leading function words that signal a clipped sentence fragment rather than a
+# standalone entity (e.g. "within budget", "and to your satisfaction"). This is a
+# general linguistic rule (English + Arabic stop-words), not domain vocabulary.
+_FRAGMENT_LEADING_WORDS = frozenset(
+    {
+        "and", "or", "but", "within", "to", "for", "with", "the", "a", "an", "of",
+        "in", "on", "by", "at", "from", "as", "that", "which", "who", "we", "our",
+        "your", "their", "its", "it", "this", "these", "those", "is", "are", "was",
+        "were", "be", "been", "being", "so", "then", "also",
+        "و", "أو", "في", "من", "على", "إلى", "التي", "الذي", "هو", "هي", "نحن",
+        "هذا", "هذه", "ثم", "كما",
+    }
+)
+
+
+def _is_sentence_fragment(item: str) -> bool:
+    """True when a candidate starts with a function word (clipped clause fragment)."""
+    words = str(item or "").split()
+    if not words:
+        return True
+    first = words[0].casefold().strip(".,;:!؟،")
+    return first in _FRAGMENT_LEADING_WORDS
+
+
+# Generic page/section labels (domain-agnostic pattern) that are NOT standalone
+# services or projects - e.g. "Design Services", "خدمات التصميم".
+_GENERIC_PAGE_SECTION_LABEL_RE = re.compile(
+    r"^(?:design|our|specialized|expert|digital|creative)\s+services$|"
+    r"^خدمات\s+التصميم$|"
+    r"^mobile\s+app$|^websites?$",
+    re.IGNORECASE,
+)
+# Truncated portfolio-template rows where CMS text was clipped mid-token.
+_TRUNCATED_TEMPLATE_TAIL_RE = re.compile(
+    r"\b(?:publi|servic|deliverab|objecti|brief\s+objecti)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _is_generic_catalog_page_label(item: str) -> bool:
+    """True for section/page labels mistaken for services or projects (structural)."""
+    normalized = re.sub(r"\s+", " ", str(item or "")).strip().casefold()
+    if not normalized:
+        return True
+    if normalized in _BRAND_TEMPLATE_LABELS:
+        return True
+    return bool(_GENERIC_PAGE_SECTION_LABEL_RE.match(normalized))
+
+
+def _is_derived_catalog_fragment(item: str) -> bool:
+    """True for clipped phrases that are not catalog entities (linguistic/structural)."""
+    text = str(item or "").strip()
+    if not text:
+        return True
+    folded = text.casefold()
+    if re.match(r"^(?:including|expert|and|or|with)\s+", folded):
+        return True
+    if len(text.split()) == 1 and text.islower() and len(text) < 14:
+        return True
+    if _TRUNCATED_TEMPLATE_TAIL_RE.search(folded):
+        return True
+    return False
+
+
+def _portfolio_primary_entity_names(cards: Any) -> frozenset:
+    """Project/case-study names observed on portfolio pages (page-type signal)."""
+    names: set = set()
+    if not isinstance(cards, list):
+        return frozenset()
+    portfolio_keys = (
+        "headings",
+        "visible_products_or_services",
+        "visible_features_or_capabilities",
+        "visible_project_or_case_study_examples",
+    )
+    for card in cards:
+        if not isinstance(card, dict) or card.get("excluded_reason"):
+            continue
+        if str(card.get("page_type") or "").casefold() != "portfolio":
+            continue
+        url = str(card.get("url") or "")
+        if re.search(r"/(?:portfolio|projects?)/", url, re.IGNORECASE):
+            title = re.sub(
+                r"\s*[-|]\s*(?:creative minds|company).*$",
+                "",
+                str(card.get("title") or ""),
+                flags=re.IGNORECASE,
+            ).strip()
+            if title and not _is_generic_catalog_page_label(title):
+                names.add(title.casefold())
+        for key in portfolio_keys:
+            for raw in card.get(key) or []:
+                item = re.sub(r"\s+", " ", str(raw or "")).strip()
+                if not item or _is_generic_catalog_page_label(item) or _is_derived_catalog_fragment(item):
+                    continue
+                names.add(item.casefold())
+        for raw in card.get("visible_project_or_case_study_examples") or []:
+            cleaned = _sanitize_evidence_item(raw, category="project")
+            if cleaned and not _is_generic_catalog_page_label(cleaned):
+                names.add(cleaned.casefold())
+    return frozenset(names)
+
+
+def _filter_derived_service_catalog(services: List[str], cards: Any) -> List[str]:
+    """Drop portfolio entities, page labels, and fragments from the services catalog."""
+    project_names = _portfolio_primary_entity_names(cards)
+    out: List[str] = []
+    seen: set = set()
+    for raw in services:
+        item = re.sub(r"\s+", " ", str(raw or "")).strip()
+        if not item:
+            continue
+        folded = item.casefold()
+        if folded in seen:
+            continue
+        if folded in project_names:
+            continue
+        if _is_generic_catalog_page_label(item) or _is_derived_catalog_fragment(item):
+            continue
+        seen.add(folded)
+        out.append(item)
+    return out
+
+
+def _filter_derived_project_catalog(projects: List[str]) -> List[str]:
+    """Drop generic page labels and fragments from the projects catalog."""
+    out: List[str] = []
+    seen: set = set()
+    for raw in projects:
+        item = re.sub(r"\s+", " ", str(raw or "")).strip()
+        if not item:
+            continue
+        folded = item.casefold()
+        if folded in seen:
+            continue
+        if _is_generic_catalog_page_label(item) or _is_derived_catalog_fragment(item):
+            continue
+        if _is_template_metadata_chain(item):
+            continue
+        seen.add(folded)
+        out.append(item)
+    return out
+
+
+def _collect_card_values(
+    cards: Any,
+    keys: List[str],
+    *,
+    limit: int = 16,
+    allow_promotional: bool = False,
+    category: str = "claim",
+    page_types: Optional[set] = None,
+) -> List[str]:
+    """Collect cleaned values from evidence cards without mutating inputs."""
+    if not isinstance(cards, list):
+        return []
+    values: List[str] = []
+    for card in cards:
+        if not isinstance(card, dict) or card.get("excluded_reason"):
+            continue
+        if page_types is not None:
+            pt = str(card.get("page_type") or "other").casefold()
+            if pt not in page_types:
+                continue
+        for key in keys:
+            values.extend(card.get(key) or [])
+    return _clean_evidence_items(values, limit=limit, allow_promotional=allow_promotional, category=category)
+
+
 def _is_structured_noise(item: str) -> bool:
     if not item:
         return True
     if len(item) < 3 or len(item) > 140:
+        return True
+    if _is_brand_template_label(item):
+        return True
+    if _is_template_metadata_chain(item):
         return True
     if _BRAND_EVIDENCE_DATE_RE.match(item) or _BRAND_EVIDENCE_JUNK_RE.match(item):
         return True
@@ -128,6 +457,10 @@ def _sanitize_evidence_item(
         return ""
 
     if category in {"service", "capability"}:
+        if _is_sentence_fragment(item):
+            return ""
+        if _CTA_LEAD_RE.search(item):
+            return ""
         if re.search(r"\b(?:transform your brand|our latest projects|why make|what is|degree|high school|certificates?)\b", item, re.IGNORECASE):
             return ""
         if _PRICING_CONTEXT_RE.search(item) and not _SERVICE_HINT_RE.search(item):
@@ -291,29 +624,40 @@ def _is_noise_label(value: Any) -> bool:
 
 
 def _has_explicit_pricing_evidence(text: str, page_type: str = "") -> bool:
-    """True only for concrete pricing/package proof, not vague pricing FAQ copy."""
-    text = str(text or "")
-    page_type = str(page_type or "").casefold()
+    """True only for concrete brand pricing/package proof."""
+    text = re.sub(r"\s+", " ", str(text or "")).strip()
+    page_type = str(page_type or "").strip().casefold().replace("-", "_")
+    if not text or _NEGATED_EVIDENCE_RE.search(text):
+        return False
     if _CURRENCY_RE.search(text):
         return True
-    if page_type == "pricing" and re.search(
-        r"\b(?:package|packages|plan|plans|tier|starter|growth|enterprise|pricing)\b",
+    if re.search(
+        r"\b(?:price|pricing|cost|fee|fees?)\s*(?::|-|is|are|starts?|starting at|from)?\s*"
+        r"(?:[$€£]?\s*\d[\d,.]*|\d[\d,.]*\s*(?:sar|usd|aed|egp))\b|"
+        r"(?:سعر|أسعار|اسعار|تكلفة|رسوم)\s*(?::|-|تبدأ من|ابتداء من)?\s*"
+        r"(?:\d[\d,.]*\s*(?:ريال|ر\.س|درهم|جنيه)?)",
         text,
         re.IGNORECASE,
     ):
         return True
     if re.search(
-        r"\b(?:package|packages|plan|plans|tier)\s*[:\-]\s*(?:[$€£]?\s*\d|[A-Z][\w\s]{2,40})",
+        r"\b(?:package|packages|plan|plans|tier)\b[^.\n]{0,80}"
+        r"\b(?:price|pricing|cost|fee|starts?|starting at)\b[^.\n]{0,40}"
+        r"(?:[$€£]?\s*\d|\d[\d,.]*\s*(?:sar|usd|aed|egp))|"
+        r"(?:باقة|باقات|خطة)\b[^.\n]{0,80}"
+        r"(?:سعر|أسعار|اسعار|تكلفة|رسوم|تبدأ من|ابتداء من)\b[^.\n]{0,40}\d",
         text,
         re.IGNORECASE,
     ):
         return True
-    if re.search(
-        r"(?:باقة|باقات|خطة)\s*[:\-]\s*(?:\d|[\u0600-\u06FF]{2,40})",
-        text,
-    ):
-        return True
-    return False
+    return page_type == "pricing" and bool(
+        re.search(
+            r"\b(?:package|packages|plan|plans|tier|starter|growth|enterprise|pricing)\b|"
+            r"(?:باقة|باقات|خطة|خطط|الأسعار|الاسعار)",
+            text,
+            re.IGNORECASE,
+        )
+    )
 
 
 def _extract_explicit_brand_geography(text: str, page_type: str = "") -> List[str]:
@@ -327,14 +671,30 @@ def _extract_explicit_brand_geography(text: str, page_type: str = "") -> List[st
         return []
     candidates: List[str] = []
     patterns = [
-        r"\b(?:address|based in|located in|office in|branch in|headquarters in|service area|serving|serves)\s*:?\s*([A-Z][A-Za-z\s.'-]{2,70})",
-        r"(?:عنوان|مقر|فرع|فروع|نخدم|خدماتنا في|يقع في|تقع في)\s*:?\s*([\u0600-\u06FF\s]{2,70})",
+        r"\b(?:address|based in|headquartered in|office in|branch in|"
+        r"service areas?|serving|serves|operates in)\s*:?\s*([A-Z][A-Za-z\s.'-]{2,70})",
+        r"(?:عنوان(?:نا)?|مقر(?:نا)?|لدينا فرع في|فروعنا في|نخدم|"
+        r"خدماتنا في|نعمل في|تعمل الشركة في|تقدم الشركة خدماتها في)\s*:?\s*"
+        r"([\u0600-\u06FF\s]{2,70})",
     ]
-    for pattern in patterns:
-        for match in re.finditer(pattern, text or "", re.IGNORECASE):
+    sentences = re.split(r"(?<=[.!?؟])\s+|\n+", str(text or ""))
+    for sentence in sentences:
+        if re.search(
+            r"\b(?:client|project|project location|location|sector|audience)\s*:|"
+            r"\bthis page presents\b|\bproject\s+(?:in|for|located)\b|"
+            r"(?:المشروع|العميل|الموقع|القطاع)\s*:",
+            sentence,
+            re.IGNORECASE,
+        ):
+            continue
+        for pattern in patterns:
+            match = re.search(pattern, sentence, re.IGNORECASE)
+            if not match:
+                continue
             value = re.split(r"[.,;|\n]|\s+\band\b\s+", match.group(1).strip(), maxsplit=1, flags=re.IGNORECASE)[0]
             value = re.sub(
-                r"\b(?:sector|audience|expertise|support|products?|services?|and status).*$",
+                r"\b(?:sector|audience|expertise|support|products?|services?|and status|"
+                r"through|via|using|with (?:its|a|the)|for (?:clients|customers)).*$",
                 "",
                 value,
                 flags=re.IGNORECASE,
@@ -343,6 +703,23 @@ def _extract_explicit_brand_geography(text: str, page_type: str = "") -> List[st
             if cleaned and 1 <= len(cleaned.split()) <= 5:
                 candidates.append(cleaned)
     return list(dict.fromkeys(candidates))[:8]
+
+
+def _is_project_source(url: str = "", page_type: str = "") -> bool:
+    """Identify project sources from stable URL structure as well as page type."""
+    normalized_type = str(page_type or "").strip().casefold().replace("-", "_")
+    if normalized_type in {"portfolio", "projects", "project", "case_study", "portfolio_listing"}:
+        return True
+
+    path = unquote(urlparse(str(url or "")).path or "").casefold()
+    segments = {
+        segment
+        for segment in re.split(r"[/_-]+", path)
+        if segment
+    }
+    if segments.intersection({"portfolio", "portfolios", "project", "projects", "case", "cases"}):
+        return True
+    return bool(re.search(r"/(?:case-study|case-studies)(?:/|$)", path))
 
 
 def _extract_project_location_metadata(text: str) -> List[str]:
@@ -418,6 +795,15 @@ def _clean_project_card_title(raw_title: str, brand_names: List[str]) -> str:
     return _sanitize_evidence_item(title, category="project_explicit")
 
 
+def _split_portfolio_metadata_list(value: str) -> List[str]:
+    """Split portfolio metadata without breaking terms such as UX/UI."""
+    return [
+        part.strip()
+        for part in re.split(r"\s*(?:,|;|\||\band\b|&|\+)\s*", str(value or ""), flags=re.IGNORECASE)
+        if part.strip()
+    ]
+
+
 def _extract_portfolio_listing_records(text: str, brand_names: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """Extract repeated project cards from portfolio listing pages without promoting labels to projects."""
     text = re.sub(r"\s+", " ", str(text or "")).strip()
@@ -476,7 +862,7 @@ def _extract_portfolio_listing_records(text: str, brand_names: Optional[List[str
                 "sector": re.sub(r"\s+", " ", sector).strip(" .,:;-"),
                 "audience": re.sub(r"\s+", " ", audience).strip(" .,:;-"),
                 "services": _clean_evidence_items(
-                    [part.strip() for part in re.split(r"\s*(?:,|;|\||/| and |&|\+)\s*", services) if part.strip()],
+                    _split_portfolio_metadata_list(services),
                     category="service",
                     limit=8,
                 ),
@@ -538,24 +924,558 @@ def _clean_evidence_items(
     return cleaned
 
 
-def _collect_card_values(
-    cards: Any,
-    keys: List[str],
-    *,
-    limit: int = 16,
-    allow_promotional: bool = False,
-    category: str = "claim",
-) -> List[str]:
-    """Collect cleaned values from evidence cards without mutating inputs."""
-    if not isinstance(cards, list):
-        return []
-    values: List[str] = []
+_CATALOG_SENTENCE_NOISE_RE = re.compile(
+    r"\b(?:testimonial|testimonials|ceo|said|impressed|collaboration|encompassed|"
+    r"helping us build|our success stories|particularly impressed)\b",
+    re.IGNORECASE,
+)
+
+
+def _brand_catalog_item_is_noise(value: str) -> bool:
+    """Drop testimonial-like sentences that sometimes leak into service extraction."""
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if not text:
+        return True
+    if len(text.split()) > 9:
+        return True
+    if _CATALOG_SENTENCE_NOISE_RE.search(text):
+        return True
+    if text.casefold().startswith("creative minds ") and len(text.split()) > 5:
+        return True
+    return False
+
+
+def build_brand_service_catalog(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+  Aggregate a writer-facing service catalog from crawled brand evidence cards.
+
+  This is the sync layer between structured extraction (cards/inventory) and the
+  page narrative knowledge pack shown to strategy, outline, and section writers.
+    """
+    state = state or {}
+    cards = state.get("brand_evidence_cards") or []
+    if not cards and state.get("internal_resources"):
+        try:
+            cards = build_brand_evidence_cards(state)
+        except Exception:
+            cards = []
+
+    # Services catalog: only from offering pages (home/services/about). Portfolio
+    # pages must not leak project names into the services bucket (page-type signal).
+    _SERVICE_CATALOG_PAGE_TYPES = {"home", "services", "product", "about"}
+    raw_services = _collect_card_values(
+        cards,
+        ["visible_products_or_services", "visible_features_or_capabilities"],
+        limit=48,
+        category="service",
+        page_types=_SERVICE_CATALOG_PAGE_TYPES,
+    )
+    services = [item for item in raw_services if not _brand_catalog_item_is_noise(item)]
+    services = _clean_evidence_items(services, category="service", limit=32)
+    services = _filter_derived_service_catalog(services, cards)
+
+    technologies: List[str] = []
+    offers: List[str] = []
+    tech_heading_re = re.compile(
+        r"\b(?:wordpress|react|php|ios|android|seo|hosting|laravel|node\.?js|flutter|"
+        r"artificial intelligence|blockchain|e-?commerce)\b",
+        re.IGNORECASE,
+    )
     for card in cards:
         if not isinstance(card, dict) or card.get("excluded_reason"):
             continue
+        # Offers can appear on any page type (e.g. homepage hero promos).
+        for offer_src in (card.get("headings") or []) + (card.get("visible_pricing_or_packages") or []):
+            offer_text = re.sub(r"\s+", " ", str(offer_src or "")).strip()
+            if offer_text and len(offer_text.split()) <= 12 and _OFFER_SIGNAL_RE.search(offer_text):
+                offers.append(offer_text)
+        page_type = str(card.get("page_type") or "").casefold()
+        if page_type not in {"home", "services", "product", "about"}:
+            continue
+        for heading in card.get("headings") or []:
+            heading_text = re.sub(r"\s+", " ", str(heading or "")).strip()
+            if not heading_text or len(heading_text.split()) > 4:
+                continue
+            # Structural routing: offers and CTA/question fragments are not techs.
+            if _OFFER_SIGNAL_RE.search(heading_text) or _CTA_LEAD_RE.search(heading_text):
+                continue
+            if _is_sentence_fragment(heading_text):
+                continue
+            if tech_heading_re.search(heading_text):
+                technologies.append(heading_text)
+    technologies = _clean_evidence_items(technologies, category="service", limit=24)
+    # Offers keep promo wording (e.g. "50% Off ... Packages"), so clean lightly via
+    # the structural-noise filter instead of the currency-focused pricing sanitizer.
+    clean_offers: List[str] = []
+    seen_offers: set = set()
+    for raw_offer in offers:
+        item = _normalize_evidence_item(raw_offer)
+        if not item or _is_structured_noise(item):
+            continue
+        key = item.casefold()
+        if key in seen_offers:
+            continue
+        seen_offers.add(key)
+        clean_offers.append(item)
+        if len(clean_offers) >= 12:
+            break
+    offers = clean_offers
+
+    inventory = state.get("brand_evidence_inventory") or {}
+    boundaries = state.get("brand_evidence_boundaries") or {}
+    return {
+        "services": services,
+        "technologies": list(dict.fromkeys(technologies)),
+        "offers": list(dict.fromkeys(offers)),
+        "pricing_available": bool(inventory.get("pricing_available")),
+        "local_presence": bool(boundaries.get("local_presence")),
+        "explicit_geography": list(boundaries.get("explicit_geography") or inventory.get("explicit_geography") or []),
+        "projects_available": bool(inventory.get("projects_available")),
+        "process_available": bool(inventory.get("process_available")),
+        "source_card_count": len([c for c in cards if isinstance(c, dict) and not c.get("excluded_reason")]),
+    }
+
+
+def format_brand_ground_truth_catalog_lines(state: Dict[str, Any]) -> List[str]:
+    """Markdown lines for the synced Brand Service Catalog + claim boundaries."""
+    catalog = build_brand_service_catalog(state)
+    lines = [
+        "",
+        "## Brand Service Catalog",
+        "Observed brand-level services/products from crawled pages. Prefer this list over SERP guesses.",
+        "",
+    ]
+    if catalog.get("services"):
+        lines.append("### Services and capabilities")
+        lines.extend(f"- {item}" for item in catalog["services"])
+    else:
+        lines.append("- No explicit brand service catalog was extracted from crawled pages.")
+
+    if catalog.get("technologies"):
+        lines.extend(["", "### Technologies and platforms"])
+        lines.extend(f"- {item}" for item in catalog["technologies"])
+
+    lines.extend(
+        [
+            "",
+            "## Brand Claim Boundaries",
+            "Do not present the following as proven brand facts unless this pack shows explicit evidence:",
+            f"- Brand pricing/packages available: {'yes' if catalog.get('pricing_available') else 'no'}",
+            f"- Brand local presence/offices: {'yes' if catalog.get('local_presence') else 'no'}",
+            f"- Observed brand geography: {', '.join(catalog.get('explicit_geography') or []) or 'none'}",
+            f"- Portfolio/projects evidenced: {'yes' if catalog.get('projects_available') else 'no'}",
+            f"- Process/workflow evidenced: {'yes' if catalog.get('process_available') else 'no'}",
+            f"- Catalog source cards: {catalog.get('source_card_count', 0)}",
+        ]
+    )
+    return lines
+
+
+def _ground_truth_card_sources(cards: Any) -> Dict[str, List[str]]:
+    """Map each evidence value to the page URLs that mention it (for traceability)."""
+    sources: Dict[str, List[str]] = {}
+    if not isinstance(cards, list):
+        return sources
+    keys = [
+        "visible_products_or_services",
+        "visible_features_or_capabilities",
+        "visible_project_or_case_study_examples",
+        "visible_pricing_or_packages",
+        "visible_geography",
+        "visible_trust_signals",
+        "visible_support_or_contact_methods",
+        "visible_process_steps",
+        "headings",
+    ]
+    for card in cards:
+        if not isinstance(card, dict) or card.get("excluded_reason"):
+            continue
+        url = str(card.get("url") or "").strip()
         for key in keys:
-            values.extend(card.get(key) or [])
-    return _clean_evidence_items(values, limit=limit, allow_promotional=allow_promotional, category=category)
+            for value in card.get(key) or []:
+                norm = re.sub(r"\s+", " ", str(value or "")).strip()
+                if not norm:
+                    continue
+                folded = norm.casefold()
+                bucket = sources.setdefault(folded, [])
+                if url and url not in bucket:
+                    bucket.append(url)
+    return sources
+
+
+def build_brand_ground_truth_report(state: Dict[str, Any]) -> str:
+    """
+    Build a single, evidence-rich, page-by-page Brand Discovery report.
+
+    This is the consolidation layer: one source of truth assembled from the
+    structured evidence cards (which already hold per-page services, technologies,
+    projects, geography, pricing, trust, contact and raw snippets). The goal is a
+    report that is organized but NOT lossy - it keeps raw supporting snippets so any
+    downstream consumer (strategy, outline, writer, validator) can trace a claim
+    back to the exact page and sentence it came from.
+
+    Step 1 only produces and persists this report; it does not yet replace the
+    inputs other layers consume.
+    """
+    state = state or {}
+    cards = state.get("brand_evidence_cards") or []
+    if not cards and state.get("internal_resources"):
+        try:
+            cards = build_brand_evidence_cards(state)
+        except Exception:
+            cards = []
+    if not isinstance(cards, list):
+        cards = []
+
+    active_cards = [c for c in cards if isinstance(c, dict) and not c.get("excluded_reason")]
+    excluded_cards = [c for c in cards if isinstance(c, dict) and c.get("excluded_reason")]
+
+    brand_name = state.get("display_brand_name") or state.get("brand_name") or "Brand"
+    brand_url = state.get("brand_url") or ""
+    catalog = build_brand_service_catalog(state)
+    inventory = state.get("brand_evidence_inventory") or {}
+    boundaries = state.get("brand_evidence_boundaries") or {}
+    value_sources = _ground_truth_card_sources(cards)
+
+    def short(url: str) -> str:
+        path = urlparse(str(url or "")).path.strip("/")
+        return path or "homepage"
+
+    def sources_for(value: str) -> str:
+        urls = value_sources.get(str(value or "").casefold()) or []
+        labels = [short(u) for u in urls[:3]]
+        return ", ".join(dict.fromkeys(labels)) if labels else "crawled pages"
+
+    # Page narrative summaries (faithful, what-this-page-is-about) keyed by URL.
+    narrative_by_url: Dict[str, str] = {}
+    for brief in state.get("brand_page_narrative_briefs") or []:
+        if not isinstance(brief, dict):
+            continue
+        b_url = str(brief.get("source_url") or brief.get("url") or "").strip().casefold()
+        summary = re.sub(r"\s+", " ", str(brief.get("narrative_brief") or "")).strip()
+        if b_url and summary:
+            narrative_by_url.setdefault(b_url, summary)
+
+    def faithful_evidence(card: Dict[str, Any], limit: int = 18) -> List[str]:
+        """Flat, faithful, lightly-filtered evidence list for a single page.
+
+        The page is the unit of truth: we do NOT force each item into a
+        service/project/technology bucket (that mislabeling is what corrupts the
+        data). We just list the salient items the page actually contains, minus
+        structural template labels, and let downstream readers interpret them in
+        the context of the page.
+        """
+        merged: List[str] = []
+        for key in (
+            "visible_products_or_services",
+            "visible_features_or_capabilities",
+            "visible_project_or_case_study_examples",
+            "visible_process_steps",
+            "visible_pricing_or_packages",
+            "visible_geography",
+            "visible_support_or_contact_methods",
+        ):
+            merged.extend(card.get(key) or [])
+        seen: set = set()
+        result: List[str] = []
+        for raw in merged:
+            item = re.sub(r"\s+", " ", str(raw or "")).strip()
+            if not item or _is_brand_template_label(item):
+                continue
+            folded = item.casefold()
+            if folded in seen:
+                continue
+            seen.add(folded)
+            result.append(item)
+            if len(result) >= limit:
+                break
+        return result
+
+    lines: List[str] = [
+        f"# Brand Ground Truth: {brand_name}",
+        "",
+        "The page is the unit of truth. Each crawled page is kept faithfully (URL, title,",
+        "summary, observed evidence, raw snippets). The consolidated catalogs at the bottom",
+        "are DERIVED from these pages and may be imperfect - when in doubt, trust the page.",
+        "Do not invent facts beyond this report.",
+        "",
+        "## Brand Overview",
+        f"- Brand URL: {brand_url}",
+        f"- Pages analyzed: {len(active_cards)}",
+        f"- Pages excluded as non-evidence: {len(excluded_cards)}",
+        f"- Page types: {', '.join(dict.fromkeys(str(c.get('page_type') or 'other') for c in active_cards)) or 'none'}",
+        "",
+        "## Page-by-Page Evidence (Primary Source of Truth)",
+    ]
+
+    if not active_cards:
+        lines.append("")
+        lines.append("No usable brand pages were collected. Keep brand mentions light and contextual.")
+
+    for idx, card in enumerate(active_cards, 1):
+        card_url = str(card.get("url") or "")
+        lines.extend(
+            [
+                "",
+                f"### Page {idx}: {card.get('title') or 'Brand page'}",
+                f"- URL: {card_url}",
+                f"- Page type (hint only): {card.get('page_type') or 'other'}",
+            ]
+        )
+        summary = narrative_by_url.get(card_url.casefold())
+        if summary:
+            lines.append(f"- Summary: {summary}")
+        evidence = faithful_evidence(card)
+        if evidence:
+            lines.append("- Observed evidence on this page:")
+            lines.extend(f"  - {item}" for item in evidence)
+        snippets = [re.sub(r"\s+", " ", str(s or "")).strip() for s in (card.get("usable_snippets") or [])]
+        snippets = [s for s in dict.fromkeys(snippets) if s]
+        if snippets:
+            lines.append("- Raw supporting snippets:")
+            lines.extend(f'  - "{s}"' for s in snippets[:6])
+
+    # Derived (secondary) consolidated catalogs: convenience index built FROM the
+    # pages above. Rendered only for categories that actually have data. These are
+    # not the source of truth - the page sections are.
+    lines.extend(
+        [
+            "",
+            "## Derived Catalogs (Secondary — Verify Against Pages Above)",
+        ]
+    )
+    pricing_and_offers = list(
+        dict.fromkeys(
+            (catalog.get("offers") or [])
+            + _collect_card_values(
+                cards, ["visible_pricing_or_packages"], limit=16, allow_promotional=True, category="pricing"
+            )
+        )
+    )
+    consolidated_categories = [
+        ("Observed Services / Offerings", catalog.get("services") or []),
+        ("Observed Technologies / Platforms", catalog.get("technologies") or []),
+        (
+            "Observed Projects / Work Examples",
+            _filter_derived_project_catalog(
+                _collect_card_values(cards, ["visible_project_or_case_study_examples"], limit=24, category="project")
+            ),
+        ),
+        ("Observed Pricing / Offers / Promotions", pricing_and_offers),
+        (
+            "Mentioned Geographies (NOT proof of brand offices)",
+            _collect_card_values(cards, ["visible_geography"], limit=16, category="geography"),
+        ),
+        (
+            "Observed Trust Signals",
+            _collect_card_values(cards, ["visible_trust_signals"], limit=12, category="trust"),
+        ),
+        (
+            "Contact / Support Methods",
+            _collect_card_values(cards, ["visible_support_or_contact_methods"], limit=10, allow_promotional=True, category="contact"),
+        ),
+    ]
+    rendered_any_category = False
+    for label, items in consolidated_categories:
+        if not items:
+            continue
+        rendered_any_category = True
+        lines.extend(["", f"### {label}"])
+        # Every derived item keeps its source page(s) for fast warning tracing.
+        for item in items:
+            lines.append(f"- {item} — source: {sources_for(item)}")
+    if not rendered_any_category:
+        lines.append("- No structured brand facts could be derived from the crawled pages.")
+
+    lines.extend(
+        [
+            "",
+            "## Claim Boundaries — What Is NOT Proven",
+            "Do not present these as proven brand facts unless a page snippet above shows it explicitly:",
+            f"- Brand pricing/packages proven: {'yes' if inventory.get('pricing_available') else 'no'}",
+            f"- Brand local presence/office proven: {'yes' if boundaries.get('local_presence') else 'no'}",
+            f"- Observed brand geography: {', '.join(boundaries.get('explicit_geography') or inventory.get('explicit_geography') or []) or 'none'}",
+            f"- Portfolio/projects evidenced: {'yes' if inventory.get('projects_available') else 'no'}",
+            f"- Testimonials evidenced: {'yes' if boundaries.get('testimonials') else 'no'}",
+            f"- Certifications/awards evidenced: {'yes' if (boundaries.get('certifications') or boundaries.get('awards')) else 'no'}",
+        ]
+    )
+
+    if excluded_cards:
+        lines.extend(["", "## Excluded Pages (not used as brand proof)"])
+        for card in excluded_cards[:20]:
+            lines.append(f"- {card.get('url') or ''} — {card.get('excluded_reason') or 'excluded'}")
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def build_brand_ground_truth_data(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Structured, machine-readable twin of build_brand_ground_truth_report.
+
+    Step 3A-0: this is the in-`state` form of the single source of truth, derived
+    from the SAME inputs the markdown report uses (catalog, inventory, boundaries,
+    evidence cards) so the two can never drift. It is produced/exposed only - it
+    does not change what any layer currently consumes (writer/validator/strategy/
+    outline keep their existing inputs until Step 3B).
+
+    Derived catalog entries carry source page labels so a downstream warning can be
+    traced back to the page it came from in one lookup.
+    """
+    state = state or {}
+    cards = state.get("brand_evidence_cards") or []
+    if not cards and state.get("internal_resources"):
+        try:
+            cards = build_brand_evidence_cards(state)
+        except Exception:
+            cards = []
+    if not isinstance(cards, list):
+        cards = []
+
+    active_cards = [c for c in cards if isinstance(c, dict) and not c.get("excluded_reason")]
+    excluded_cards = [c for c in cards if isinstance(c, dict) and c.get("excluded_reason")]
+
+    catalog = build_brand_service_catalog(state)
+    inventory = state.get("brand_evidence_inventory") or {}
+    boundaries = state.get("brand_evidence_boundaries") or {}
+    value_sources = _ground_truth_card_sources(cards)
+
+    def short(url: str) -> str:
+        path = urlparse(str(url or "")).path.strip("/")
+        return path or "homepage"
+
+    def with_sources(values: List[str]) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        for value in values:
+            urls = value_sources.get(str(value or "").casefold()) or []
+            labels = list(dict.fromkeys(short(u) for u in urls[:3])) or ["crawled pages"]
+            out.append({"value": value, "sources": labels})
+        return out
+
+    narrative_by_url: Dict[str, str] = {}
+    for brief in state.get("brand_page_narrative_briefs") or []:
+        if not isinstance(brief, dict):
+            continue
+        b_url = str(brief.get("source_url") or brief.get("url") or "").strip().casefold()
+        summary = re.sub(r"\s+", " ", str(brief.get("narrative_brief") or "")).strip()
+        if b_url and summary:
+            narrative_by_url.setdefault(b_url, summary)
+
+    pricing_and_offers = list(
+        dict.fromkeys(
+            (catalog.get("offers") or [])
+            + _collect_card_values(
+                cards, ["visible_pricing_or_packages"], limit=16, allow_promotional=True, category="pricing"
+            )
+        )
+    )
+    projects = _filter_derived_project_catalog(
+        _collect_card_values(cards, ["visible_project_or_case_study_examples"], limit=24, category="project")
+    )
+    geographies = _collect_card_values(cards, ["visible_geography"], limit=16, category="geography")
+    trust_signals = _collect_card_values(cards, ["visible_trust_signals"], limit=12, category="trust")
+    contact_methods = _collect_card_values(
+        cards, ["visible_support_or_contact_methods"], limit=10, allow_promotional=True, category="contact"
+    )
+
+    pages: List[Dict[str, Any]] = []
+    for card in active_cards:
+        card_url = str(card.get("url") or "")
+        pages.append(
+            {
+                "url": card_url,
+                "title": card.get("title") or "Brand page",
+                "page_type": card.get("page_type") or "other",
+                "summary": narrative_by_url.get(card_url.casefold(), ""),
+            }
+        )
+
+    return {
+        "brand_name": state.get("display_brand_name") or state.get("brand_name") or "Brand",
+        "brand_url": state.get("brand_url") or "",
+        "pages_analyzed": len(active_cards),
+        "pages_excluded": len(excluded_cards),
+        "catalogs": {
+            "services": with_sources(catalog.get("services") or []),
+            "technologies": with_sources(catalog.get("technologies") or []),
+            "projects": with_sources(projects),
+            "pricing_offers": with_sources(pricing_and_offers),
+            "geographies": with_sources(geographies),
+            "trust_signals": with_sources(trust_signals),
+            "contact_methods": with_sources(contact_methods),
+        },
+        "claim_boundaries": {
+            "pricing_available": bool(inventory.get("pricing_available")),
+            "local_presence": bool(boundaries.get("local_presence")),
+            "explicit_geography": list(
+                boundaries.get("explicit_geography") or inventory.get("explicit_geography") or []
+            ),
+            "projects_available": bool(inventory.get("projects_available")),
+            "process_available": bool(inventory.get("process_available")),
+            "testimonials": bool(boundaries.get("testimonials")),
+            "certifications": bool(boundaries.get("certifications")),
+            "awards": bool(boundaries.get("awards")),
+        },
+        "pages": pages,
+    }
+
+
+def record_ground_truth_consumption(state: Dict[str, Any], layer: str) -> Dict[str, Any]:
+    """
+    Step 3A-1 (availability + logging only): record whether the in-state brand
+    ground truth was available to `layer` at the moment it ran.
+
+    This is intentionally side-effect-free with respect to article behavior: it does
+    NOT feed anything into prompts, does NOT change any decision, and does NOT remove
+    legacy inputs. It only stamps `state["ground_truth_consumption"][layer]` so logs
+    and unit tests can prove each layer is wired to the single source of truth before
+    Step 3B (dominance) is attempted.
+    """
+    if state is None:
+        state = {}
+    markdown = state.get("brand_ground_truth")
+    data = state.get("brand_ground_truth_data")
+    used = bool(markdown) and bool(data)
+    catalogs = (data or {}).get("catalogs") or {}
+    record = {
+        "used": used,
+        "markdown_chars": len(markdown) if isinstance(markdown, str) else 0,
+        "catalog_counts": {key: len(value or []) for key, value in catalogs.items()},
+    }
+    consumption = state.setdefault("ground_truth_consumption", {})
+    consumption[layer] = record
+    return record
+
+
+def resolve_brand_claim_boundaries(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Return claim-boundary flags for validator/fulfillment decisions.
+
+    Step 3B: prefer the in-state ground truth structured twin when available so
+    validator decisions align with the same single source of truth as the writer.
+    Falls back to legacy inventory/boundaries when ground truth is absent.
+    """
+    state = state or {}
+    gt_data = state.get("brand_ground_truth_data")
+    if isinstance(gt_data, dict):
+        cb = gt_data.get("claim_boundaries")
+        if isinstance(cb, dict) and cb:
+            return dict(cb)
+
+    inventory = state.get("brand_evidence_inventory") or {}
+    boundaries = state.get("brand_evidence_boundaries") or {}
+    return {
+        "pricing_available": bool(inventory.get("pricing_available") or boundaries.get("brand_pricing")),
+        "local_presence": bool(boundaries.get("local_presence")),
+        "explicit_geography": list(
+            boundaries.get("explicit_geography") or inventory.get("explicit_geography") or []
+        ),
+        "projects_available": bool(inventory.get("projects_available")),
+        "process_available": bool(inventory.get("process_available")),
+        "testimonials": bool(boundaries.get("testimonials")),
+        "certifications": bool(boundaries.get("certifications")),
+        "awards": bool(boundaries.get("awards")),
+    }
 
 
 def build_brand_evidence_inventory(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -696,6 +1616,7 @@ def build_brand_evidence_inventory(state: Dict[str, Any]) -> Dict[str, Any]:
 
         url = card_url(card)
         page_type = page_type_of(card)
+        project_source = _is_project_source(url, page_type)
         raw_text = "\n".join([card_text(card), raw_text_for_url(url)])
 
         services = _clean_evidence_items(
@@ -712,7 +1633,7 @@ def build_brand_evidence_inventory(state: Dict[str, Any]) -> Dict[str, Any]:
             category="project_explicit",
             limit=18,
         )
-        has_project_page = page_type in {"portfolio", "projects", "case_study", "case-study"}
+        has_project_page = project_source
         if (has_project_page and projects) or (has_project_page and _PROJECT_CONTEXT_RE.search(raw_text)):
             inventory["projects_available"] = True
             add_url("project_page_urls", url)
@@ -732,19 +1653,23 @@ def build_brand_evidence_inventory(state: Dict[str, Any]) -> Dict[str, Any]:
             inventory["trust_available"] = True
             add_url("trust_page_urls", url)
 
-        inventory["explicit_geography"].extend(_extract_explicit_brand_geography(raw_text_for_url(url), page_type))
+        if not project_source:
+            inventory["explicit_geography"].extend(
+                _extract_explicit_brand_geography(raw_text_for_url(url), page_type)
+            )
 
     for chunk in chunks:
         if not isinstance(chunk, dict):
             continue
         url = chunk_url(chunk)
         page_type = page_type_of(chunk)
+        project_source = _is_project_source(url, page_type)
         text = chunk_text(chunk)
 
         if page_type in {"services", "product", "home"} and _SERVICE_HINT_RE.search(text):
             inventory["services_available"] = True
             add_url("service_page_urls", url)
-        if page_type in {"portfolio", "projects", "case_study", "case-study"} and _PROJECT_CONTEXT_RE.search(text):
+        if project_source and _PROJECT_CONTEXT_RE.search(text):
             inventory["projects_available"] = True
             add_url("project_page_urls", url)
         if _has_explicit_pricing_evidence(text, page_type):
@@ -756,7 +1681,10 @@ def build_brand_evidence_inventory(state: Dict[str, Any]) -> Dict[str, Any]:
         if _TRUST_CONTEXT_RE.search(text) and page_type != "blog":
             inventory["trust_available"] = True
             add_url("trust_page_urls", url)
-        inventory["explicit_geography"].extend(_extract_explicit_brand_geography(text, page_type))
+        if not project_source:
+            inventory["explicit_geography"].extend(
+                _extract_explicit_brand_geography(text, page_type)
+            )
 
     inventory["explicit_geography"] = _clean_evidence_items(
         list(dict.fromkeys(inventory["explicit_geography"])),
@@ -801,6 +1729,159 @@ def build_brand_evidence_inventory(state: Dict[str, Any]) -> Dict[str, Any]:
         inventory["confidence"] = "medium"
 
     return inventory
+
+
+def build_brand_evidence_boundaries(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Build source-qualified brand fact boundaries for strategy and claim gates.
+
+    SERP data and the article target area are intentionally ignored. Project
+    locations remain project metadata and never establish brand local presence.
+    """
+    inventory = state.get("brand_evidence_inventory")
+    if not isinstance(inventory, dict):
+        inventory = build_brand_evidence_inventory(state)
+
+    categories = {
+        "testimonials": [],
+        "awards": [],
+        "certifications": [],
+        "partnerships": [],
+        "guarantees": [],
+        "delivery_timelines": [],
+    }
+    evidence_sources = {key: [] for key in categories}
+    explicit_geography_values: List[str] = []
+    local_presence_geography: List[str] = []
+    pricing_sources: List[str] = []
+
+    source_items: List[Dict[str, Any]] = []
+    for item in state.get("brand_source_chunks") or []:
+        if isinstance(item, dict):
+            source_items.append(item)
+    if not source_items:
+        for item in state.get("internal_resources") or []:
+            if isinstance(item, dict):
+                source_items.append(item)
+    if not source_items:
+        for item in state.get("brand_page_narrative_briefs") or []:
+            if isinstance(item, dict):
+                source_items.append(item)
+
+    for item in source_items:
+        url = str(item.get("url") or item.get("link") or item.get("source_url") or "").strip()
+        page_type = str(item.get("page_type") or "").strip().casefold()
+        project_source = _is_project_source(url, page_type)
+        text = "\n".join(
+            str(value or "")
+            for value in [
+                item.get("page_title"),
+                item.get("heading"),
+                item.get("text"),
+                item.get("body_text"),
+                item.get("page_text"),
+                item.get("narrative_brief"),
+            ]
+            if value
+        )
+        if not text:
+            continue
+
+        explicit = _extract_explicit_trust_evidence(text, page_type)
+        for category, values in explicit.items():
+            if not values:
+                continue
+            categories[category].extend(values)
+            if url:
+                evidence_sources[category].append(url)
+
+        geography = [] if project_source else _extract_explicit_brand_geography(text, page_type)
+        explicit_geography_values.extend(geography)
+        local_presence_geography.extend(geography)
+        if _has_explicit_pricing_evidence(text, page_type) and url:
+            pricing_sources.append(url)
+
+    # Backward-compatible routing metadata may contribute geographic focus only
+    # when no crawled chunk set exists. It must never establish local presence.
+    if not state.get("brand_source_chunks"):
+        for card in state.get("brand_evidence_cards") or []:
+            if not isinstance(card, dict) or card.get("excluded_reason"):
+                continue
+            url = str(card.get("url") or card.get("link") or "").strip()
+            page_type = str(card.get("page_type") or "").strip().casefold()
+            if _is_project_source(url, page_type):
+                continue
+            explicit_geography_values.extend(
+                _clean_evidence_items(
+                    card.get("visible_geography") or [],
+                    category="geography",
+                    limit=8,
+                )
+            )
+
+    inventory_geography = inventory.get("explicit_geography") or [] if not source_items else []
+    explicit_geography = _clean_evidence_items(
+        list(dict.fromkeys(explicit_geography_values or inventory_geography)),
+        category="geography",
+        limit=8,
+    )
+    local_presence_geography = _clean_evidence_items(
+        list(dict.fromkeys(local_presence_geography)),
+        category="geography",
+        limit=8,
+    )
+    brand_pricing = bool(pricing_sources)
+
+    boundaries = {
+        "services": bool(inventory.get("services_available")),
+        "projects": bool(inventory.get("projects_available")),
+        "process": bool(inventory.get("process_available")),
+        "testimonials": bool(categories["testimonials"]),
+        "awards": bool(categories["awards"]),
+        "certifications": bool(categories["certifications"]),
+        "partnerships": bool(categories["partnerships"]),
+        "brand_pricing": brand_pricing,
+        "local_presence": bool(local_presence_geography),
+        "explicit_geography": explicit_geography,
+        "guarantees": bool(categories["guarantees"]),
+        "delivery_timelines": bool(categories["delivery_timelines"]),
+        "evidence_sources": {
+            **{
+                key: sorted(set(urls))
+                for key, urls in evidence_sources.items()
+            },
+            "brand_pricing": sorted(set(pricing_sources)),
+            "local_presence": sorted(
+                set(evidence_sources.get("local_presence") or [])
+                | set(
+                    str(item.get("url") or item.get("link") or item.get("source_url") or "")
+                    for item in source_items
+                    if isinstance(item, dict)
+                    and not _is_project_source(
+                        str(item.get("url") or item.get("link") or item.get("source_url") or ""),
+                        str(item.get("page_type") or ""),
+                    )
+                    and _extract_explicit_brand_geography(
+                        "\n".join(
+                            str(value or "")
+                            for value in [
+                                item.get("page_title"),
+                                item.get("heading"),
+                                item.get("text"),
+                                item.get("body_text"),
+                                item.get("page_text"),
+                                item.get("narrative_brief"),
+                            ]
+                            if value
+                        ),
+                        str(item.get("page_type") or ""),
+                    )
+                )
+                - {""}
+            ),
+        },
+    }
+    return boundaries
 
 
 def get_empty_brand_offer_contract(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -976,8 +2057,27 @@ class BrandEvidenceService:
                 score += 22
             if outline_requirements.get("needs_technologies") and any(term in haystack for term in ["technology", "technologies", "tech", "stack", "software", "systems"]):
                 score += 18
-            if any(term in haystack for term in ["web design", "webdesign", "website design", "web development"]):
+            # Domain-agnostic offering/catalog signal: prefer pages that expose the
+            # brand's own services/products catalog, regardless of industry. The
+            # offering vocabulary comes from generic structural words (services /
+            # products / solutions / خدمات / منتجات / حلول), not a topic keyword list.
+            if re.search(
+                r"/(?:services?|products?|solutions?|offerings?|"
+                r"%d8%ae%d8%af%d9%85%d8%a7%d8%aa|خدمات|منتجات|حلول)(?:/|$)",
+                path,
+            ):
+                score += 24
+            if any(
+                term in haystack
+                for term in [
+                    "our services", "what we offer", "what we do", "services include",
+                    "our products", "خدماتنا", "ما نقدمه", "تشمل خدماتنا", "منتجاتنا",
+                ]
+            ):
                 score += 16
+            # Topic-relative penalty (domain-neutral): media/blog pages that do not
+            # match the article topic are lower value. This is gated on the topic
+            # itself, so a video/blog-focused brand does not penalize its own pages.
             if any(term in haystack for term in ["video", "production", "blog", "news"]) and not any(
                 token in haystack for token in topic_tokens
             ):
@@ -1123,7 +2223,7 @@ class BrandEvidenceService:
                         "link": url,
                         "text": anchor_text or title,
                         "title": title,
-                        "headings": headings[:15],
+                        "headings": headings[:50],
                         "cta_labels": list(dict.fromkeys(ctas))[:15],
                         "page_text": truncated_text,
                         "page_text_full": full_text,
@@ -1427,6 +2527,9 @@ def build_brand_offer_contract(state: Dict[str, Any]) -> Dict[str, Any]:
 
     brand_context = state.get("brand_context", "") or ""
     target_keyword = state.get("primary_keyword", "") or ""
+    boundary_state = dict(state)
+    boundary_state["brand_evidence_cards"] = cards
+    evidence_boundaries = build_brand_evidence_boundaries(boundary_state)
 
     # Initialize empty clean contract
     contract = get_empty_brand_offer_contract(state)
@@ -1521,29 +2624,18 @@ def build_brand_offer_contract(state: Dict[str, Any]) -> Dict[str, Any]:
     contract["evidence_summary"]["detected_domain"] = detected_domain
 
     # 3. Extract explicit evidence from cards
-    explicit_geography = []
+    explicit_geography = list(evidence_boundaries.get("explicit_geography") or [])
     explicit_pricing = []
-    explicit_guarantees = []
-    explicit_certifications = []
-    explicit_partnerships = []
-    explicit_delivery_timelines = []
+    explicit_guarantees = ["service guarantee"] if evidence_boundaries.get("guarantees") else []
+    explicit_certifications = ["certified credentials"] if evidence_boundaries.get("certifications") else []
+    explicit_partnerships = ["verified partnerships"] if evidence_boundaries.get("partnerships") else []
+    explicit_delivery_timelines = ["defined delivery timelines"] if evidence_boundaries.get("delivery_timelines") else []
     
     for card in cards:
         if card.get("excluded_reason"):
             continue
-        explicit_geography.extend(_clean_evidence_items(card.get("visible_geography", []), category="geography", limit=8))
         explicit_pricing.extend(_clean_evidence_items(card.get("visible_pricing_or_packages", []), category="pricing", limit=8))
 
-        trust_text = " ".join(_clean_evidence_items(card.get("visible_trust_signals", []), category="trust", limit=12)).lower()
-        if any(w in trust_text for w in ["guarantee", "guaranteed", "ضمان", "مضمون"]):
-            explicit_guarantees.append("service guarantee")
-        if any(w in trust_text for w in ["certified", "certification", "license", "licensed", "iso", "معتمد", "مرخص", "شهادة"]):
-            explicit_certifications.append("certified credentials")
-        if any(w in trust_text for w in ["partner", "partnership", "شريك", "شراكة"]):
-            explicit_partnerships.append("verified partnerships")
-        if any(w in trust_text for w in ["delivery in", "delivered in", "تسليم خلال"]):
-            explicit_delivery_timelines.append("defined delivery timelines")
-            
     explicit_geography = list(dict.fromkeys(explicit_geography))
     explicit_pricing = list(dict.fromkeys(explicit_pricing))
     explicit_guarantees = list(dict.fromkeys(explicit_guarantees))
@@ -2617,6 +3709,10 @@ _PROJECT_NAME_NOISE = {
     "seo",
     "branding",
     "digital marketing",
+    "الفعلية",
+    "فعلية",
+    "الفعلي",
+    "فعلي",
 }
 
 
@@ -2724,8 +3820,14 @@ def _project_name_is_supported(candidate: str, observed_names: List[str], allowe
             return True
 
     for source in allowed_sources:
-        source_key = _project_name_key(source)
-        if candidate_key and candidate_key in source_key:
+        source_folded = re.sub(r"\s+", " ", str(source or "")).casefold().strip()
+        if not source_folded or not candidate_key:
+            continue
+        boundary_pattern = re.compile(
+            rf"(?<![\w\u0600-\u06FF]){re.escape(candidate_key)}(?![\w\u0600-\u06FF])",
+            re.IGNORECASE,
+        )
+        if boundary_pattern.search(source_folded):
             return True
 
     return False
@@ -3476,9 +4578,18 @@ def build_brand_evidence_cards(state: dict) -> list[dict]:
         item = clean(text)
         if is_generic_heading(item):
             return False
-        if page_type_value == "product":
+        # Signal-based (domain-agnostic): on a dedicated services/products page the
+        # page itself is the signal - every non-generic heading is an offering,
+        # regardless of vocabulary. This avoids biasing extraction toward one
+        # industry (e.g. web/tech) and works for any vertical.
+        if page_type_value in {"product", "services"}:
             return bool(_sanitize_evidence_item(item, "service"))
-        return bool(_SERVICE_HINT_RE.search(item) and _sanitize_evidence_item(item, "service"))
+        # On mixed pages (home/about/other) we lack page-type certainty, so accept
+        # only short non-generic headings (offering-style labels) instead of
+        # matching an industry keyword list.
+        if len(item.split()) <= 6 and _sanitize_evidence_item(item, "service"):
+            return True
+        return False
 
     def normalize_offer_candidate(text: str) -> str:
         item = clean(text)
@@ -3544,7 +4655,13 @@ def build_brand_evidence_cards(state: dict) -> list[dict]:
         root_url = f"{parsed_url.scheme}://{parsed_url.netloc}" if parsed_url.scheme and parsed_url.netloc else ""
 
         page_type = "other"
-        if any(k in url_lower for k in ["contact", "get-in-touch", "تواصل", "اتصل"]):
+        # URL path is authoritative for portfolio/project pages: a case-study page
+        # that merely mentions "Design Services" in its heading must NOT be
+        # reclassified as a services catalog page (which would extract its template
+        # field labels as fake services). URL-based portfolio detection wins.
+        if re.search(r"/(?:portfolio|projects?|case-study|case-studies)(?:/|$)", parsed_url.path):
+            page_type = "portfolio"
+        elif any(k in url_lower for k in ["contact", "get-in-touch", "تواصل", "اتصل"]):
             page_type = "contact"
         elif any(contains_term(title_lower, k) or any(contains_term(h, k) for h in headings_lower) for k in ["contact us", "تواصل معنا", "اتصل بنا"]):
             page_type = "contact"
@@ -3579,9 +4696,18 @@ def build_brand_evidence_cards(state: dict) -> list[dict]:
         elif any(contains_term(title_lower, k) for k in ["home", "homepage", "الرئيسية", "الصفحة الرئيسية"]):
             page_type = "home"
 
+        is_brand_root = bool(root_url and url_lower.rstrip("/") == root_url.rstrip("/"))
+        service_catalog_page = page_type in ["services", "home", "product"] or is_brand_root
         visible_products_or_services = []
-        if page_type in ["services", "home", "product"]:
+        if service_catalog_page:
             visible_products_or_services.extend([h for h in headings if looks_like_service_heading(h, page_type)])
+            for sec in res.get("semantic_sections") or []:
+                if not isinstance(sec, dict):
+                    continue
+                sec_heading = clean(sec.get("heading") or "")
+                if sec_heading and looks_like_service_heading(sec_heading, page_type):
+                    visible_products_or_services.append(sec_heading)
+            visible_products_or_services.extend(_extract_services_from_text(corpus_text))
         for pattern in explicit_offer_patterns:
             for match in re.finditer(pattern, corpus_text, re.IGNORECASE):
                 for phrase in split_visible_phrase(match.group(1)):
@@ -4314,10 +5440,10 @@ def classify_page_type(url: str, title: str = "", headings: List[str] = None) ->
         return "pricing"
     if path_has("services", "service"):
         return "services"
-    if path_has("products", "product", "shop", "store"):
-        return "product"
     if path_has("portfolio", "projects", "project", "case study", "case-study", "case-studies", "portfoliotype"):
         return "portfolio"
+    if path_has("products", "product", "shop", "store"):
+        return "product"
     if path_has("blog", "news", "articles", "article"):
         return "blog"
     
@@ -4440,7 +5566,7 @@ def chunk_text(text: str, max_tokens: int = 1000, overlap_tokens: int = 150) -> 
 
 def build_brand_source_chunks(state: Dict[str, Any]) -> List[Dict[str, Any]]:
     resources = state.get("internal_resources") or []
-    all_chunks = []
+    page_chunk_groups: List[List[Dict[str, Any]]] = []
     
     max_chunks_per_page = 25
     max_total_brand_chunks = 120
@@ -4515,11 +5641,31 @@ def build_brand_source_chunks(state: Dict[str, Any]) -> List[Dict[str, Any]]:
                         "page_type": page_type,
                     })
                 
-        # Limit to max_chunks_per_page (25)
-        all_chunks.extend(page_chunks[:max_chunks_per_page])
-        
-    # Limit to max_total_brand_chunks (120)
-    return all_chunks[:max_total_brand_chunks]
+        # Keep a per-page cap, then allocate the global budget fairly below.
+        capped_page_chunks = page_chunks[:max_chunks_per_page]
+        if capped_page_chunks:
+            page_chunk_groups.append(capped_page_chunks)
+
+    # A flat first-come slice lets newly crawled project pages consume the
+    # entire budget and silently remove older service/about pages. Allocate in
+    # rounds so every crawled page contributes context before any page gets
+    # additional depth.
+    selected_chunks: List[Dict[str, Any]] = []
+    chunk_index = 0
+    while len(selected_chunks) < max_total_brand_chunks:
+        added_this_round = False
+        for page_chunks in page_chunk_groups:
+            if chunk_index >= len(page_chunks):
+                continue
+            selected_chunks.append(page_chunks[chunk_index])
+            added_this_round = True
+            if len(selected_chunks) >= max_total_brand_chunks:
+                break
+        if not added_this_round:
+            break
+        chunk_index += 1
+
+    return selected_chunks
 
 
 def _compact_brand_page_text(text: str, max_chars: int = 900) -> str:
@@ -4615,28 +5761,26 @@ def _extract_technologies_from_text(text: str) -> List[str]:
 
 
 def _extract_services_from_text(text: str) -> List[str]:
-    folded = str(text or "").casefold()
+    """
+    Signal-based, domain-agnostic service extraction.
+
+    Instead of matching an industry keyword list (which biases extraction toward a
+    single vertical like web/tech), this reads explicit offer grammar - phrases
+    where the brand states what it provides - in English and Arabic. The actual
+    offering names come from the brand's own copy, so it works for any industry.
+    """
     candidates: List[str] = []
-    service_terms = [
-        "web design", "web development", "website development", "web application development",
-        "mobile app development", "mobile application development", "ui/ux design", "ux/ui design",
-        "e-commerce", "ecommerce", "erp systems", "crm integrations", "crm", "pos software",
-        "wms", "dashboard development", "software development", "digital marketing", "seo",
-        "branding", "video production", "photography", "motion graphics", "content strategy",
-    ]
-    for term in service_terms:
-        if term in folded:
-            candidates.append(term.upper() if term in {"crm", "wms"} else term.title())
 
     provider_patterns = [
-        r"\b(?:we\s+)?(?:provide|offer|deliver|build|develop|specialize in|services include|solutions include)\s+([^.\n]+)",
-        r"\b(?:including|such as)\s+([^.\n]+)",
+        r"\b(?:we\s+)?(?:provide|offer|deliver|specialize in|services include|solutions include|our services are)\s+([^.\n]+)",
+        r"(?:نقدم|نوفر|نوّفر|نُقدم|تشمل خدماتنا|خدماتنا تشمل|متخصصون في|متخصصين في)\s+([^.\n؛]+)",
     ]
     for pattern in provider_patterns:
         for match in re.finditer(pattern, text or "", re.IGNORECASE):
-            for part in re.split(r"\s*(?:,|;|\||/| and |&|\+)\s*", match.group(1), flags=re.IGNORECASE):
-                item = re.sub(r"\s+", " ", part).strip(" .:-")
-                if _SERVICE_HINT_RE.search(item):
+            for part in re.split(r"\s*(?:,|;|؛|\||/| and | و |&|\+|·|•)\s*", match.group(1), flags=re.IGNORECASE):
+                item = re.sub(r"\s+", " ", part).strip(" .:-،")
+                # Domain-agnostic length/quality gating only; no keyword whitelist.
+                if 2 <= len(item) <= 80 and len(item.split()) <= 8:
                     candidates.append(item)
 
     return _clean_evidence_items(candidates, category="service", limit=18)
@@ -5134,6 +6278,21 @@ def _build_page_narrative_text(
     narrative_parts = [
         f"This {page_label} page is titled \"{clean_title}\" and should be treated as a page-scoped brand source.",
     ]
+    catalog_page = page_type not in {
+        "portfolio", "projects", "case_study", "case-study", "portfolio_listing", "blog",
+    }
+    if catalog_page and services:
+        narrative_parts.append(
+            "Observed brand services listed on this page include: "
+            + ", ".join(services[:14])
+            + "."
+        )
+    if catalog_page and technologies:
+        narrative_parts.append(
+            "Observed technologies or platforms mentioned on this page include: "
+            + ", ".join(technologies[:12])
+            + "."
+        )
     if project_records and len(project_records) >= 2:
         record_sentences = [
             sentence for sentence in (_portfolio_record_sentence(record) for record in project_records[:16])
@@ -5276,6 +6435,335 @@ def _area_relevance_score_for_text(text: str, state: Dict[str, Any]) -> int:
             score += 100
 
     return score
+
+
+def build_safe_project_records_from_knowledge_pack(
+    state: Dict[str, Any],
+    section: Optional[Dict[str, Any]] = None,
+    limit: int = 8,
+) -> List[Dict[str, Any]]:
+    """
+    Build conservative project records from page-scoped narrative briefs only.
+
+    Loose project-name lists remain routing diagnostics and are deliberately
+    ignored. A record must come from a project/portfolio source and contain at
+    least one substantive observed detail beyond its name.
+    """
+    state = state or {}
+    section = section or {}
+    if limit <= 0:
+        return []
+
+    source_briefs: List[Dict[str, Any]] = []
+    seen_sources = set()
+    for brief in [
+        *(section.get("section_page_narrative_briefs") or []),
+        *(state.get("brand_page_narrative_briefs") or []),
+    ]:
+        if not isinstance(brief, dict):
+            continue
+        source_key = str(brief.get("source_url") or brief.get("url") or id(brief))
+        if source_key in seen_sources:
+            continue
+        seen_sources.add(source_key)
+        source_briefs.append(brief)
+
+    if not source_briefs:
+        return []
+
+    brand_names = [
+        str(value or "").strip()
+        for value in [
+            state.get("display_brand_name"),
+            state.get("brand_name"),
+            state.get("official_brand_name"),
+            *(state.get("brand_aliases") or []),
+        ]
+        if str(value or "").strip()
+    ]
+    brand_names_folded = {name.casefold() for name in brand_names}
+    noisy_names = {
+        "all", "brief", "client", "client name", "design services",
+        "location", "management", "mobile app", "name", "objective",
+        "portfolio", "project", "project name", "projects", "publish date",
+        "scope of work", "screenshots", "sector", "services provided",
+        "technology stack", "technologies used", "web app", "website",
+        "websites", "quality assurance", "target", "b2b", "b2c",
+    }
+
+    def clean_name(value: Any) -> str:
+        name = re.sub(r"\s+", " ", str(value or "")).strip(" .:-|")
+        if not name:
+            return ""
+        parts = re.split(r"\s+[-|]\s+", name)
+        if len(parts) > 1:
+            suffix = parts[-1].strip().casefold()
+            if (
+                suffix in brand_names_folded
+                or suffix in {"company", "official", "portfolio", "projects", "case study"}
+            ):
+                name = " - ".join(parts[:-1]).strip(" .:-|")
+        name = re.sub(
+            r"^(?:client|client name|project|project name|case study|name)\s*:\s*",
+            "",
+            name,
+            flags=re.IGNORECASE,
+        ).strip(" .:-|")
+        folded = name.casefold()
+        if folded in noisy_names:
+            return ""
+        if _BRAND_EVIDENCE_DATE_RE.match(name) or _BRAND_EVIDENCE_JUNK_RE.match(name):
+            return ""
+        if re.search(
+            r"\b(?:screenshots?|technology stack|technologies used|scope of work|"
+            r"services provided|publish date|objective|target audience)\b",
+            name,
+            re.IGNORECASE,
+        ):
+            return ""
+        cleaned = _sanitize_evidence_item(name, "project_explicit")
+        if not cleaned or len(cleaned) > 100:
+            return ""
+        return cleaned
+
+    def family_key(value: Any) -> str:
+        name = clean_name(value)
+        if not name:
+            return ""
+        key = re.sub(
+            r"\s+(?:mob(?:ile)?\s+app|web\s+app|mobile\s+application|"
+            r"web\s+application|website|platform|ios|android|app)$",
+            "",
+            name,
+            flags=re.IGNORECASE,
+        ).strip()
+        key = re.sub(r"[^\w\u0600-\u06FF\s]", " ", key.casefold())
+        return re.sub(r"\s+", " ", key).strip()
+
+    def family_display(value: Any) -> str:
+        name = clean_name(value)
+        if not name:
+            return ""
+        return re.sub(
+            r"\s+(?:mob(?:ile)?\s+app|web\s+app|mobile\s+application|"
+            r"web\s+application|website|platform|ios|android|app)$",
+            "",
+            name,
+            flags=re.IGNORECASE,
+        ).strip(" .:-|")
+
+    def clean_location(value: Any) -> str:
+        location = re.sub(r"\s+", " ", str(value or "")).strip(" .:-|")
+        if not location or location.casefold() in noisy_names:
+            return ""
+        if len(location) > 100 or re.search(
+            r"\b(?:application|audience|branding|content|design|sector|service|"
+            r"technology|tools|stack|ui|ux|b2b|b2c)\b",
+            location,
+            re.IGNORECASE,
+        ):
+            return ""
+        return location
+
+    def clean_details(values: Any, category: str) -> List[str]:
+        result: List[str] = []
+        for value in values or []:
+            cleaned = _sanitize_evidence_item(value, category=category, allow_promotional=True)
+            if not cleaned or cleaned.casefold() in noisy_names:
+                continue
+            if cleaned.casefold() not in {item.casefold() for item in result}:
+                result.append(cleaned)
+        return result[:10]
+
+    def location_from_text(text: str) -> str:
+        for pattern in [
+            r"\bLocation\s*:\s*(.{2,100}?)(?=\s+(?:Sector|Audience|Expertise|"
+            r"Services|Project|Technologies|Brief)\s*:|[.;]|$)",
+            r"\bproject\s+in\s+(.{2,100}?)(?=\s+(?:within|featuring|with|for|sector)\b|[.;]|$)",
+        ]:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                location = clean_location(match.group(1))
+                if location:
+                    return location
+        return ""
+
+    def sector_from_text(text: str) -> str:
+        for pattern in [
+            r"\bSector\s*:\s*(.{2,80}?)(?=\s+(?:Audience|Expertise|Services|"
+            r"Project|Technologies|Brief)\s*:|[.;]|$)",
+            r"\bwithin\s+the\s+(.{2,60}?)\s+sector\b",
+        ]:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                sector = re.sub(r"\s+", " ", match.group(1)).strip(" .:-|")
+                if sector and sector.casefold() not in noisy_names:
+                    return sector
+        return ""
+
+    records_by_family: Dict[str, Dict[str, Any]] = {}
+    source_order = 0
+
+    def add_record(record: Dict[str, Any], source_url: str) -> None:
+        nonlocal source_order
+        raw_name = clean_name(record.get("name"))
+        if not raw_name:
+            return
+        location = clean_location(record.get("location"))
+        if location and raw_name.casefold().startswith("project "):
+            leading_location = re.split(r"\s*,\s*", location)[0].strip()
+            if leading_location and re.search(
+                rf"\s+{re.escape(leading_location)}$",
+                raw_name,
+                re.IGNORECASE,
+            ):
+                without_location = clean_name(
+                    re.sub(
+                        rf"\s+{re.escape(leading_location)}$",
+                        "",
+                        raw_name,
+                        flags=re.IGNORECASE,
+                    )
+                )
+                if without_location:
+                    raw_name = without_location
+        sector = re.sub(r"\s+", " ", str(record.get("sector") or "")).strip(" .:-|")
+        if sector.casefold() in noisy_names:
+            sector = ""
+        category = re.sub(r"\s+", " ", str(record.get("category") or "")).strip(" .:-|")
+        if category.casefold() in noisy_names:
+            category = ""
+        services = clean_details(record.get("services"), "service")
+        technologies = clean_details(record.get("technologies"), "capability")
+        if not any([location, sector, category, services, technologies]):
+            return
+
+        key = family_key(raw_name) or raw_name.casefold()
+        existing = records_by_family.get(key)
+        if existing is None:
+            existing = {
+                "name": raw_name,
+                "location": location,
+                "sector": sector,
+                "category": category,
+                "services": services,
+                "technologies": technologies,
+                "variants": [],
+                "source_urls": [source_url] if source_url else [],
+                "_raw_names": [raw_name],
+                "_source_order": source_order,
+            }
+            records_by_family[key] = existing
+            source_order += 1
+            return
+
+        if raw_name.casefold() not in {item.casefold() for item in existing["_raw_names"]}:
+            existing["_raw_names"].append(raw_name)
+        if source_url and source_url not in existing["source_urls"]:
+            existing["source_urls"].append(source_url)
+        for field, value in [("location", location), ("sector", sector), ("category", category)]:
+            if value and not existing.get(field):
+                existing[field] = value
+        existing["services"] = list(dict.fromkeys([*existing["services"], *services]))[:10]
+        existing["technologies"] = list(dict.fromkeys([*existing["technologies"], *technologies]))[:10]
+
+    for brief in source_briefs:
+        source_url = str(brief.get("source_url") or brief.get("url") or "").strip()
+        page_type = str(brief.get("page_type") or "").casefold()
+        if not _is_project_source(source_url, page_type):
+            continue
+        narrative = str(brief.get("narrative_brief") or "").strip()
+
+        safe_records = brief.get("safe_project_records")
+        if not isinstance(safe_records, list):
+            safe_records = []
+        if not safe_records:
+            signals = brief.get("routing_signals") if isinstance(brief.get("routing_signals"), dict) else {}
+            parsed_records = signals.get("project_records")
+            if isinstance(parsed_records, list):
+                safe_records = [
+                    record
+                    for record in parsed_records
+                    if isinstance(record, dict)
+                    and str(record.get("name") or "").strip()
+                    and any(
+                        [
+                            str(record.get("location") or "").strip(),
+                            str(record.get("sector") or "").strip(),
+                            str(record.get("category") or "").strip(),
+                            record.get("services"),
+                            record.get("technologies"),
+                        ]
+                    )
+                ]
+        if not safe_records and narrative:
+            safe_records = _extract_portfolio_listing_records(narrative, brand_names)
+
+        for record in safe_records:
+            if isinstance(record, dict):
+                add_record(record, source_url)
+
+        if safe_records:
+            continue
+
+        source_path = urlparse(source_url).path.casefold().rstrip("/")
+        listing_page = source_path.endswith(("/projects", "/portfolio", "/case-studies", "/cases"))
+        title = clean_name(brief.get("page_title"))
+        if not title or listing_page:
+            continue
+        location = location_from_text(narrative)
+        sector = sector_from_text(narrative)
+        signals = brief.get("routing_signals") if isinstance(brief.get("routing_signals"), dict) else {}
+        add_record(
+            {
+                "name": title,
+                "location": location,
+                "sector": sector,
+                "services": signals.get("services") or _extract_services_from_text(narrative),
+                "technologies": signals.get("technologies") or _extract_technologies_from_text(narrative),
+            },
+            source_url,
+        )
+
+    records: List[Dict[str, Any]] = []
+    for record in records_by_family.values():
+        raw_names = list(record.pop("_raw_names", []))
+        source_order_value = record.pop("_source_order", 0)
+        if len(raw_names) > 1:
+            display = family_display(raw_names[0])
+            if display:
+                record["name"] = display
+            record["variants"] = raw_names[:8]
+        else:
+            record["variants"] = []
+        relevance_score = _area_relevance_score_for_text(
+            " ".join(
+                [
+                    str(record.get("name") or ""),
+                    str(record.get("location") or ""),
+                    str(record.get("sector") or ""),
+                    " ".join(record.get("services") or []),
+                    " ".join(record.get("technologies") or []),
+                ]
+            ),
+            state,
+        )
+        record["target_area_relevance"] = "explicit" if relevance_score > 0 else "general"
+        record["_relevance_score"] = relevance_score
+        record["_source_order"] = source_order_value
+        records.append(record)
+
+    records.sort(
+        key=lambda record: (
+            -int(record.get("_relevance_score") or 0),
+            int(record.get("_source_order") or 0),
+            str(record.get("name") or "").casefold(),
+        )
+    )
+    for record in records:
+        record.pop("_relevance_score", None)
+        record.pop("_source_order", None)
+    return records[:limit]
 
 
 def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -5446,6 +6934,18 @@ def build_brand_page_narrative_briefs(state: Dict[str, Any]) -> List[Dict[str, A
                         "" if trust else "No explicit testimonials, awards, certifications, guarantees, or response-time claims observed on this page.",
                     ]
                     if item
+                ],
+                "safe_project_records": [
+                    {
+                        "name": record.get("name", ""),
+                        "location": record.get("location", ""),
+                        "sector": record.get("sector", ""),
+                        "category": record.get("category", ""),
+                        "services": list(record.get("services") or [])[:8],
+                        "technologies": list(record.get("technologies") or [])[:8],
+                    }
+                    for record in (project_records or [])[:24]
+                    if isinstance(record, dict) and str(record.get("name") or "").strip()
                 ],
                 # Routing/debug only. Do not render these as writer-truth lists.
                 "routing_signals": {
@@ -6595,6 +8095,105 @@ def build_section_brand_understanding(section: dict, state: dict, retrieved_chun
         brief["recommended_angle"]["best_evidence_categories"] = ["market_standards"]
         _add_section_understanding_support_warnings(brief, section, state, raw_blocks)
         return brief
+
+    section_type = str(section.get("section_type") or "").casefold()
+    taxonomy_axis = str(section.get("taxonomy_axis") or "").casefold()
+    commercial_role = str(section.get("commercial_section_role") or "").casefold()
+    project_section = (
+        _section_heading_mentions_projects(_section_understanding_heading_text(section))
+        or section_type in {"proof", "case_study", "case-study", "portfolio", "projects"}
+        or taxonomy_axis == "brand_projects"
+        or commercial_role == "proof"
+    )
+    if project_section and page_narratives:
+        section_with_narratives = dict(section)
+        section_with_narratives["section_page_narrative_briefs"] = list(page_narratives)
+        safe_records = build_safe_project_records_from_knowledge_pack(
+            state,
+            section=section_with_narratives,
+            limit=8,
+        )
+        canonical_pack_present = bool(
+            isinstance(state.get("brand_page_narrative_briefs"), list)
+            and state.get("brand_page_narrative_briefs")
+        )
+        if not safe_records and not canonical_pack_present:
+            # Older callers may provide raw portfolio blocks without compiling
+            # the canonical knowledge pack. Preserve that fallback for audit
+            # compatibility, but never prefer it over an existing pack.
+            safe_records = []
+        else:
+            brief["selected_page_narratives"] = [
+                {
+                    "source_url": page.get("source_url") or page.get("url") or "",
+                    "page_type": page.get("page_type") or "other",
+                    "page_title": page.get("page_title") or "",
+                }
+                for page in page_narratives
+                if isinstance(page, dict)
+            ][:8]
+            brief["relevant_projects"] = [
+                str(record.get("name") or "").strip()
+                for record in safe_records
+                if str(record.get("name") or "").strip()
+            ]
+            brief["relevant_project_records"] = [dict(record) for record in safe_records]
+            brief["relevant_project_families"] = [
+                {
+                    "name": record.get("name", ""),
+                    "variants": list(record.get("variants") or []),
+                    "target_area_relevance": record.get("target_area_relevance", "general"),
+                }
+                for record in safe_records
+            ]
+            brief["relevant_services"] = list(
+                dict.fromkeys(
+                    str(service).strip()
+                    for record in safe_records
+                    for service in (record.get("services") or [])
+                    if str(service).strip()
+                )
+            )[:12]
+            brief["relevant_technologies"] = list(
+                dict.fromkeys(
+                    str(technology).strip()
+                    for record in safe_records
+                    for technology in (record.get("technologies") or [])
+                    if str(technology).strip()
+                )
+            )[:12]
+            brief["useful_source_snippets"] = [
+                _compact_brand_page_text(str(page.get("narrative_brief") or ""), max_chars=500)
+                for page in page_narratives
+                if isinstance(page, dict) and str(page.get("narrative_brief") or "").strip()
+            ][:4]
+            if safe_records:
+                brief["recommended_angle"] = {
+                    "focus_types": ["specific observed projects", "observed implementation details"],
+                    "avoid_types": ["generic praise", "unobserved project names", "brand geography inference"],
+                    "best_evidence_categories": ["portfolio"],
+                    "preferred_section_style": "evidence_grounded",
+                }
+            else:
+                brief["recommended_angle"] = {
+                    "focus_types": ["evidence-neutral proof framing"],
+                    "avoid_types": ["invented projects", "routing labels presented as projects"],
+                    "best_evidence_categories": [],
+                    "preferred_section_style": "general_guidance",
+                }
+            _add_section_understanding_support_warnings(
+                brief,
+                section,
+                state,
+                raw_blocks,
+                support_flags={
+                    "projects": bool(safe_records),
+                    "pricing": False,
+                    "process": False,
+                    "geography": False,
+                },
+            )
+            return brief
 
     brand_name = (state.get("brand_name") or "").strip()
     brand_aliases = state.get("brand_aliases") or []
@@ -7838,6 +9437,57 @@ def _legacy_raw_blocks_from_cards(state: Dict[str, Any]) -> List[Dict[str, Any]]
     return blocks
 
 
+def _content_claims_brand_local_presence(
+    content_text: str,
+    area: str,
+    brand_terms: Optional[List[str]] = None,
+) -> bool:
+    """
+    True only when copy attributes local/market presence to the brand itself.
+
+    Mentioning the article target area (e.g. buyer context in Saudi Arabia) is
+  not a brand geography claim and must not trigger fulfillment failures.
+    """
+    area_folded = _fulfillment_text(area)
+    if not area_folded or area_folded not in content_text:
+        return False
+
+    # Buyer market context (e.g. "السوق السعودي") is not a brand office/presence claim.
+    if re.search(
+        r"(?:\u0627\u0644\u0633\u0648\u0642|\u0633\u0648\u0642|market|buyer|customers?)\b",
+        content_text,
+        re.IGNORECASE,
+    ) and not re.search(
+        r"(?:\u0645\u0643\u062a\u0628|\u0641\u0631\u0639|\u062d\u0636\u0648\u0631|\u0645\u0642\u0631|"
+        r"based|located|office|branch|headquarter|presence)",
+        content_text,
+        re.IGNORECASE,
+    ):
+        return False
+
+    brand_terms = [term.casefold() for term in (brand_terms or []) if str(term).strip()]
+    for term in brand_terms:
+        if len(term) < 3:
+            continue
+        if re.search(
+            rf"{re.escape(term)}[^.\n]{{0,70}}{re.escape(area_folded)}|"
+            rf"{re.escape(area_folded)}[^.\n]{{0,70}}{re.escape(term)}",
+            content_text,
+            re.IGNORECASE,
+        ):
+            return True
+
+    return bool(
+        re.search(
+            rf"(?:لدينا|مكتب|فرع|حضور|نخدم|خدماتنا|نعمل|تعمل|خبرة)[^.\n]{{0,55}}{re.escape(area_folded)}|"
+            rf"(?:we\s+)?(?:serve|serving|based|located|office|branch|presence|operate|operates|experience)[^.\n]{{0,55}}{re.escape(area_folded)}|"
+            rf"(?:serves?|serving|available)\s+(?:clients|customers|businesses)?\s+(?:across|in|within)\s+{re.escape(area_folded)}",
+            content_text,
+            re.IGNORECASE,
+        )
+    )
+
+
 def evaluate_brand_section_fulfillment(
     section: Dict[str, Any],
     content: str,
@@ -7963,9 +9613,16 @@ def evaluate_brand_section_fulfillment(
             "matched_evidence": matched,
         }
 
-    raw_pricing_supported = bool(support_flags.get("pricing"))
+    claim_bounds = resolve_brand_claim_boundaries(state)
+
+    raw_pricing_supported = (
+        bool(support_flags.get("pricing"))
+        or bool(claim_bounds.get("pricing_available"))
+    )
     raw_geo_supported = bool(geography) or bool(support_flags.get("geography"))
-    raw_trust_supported = bool(_TRUST_CONTEXT_RE.search(raw_text))
+    raw_trust_supported = bool(_TRUST_CONTEXT_RE.search(raw_text)) or any(
+        bool(claim_bounds.get(key)) for key in ("testimonials", "certifications", "awards")
+    )
     raw_timeline_supported = bool(re.search(
         r"\b(?:within|in\s+\d+\s+(?:hours?|days?|weeks?)|response\s+time|same[-\s]?day|24/7)\b|"
         r"(?:\u062e\u0644\u0627\u0644\s+\d+\s+(?:\u0633\u0627\u0639\u0629|\u0623\u064a\u0627\u0645|\u0627\u064a\u0627\u0645|\u0623\u0633\u0627\u0628\u064a\u0639)|"
@@ -7996,7 +9653,11 @@ def evaluate_brand_section_fulfillment(
     )
 
     area = str(state.get("area") or "").strip()
-    area_claimed = bool(area and _fulfillment_text(area) in content_text)
+    brand_local_presence_claimed = _content_claims_brand_local_presence(
+        content_text,
+        area,
+        brand_terms,
+    )
     promised_geo_claim = promised_geo and (
         heading_mentions_brand
         or axis in {"brand_projects", "brand_pricing"}
@@ -8005,7 +9666,15 @@ def evaluate_brand_section_fulfillment(
     unsupported_claims: List[str] = []
     if (promised_pricing or pricing_claim_re.search(combined_written_text)) and not raw_pricing_supported:
         unsupported_claims.append("brand pricing/packages promised without explicit raw brand pricing evidence")
-    if (promised_geo_claim or area_claimed or geography_claim_re.search(content_text)) and not raw_geo_supported:
+    geography_needs_evidence = (
+        brand_local_presence_claimed
+        or promised_geo_claim
+        or (
+            geography_claim_re.search(content_text)
+            and bool(claim_bounds.get("local_presence"))
+        )
+    )
+    if geography_needs_evidence and not raw_geo_supported:
         unsupported_claims.append("brand geography/market presence promised without explicit raw brand geography evidence")
     if trust_claim_re.search(content_text) and not raw_trust_supported:
         unsupported_claims.append("brand trust/certification/leadership claim lacks explicit raw evidence")

@@ -473,4 +473,15 @@ Prefer: "نصائح أخيرة قبل زيارة [entity]", "ما الذي يج�
 - No markdown fences.
 - No explanation before or after the JSON.
 - Do not include body content.
-- Do not include fields other than: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `subheadings`.
+- Include exactly these fields at the top level:
+  - `informational_subtype`: One of `"educational"`, `"comparative"`, or `"experience_based"`. This must match the flow you applied in Section 2. It is **internal pipeline metadata only** and will not be shown to the user.
+  - `outline`: The array of section objects.
+- Each section object may only contain: `section_id`, `heading_text`, `heading_level`, `section_type`, `section_intent`, `subheadings`.
+
+**Output shape:**
+```json
+{
+  "informational_subtype": "educational",
+  "outline": [...]
+}
+```

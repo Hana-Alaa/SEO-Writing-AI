@@ -56,23 +56,22 @@ Your task is to generate only the heading structure layer of an article outline 
     7. **How it works / Process** (`section_type: process`): Numbered steps. Reduces friction and objection.
     8. **FAQ section** (`section_type: faq`): Focus on objections and pricing/process questions specifically.
     9. **Strong conclusion + CTA** (`section_type: conclusion`): This is the main conversion point. Direct and confident.
-  - Assign the implied commercial role through `coverage_role` when possible:
-    `offer_clarity`, `features_or_included`, `differentiators`, `proof`, `comparison`, `process_or_how`, `faq`, `conclusion`.
+  - Assign the implied commercial role through `coverage_role` when possible.
   - Keep these roles distinct. Do not make a features section repeat the service catalog, and do not make proof/projects duplicate earlier sections.
   - The buyer-journey role map is domain-neutral. Do not hardcode structures from another industry, competitor article, country, or brand.
   - Use optional roles only when they are relevant to the topic and evidence: security/performance, technology/capability, business impact, local fit, cost/value/ROI, or other domain-specific decision angles.
   - **FLEXIBILITY & EXPANSION RULE (CRITICAL)**: While the 9 pillars above MUST be covered, you are STRONGLY ENCOURAGED to ADD 1-2 extra domain-specific H2 sections (e.g., Legal Rules, Location/Area Guides, Licensing Requirements, Specific Use Cases) between these pillars if observed in the SERP brief or if highly necessary for the topic.
-  - For these custom added sections, you may use `section_type: "core"` or `section_type: "location"`.
-  - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field:
-    - `offer_clarity`: For the core service/product definition and options.
-    - `features_or_included`: For technical specs, amenities, or what's included.
-    - `differentiators`: For evidence-backed operational advantages or differentiation only; avoid generic promotional brand headings.
+  - For these custom added sections, use `section_type: "core"` and `coverage_role: "custom"` (see below).
+  - **MANDATORY ROLES**: You MUST assign one of the following explicit roles to each section in the `coverage_role` field. Prefer the **canonical** label; legacy labels (in parentheses) are still accepted by the system for backward compatibility:
+    - `offer` *(legacy: `offer_clarity`)*: For the core service/product definition and options.
+    - `features` *(legacy: `features_or_included`)*: For technical specs, amenities, or what's included.
+    - `differentiation` *(legacy: `differentiators`)*: For evidence-backed operational advantages or differentiation only; avoid generic promotional brand headings.
     - `proof`: For observed pricing, availability, case studies, projects, or trust signals only.
     - `comparison`: For comparing options, scenarios, or alternatives.
-    - `process_or_how`: For the buying journey, steps, or how to get started.
+    - `process` *(legacy: `process_or_how`)*: For the buying journey, steps, or how to get started.
     - `faq`: For the FAQ section.
     - `conclusion`: For the final wrap-up and call to action.
-    - `custom_domain_topic`: For any custom extra H2 section you add (like Legal, Location, etc.).
+    - `custom` *(legacy: `custom_domain_topic`)*: For any extra domain-specific H2 section you add (Legal, Technology, Use Cases, Market Context, etc.). **IMPORTANT:** A `custom` section is validation-neutral — it does NOT count as fulfilling any of the 8 buyer-journey roles above. All 8 core roles must still appear in the outline through their own dedicated sections.
   - **PRIMARY KEYWORD FIELDS**:
     - `contains_exact_primary_keyword`: Set to `true` ONLY if the heading text itself includes the exact Primary Keyword. This MUST be `true` for exactly ONE visible H2 heading and `false` for everything else (including Intro and H3s).
     - `requires_primary_keyword`: Set to `true` if the section body copy should naturally include the Primary Keyword. This is an instruction for the writer, not a heading rule.

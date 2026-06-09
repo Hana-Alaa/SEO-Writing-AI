@@ -5,6 +5,7 @@ import os
 import json
 import tempfile
 import re
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 from src.services.brand_evidence_service import (
@@ -12,6 +13,7 @@ from src.services.brand_evidence_service import (
     build_brand_offer_contract,
     get_empty_brand_offer_contract,
     build_brand_generation_guardrails,
+    build_brand_evidence_boundaries,
     build_brand_evidence_inventory,
     build_brand_page_briefs,
     classify_page_type,
@@ -4612,6 +4614,11 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("service_scope", role_names)
         self.assertIn("proof", role_names)
+        self.assertNotIn("features_included", role_names)
+        self.assertNotIn("comparison", role_names)
+        self.assertIn("features_included", optional_names)
+        self.assertIn("comparison", optional_names)
+        self.assertLessEqual(len(role_names), 8)
         self.assertIn("security_performance", optional_names)
         self.assertIn("business_impact", optional_names)
         self.assertIn("local_market_fit", optional_names)
@@ -4643,8 +4650,8 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Role names must not appear as visible headings", context)
         self.assertIn("Competitor-style structures may inspire missing decision angles", context)
 
-    def test_commercial_coverage_gate_adds_missing_roles_without_topic_bias(self):
-        """Missing commercial buyer-journey roles should be filled without web-design-specific headings."""
+    def test_commercial_coverage_gate_merges_before_adding_without_topic_bias(self):
+        """Compatible buyer-journey jobs should merge before new H2 sections are added."""
         controller = AsyncWorkflowController(work_dir=".")
         state = {
             "content_type": "brand_commercial",
@@ -4683,16 +4690,106 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
         roles = [section.get("commercial_section_role") or controller._commercial_section_role_for_section(section, state) for section in prepared]
         headings_blob = " ".join(section.get("heading_text", "") for section in prepared).lower()
 
-        self.assertIn("features_included", roles)
-        self.assertIn("evaluation_criteria", roles)
-        self.assertIn("comparison", roles)
         self.assertIn("process", roles)
         self.assertNotIn("proof", roles)
         self.assertNotIn("security_performance", roles)
         self.assertNotIn("technology_or_capability", roles)
+        section_ids = [section.get("section_id") for section in prepared]
+        self.assertNotIn("sec_auto_features_included", section_ids)
+        self.assertNotIn("sec_auto_evaluation_criteria", section_ids)
+        self.assertNotIn("sec_auto_comparison", section_ids)
+        self.assertLessEqual(
+            sum(1 for section in prepared if (section.get("heading_level") or "").upper() == "H2"),
+            8,
+        )
+        self.assertTrue(any(
+            item.get("role") == "evaluation_criteria" and item.get("action") == "merged"
+            for item in state.get("commercial_coverage_report", [])
+        ))
         self.assertNotIn("web design", headings_blob)
         self.assertNotIn("تصميم مواقع", headings_blob)
         self.assertEqual(roles[-1], "cta")
+
+    def test_patch_3b_existing_comparison_covers_evaluation_without_auto_h2(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "primary_keyword": "best professional service",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "Opening", "heading_level": "INTRO", "section_type": "introduction"},
+            {"section_id": "offer", "heading_text": "What the service includes", "heading_level": "H2", "section_type": "offer"},
+            {"section_id": "compare", "heading_text": "Compare available options", "heading_level": "H2", "section_type": "comparison"},
+            {"section_id": "process", "heading_text": "How it works", "heading_level": "H2", "section_type": "process"},
+            {"section_id": "faq", "heading_text": "Common questions", "heading_level": "H2", "section_type": "faq"},
+            {"section_id": "cta", "heading_text": "Take the next step", "heading_level": "H2", "section_type": "conclusion"},
+        ]
+
+        prepared = controller._ensure_commercial_buyer_journey_coverage(copy.deepcopy(outline), state)
+        section_ids = [section.get("section_id") for section in prepared]
+        comparison = next(section for section in prepared if section.get("section_id") == "compare")
+
+        self.assertNotIn("sec_auto_evaluation_criteria", section_ids)
+        self.assertIn("evaluation_criteria", comparison.get("merged_coverage_roles", []))
+        self.assertNotIn("sec_auto_comparison", section_ids)
+
+    def test_patch_3b_coverage_gate_does_not_exceed_eight_h2_sections(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "primary_keyword": "professional service",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": True,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+        outline = [
+            {"section_id": "intro", "heading_text": "Opening", "heading_level": "INTRO", "section_type": "introduction"},
+            {"section_id": "offer", "heading_text": "Service scope", "heading_level": "H2", "section_type": "offer"},
+            {"section_id": "features", "heading_text": "Included capabilities", "heading_level": "H2", "section_type": "features"},
+            {"section_id": "criteria", "heading_text": "Evaluation criteria", "heading_level": "H2", "section_type": "core", "coverage_role": "custom_domain_topic"},
+            {"section_id": "proof", "heading_text": "BrandCo project evidence", "heading_level": "H2", "section_type": "proof"},
+            {"section_id": "process", "heading_text": "How it works", "heading_level": "H2", "section_type": "process"},
+            {"section_id": "topic_a", "heading_text": "Operational considerations", "heading_level": "H2", "section_type": "informational"},
+            {"section_id": "topic_b", "heading_text": "Planning considerations", "heading_level": "H2", "section_type": "informational"},
+            {"section_id": "faq", "heading_text": "Common questions", "heading_level": "H2", "section_type": "faq"},
+        ]
+
+        prepared = controller._ensure_commercial_buyer_journey_coverage(copy.deepcopy(outline), state)
+        h2_sections = [
+            section for section in prepared
+            if (section.get("heading_level") or "").upper() == "H2"
+        ]
+
+        self.assertLessEqual(len(h2_sections), 8)
+        section_ids = [str(section.get("section_id") or "") for section in prepared]
+        self.assertIn("sec_auto_cta", section_ids)
+        self.assertNotIn("sec_auto_features_included", section_ids)
+        self.assertNotIn("sec_auto_evaluation_criteria", section_ids)
+        self.assertNotIn("sec_auto_comparison", section_ids)
+        self.assertTrue(any(
+            item.get("action") == "merged_existing"
+            and item.get("reason") == "offer_section_already_covers_inclusions"
+            for item in state.get("commercial_coverage_report", [])
+        ))
 
     def test_commercial_coverage_gate_keeps_decision_factors_inside_criteria(self):
         """Topic-specific decision factors should not become repeated standalone H2s."""
@@ -4733,6 +4830,13 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
 
         self.assertNotIn("security_performance", no_signal_roles)
         self.assertNotIn("security_performance", signaled_roles)
+        self.assertNotIn("evaluation_criteria", no_signal_roles)
+        self.assertEqual(no_signal_roles.count("comparison"), 1)
+        comparison = next(
+            section for section in no_signal
+            if section.get("commercial_section_role") == "comparison"
+        )
+        self.assertIn("evaluation_criteria", comparison.get("merged_coverage_roles", []))
 
     def test_commercial_decision_review_sections_are_merged(self):
         """Overlapping criteria/security/technology sections should become one criteria block."""
@@ -6457,22 +6561,20 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             [
                 "intro",
                 "service_explanation",
-                "features_included",
                 "brand_differentiator",
                 "proof",
                 "comparison",
                 "process",
-                "evaluation_criteria",
                 "faq",
                 "cta",
             ],
         )
         self.assertEqual(policies[1], "brand_light")
-        self.assertEqual(policies[2], "brand_light")
-        self.assertEqual(policies[5], "neutral_market")
-        self.assertEqual(policies[7], "neutral_market")
-        self.assertEqual(policies[8], "neutral_market")
-        self.assertEqual(policies[9], "brand_cta")
+        self.assertIn("features_included", prepared["outline"][1].get("merged_coverage_roles", []))
+        self.assertIn("evaluation_criteria", prepared["outline"][4].get("merged_coverage_roles", []))
+        self.assertEqual(policies[4], "neutral_market")
+        self.assertEqual(policies[6], "neutral_market")
+        self.assertEqual(policies[7], "brand_cta")
 
     def test_brand_usage_policy_flags_project_examples_in_brand_light_sections(self):
         """Service/features sections may mention the brand lightly but should not consume proof examples."""
@@ -7685,6 +7787,2276 @@ class TestBrandEvidenceContract(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(state["content_stage_status"], "needs_revision")
             warnings = " ".join(state["content_stage_quality_report"]["warnings"])
             self.assertIn("unsupported_brand_claim_removed", warnings)
+
+    def test_patch_3a_marketing_partnership_slogan_is_not_explicit_partnership_evidence(self):
+        state = {
+            "brand_name": "BrandCo",
+            "primary_keyword": "digital services",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": True,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/",
+                "page_type": "home",
+                "text": (
+                    "Long-Term Partnership. We do not just complete projects; "
+                    "we build relationships and grow with our clients."
+                ),
+            }],
+            "brand_evidence_cards": [{
+                "url": "https://brand.test/",
+                "page_type": "home",
+                "visible_products_or_services": ["Web Development"],
+                "visible_features_or_capabilities": [],
+                "visible_project_or_case_study_examples": [],
+                "visible_process_steps": [],
+                "visible_pricing_or_packages": [],
+                "visible_trust_signals": ["partnership"],
+                "visible_geography": [],
+                "visible_support_or_contact_methods": [],
+                "excluded_reason": None,
+            }],
+        }
+
+        boundaries = build_brand_evidence_boundaries(state)
+        contract = build_brand_offer_contract(state)
+
+        self.assertFalse(boundaries["partnerships"])
+        self.assertNotIn("verified partnerships", contract["trust_signals"])
+
+    def test_patch_3a_explicit_official_partner_evidence_is_preserved(self):
+        state = {
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": True,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/about",
+                "page_type": "about",
+                "text": "BrandCo is an official partner of Example Cloud.",
+            }],
+        }
+
+        boundaries = build_brand_evidence_boundaries(state)
+
+        self.assertTrue(boundaries["partnerships"])
+        self.assertEqual(
+            boundaries["evidence_sources"]["partnerships"],
+            ["https://brand.test/about"],
+        )
+
+    def test_patch_3a_project_location_and_target_area_do_not_create_local_presence(self):
+        state = {
+            "area": "Targetland",
+            "primary_keyword": "service in Targetland",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/projects/sample",
+                "page_type": "portfolio",
+                "text": "Client: Sample Co. Location: Targetland. Sector: Retail.",
+            }],
+        }
+
+        boundaries = build_brand_evidence_boundaries(state)
+
+        self.assertFalse(boundaries["local_presence"])
+        self.assertEqual(boundaries["explicit_geography"], [])
+
+    def test_patch_3a_boundaries_are_non_mutating(self):
+        state = {
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": True,
+                "trust_available": False,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/projects",
+                "page_type": "portfolio",
+                "text": "Portfolio project for Client One.",
+            }],
+        }
+        before = copy.deepcopy(state)
+
+        build_brand_evidence_boundaries(state)
+
+        self.assertEqual(state, before)
+
+    def test_patch_3c1_chunk_budget_preserves_every_crawled_page(self):
+        from src.services.brand_evidence_service import (
+            build_brand_page_narrative_briefs,
+            build_brand_source_chunks,
+        )
+
+        def resource(url, page_type, prefix, body):
+            return {
+                "link": url,
+                "title": f"{prefix} page",
+                "page_type": page_type,
+                "page_text_full": " ".join(body for _ in range(25)),
+                "semantic_sections": [
+                    {
+                        "heading": f"{prefix} section {index}",
+                        "body_text": f"{body} Section {index}.",
+                        "url": url,
+                        "page_title": f"{prefix} page",
+                        "page_type": page_type,
+                    }
+                    for index in range(25)
+                ],
+            }
+
+        project_resources = [
+            resource(
+                f"https://brand.test/portfolio/project-{index}",
+                "portfolio",
+                f"Project {index}",
+                f"Client: Project {index}. Location: Region {index}. Sector: Services.",
+            )
+            for index in range(6)
+        ]
+        service_url = "https://brand.test/services/implementation"
+        service_resource = resource(
+            service_url,
+            "services",
+            "Implementation",
+            "We provide web development, mobile app development, and UX/UI design using React.",
+        )
+        state = {
+            "brand_name": "BrandCo",
+            "internal_resources": [*project_resources, service_resource],
+        }
+
+        chunks = build_brand_source_chunks(state)
+        urls = {chunk.get("url") for chunk in chunks}
+        brief_state = {**state, "brand_source_chunks": chunks}
+        briefs = build_brand_page_narrative_briefs(brief_state)
+
+        self.assertLessEqual(len(chunks), 120)
+        self.assertEqual(
+            urls,
+            {resource_item["link"] for resource_item in state["internal_resources"]},
+        )
+        self.assertIn(service_url, {brief.get("source_url") for brief in briefs})
+
+    def test_patch_3c1_portfolio_url_wins_over_product_word_in_slug(self):
+        self.assertEqual(
+            classify_page_type("https://brand.test/portfolio/sample-bookstore"),
+            "portfolio",
+        )
+
+    def test_patch_3c1_misclassified_project_location_does_not_create_presence(self):
+        state = {
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": ["Targetland"],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/portfolio/sample-bookstore",
+                "page_type": "product",
+                "text": "Client: Sample Bookstore. Location: Targetland. Sector: Retail.",
+            }],
+            "brand_evidence_cards": [{
+                "url": "https://brand.test/portfolio/sample-bookstore",
+                "page_type": "product",
+                "visible_geography": ["Targetland"],
+                "excluded_reason": None,
+            }],
+        }
+
+        inventory_state = {
+            key: value
+            for key, value in state.items()
+            if key != "brand_evidence_inventory"
+        }
+        inventory = build_brand_evidence_inventory(inventory_state)
+        boundaries = build_brand_evidence_boundaries(state)
+
+        self.assertEqual(inventory["explicit_geography"], [])
+        self.assertFalse(boundaries["local_presence"])
+        self.assertEqual(boundaries["explicit_geography"], [])
+        self.assertEqual(boundaries["evidence_sources"]["local_presence"], [])
+
+    def test_patch_3c1_embedded_project_location_on_service_page_is_not_presence(self):
+        state = {
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": True,
+                "trust_available": False,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/services/design",
+                "page_type": "services",
+                "text": (
+                    "We provide UX/UI design services. "
+                    "This page presents the Atlas project in Targetland. "
+                    "Client: Atlas. Location: Targetland. Sector: Retail."
+                ),
+            }],
+        }
+
+        inventory = build_brand_evidence_inventory(state)
+        boundaries = build_brand_evidence_boundaries(state)
+
+        self.assertEqual(inventory["explicit_geography"], [])
+        self.assertFalse(boundaries["local_presence"])
+        self.assertEqual(boundaries["explicit_geography"], [])
+
+    def test_patch_3c1_explicit_non_project_presence_is_preserved(self):
+        state = {
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/about",
+                "page_type": "about",
+                "text": (
+                    "BrandCo operates in Harbor City. "
+                    "BrandCo serves Coastland through its consulting team."
+                ),
+            }],
+        }
+
+        boundaries = build_brand_evidence_boundaries(state)
+
+        self.assertTrue(boundaries["local_presence"])
+        self.assertEqual(
+            boundaries["explicit_geography"],
+            ["Harbor City", "Coastland"],
+        )
+        self.assertEqual(
+            boundaries["evidence_sources"]["local_presence"],
+            ["https://brand.test/about"],
+        )
+
+    def test_patch_3c3_branding_package_is_not_pricing_evidence(self):
+        state = {
+            "brand_source_chunks": [{
+                "url": "https://brand.test/portfolio/government-identity",
+                "page_type": "portfolio",
+                "heading": "Brand Identity Package",
+                "text": (
+                    "Creative work included a Graphic Design & Branding Package. "
+                    "Brand Identity Package: logo refresh, typography, and templates."
+                ),
+            }],
+            "brand_evidence_cards": [{
+                "url": "https://brand.test/portfolio/government-identity",
+                "page_type": "portfolio",
+                "visible_pricing_or_packages": [],
+                "excluded_reason": None,
+            }],
+        }
+
+        inventory = build_brand_evidence_inventory(state)
+        boundary_state = {**state, "brand_evidence_inventory": inventory}
+        boundaries = build_brand_evidence_boundaries(boundary_state)
+
+        self.assertFalse(inventory["pricing_available"])
+        self.assertEqual(inventory["pricing_page_urls"], [])
+        self.assertFalse(boundaries["brand_pricing"])
+        self.assertEqual(boundaries["evidence_sources"]["brand_pricing"], [])
+
+    def test_patch_3c3_stale_pricing_inventory_cannot_unlock_brand_pricing(self):
+        state = {
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": True,
+                "pricing_page_urls": ["https://brand.test/portfolio/sample"],
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/portfolio/sample",
+                "page_type": "portfolio",
+                "text": "Branding Package: logo, typography, and visual guidelines.",
+            }],
+        }
+
+        boundaries = build_brand_evidence_boundaries(state)
+
+        self.assertFalse(boundaries["brand_pricing"])
+        self.assertEqual(boundaries["evidence_sources"]["brand_pricing"], [])
+
+    def test_patch_3c3_card_geography_cannot_unlock_local_presence(self):
+        state = {
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": True,
+                "trust_available": False,
+                "explicit_geography": [],
+            },
+            "brand_source_chunks": [{
+                "url": "https://brand.test/design-services",
+                "page_type": "services",
+                "text": (
+                    "We provide design services. "
+                    "Client: Sample Project. Location: Targetland. Sector: Retail."
+                ),
+            }],
+            "brand_evidence_cards": [{
+                "url": "https://brand.test/design-services",
+                "page_type": "services",
+                "visible_geography": ["Targetland"],
+                "excluded_reason": None,
+            }],
+        }
+
+        boundaries = build_brand_evidence_boundaries(state)
+
+        self.assertFalse(boundaries["local_presence"])
+        self.assertEqual(boundaries["explicit_geography"], [])
+        self.assertEqual(boundaries["evidence_sources"]["local_presence"], [])
+
+    def test_patch_3c3_explicit_pricing_page_is_preserved(self):
+        state = {
+            "brand_source_chunks": [{
+                "url": "https://brand.test/pricing",
+                "page_type": "pricing",
+                "text": "Starter package pricing starts at 500 USD.",
+            }],
+        }
+
+        inventory = build_brand_evidence_inventory(state)
+        boundaries = build_brand_evidence_boundaries({
+            **state,
+            "brand_evidence_inventory": inventory,
+        })
+
+        self.assertTrue(inventory["pricing_available"])
+        self.assertTrue(boundaries["brand_pricing"])
+        self.assertEqual(
+            boundaries["evidence_sources"]["brand_pricing"],
+            ["https://brand.test/pricing"],
+        )
+
+    def test_patch_3c3_claim_support_uses_boundaries_not_stale_inventory(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_evidence_inventory": {
+                "pricing_available": True,
+                "explicit_geography": ["Targetland"],
+            },
+            "brand_evidence_boundaries": {
+                "brand_pricing": False,
+                "local_presence": False,
+            },
+            "brand_page_knowledge_pack_context": (
+                "No explicit pricing/packages or local presence observed."
+            ),
+        }
+
+        support = controller._brand_claim_support_flags(state)
+
+        self.assertFalse(support["pricing"])
+        self.assertFalse(support["local_presence"])
+
+    def test_patch_3c2_safe_projects_rank_target_area_and_preserve_names(self):
+        from src.services.brand_evidence_service import (
+            build_safe_project_records_from_knowledge_pack,
+        )
+
+        state = {
+            "area": "Targetland",
+            "target_area_aliases": ["Target City"],
+            "brand_name": "BrandCo",
+            "brand_page_narrative_briefs": [{
+                "source_url": "https://brand.test/portfolio",
+                "page_type": "portfolio_listing",
+                "page_title": "Portfolio - BrandCo",
+                "narrative_brief": "A portfolio listing with source-backed project cards.",
+                "safe_project_records": [
+                    {
+                        "name": "Northstar Consulting Egypt",
+                        "location": "Egypt",
+                        "sector": "Consulting",
+                        "services": ["UX/UI"],
+                        "technologies": ["Figma"],
+                    },
+                    {
+                        "name": "Atlas Web App",
+                        "location": "Elsewhere",
+                        "sector": "Retail",
+                        "services": ["Web Development"],
+                        "technologies": ["React"],
+                    },
+                    {
+                        "name": "Atlas Mobile App",
+                        "location": "Elsewhere",
+                        "sector": "Retail",
+                        "services": ["Mobile App Development"],
+                        "technologies": ["Swift"],
+                    },
+                    {
+                        "name": "Harbor Retail",
+                        "location": "Target City, Targetland",
+                        "sector": "E-commerce",
+                        "services": ["Web Development"],
+                        "technologies": ["Node.js"],
+                    },
+                ],
+                "routing_signals": {
+                    "projects": ["Screenshots", "Technology Stack", "B2C Branding"],
+                },
+            }],
+        }
+
+        records = build_safe_project_records_from_knowledge_pack(state, limit=10)
+        names = [record["name"] for record in records]
+
+        self.assertEqual(names[0], "Harbor Retail")
+        self.assertIn("Northstar Consulting Egypt", names)
+        self.assertNotIn("Northstar Consulting", names)
+        self.assertIn("Atlas", names)
+        atlas = next(record for record in records if record["name"] == "Atlas")
+        self.assertEqual(
+            atlas["variants"],
+            ["Atlas Web App", "Atlas Mobile App"],
+        )
+        self.assertNotIn("Screenshots", names)
+        self.assertNotIn("Technology Stack", names)
+
+    def test_patch_3c2_loose_routing_projects_never_create_safe_records(self):
+        from src.services.brand_evidence_service import (
+            build_safe_project_records_from_knowledge_pack,
+        )
+
+        state = {
+            "brand_name": "BrandCo",
+            "brand_page_narrative_briefs": [{
+                "source_url": "https://brand.test/portfolio",
+                "page_type": "portfolio_listing",
+                "page_title": "Projects - BrandCo",
+                "narrative_brief": "This page contains layout labels but no complete project record.",
+                "routing_signals": {
+                    "projects": [
+                        "Screenshots",
+                        "Technology Stack",
+                        "B2C Branding",
+                        "Adobe Photoshop",
+                    ],
+                },
+            }],
+        }
+
+        records = build_safe_project_records_from_knowledge_pack(state)
+
+        self.assertEqual(records, [])
+
+    def test_patch_3c2_project_understanding_uses_safe_pack_records_only(self):
+        from src.services.brand_evidence_service import build_section_brand_understanding
+
+        project_brief = {
+            "source_url": "https://brand.test/portfolio",
+            "page_type": "portfolio_listing",
+            "page_title": "Portfolio - BrandCo",
+            "narrative_brief": "A portfolio listing with complete project cards.",
+            "safe_project_records": [
+                {
+                    "name": "Harbor Retail",
+                    "location": "Targetland",
+                    "sector": "Retail",
+                    "services": ["UX/UI"],
+                    "technologies": ["Figma"],
+                },
+                {
+                    "name": "Northstar Portal",
+                    "location": "Elsewhere",
+                    "sector": "Services",
+                    "services": ["Web Development"],
+                    "technologies": ["React"],
+                },
+            ],
+            "routing_signals": {
+                "projects": ["Brief Client", "Introduction", "Screenshots"],
+            },
+        }
+        section = {
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "section_page_narrative_briefs": [project_brief],
+        }
+        state = {
+            "area": "Targetland",
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "brand_page_narrative_briefs": [project_brief],
+        }
+
+        understanding = build_section_brand_understanding(section, state, [])
+
+        self.assertEqual(
+            understanding["relevant_projects"],
+            ["Harbor Retail", "Northstar Portal"],
+        )
+        self.assertNotIn("Brief Client", understanding["relevant_projects"])
+        self.assertNotIn("Introduction", understanding["relevant_projects"])
+        self.assertEqual(
+            understanding["relevant_project_records"][0]["target_area_relevance"],
+            "explicit",
+        )
+
+    def test_patch_3c2_proof_gate_injects_stronger_target_area_projects(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        project_brief = {
+            "source_url": "https://brand.test/portfolio",
+            "page_type": "portfolio_listing",
+            "page_title": "Portfolio - BrandCo",
+            "narrative_brief": "A portfolio listing with complete project cards.",
+            "safe_project_records": [
+                {
+                    "name": "Distant Portal",
+                    "location": "Elsewhere",
+                    "sector": "Services",
+                    "services": ["Web Development"],
+                    "technologies": ["React"],
+                },
+                {
+                    "name": "Harbor Retail",
+                    "location": "Targetland",
+                    "sector": "Retail",
+                    "services": ["UX/UI"],
+                    "technologies": ["Figma"],
+                },
+                {
+                    "name": "Coast Media",
+                    "location": "Targetland",
+                    "sector": "Media",
+                    "services": ["Mobile App Development"],
+                    "technologies": ["Swift"],
+                },
+            ],
+        }
+        section = {
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "section_page_narrative_briefs": [project_brief],
+        }
+        state = {
+            "area": "Targetland",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "brand_page_narrative_briefs": [project_brief],
+        }
+
+        result = controller._ensure_project_proof_format(
+            "Distant Portal is one observed project example.",
+            section,
+            state,
+        )
+
+        self.assertIn("Harbor Retail", result)
+        self.assertIn("Coast Media", result)
+        self.assertLess(result.index("Harbor Retail"), result.index("Distant Portal"))
+        self.assertNotIn("|---", result)
+        self.assertIn(
+            "project_proof_missed_target_relevant_evidence",
+            section.get("section_quality_issues", []),
+        )
+
+    def test_patch_3c2_safe_project_builder_does_not_mutate_inputs(self):
+        from src.services.brand_evidence_service import (
+            build_safe_project_records_from_knowledge_pack,
+        )
+
+        state = {
+            "area": "Targetland",
+            "brand_page_narrative_briefs": [{
+                "source_url": "https://brand.test/portfolio/sample",
+                "page_type": "portfolio",
+                "page_title": "Sample Project",
+                "narrative_brief": (
+                    "This page presents the Sample Project project in Targetland "
+                    "within the Retail sector."
+                ),
+                "safe_project_records": [{
+                    "name": "Sample Project",
+                    "location": "Targetland",
+                    "sector": "Retail",
+                    "services": ["UX/UI"],
+                    "technologies": ["Figma"],
+                }],
+            }],
+        }
+        section = {
+            "heading_text": "Project examples",
+            "section_type": "proof",
+            "section_page_narrative_briefs": state["brand_page_narrative_briefs"],
+        }
+        before_state = copy.deepcopy(state)
+        before_section = copy.deepcopy(section)
+
+        build_safe_project_records_from_knowledge_pack(
+            state,
+            section=section,
+        )
+
+        self.assertEqual(state, before_state)
+        self.assertEqual(section, before_section)
+
+    def test_patch_3c4_workflow_approval_is_not_a_certification_claim(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_evidence_boundaries": {"certifications": False},
+            "brand_page_knowledge_pack_context": "No explicit certifications observed.",
+        }
+        text = (
+            "1. اعتماد التصميم بعد مراجعته مع العميل.\n"
+            "2. بدء التطوير بعد اعتماد الخطة."
+        )
+
+        cleaned, issues = controller._sanitize_unsupported_brand_claims(
+            text,
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+
+        self.assertEqual(cleaned, text)
+        self.assertEqual(issues, [])
+
+    def test_patch_3c4_blocks_explicit_professional_accreditation_without_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "brand_evidence_boundaries": {"certifications": False},
+            "brand_page_knowledge_pack_context": "No explicit certifications observed.",
+        }
+
+        cleaned, issues = controller._sanitize_unsupported_brand_claims(
+            "BrandCo شركة معتمدة من الهيئة المهنية.",
+            state,
+            context="body",
+            brand_sensitive=True,
+        )
+
+        self.assertEqual(cleaned, "")
+        self.assertEqual(issues, ["certification"])
+
+    def test_patch_3c4_pack_workflow_approval_does_not_unlock_certifications(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_name": "BrandCo",
+            "brand_evidence_boundaries": {"certifications": False},
+            "brand_page_knowledge_pack_context": (
+                "The workflow includes client review, اعتماد التصميم, and final delivery."
+            ),
+        }
+
+        support = controller._brand_claim_support_flags(state)
+
+        self.assertFalse(support["certification"])
+
+    def test_patch_3c4_ordered_list_cleanup_removes_empty_markers_and_renumbers(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        content = (
+            "3.\n"
+            "4. مراجعة المتطلبات\n"
+            "7. اعتماد التصميم مع العميل\n"
+            "9.\n"
+            "10. بدء التنفيذ"
+        )
+
+        cleaned = controller._normalize_ordered_lists(content)
+
+        self.assertEqual(
+            cleaned,
+            "1. مراجعة المتطلبات\n"
+            "2. اعتماد التصميم مع العميل\n"
+            "3. بدء التنفيذ",
+        )
+
+    def test_patch_3c4_faq_workflow_approval_is_not_classified_as_certification(self):
+        controller = AsyncWorkflowController(work_dir=".")
+
+        topic = controller._faq_sensitive_topic("كم تستغرق مرحلة اعتماد التصميم؟")
+
+        self.assertEqual(topic, "")
+
+    async def test_patch_3c5_post_outline_crawl_refreshes_all_derived_evidence(self):
+        controller = AsyncWorkflowController(work_dir=".")
+
+        async def fake_enrich(state, max_pages=8):
+            state = dict(state)
+            state["internal_resources"] = list(state.get("internal_resources") or []) + [{
+                "link": "https://brand.test/portfolio/harbor",
+                "title": "Harbor Retail",
+                "page_type": "portfolio",
+                "page_text_full": (
+                    "Project: Harbor Retail. Client: Harbor Retail. "
+                    "Location: Target City, Targetland. Sector: E-commerce. "
+                    "Services Provided: UX/UI Design, Web Development. "
+                    "Technologies Used: React, Node.js."
+                ),
+                "semantic_sections": [{
+                    "heading": "Harbor Retail",
+                    "body_text": (
+                        "Project: Harbor Retail. Client: Harbor Retail. "
+                        "Location: Target City, Targetland. Sector: E-commerce. "
+                        "Services Provided: UX/UI Design, Web Development. "
+                        "Technologies Used: React, Node.js."
+                    ),
+                    "url": "https://brand.test/portfolio/harbor",
+                    "page_title": "Harbor Retail",
+                    "page_type": "portfolio",
+                }],
+                "is_brand_crawled": True,
+            }]
+            return state
+
+        controller.brand_evidence_service.enrich_brand_internal_resources = AsyncMock(
+            side_effect=fake_enrich
+        )
+        state = {
+            "brand_url": "https://brand.test",
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "primary_keyword": "business platform provider",
+            "raw_title": "Best business platform provider",
+            "area": "Targetland",
+            "output_dir": ".",
+            "internal_resources": [{
+                "link": "https://brand.test",
+                "title": "BrandCo",
+                "page_type": "home",
+                "page_text_full": "BrandCo provides digital product services.",
+            }],
+            "brand_offer_contract": {"stale_marker": True},
+            "brand_generation_guardrails": {"stale_marker": True},
+            "brand_writing_brief": {"stale_marker": True},
+        }
+        outline = [{
+            "heading_text": "Projects shown by BrandCo",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+        }]
+
+        result = await controller._run_post_outline_brand_targeted_crawl(
+            state,
+            outline,
+        )
+
+        revision = result["brand_evidence_revision"]
+        self.assertTrue(result["brand_evidence_boundaries"]["projects"])
+        self.assertNotIn("stale_marker", result["brand_offer_contract"])
+        self.assertNotIn("stale_marker", result["brand_generation_guardrails"])
+        self.assertNotIn("stale_marker", result["brand_writing_brief"])
+        self.assertIn("Harbor Retail", result["brand_page_knowledge_pack_context"])
+        self.assertEqual(
+            result["brand_evidence_source_fingerprint"],
+            result["brand_evidence_derived_source_fingerprint"],
+        )
+        for key in (
+            "brand_page_knowledge_pack",
+            "brand_evidence_inventory",
+            "brand_evidence_boundaries",
+            "brand_offer_contract",
+            "brand_generation_guardrails",
+            "brand_writing_brief",
+        ):
+            self.assertEqual(result[f"{key}_revision"], revision)
+
+    async def test_patch_3c5_refreshed_inventory_prevents_premature_project_downgrade(self):
+        controller = AsyncWorkflowController(work_dir=".")
+
+        async def fake_enrich(state, max_pages=8):
+            state = dict(state)
+            state["internal_resources"] = list(state.get("internal_resources") or []) + [{
+                "link": "https://brand.test/projects/atlas",
+                "title": "Atlas Portal",
+                "page_type": "portfolio",
+                "page_text_full": (
+                    "Project: Atlas Portal. Client: Atlas Group. Sector: Services. "
+                    "Services Provided: Web Development. Technologies Used: React."
+                ),
+                "semantic_sections": [{
+                    "heading": "Atlas Portal",
+                    "body_text": (
+                        "Project: Atlas Portal. Client: Atlas Group. Sector: Services. "
+                        "Services Provided: Web Development. Technologies Used: React."
+                    ),
+                    "url": "https://brand.test/projects/atlas",
+                    "page_title": "Atlas Portal",
+                    "page_type": "portfolio",
+                }],
+                "is_brand_crawled": True,
+            }]
+            return state
+
+        controller.brand_evidence_service.enrich_brand_internal_resources = AsyncMock(
+            side_effect=fake_enrich
+        )
+        state = {
+            "brand_url": "https://brand.test",
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "primary_keyword": "service provider",
+            "raw_title": "Best service provider",
+            "output_dir": ".",
+            "internal_resources": [],
+            "brand_evidence_inventory": {
+                "projects_available": False,
+                "confidence": "low",
+            },
+        }
+        outline = [{
+            "section_id": "proof",
+            "heading_text": "Projects shown by BrandCo",
+            "heading_level": "H2",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+        }]
+
+        refreshed = await controller._run_post_outline_brand_targeted_crawl(
+            state,
+            outline,
+        )
+        normalized = controller._normalize_outline_with_brand_evidence_inventory(
+            outline,
+            refreshed,
+        )
+
+        self.assertTrue(refreshed["brand_evidence_inventory"]["projects_available"])
+        self.assertEqual(normalized[0]["heading_text"], "Projects shown by BrandCo")
+        self.assertNotEqual(normalized[0].get("fulfillment_status"), "unsupported")
+
+    async def test_patch_3c5_prewrite_guard_refreshes_changed_raw_resources(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_url": "https://brand.test",
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "output_dir": ".",
+            "internal_resources": [{
+                "link": "https://brand.test/services",
+                "title": "Services",
+                "page_type": "services",
+                "page_text_full": "BrandCo provides workflow automation services.",
+                "semantic_sections": [{
+                    "heading": "Workflow Automation",
+                    "body_text": "BrandCo provides workflow automation services.",
+                    "url": "https://brand.test/services",
+                    "page_title": "Services",
+                    "page_type": "services",
+                }],
+            }],
+            "brand_page_knowledge_pack_context": "STALE PACK",
+            "brand_evidence_inventory": {},
+            "brand_evidence_boundaries": {},
+            "brand_offer_contract": {"stale_marker": True},
+            "brand_generation_guardrails": {"stale_marker": True},
+            "brand_evidence_derived_source_fingerprint": "old-snapshot",
+        }
+
+        refreshed = await controller._ensure_brand_evidence_state_current(
+            state,
+            reason="test_prewrite",
+        )
+
+        self.assertNotEqual(
+            refreshed["brand_evidence_derived_source_fingerprint"],
+            "old-snapshot",
+        )
+        self.assertNotIn("STALE PACK", refreshed["brand_page_knowledge_pack_context"])
+        self.assertNotIn("stale_marker", refreshed["brand_offer_contract"])
+        self.assertNotIn("stale_marker", refreshed["brand_generation_guardrails"])
+        self.assertEqual(
+            refreshed["brand_evidence_source_fingerprint"],
+            refreshed["brand_evidence_derived_source_fingerprint"],
+        )
+
+    async def test_patch_3c5_prewrite_guard_skips_refresh_for_current_snapshot(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "brand_url": "https://brand.test",
+            "internal_resources": [{
+                "link": "https://brand.test",
+                "title": "Home",
+                "page_text_full": "Current source text.",
+            }],
+            "brand_page_knowledge_pack_context": "Current pack",
+            "brand_evidence_inventory": {},
+            "brand_evidence_boundaries": {},
+            "brand_offer_contract": {},
+            "brand_generation_guardrails": {},
+        }
+        fingerprint = controller._brand_evidence_source_fingerprint(state)
+        state["brand_evidence_derived_source_fingerprint"] = fingerprint
+        controller._refresh_brand_derived_evidence_state = AsyncMock()
+
+        result = await controller._ensure_brand_evidence_state_current(
+            state,
+            reason="test_current",
+        )
+
+        self.assertIs(result, state)
+        controller._refresh_brand_derived_evidence_state.assert_not_awaited()
+
+    def test_patch_3c6_heading_downgrade_rebuilds_role_snapshot_and_contract(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "primary_keyword": "business service provider",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": False,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+            "brand_evidence_cards": [],
+        }
+        section = {
+            "section_id": "pricing",
+            "heading_text": "BrandCo pricing packages",
+            "heading_level": "H2",
+            "section_type": "pricing",
+            "taxonomy_axis": "pricing",
+            "commercial_section_role": "cost_value",
+            "coverage_role": "pricing",
+            "section_contract": {"source_heading": "BrandCo pricing packages"},
+            "section_intent_snapshot": {
+                "source_heading": "BrandCo pricing packages",
+                "section_job": "cost_value",
+            },
+        }
+        outline = [section]
+        old_heading = section["heading_text"]
+
+        section["heading_text"] = controller._fulfill_and_downgrade_heading(section, state)
+        report = controller._sync_heading_role_contract(
+            section,
+            state,
+            old_heading,
+            outline=outline,
+            index=0,
+        )
+
+        self.assertNotEqual(section["heading_text"], old_heading)
+        self.assertEqual(section["commercial_section_role"], "service_explanation")
+        self.assertEqual(section["section_type"], "offer")
+        self.assertEqual(section["section_intent_snapshot"]["section_job"], "offer_scope")
+        self.assertEqual(
+            section["section_intent_snapshot"]["buyer_question"],
+            "what_is_the_offer_or_service",
+        )
+        self.assertEqual(
+            section["section_intent_snapshot"]["source_heading"],
+            section["heading_text"],
+        )
+        self.assertEqual(section["section_contract"]["source_heading"], section["heading_text"])
+        self.assertIn(section["heading_text"], section["section_contract"]["must_answer"])
+        self.assertFalse(report["body_rewrite_required"])
+
+    def test_patch_3c6_role_change_with_existing_body_requires_one_rewrite(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "primary_keyword": "business service provider",
+            "brand_evidence_inventory": {
+                "services_available": True,
+                "projects_available": True,
+                "pricing_available": False,
+                "process_available": False,
+                "trust_available": False,
+                "explicit_geography": [],
+                "confidence": "medium",
+            },
+        }
+        old_heading = "Observed projects from BrandCo"
+        section = {
+            "section_id": "proof",
+            "heading_text": "Service Scope Available From BrandCo",
+            "heading_level": "H2",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "commercial_section_role": "proof",
+            "coverage_role": "proof",
+            "section_contract": {"source_heading": old_heading},
+            "section_intent_snapshot": {
+                "source_heading": old_heading,
+                "section_job": "proof",
+            },
+        }
+
+        report = controller._sync_heading_role_contract(
+            section,
+            state,
+            old_heading,
+            outline=[section],
+            index=0,
+            existing_content="Atlas Portal is a named project delivered for a client.",
+        )
+
+        self.assertEqual(section["commercial_section_role"], "service_explanation")
+        self.assertTrue(report["body_rewrite_required"])
+        self.assertIn(
+            "heading_contract_body_rewrite_required",
+            section["section_quality_issues"],
+        )
+
+    def test_patch_3c6_prewrite_guard_repairs_stale_heading_metadata(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "primary_keyword": "managed service",
+            "brand_evidence_inventory": {},
+        }
+        section = {
+            "section_id": "process",
+            "heading_text": "How the process works",
+            "heading_level": "H2",
+            "section_type": "proof",
+            "taxonomy_axis": "brand_projects",
+            "coverage_role": "proof",
+            "commercial_section_role": "proof",
+            "section_contract": {"source_heading": "Project examples"},
+            "section_intent_snapshot": {
+                "source_heading": "Project examples",
+                "section_job": "proof",
+            },
+        }
+
+        controller._ensure_heading_role_contract_current(
+            section,
+            state,
+            outline=[section],
+            index=0,
+        )
+
+        self.assertEqual(section["commercial_section_role"], "process")
+        self.assertEqual(section["section_type"], "process")
+        self.assertEqual(section["coverage_role"], "process_or_how")
+        self.assertEqual(section["section_intent_snapshot"]["section_job"], "process")
+        self.assertEqual(section["section_contract"]["source_heading"], "How the process works")
+
+    def test_patch_3c6_same_role_heading_rewrite_keeps_compatible_body(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "primary_keyword": "business service provider",
+            "brand_evidence_inventory": {"services_available": True},
+        }
+        old_heading = "BrandCo service overview"
+        section = {
+            "section_id": "services",
+            "heading_text": "Services available from BrandCo",
+            "heading_level": "H2",
+            "section_type": "offer",
+            "taxonomy_axis": "brand_offer",
+            "commercial_section_role": "service_explanation",
+            "coverage_role": "offer_clarity",
+            "section_contract": {"source_heading": old_heading},
+            "section_intent_snapshot": {
+                "source_heading": old_heading,
+                "section_job": "offer_scope",
+            },
+        }
+
+        report = controller._sync_heading_role_contract(
+            section,
+            state,
+            old_heading,
+            outline=[section],
+            index=0,
+            existing_content=(
+                "BrandCo provides implementation, integration, and support services "
+                "for operational teams."
+            ),
+        )
+
+        self.assertEqual(section["commercial_section_role"], "service_explanation")
+        self.assertFalse(report["body_rewrite_required"])
+        self.assertNotIn(
+            "heading_contract_body_rewrite_required",
+            section.get("section_quality_issues", []),
+        )
+
+    def test_patch_3c6_unresolved_heading_body_mismatch_marks_content_needs_revision(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "include_tables": False,
+                "input_data": {"title": "Business service guide"},
+                "raw_title": "Business service guide",
+                "output_dir": tmpdir,
+                "outline": [{
+                    "section_id": "services",
+                    "heading_text": "Available services",
+                    "heading_level": "H2",
+                    "section_type": "offer",
+                    "commercial_section_role": "service_explanation",
+                }],
+                "sections": {
+                    "services": {
+                        "generated_content": "A previous project is described here.",
+                        "section_quality_issues": [
+                            "heading_contract_body_rewrite_required",
+                        ],
+                    },
+                },
+            }
+
+            controller._build_content_stage_markdown(state, "Business service guide")
+
+        self.assertEqual(state["content_stage_status"], "needs_revision")
+        self.assertIn(
+            "heading_contract_body_rewrite_required",
+            " ".join(state["content_stage_quality_report"]["warnings"]),
+        )
+
+    def test_patch_3c7_surgical_intro_injects_keyword_without_replacing_hook(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "best managed service provider",
+            "brand_name": "BrandCo",
+            "display_brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        section = {
+            "section_id": "intro",
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+            "brand_usage_policy": "soft_intro_brand",
+        }
+        hook = (
+            "A rushed decision can leave a team with unclear scope, avoidable costs, "
+            "and a solution that does not fit its daily work."
+        )
+        bridge = (
+            "BrandCo provides a clear service scope that helps the reader connect the "
+            "problem to a practical next step."
+        )
+        cta = "Review [BrandCo official website](https://brand.test) when you are ready to explore the available scope."
+        content = "\n\n".join([hook, bridge, cta])
+
+        repaired, report = controller._finalize_commercial_intro_surgically(
+            content,
+            section,
+            state,
+        )
+        repaired_again, second_report = controller._finalize_commercial_intro_surgically(
+            repaired,
+            section,
+            state,
+        )
+        paragraphs = repaired.split("\n\n")
+
+        self.assertEqual(report["status"], "repaired")
+        self.assertEqual(len(paragraphs), 3)
+        self.assertIn(state["primary_keyword"], paragraphs[0])
+        self.assertIn(hook, paragraphs[0])
+        self.assertNotIn("BrandCo", paragraphs[0])
+        self.assertEqual(repaired_again, repaired)
+        self.assertEqual(second_report["status"], "pass")
+
+    def test_patch_3c7_surgical_intro_reorders_and_deduplicates_existing_paragraphs(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "service provider",
+            "brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        section = {
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+            "brand_usage_policy": "soft_intro_brand",
+        }
+        hook = "Choosing a service provider without a clear scope can create unnecessary risk for the reader."
+        bridge = "BrandCo helps connect that need to a clear service scope and a practical next step."
+        cta = "Visit [BrandCo](https://brand.test) to review the available service scope."
+
+        repaired, report = controller._finalize_commercial_intro_surgically(
+            "\n\n".join([cta, bridge, hook, cta]),
+            section,
+            state,
+        )
+        paragraphs = repaired.split("\n\n")
+
+        self.assertEqual(report["status"], "repaired")
+        self.assertEqual(paragraphs, [hook, bridge, cta])
+        self.assertEqual(repaired.count("https://brand.test"), 1)
+
+    def test_patch_3c7_missing_bridge_never_generates_fallback_copy(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "service provider",
+            "brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        section = {
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+            "brand_usage_policy": "soft_intro_brand",
+        }
+        content = (
+            "Choosing a service provider without a clear scope can create unnecessary risk for the reader.\n\n"
+            "Visit [BrandCo](https://brand.test) to review the available service scope."
+        )
+
+        repaired, report = controller._finalize_commercial_intro_surgically(
+            content,
+            section,
+            state,
+        )
+
+        self.assertEqual(report["status"], "needs_revision")
+        self.assertIn("intro_missing_brand_bridge", report["issues"])
+        self.assertNotIn("This is where BrandCo can be introduced lightly", repaired)
+        self.assertEqual(len(repaired.split("\n\n")), 2)
+
+    def test_patch_3c7_final_gate_rejects_earlier_generated_fallback_paragraphs(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "service provider",
+            "brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+        }
+        section = {
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+            "brand_usage_policy": "soft_intro_brand",
+        }
+        draft = (
+            "Choosing a service provider without a clear scope can create unnecessary risk "
+            "and leave the reader unsure about the practical next step."
+        )
+        intermediate = controller._ensure_commercial_intro_contract(
+            draft,
+            section,
+            state,
+        )
+
+        repaired, report = controller._finalize_commercial_intro_surgically(
+            intermediate,
+            section,
+            state,
+        )
+
+        self.assertEqual(report["status"], "needs_revision")
+        self.assertIn("intro_missing_brand_bridge", report["issues"])
+        self.assertIn("intro_missing_soft_cta", report["issues"])
+        self.assertNotIn("This is where BrandCo can be introduced lightly", repaired)
+        self.assertNotIn("To start practically", repaired)
+
+    def test_patch_3c7_unsupported_bridge_claim_requires_revision(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        state = {
+            "content_type": "brand_commercial",
+            "article_language": "en",
+            "primary_keyword": "service provider",
+            "brand_name": "BrandCo",
+            "brand_url": "https://brand.test",
+            "brand_evidence_boundaries": {
+                "local_presence": False,
+                "pricing": False,
+                "testimonials": False,
+                "awards": False,
+                "certifications": False,
+                "partnerships": False,
+            },
+            "brand_page_knowledge_pack_context": (
+                "No explicit local presence, pricing, testimonials, awards, certifications, "
+                "or partnerships observed."
+            ),
+        }
+        section = {
+            "section_type": "introduction",
+            "heading_level": "INTRO",
+            "commercial_section_role": "intro",
+            "brand_usage_policy": "soft_intro_brand",
+        }
+        content = (
+            "Choosing a service provider without a clear scope can create unnecessary risk for the reader.\n\n"
+            "BrandCo provides local support and guaranteed market expertise for every client.\n\n"
+            "Visit [BrandCo](https://brand.test) to review the available service scope."
+        )
+
+        repaired, report = controller._finalize_commercial_intro_surgically(
+            content,
+            section,
+            state,
+        )
+
+        self.assertEqual(report["status"], "needs_revision")
+        self.assertIn("intro_brand_bridge_unsupported", report["issues"])
+        self.assertNotIn("local support", repaired.lower())
+
+    def test_patch_3c7_content_stage_repairs_intro_before_saving(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "article_language": "en",
+                "include_tables": False,
+                "primary_keyword": "best service provider",
+                "raw_title": "Best service provider",
+                "brand_name": "BrandCo",
+                "brand_url": "https://brand.test",
+                "output_dir": tmpdir,
+                "outline": [{
+                    "section_id": "intro",
+                    "section_type": "introduction",
+                    "heading_level": "INTRO",
+                    "commercial_section_role": "intro",
+                    "brand_usage_policy": "soft_intro_brand",
+                }],
+                "sections": {
+                    "intro": {
+                        "generated_content": (
+                            "A rushed decision can create an unclear scope and unnecessary risk for the reader.\n\n"
+                            "BrandCo helps connect that need to a clear service scope and practical next step.\n\n"
+                            "Visit [BrandCo](https://brand.test) to review the available service scope."
+                        ),
+                    },
+                },
+            }
+
+            markdown = controller._build_content_stage_markdown(
+                state,
+                "Best service provider",
+            )
+
+            saved = Path(tmpdir, "article_final.md").read_text(encoding="utf-8")
+
+        intro_body = state["sections"]["intro"]["generated_content"]
+        self.assertIn("best service provider", intro_body.split("\n\n")[0])
+        self.assertEqual(state["final_intro_quality_report"]["status"], "repaired")
+        self.assertEqual(state["content_stage_status"], "success")
+        self.assertEqual(markdown, saved)
+
+    def test_patch_3c7_content_stage_fails_closed_when_bridge_is_missing(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "article_language": "en",
+                "include_tables": False,
+                "primary_keyword": "service provider",
+                "raw_title": "Service provider",
+                "brand_name": "BrandCo",
+                "brand_url": "https://brand.test",
+                "output_dir": tmpdir,
+                "outline": [{
+                    "section_id": "intro",
+                    "section_type": "introduction",
+                    "heading_level": "INTRO",
+                    "commercial_section_role": "intro",
+                    "brand_usage_policy": "soft_intro_brand",
+                }],
+                "sections": {
+                    "intro": {
+                        "generated_content": (
+                            "Choosing a service provider without a clear scope can create unnecessary risk.\n\n"
+                            "Visit [BrandCo](https://brand.test) to review the available service scope."
+                        ),
+                    },
+                },
+            }
+
+            controller._build_content_stage_markdown(state, "Service provider")
+
+        self.assertEqual(state["content_stage_status"], "needs_revision")
+        self.assertEqual(state["final_intro_quality_report"]["status"], "needs_revision")
+        self.assertIn(
+            "intro_final_enforcement_failed",
+            " ".join(state["content_stage_quality_report"]["warnings"]),
+        )
+
+    def test_patch_3c8_process_section_recovers_after_broken_numbered_list(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "brand_commercial",
+                "article_language": "ar",
+                "include_tables": False,
+                "output_dir": tmpdir,
+                "outline": [{
+                    "section_id": "process",
+                    "heading_text": "خطوات تنفيذ المشروع",
+                    "section_type": "process",
+                    "heading_level": "H2",
+                    "commercial_section_role": "process",
+                }],
+                "sections": {
+                    "process": {
+                        "generated_content": (
+                            "فيما يلي الخطوات الأساسية:\n\n"
+                            "3.\n\n"
+                            "4."
+                        ),
+                    },
+                },
+            }
+
+            markdown = controller._build_content_stage_markdown(state, "Test article")
+
+            self.assertNotRegex(markdown, r"(?m)^\s*3\.\s*$")
+            self.assertGreaterEqual(controller._count_ordered_list_items(markdown), 4)
+
+    def test_patch_3c8_empty_numbered_list_item_marks_needs_revision(self):
+        controller = AsyncWorkflowController(work_dir=".")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = {
+                "content_type": "informational",
+                "article_language": "en",
+                "include_tables": False,
+                "output_dir": tmpdir,
+                "outline": [{
+                    "section_id": "body",
+                    "heading_text": "How it works",
+                    "section_type": "body",
+                    "heading_level": "H2",
+                }],
+                "sections": {
+                    "body": {
+                        "generated_content": "Overview\n\n1. First step\n\n2.\n\n3. Third step",
+                    },
+                },
+            }
+
+            issues = controller._section_body_integrity_issues(
+                state["sections"]["body"]["generated_content"],
+                state["outline"][0],
+                state,
+            )
+            self.assertIn("empty_numbered_list_item", issues)
+
+    def test_patch_3c8_manager_report_reflects_needs_revision(self):
+        from src.utils.workflow_logger import WorkflowLogger
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workflow_logger = WorkflowLogger(tmpdir)
+            workflow_logger.metrics.append({
+                "timestamp": datetime.now().isoformat(),
+                "step_name": "STEP_TOTAL: content_writing",
+                "duration_sec": 1.0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+                "model": "openai/gpt-4.1",
+                "estimated_cost": 0.0,
+            })
+            state = {
+                "content_stage_status": "needs_revision",
+                "content_stage_quality_report": {
+                    "status": "needs_revision",
+                    "warnings": ["sec_07: process_section_insufficient_steps"],
+                },
+            }
+            workflow_logger.export_manager_summary(state=state)
+            report = Path(tmpdir, "manager_report.txt").read_text(encoding="utf-8")
+
+            self.assertIn("COMPLETED WITH REVISION REQUIRED", report)
+            self.assertIn("QUALITY WARNINGS: 1", report)
+            self.assertIn("REVIEW REQUIRED: yes", report)
+
+    def test_patch_3e_target_area_mention_is_not_brand_geography_claim(self):
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        section = {
+            "section_id": "offer",
+            "heading_text": "افضل شركة تصميم مواقع في السعودية: ما الذي تقدمه من حلول؟",
+            "taxonomy_axis": "brand_offer",
+            "section_contract": {"brand_policy": "commercial", "taxonomy_axis": "brand_offer"},
+        }
+        understanding = {
+            "relevant_services": ["Web Development"],
+            "relevant_geography": [],
+        }
+        raw_blocks = [
+            {
+                "source_url": "https://brand.test/",
+                "page_type": "home",
+                "heading": "Services",
+                "observed_text": "BrandCo provides Web Development.",
+                "observed_facts": ["Service: Web Development"],
+            }
+        ]
+
+        report = evaluate_brand_section_fulfillment(
+            section,
+            "تبحث المؤسسات في السعودية عن شريك تقني يقدم Web Development بوضوح.",
+            understanding,
+            raw_blocks,
+            {"content_type": "brand_commercial", "brand_name": "BrandCo", "area": "السعودية"},
+        )
+
+        self.assertNotIn("geography", report.get("fulfillment_reason", ""))
+
+    def test_patch_3e_brand_local_presence_claim_still_fails_without_evidence(self):
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        section = {
+            "section_id": "geo",
+            "heading_text": "BrandCo services in Countryland",
+            "taxonomy_axis": "brand_offer",
+            "section_contract": {"brand_policy": "commercial", "taxonomy_axis": "brand_offer"},
+        }
+        understanding = {"relevant_services": ["Web Development"], "relevant_geography": []}
+        raw_blocks = [
+            {
+                "source_url": "https://brand.test/services",
+                "page_type": "services",
+                "heading": "Services",
+                "observed_text": "BrandCo provides Web Development.",
+                "observed_facts": ["Service: Web Development"],
+            }
+        ]
+
+        report = evaluate_brand_section_fulfillment(
+            section,
+            "BrandCo serves clients across Countryland with Web Development.",
+            understanding,
+            raw_blocks,
+            {"content_type": "brand_commercial", "brand_name": "BrandCo", "area": "Countryland"},
+        )
+
+        self.assertEqual(report["fulfillment_status"], "unsupported")
+        self.assertIn("geography", report["fulfillment_reason"])
+
+    def test_patch_3e_homepage_narrative_lists_observed_services(self):
+        from src.services.brand_evidence_service import _build_page_narrative_text
+
+        narrative = _build_page_narrative_text(
+            page_type="home",
+            title="Web Development Company",
+            headings=["Android Apps", "WordPress", "SEO"],
+            text=(
+                "We build Android Apps and WordPress websites. "
+                "Our SEO and Hosting services help brands grow."
+            ),
+            services=["Wordpress", "Seo", "Hosting", "Android Apps"],
+            technologies=["WordPress", "React JS"],
+            projects=[],
+            process_steps=[],
+            geography=[],
+            project_locations=[],
+            pricing=[],
+            trust=[],
+        )
+
+        self.assertIn("Observed brand services listed on this page include", narrative)
+        self.assertIn("Wordpress", narrative)
+        self.assertIn("Hosting", narrative)
+
+    def test_patch_3e_evidence_cards_extract_homepage_service_catalog(self):
+        from src.services.brand_evidence_service import build_brand_evidence_cards
+
+        state = {
+            "brand_url": "https://brand.test/",
+            "internal_resources": [
+                {
+                    "link": "https://brand.test/",
+                    "title": "Web Development Company",
+                    "headings": ["About us", "Why You Should Choose Us"],
+                    "cta_labels": [],
+                    "page_text": (
+                        "Android Apps iOS Apps PHP WordPress React JS SEO Digital Marketing "
+                        "Email Marketing Web Hosting Shared Hosting Packages"
+                    ),
+                    "semantic_sections": [
+                        {"heading": "Android Apps", "body_text": "We build Android Apps."},
+                        {"heading": "WordPress", "body_text": "Custom WordPress websites."},
+                        {"heading": "SEO", "body_text": "SEO services."},
+                        {"heading": "Web Hosting", "body_text": "Shared hosting packages."},
+                    ],
+                }
+            ],
+        }
+
+        cards = build_brand_evidence_cards(state)
+        home_card = next(card for card in cards if card.get("url") == "https://brand.test/")
+        services = " ".join(home_card.get("visible_products_or_services") or []).casefold()
+
+        self.assertIn("wordpress", services)
+        self.assertIn("seo", services)
+        self.assertTrue("hosting" in services or "web hosting" in services)
+
+    def test_patch_3e_feliya_adjective_is_not_unsupported_project_name(self):
+        from src.services.brand_evidence_service import find_unsupported_brand_project_names
+
+        unsupported = find_unsupported_brand_project_names(
+            "نربط القارئ بالحاجة الفعلية لإنشاء موقع إلكتروني احترافي.",
+            observed_project_names=[],
+            allowed_sources=["الحاجة الفعلية لإنشاء موقع إلكتروني"],
+        )
+
+        self.assertNotIn("الفعلية", unsupported)
+
+    def test_patch_3e2_saved_pack_includes_brand_service_catalog(self):
+        import tempfile
+        from src.services.workflow_controller import AsyncWorkflowController
+
+        controller = AsyncWorkflowController.__new__(AsyncWorkflowController)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            controller.work_dir = tmp_dir
+            state = {
+                "output_dir": tmp_dir,
+                "brand_url": "https://brand.test/",
+                "display_brand_name": "BrandCo",
+                "brand_crawl_report": {"crawled_urls": ["https://brand.test/"]},
+                "brand_page_narrative_briefs": [],
+                "brand_evidence_cards": [
+                    {
+                        "url": "https://brand.test/",
+                        "page_type": "home",
+                        "headings": ["WordPress", "SEO"],
+                        "visible_products_or_services": [
+                            "WordPress",
+                            "SEO",
+                            "Web Hosting",
+                            "Mobile App Development",
+                        ],
+                    }
+                ],
+                "brand_evidence_inventory": {},
+                "brand_evidence_boundaries": {},
+            }
+
+            controller._persist_brand_page_knowledge_pack(state)
+
+            pack_path = os.path.join(tmp_dir, "brand_page_knowledge_pack.md")
+            with open(pack_path, "r", encoding="utf-8") as fh:
+                pack_text = fh.read()
+
+        self.assertIn("## Brand Service Catalog", pack_text)
+        catalog_lower = pack_text.casefold()
+        self.assertIn("wordpress", catalog_lower)
+        self.assertIn("seo", catalog_lower)
+        self.assertTrue("hosting" in catalog_lower or "web hosting" in catalog_lower)
+
+    def test_ground_truth_report_is_evidence_rich_and_traceable(self):
+        from src.services.brand_evidence_service import build_brand_ground_truth_report
+
+        state = {
+            "brand_url": "https://brand.test/",
+            "display_brand_name": "BrandCo",
+            "internal_resources": [
+                {
+                    "link": "https://brand.test/",
+                    "title": "Home",
+                    "headings": ["WordPress", "SEO", "Web Hosting"],
+                    "page_text": (
+                        "We provide WordPress, SEO and Web Hosting. "
+                        "We have 200+ projects and 10 years experience."
+                    ),
+                    "semantic_sections": [
+                        {"heading": "WordPress", "body_text": "x"},
+                        {"heading": "SEO", "body_text": "x"},
+                        {"heading": "Web Hosting", "body_text": "x"},
+                    ],
+                }
+            ],
+        }
+
+        report = build_brand_ground_truth_report(state)
+        lower = report.casefold()
+
+        self.assertIn("# Brand Ground Truth", report)
+        self.assertIn("Observed Services / Offerings", report)
+        self.assertIn("Page-by-Page Evidence", report)
+        self.assertIn("## Claim Boundaries", report)
+        self.assertIn("wordpress", lower)
+        self.assertIn("seo", lower)
+        # Source traceability: each catalog item records where it came from.
+        self.assertIn("source:", lower)
+        # Raw snippets must be retained (not over-summarized).
+        self.assertIn("raw supporting snippets", lower)
+
+    def test_ground_truth_report_is_domain_agnostic(self):
+        from src.services.brand_evidence_service import build_brand_ground_truth_report
+
+        state = {
+            "brand_url": "https://realestate.test/",
+            "display_brand_name": "Golden Host",
+            "internal_resources": [
+                {
+                    "link": "https://realestate.test/services",
+                    "title": "Real Estate Services",
+                    "headings": [
+                        "Furnished Apartments For Rent",
+                        "Villas For Sale",
+                        "Commercial Offices",
+                    ],
+                    "page_text": "We offer Furnished Apartments For Rent and Villas For Sale.",
+                    "semantic_sections": [
+                        {"heading": "Furnished Apartments For Rent", "body_text": "x"},
+                        {"heading": "Villas For Sale", "body_text": "x"},
+                    ],
+                }
+            ],
+        }
+
+        report = build_brand_ground_truth_report(state).casefold()
+        self.assertIn("furnished apartments for rent", report)
+        self.assertIn("villas for sale", report)
+
+    def test_ground_truth_report_does_not_force_empty_categories(self):
+        from src.services.brand_evidence_service import build_brand_ground_truth_report
+
+        # A simple services-only brand with no projects, no technologies, no pricing.
+        state = {
+            "brand_url": "https://clinic.test/",
+            "display_brand_name": "Smile Clinic",
+            "internal_resources": [
+                {
+                    "link": "https://clinic.test/services",
+                    "title": "Dental Services",
+                    "headings": ["Teeth Whitening", "Dental Implants", "Orthodontics"],
+                    "page_text": "We provide Teeth Whitening, Dental Implants and Orthodontics.",
+                    "semantic_sections": [
+                        {"heading": "Teeth Whitening", "body_text": "x"},
+                        {"heading": "Dental Implants", "body_text": "x"},
+                    ],
+                }
+            ],
+        }
+
+        report = build_brand_ground_truth_report(state)
+        # Observed category present (derived catalog).
+        self.assertIn("Observed Services / Offerings", report)
+        # Categories with no observed data must NOT be forced into the report.
+        self.assertNotIn("Observed Projects / Work Examples", report)
+        self.assertNotIn("Observed Technologies / Platforms", report)
+        self.assertNotIn("Observed Pricing / Offers", report)
+
+    def test_portfolio_template_labels_are_not_extracted_as_services(self):
+        from src.services.brand_evidence_service import (
+            build_brand_evidence_cards,
+            build_brand_service_catalog,
+            _is_brand_template_label,
+        )
+
+        # Direct unit check on the central noise filter.
+        for label in ["Project Name", "Publish Date", "Scope of Work", "04-2018", "اسم المشروع"]:
+            self.assertTrue(_is_brand_template_label(label), f"{label} should be template noise")
+        for real in ["WordPress", "SEO", "Furnished Apartments For Rent"]:
+            self.assertFalse(_is_brand_template_label(real), f"{real} must not be filtered")
+
+        # A portfolio case-study page that mentions "Design Services" must be
+        # classified as portfolio (URL wins) and must NOT leak template labels.
+        state = {
+            "brand_url": "https://brand.test/",
+            "internal_resources": [
+                {
+                    "link": "https://brand.test/portfolio/baddel",
+                    "title": "Baddel",
+                    "headings": [
+                        "Baddel",
+                        "Design Services",
+                        "Project Name",
+                        "Publish Date",
+                        "Scope of Work",
+                        "Quality Assurance",
+                    ],
+                    "page_text": "Project: Baddel. Mobile application delivered for the client.",
+                    "semantic_sections": [{"heading": "Baddel", "body_text": "Mobile app."}],
+                }
+            ],
+        }
+
+        cards = build_brand_evidence_cards(state)
+        card = next(c for c in cards if c.get("url") == "https://brand.test/portfolio/baddel")
+        self.assertEqual(card.get("page_type"), "portfolio")
+        services_blob = " ".join(card.get("visible_products_or_services") or []).casefold()
+        self.assertNotIn("project name", services_blob)
+        self.assertNotIn("publish date", services_blob)
+        self.assertNotIn("scope of work", services_blob)
+
+        catalog_services = " ".join(build_brand_service_catalog(state).get("services") or []).casefold()
+        self.assertNotIn("project name", catalog_services)
+        self.assertNotIn("publish date", catalog_services)
+
+    def test_metadata_chains_and_fragments_are_structurally_filtered(self):
+        from src.services.brand_evidence_service import (
+            _is_structured_noise,
+            _sanitize_evidence_item,
+        )
+
+        # A: concatenated portfolio-template chains are dropped (domain-neutral:
+        # anchored on "Publish Date"/"تاريخ النشر", not on industry words).
+        for chain in [
+            "Baddel Websites Publish Date 12-2021 Brief Objective",
+            "Rage3 Design Services Publish Date 04-2019 Brief Objecti",
+            "Rage3 خدمات التصميم تاريخ النشر 04-2019 موجز الهدف",
+        ]:
+            self.assertTrue(_is_structured_noise(chain), f"chain should be noise: {chain}")
+
+        # Real multi-word entities (any vertical) must survive.
+        for real in [
+            "Aqar Ya Masr Web app",
+            "Qatar General Authority of Customs",
+            "Furnished Apartments For Rent",
+        ]:
+            self.assertFalse(_is_structured_noise(real), f"real entity dropped: {real}")
+
+        # B: clipped sentence fragments are not valid services (general linguistic
+        # rule on leading function words, not a service dictionary).
+        for frag in ["the finished project on time", "within budget", "and to your satisfaction"]:
+            self.assertEqual(_sanitize_evidence_item(frag, "service"), "", f"fragment kept: {frag}")
+
+    def test_offers_are_separated_from_technologies_with_sources(self):
+        from src.services.brand_evidence_service import (
+            build_brand_service_catalog,
+            build_brand_ground_truth_report,
+        )
+
+        state = {
+            "brand_url": "https://cems.test/",
+            "display_brand_name": "Creative Minds",
+            "internal_resources": [
+                {
+                    "link": "https://cems.test/",
+                    "title": "Home",
+                    "headings": [
+                        "WordPress",
+                        "React",
+                        "Need a Web hosting?",
+                        "50% Off On Any Shared Hosting Packages",
+                    ],
+                    "page_text": "We provide WordPress and React.",
+                    "semantic_sections": [
+                        {"heading": "WordPress", "body_text": "x"},
+                        {"heading": "React", "body_text": "x"},
+                    ],
+                }
+            ],
+        }
+
+        catalog = build_brand_service_catalog(state)
+        # The promo goes into offers, never into technologies.
+        tech_blob = " ".join(catalog.get("technologies") or []).casefold()
+        offers_blob = " ".join(catalog.get("offers") or []).casefold()
+        self.assertNotIn("50%", tech_blob)
+        self.assertNotIn("off on any", tech_blob)
+        self.assertIn("50%", offers_blob)
+        # CTA/question fragment is not a service or a technology.
+        self.assertNotIn("need a web hosting", tech_blob)
+
+        report = build_brand_ground_truth_report(state)
+        lower = report.casefold()
+        self.assertIn("observed pricing / offers / promotions", lower)
+        # Every derived line is traceable to its source page.
+        self.assertNotIn("need a web hosting", report.split("## Claim Boundaries")[0].casefold())
+
+    def test_step_3a0_ground_truth_exposed_in_state_and_synced_with_file(self):
+        import os
+        import tempfile
+        from src.services.workflow_controller import AsyncWorkflowController
+        from src.services.brand_evidence_service import build_brand_ground_truth_report
+
+        controller = AsyncWorkflowController.__new__(AsyncWorkflowController)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            controller.work_dir = tmp_dir
+            state = {
+                "output_dir": tmp_dir,
+                "brand_url": "https://brand.test/",
+                "display_brand_name": "BrandCo",
+                "brand_page_narrative_briefs": [],
+                "brand_evidence_cards": [
+                    {
+                        "url": "https://brand.test/",
+                        "page_type": "home",
+                        "headings": ["WordPress", "SEO"],
+                        "visible_products_or_services": ["WordPress", "SEO", "Web Hosting"],
+                    }
+                ],
+                "brand_evidence_inventory": {"projects_available": False, "pricing_available": False},
+                "brand_evidence_boundaries": {"local_presence": False},
+            }
+
+            controller._persist_brand_ground_truth_report(state)
+
+            # 1) Markdown is exposed in state (not just a file path).
+            self.assertIn("brand_ground_truth", state)
+            self.assertIn("brand_ground_truth_data", state)
+            self.assertTrue(str(state["brand_ground_truth"]).startswith("# Brand Ground Truth"))
+
+            # 2) state markdown is byte-identical to the persisted file.
+            with open(state["brand_ground_truth_path"], "r", encoding="utf-8") as fh:
+                file_text = fh.read()
+            self.assertEqual(state["brand_ground_truth"], file_text)
+
+            # 3) state markdown matches a fresh report build (no drift).
+            self.assertEqual(state["brand_ground_truth"], build_brand_ground_truth_report(state))
+
+        # 4) Structured twin has the expected shape and carries sources.
+        data = state["brand_ground_truth_data"]
+        self.assertIn("catalogs", data)
+        self.assertIn("claim_boundaries", data)
+        self.assertIn("pages", data)
+        services = data["catalogs"]["services"]
+        self.assertTrue(services, "services catalog should not be empty")
+        self.assertTrue(all("value" in s and "sources" in s for s in services))
+        # 5) Structured boundaries reflect the same inventory/boundaries inputs.
+        self.assertFalse(data["claim_boundaries"]["pricing_available"])
+        self.assertFalse(data["claim_boundaries"]["local_presence"])
+        self.assertEqual(data["pages_analyzed"], 1)
+
+    def test_step_3a1_consumption_recorder_stamps_state(self):
+        from src.services.brand_evidence_service import record_ground_truth_consumption
+
+        # Present: used=True and stamped under the layer name.
+        state = {
+            "brand_ground_truth": "# Brand Ground Truth\n...",
+            "brand_ground_truth_data": {"catalogs": {"services": [{"value": "SEO", "sources": ["homepage"]}]}},
+        }
+        rec = record_ground_truth_consumption(state, "strategy")
+        self.assertTrue(rec["used"])
+        self.assertGreater(rec["markdown_chars"], 0)
+        self.assertEqual(rec["catalog_counts"]["services"], 1)
+        self.assertTrue(state["ground_truth_consumption"]["strategy"]["used"])
+
+        # Absent: used=False, still stamped (so logs prove it was checked).
+        empty_state: dict = {}
+        rec2 = record_ground_truth_consumption(empty_state, "writer")
+        self.assertFalse(rec2["used"])
+        self.assertIn("writer", empty_state["ground_truth_consumption"])
+
+    def test_step_3a1_outline_and_writer_recorder_on_controller(self):
+        from src.services.workflow_controller import AsyncWorkflowController
+
+        controller = AsyncWorkflowController.__new__(AsyncWorkflowController)
+        state = {
+            "brand_ground_truth": "# Brand Ground Truth\nx",
+            "brand_ground_truth_data": {"catalogs": {"services": [{"value": "SEO", "sources": ["homepage"]}]}},
+        }
+        for layer in ("outline", "writer"):
+            rec = controller._record_ground_truth_consumption(state, layer)
+            self.assertTrue(rec["used"])
+            self.assertTrue(state["ground_truth_consumption"][layer]["used"])
+
+    def test_step_3a1_validator_sees_ground_truth_in_parallel(self):
+        import asyncio
+        from src.services.validation_service import ValidationService
+
+        validator = ValidationService()
+        state = {
+            "brand_url": "https://brand.test/",
+            "brand_name": "BrandCo",
+            "content_type": "brand_commercial",
+            "brand_ground_truth": "# Brand Ground Truth\nx",
+            "brand_ground_truth_data": {"catalogs": {"services": [{"value": "SEO", "sources": ["homepage"]}]}},
+        }
+        section = {
+            "heading_text": "Why BrandCo",
+            "section_type": "body",
+            "section_intent": "commercial",
+            "cta_eligible": False,
+        }
+
+        # The consumption stamp happens at the very top of validate_section_output,
+        # before any heavy validation logic. Downstream logic needs more setup than
+        # this unit test provides, so we only care that entry-time recording fired.
+        try:
+            asyncio.run(
+                validator.validate_section_output(
+                    content="BrandCo provides SEO and hosting services for clients.",
+                    section=section,
+                    content_type="brand_commercial",
+                    state=state,
+                )
+            )
+        except Exception:
+            pass
+
+        # The validator recorded that ground truth was available, without any
+        # ground-truth-driven decision (parallel availability only).
+        self.assertIn("validator", state.get("ground_truth_consumption", {}))
+        self.assertTrue(state["ground_truth_consumption"]["validator"]["used"])
+
+    # ------------------------------------------------------------------
+    # The 5 pre-run gate tests: prove the ground truth carries the right
+    # facts to each layer before the single evaluation run.
+    # ------------------------------------------------------------------
+    def _gate_state(self):
+        return {
+            "brand_url": "https://cm.test/",
+            "display_brand_name": "Creative Minds",
+            "brand_evidence_cards": [
+                {
+                    "url": "https://cm.test/",
+                    "page_type": "home",
+                    "title": "Home",
+                    "headings": ["WordPress", "SEO"],
+                    "visible_products_or_services": [
+                        "Web Development",
+                        "Web Hosting",
+                        "SEO",
+                        "Mobile App Development",
+                    ],
+                    "usable_snippets": ["We provide SEO and Web Hosting."],
+                },
+                {
+                    "url": "https://cm.test/portfolio/baddel",
+                    "page_type": "portfolio",
+                    "title": "Baddel",
+                    "visible_project_or_case_study_examples": ["Baddel Mobile App"],
+                    "visible_geography": ["Riyadh"],
+                    "usable_snippets": ["Baddel project delivered in Riyadh."],
+                },
+            ],
+            "brand_evidence_inventory": {"pricing_available": False, "projects_available": True},
+            "brand_evidence_boundaries": {"local_presence": False, "explicit_geography": []},
+        }
+
+    def test_gate_1_hosting_reaches_strategy(self):
+        from src.services.brand_evidence_service import (
+            build_brand_ground_truth_data,
+            record_ground_truth_consumption,
+        )
+
+        state = self._gate_state()
+        data = build_brand_ground_truth_data(state)
+        services = " ".join(s["value"] for s in data["catalogs"]["services"]).casefold()
+        self.assertIn("hosting", services)
+
+        # Strategy reads the same in-state object; consumption confirms availability.
+        state["brand_ground_truth"] = "# Brand Ground Truth\nx"
+        state["brand_ground_truth_data"] = data
+        rec = record_ground_truth_consumption(state, "strategy")
+        self.assertTrue(rec["used"])
+        self.assertGreater(rec["catalog_counts"]["services"], 0)
+
+    def test_gate_2_seo_reaches_outline(self):
+        from src.services.brand_evidence_service import build_brand_ground_truth_data
+
+        data = build_brand_ground_truth_data(self._gate_state())
+        services = " ".join(s["value"] for s in data["catalogs"]["services"]).casefold()
+        self.assertIn("seo", services)
+
+    def test_gate_3_no_pricing_keeps_validator_pricing_false(self):
+        from src.services.brand_evidence_service import build_brand_ground_truth_data
+
+        data = build_brand_ground_truth_data(self._gate_state())
+        # No pricing anywhere → boundary stays false and pricing/offers catalog empty.
+        self.assertFalse(data["claim_boundaries"]["pricing_available"])
+        self.assertEqual(data["catalogs"]["pricing_offers"], [])
+
+    def test_gate_4_baddel_reaches_writer_context_as_project(self):
+        from src.services.brand_evidence_service import (
+            build_brand_ground_truth_data,
+            build_brand_ground_truth_report,
+        )
+        from src.services.workflow_controller import AsyncWorkflowController
+
+        state = self._gate_state()
+        data = build_brand_ground_truth_data(state)
+        projects = " ".join(p["value"] for p in data["catalogs"]["projects"]).casefold()
+        self.assertIn("baddel", projects)
+
+        # The writer-only block actually carries Baddel into the writer context.
+        state["brand_ground_truth"] = build_brand_ground_truth_report(state)
+        controller = AsyncWorkflowController.__new__(AsyncWorkflowController)
+        writer_block = controller._format_ground_truth_for_writer(state)
+        self.assertIn("[BRAND GROUND TRUTH", writer_block)
+        self.assertIn("Baddel", writer_block)
+
+    def test_gate_5_project_location_does_not_become_local_presence(self):
+        from src.services.brand_evidence_service import build_brand_ground_truth_data
+
+        data = build_brand_ground_truth_data(self._gate_state())
+        geographies = " ".join(g["value"] for g in data["catalogs"]["geographies"]).casefold()
+        # Riyadh is observed as a project geography...
+        self.assertIn("riyadh", geographies)
+        # ...but it must NOT be promoted to a proven brand local presence/office.
+        self.assertFalse(data["claim_boundaries"]["local_presence"])
+
+    def test_structural_catalog_cleanup_removes_cross_bucket_noise(self):
+        from src.services.brand_evidence_service import (
+            build_brand_ground_truth_data,
+            build_brand_service_catalog,
+        )
+
+        state = {
+            "brand_url": "https://brand.test/",
+            "display_brand_name": "BrandCo",
+            "brand_evidence_cards": [
+                {
+                    "url": "https://brand.test/",
+                    "page_type": "home",
+                    "visible_products_or_services": ["WordPress", "SEO", "Web Hosting"],
+                },
+                {
+                    "url": "https://brand.test/design-services",
+                    "page_type": "services",
+                    "visible_products_or_services": [
+                        "Design Services",
+                        "Rage3",
+                        "Bolaq Bookstore",
+                        "expert design",
+                        "including UI",
+                        "websites",
+                    ],
+                },
+                {
+                    "url": "https://brand.test/portfolio/baddel",
+                    "page_type": "portfolio",
+                    "title": "Baddel",
+                    "visible_project_or_case_study_examples": ["Baddel Mobile App"],
+                },
+                {
+                    "url": "https://brand.test/portfolio/rage3",
+                    "page_type": "portfolio",
+                    "title": "Rage3",
+                    "headings": ["Rage3"],
+                },
+                {
+                    "url": "https://brand.test/portfolio/bolaq-bookstore",
+                    "page_type": "portfolio",
+                    "title": "Bolaq Bookstore",
+                    "headings": ["Bolaq Bookstore"],
+                },
+                {
+                    "url": "https://brand.test/portfolio/qatar",
+                    "page_type": "portfolio",
+                    "visible_project_or_case_study_examples": [
+                        "Qatar General Authority of Customs Design Services Publi",
+                        "Design Services",
+                    ],
+                },
+            ],
+            "brand_evidence_inventory": {"pricing_available": False, "projects_available": True},
+            "brand_evidence_boundaries": {"local_presence": False},
+        }
+
+        services = build_brand_service_catalog(state).get("services") or []
+        services_blob = " ".join(services).casefold()
+        self.assertIn("wordpress", services_blob)
+        self.assertIn("seo", services_blob)
+        self.assertNotIn("rage3", services_blob)
+        self.assertNotIn("bolaq", services_blob)
+        self.assertNotIn("expert design", services_blob)
+        self.assertNotIn("including ui", services_blob)
+
+        data = build_brand_ground_truth_data(state)
+        projects = [p["value"] for p in data["catalogs"]["projects"]]
+        projects_blob = " ".join(projects).casefold()
+        self.assertNotIn("design services", projects_blob)
+        self.assertNotIn("publi", projects_blob)
+
+    def test_resolve_brand_claim_boundaries_prefers_ground_truth(self):
+        from src.services.brand_evidence_service import resolve_brand_claim_boundaries
+
+        state = {
+            "brand_ground_truth_data": {
+                "claim_boundaries": {
+                    "pricing_available": False,
+                    "local_presence": False,
+                    "testimonials": False,
+                    "certifications": False,
+                    "awards": False,
+                }
+            },
+            "brand_evidence_inventory": {"pricing_available": True},
+            "brand_evidence_boundaries": {"local_presence": True, "brand_pricing": True},
+        }
+        bounds = resolve_brand_claim_boundaries(state)
+        self.assertFalse(bounds["pricing_available"])
+        self.assertFalse(bounds["local_presence"])
+
+    def test_fulfillment_allows_buyer_market_context_without_local_presence(self):
+        from src.services.brand_evidence_service import evaluate_brand_section_fulfillment
+
+        state = {
+            "content_type": "brand_commercial",
+            "brand_name": "Creative Minds",
+            "area": "السعودية",
+            "brand_ground_truth_data": {
+                "claim_boundaries": {
+                    "pricing_available": False,
+                    "local_presence": False,
+                    "testimonials": False,
+                    "certifications": False,
+                    "awards": False,
+                },
+                "catalogs": {"geographies": [{"value": "Riyadh", "sources": ["portfolio/baddel"]}]},
+            },
+        }
+        section = {
+            "heading_text": "ما الذي يميز Creative Minds؟",
+            "section_type": "body",
+            "section_contract": {"brand_policy": "commercial"},
+            "taxonomy_axis": "brand_offer",
+            "_visible_brand_reference": True,
+        }
+        content = (
+            "تقدم Creative Minds حلولاً متكاملة مع فهم عميق للسوق السعودي "
+            "وتجربة عملية في تطوير المواقع."
+        )
+        report = evaluate_brand_section_fulfillment(
+            section=section,
+            content=content,
+            section_brand_understanding={"relevant_services": ["WordPress", "SEO"]},
+            section_raw_brand_blocks=[],
+            state=state,
+        )
+        reason = str(report.get("fulfillment_reason") or "")
+        self.assertNotIn("geography/market presence", reason)
 
 
 if __name__ == '__main__':

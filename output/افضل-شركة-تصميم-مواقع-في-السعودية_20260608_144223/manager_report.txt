@@ -1,0 +1,41 @@
+╔══════════════════════════════════════════════════════════╗
+║           EXECUTIVE ARTICLE GENERATION REPORT            ║
+╚══════════════════════════════════════════════════════════╝
+
+● OVERALL EXECUTION TIME: 2.2 minutes
+● TOTAL AI PROCESSING UNITS: 21,956
+● PROJECT STATUS: COMPLETED WITH REVISION REQUIRED
+● GENERATION DATE: 2026-06-08 14:47
+● QUALITY WARNINGS: 9
+● REVIEW REQUIRED: yes
+
+PHASE BREAKDOWN
+============================================================
+
+▶ Phase 1: Project Setup
+  ────────────────────────────────────────────────────────
+  • Brand Intelligence Gathering           |    20.6s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  PROJECT SETUP               |    20.6s | AI: 0
+
+▶ Phase 2: Market Analysis
+  ────────────────────────────────────────────────────────
+  • Live Web & Competitor Search           |    48.6s | AI: Local Process
+  • Google Search Intent Analysis          |    12.7s | AI: Local Process
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  MARKET ANALYSIS             |     1.0m | AI: 0
+
+▶ Phase 3: Strategy & Design
+  ────────────────────────────────────────────────────────
+  • User Intent Calibration                |     3.6s | AI: 720
+  • Persona & Tone Design                  |     < 1s | AI: 720
+  • SEO Strategic Roadmap                  |     6.9s | AI: 5,409
+  • Article Structure Design               |    39.6s | AI: 15,107
+  ────────────────────────────────────────────────────────
+  SUB-TOTAL  STRATEGY & DESIGN           |    50.1s | AI: 21,956
+
+============================================================
+Note: 'AI Processing Units' represent the computational effort 
+expended by the AI models. 'Local Process' indicates 
+technical assembly tasks performed without external AI costs.
+'AI Generated' indicates high-compute visual creation steps.

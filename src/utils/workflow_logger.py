@@ -140,7 +140,26 @@ class WorkflowLogger:
                 writer.writeheader()
             writer.writerow(metric)
         
-    def export_csv(self, filename: str = "metrics.csv"):
+    def _resolve_project_status(self, state: Optional[Dict[str, Any]] = None) -> str:
+        """Map workflow state to an executive project status label."""
+        if not state:
+            return "COMPLETED"
+
+        if state.get("final_status") == "needs_revision":
+            return "COMPLETED WITH REVISION REQUIRED"
+        if state.get("content_stage_status") == "needs_revision":
+            return "COMPLETED WITH REVISION REQUIRED"
+
+        quality_report = state.get("content_stage_quality_report") or {}
+        if isinstance(quality_report, dict) and quality_report.get("status") == "needs_revision":
+            return "COMPLETED WITH REVISION REQUIRED"
+
+        if state.get("content_stage_status") == "success" or state.get("final_status") == "success":
+            return "COMPLETED SUCCESSFULLY"
+
+        return "COMPLETED"
+
+    def export_csv(self, filename: str = "metrics.csv", state: Optional[Dict[str, Any]] = None):
         """Exports all collected metrics to a CSV file."""
         filepath = os.path.join(self.output_dir, filename)
         
@@ -162,7 +181,7 @@ class WorkflowLogger:
             
             # Auto-generate summaries
             self.export_text_summary()
-            self.export_manager_summary()
+            self.export_manager_summary(state=state)
             self.export_consumption_reports()
             
         except Exception as e:
@@ -279,12 +298,16 @@ class WorkflowLogger:
         except Exception as e:
             logger.error(f"Failed to export text summary: {e}")
 
-    def export_manager_summary(self, filename: str = "manager_report.txt"):
+    def export_manager_summary(self, filename: str = "manager_report.txt", state: Optional[Dict[str, Any]] = None):
         """
         Generates a simplified, executive-level report grouped by phases.
         Hides technical internal events and uses friendly terminology.
         """
         if not self.metrics: return
+        project_status = self._resolve_project_status(state)
+        quality_report = (state or {}).get("content_stage_quality_report") or {}
+        quality_warnings = quality_report.get("warnings") or []
+        warning_count = len(quality_warnings) if isinstance(quality_warnings, list) else 0
         
         # Step -> (Phase, Friendly Name)
         STEP_MAP = {
@@ -407,8 +430,12 @@ class WorkflowLogger:
                 
                 f.write(f"● OVERALL EXECUTION TIME: {overall_duration/60:.1f} minutes\n")
                 f.write(f"● TOTAL AI PROCESSING UNITS: {total_units:,}\n")
-                f.write(f"● PROJECT STATUS: COMPLETED SUCCESSFULLY\n")
-                f.write(f"● GENERATION DATE: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
+                f.write(f"● PROJECT STATUS: {project_status}\n")
+                f.write(f"● GENERATION DATE: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+                if warning_count:
+                    f.write(f"● QUALITY WARNINGS: {warning_count}\n")
+                    f.write("● REVIEW REQUIRED: yes\n")
+                f.write("\n")
                 
                 f.write("PHASE BREAKDOWN\n")
                 f.write("=" * 60 + "\n\n")

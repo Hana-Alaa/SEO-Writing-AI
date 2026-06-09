@@ -114,8 +114,10 @@ EXPECTED_BRAND_CONVERSION_MARKERS = [
 class DummyAIClient:
     def __init__(self, payloads):
         self._payloads = list(payloads)
+        self.prompts = []
 
     async def send(self, prompt, step=""):
+        self.prompts.append(prompt)
         if self._payloads:
             payload = self._payloads.pop(0)
         else:
@@ -640,6 +642,98 @@ def test_heading_only_detox_preserves_brand_contract():
     assert "buying journey" in process, "detox should preserve the buying-journey process role"
     assert "buyer-first" in sanitized_brand_context.lower(), "brand context should stay supportive, not dominant"
     assert "buyer-focused" in sanitized_writing_blueprint.lower(), "writing blueprint should reinforce buyer-facing headings"
+
+
+def test_patch_3a_serp_testimonials_do_not_become_supported_brand_proof():
+    ai_payload = {
+        "primary_angle": "Help the reader compare service options.",
+        "market_angle": "Compare practical service options in Targetland.",
+        "target_reader_state": "Buyer",
+        "pain_point_focus": ["Hard to compare scope"],
+        "emotional_trigger": "Wants confidence",
+        "depth_level": "comprehensive",
+        "supported_eeat_signals": [
+            "Present real customer testimonials",
+            "Explain the observed delivery process",
+        ],
+        "supported_differentiators": [],
+        "supported_proof_points": [
+            "Customer testimonials",
+            "Observed completed projects",
+        ],
+        "conversion_strategy": (
+            "Clarify the offer, show testimonials, compare options, answer objections, and close with a CTA."
+        ),
+        "cta_philosophy": "Soft then direct",
+        "local_strategy": "Emphasize local market expertise in Targetland.",
+        "tone_direction": "Helpful",
+        "section_role_map": {},
+    }
+    service = _make_service([ai_payload])
+    state = _brand_state(ai_payload)
+    state["primary_keyword"] = "best service provider in Targetland"
+    state["area"] = "Targetland"
+    state["brand_evidence_boundaries"] = {
+        "services": True,
+        "projects": True,
+        "process": True,
+        "testimonials": False,
+        "awards": False,
+        "certifications": False,
+        "partnerships": False,
+        "brand_pricing": False,
+        "local_presence": False,
+        "explicit_geography": [],
+    }
+    state["seo_intelligence"]["market_analysis"]["market_insights"]["topic_observations"]["secondary_mentions"] = [{
+        "topic": "customer testimonials and awards",
+        "frequency": 2,
+        "confidence": "medium",
+    }]
+    state["seo_intelligence"]["market_analysis"]["market_insights"]["writing_guide"] = (
+        "Highlight customer testimonials and trust."
+    )
+
+    asyncio.run(service.run_content_strategy(state))
+
+    strategy = state["content_strategy"]
+    proof_blob = " ".join(strategy["supported_proof_points"]).lower()
+    eeat_blob = " ".join(strategy["supported_eeat_signals"]).lower()
+    assert "testimonial" not in proof_blob
+    assert "testimonial" not in eeat_blob
+    assert "project" in proof_blob
+    assert "local market expertise" not in strategy["local_strategy"].lower()
+    assert "reader" in strategy["local_strategy"].lower()
+    assert "testimonial" not in strategy["conversion_strategy"].lower()
+    removed = [
+        item for item in state["brand_strategy_provenance"]
+        if item["category"] == "testimonials" and item["brand_claim_allowed"] is False
+    ]
+    assert removed
+    assert all(item["source"] == "SERP" for item in removed)
+
+
+def test_patch_3a_strategy_prompt_receives_boundaries_not_full_knowledge_pack():
+    service = _make_service([{}])
+    state = _brand_state({})
+    state["brand_evidence_boundaries"] = {
+        "projects": True,
+        "testimonials": False,
+        "awards": False,
+        "certifications": False,
+        "partnerships": False,
+        "brand_pricing": False,
+        "local_presence": False,
+        "explicit_geography": [],
+    }
+    state["brand_page_knowledge_pack_context"] = "SECRET FULL PAGE CONTENT"
+
+    asyncio.run(service.run_content_strategy(state))
+
+    prompt = service.ai_client.prompts[0]
+    assert "Brand Evidence Boundaries" in prompt
+    assert '"testimonials": false' in prompt
+    assert "SECRET FULL PAGE CONTENT" not in prompt
 
 
 def legacy_outline_step_rejects_invalid_heading_only_outline_after_all_retries():

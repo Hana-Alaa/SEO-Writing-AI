@@ -606,6 +606,28 @@ class StrategyService:
         intent_layer = full_intel.get("intent_analysis", {})
         structural_layer = full_intel.get("structural_intelligence", {})
         market_insights = full_intel.get("market_insights", {})
+        brand_evidence_boundaries = state.get("brand_evidence_boundaries")
+        if not isinstance(brand_evidence_boundaries, dict):
+            try:
+                from src.services.brand_evidence_service import build_brand_evidence_boundaries
+                brand_evidence_boundaries = build_brand_evidence_boundaries(state)
+            except Exception:
+                brand_evidence_boundaries = {}
+            state["brand_evidence_boundaries"] = brand_evidence_boundaries
+
+        # Step 3A-1: read the single source of truth in parallel with the legacy
+        # boundaries (availability + logging only; strategy decisions are unchanged
+        # and still driven by brand_evidence_boundaries until Step 3B).
+        try:
+            from src.services.brand_evidence_service import record_ground_truth_consumption
+            gt_record = record_ground_truth_consumption(state, "strategy")
+            logger.info(
+                "[ground_truth] strategy_ground_truth_used=%s chars=%s",
+                str(gt_record["used"]).lower(),
+                gt_record["markdown_chars"],
+            )
+        except Exception:
+            pass
 
         clusters = market_insights.get("keyword_clusters", [])
         if not clusters:
@@ -639,6 +661,7 @@ class StrategyService:
             serp_intent_analysis=json.dumps(intent_layer),
             serp_structural_intelligence=json.dumps(structural_layer),
             serp_market_insights=json.dumps(market_insights),
+            brand_evidence_boundaries=json.dumps(brand_evidence_boundaries),
             keyword_clusters=json.dumps(clusters),
             content_type=content_type,
             area=area,
@@ -674,9 +697,30 @@ class StrategyService:
             parsed = recover_json(json_text)
 
             if isinstance(parsed, dict) and parsed:
+                attempt_provenance = []
+                if content_type == "brand_commercial":
+                    parsed, attempt_provenance = self._apply_brand_evidence_boundaries(
+                        parsed,
+                        brand_evidence_boundaries,
+                        primary_keyword=primary_keyword,
+                        area=area,
+                        seo_intelligence=seo_intelligence,
+                    )
                 normalized = self._normalize_content_strategy(
                     parsed, primary_keyword, content_type, area, seo_intelligence=seo_intelligence
                 )
+                if content_type == "brand_commercial":
+                    normalized, normalized_provenance = self._apply_brand_evidence_boundaries(
+                        normalized,
+                        brand_evidence_boundaries,
+                        primary_keyword=primary_keyword,
+                        area=area,
+                        seo_intelligence=seo_intelligence,
+                    )
+                    state["brand_strategy_provenance"] = self._merge_brand_strategy_provenance(
+                        attempt_provenance,
+                        normalized_provenance,
+                    )
                 if self._is_valid_content_strategy(normalized):
                     final_data = normalized
                     break
@@ -689,11 +733,67 @@ class StrategyService:
             final_data = self._normalize_content_strategy(
                 {}, primary_keyword, content_type, area, seo_intelligence=seo_intelligence
             )
+            if content_type == "brand_commercial":
+                final_data, provenance = self._apply_brand_evidence_boundaries(
+                    final_data,
+                    brand_evidence_boundaries,
+                    primary_keyword=primary_keyword,
+                    area=area,
+                    seo_intelligence=seo_intelligence,
+                )
+                state["brand_strategy_provenance"] = provenance
 
         final_data = self._apply_dynamic_section_role_overrides(final_data, state)
+        if content_type == "brand_commercial":
+            final_data, final_provenance = self._apply_brand_evidence_boundaries(
+                final_data,
+                brand_evidence_boundaries,
+                primary_keyword=primary_keyword,
+                area=area,
+                seo_intelligence=seo_intelligence,
+            )
+            provenance = self._merge_brand_strategy_provenance(
+                state.get("brand_strategy_provenance", []),
+                final_provenance,
+            )
+            state["brand_strategy_provenance"] = provenance
+            for item in provenance:
+                logger.info(
+                    "[brand_strategy_provenance] signal=%s source=%s use=%s brand_claim_allowed=%s action=%s",
+                    item.get("category"),
+                    item.get("source"),
+                    item.get("allowed_use"),
+                    item.get("brand_claim_allowed"),
+                    item.get("action"),
+                )
 
         state["content_strategy"] = final_data
         return state
+
+    @staticmethod
+    def _merge_brand_strategy_provenance(*groups: Any) -> List[Dict[str, Any]]:
+        """Combine provenance passes without losing or repeating decisions."""
+        merged: List[Dict[str, Any]] = []
+        seen = set()
+        for group in groups:
+            if not isinstance(group, list):
+                continue
+            for item in group:
+                if not isinstance(item, dict):
+                    continue
+                key = (
+                    item.get("signal"),
+                    item.get("category"),
+                    item.get("source"),
+                    item.get("allowed_use"),
+                    item.get("brand_claim_allowed"),
+                    item.get("action"),
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
+                merged.append(dict(item))
+        return merged
 
     def _apply_dynamic_section_role_overrides(self, strategy: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
         """Applies dynamic overrides to the section_role_map based on content context."""
@@ -908,6 +1008,160 @@ class StrategyService:
 
     def _build_brand_emotional_trigger(self) -> str:
         return "Confidence from understanding the options clearly and avoiding the wrong fit."
+
+    def _strategy_sensitive_categories(self, text: str) -> List[str]:
+        value = self._normalize_token(text)
+        categories = []
+        patterns = {
+            "testimonials": (
+                r"\b(?:testimonials?|customer reviews?|client reviews?|customer stories|client experiences?)\b|"
+                r"(?:شهادات العملاء|تجارب العملاء|تجارب عملاء|آراء العملاء|تقييمات العملاء)"
+            ),
+            "awards": (
+                r"\b(?:award-winning|awards?|winner|awarded)\b|"
+                r"(?:جائزة|جوائز|حائز|فائز)"
+            ),
+            "certifications": (
+                r"\b(?:certified|certification|accredited|licensed|iso\s*\d*)\b|"
+                r"(?:اعتماد|معتمد|مرخص|شهادة مهنية|شهادة اعتماد)"
+            ),
+            "partnerships": (
+                r"\b(?:official partner|certified partner|partnerships?|partner program)\b|"
+                r"(?:شريك رسمي|شريك معتمد|شراكة|شراكات)"
+            ),
+            "brand_pricing": (
+                r"\b(?:pricing examples?|brand pricing|package tiers?|prices? start|starting at)\b|"
+                r"(?:أسعار البراند|أسعار الشركة|باقات الشركة|أسعار تبدأ|تبدأ الأسعار)"
+            ),
+            "local_presence": (
+                r"\b(?:local presence|local office|local branch|local team|local support|"
+                r"market expertise|understands? (?:the )?local market)\b|"
+                r"(?:حضور محلي|مكتب محلي|فرع محلي|فريق محلي|دعم محلي|"
+                r"خبرة في السوق|فهم السوق|فهم احتياجات العملاء في)"
+            ),
+            "projects": r"\b(?:projects?|portfolio|case studies?|case study)\b|(?:مشروع|مشاريع|أعمال|نماذج منجزة)",
+        }
+        for category, pattern in patterns.items():
+            if re.search(pattern, value, re.IGNORECASE):
+                categories.append(category)
+        return categories
+
+    def _serp_mentions_sensitive_category(
+        self,
+        category: str,
+        seo_intelligence: Optional[Dict[str, Any]],
+    ) -> bool:
+        market_insights = (
+            (seo_intelligence or {}).get("market_analysis", {}).get("market_insights", {})
+            if isinstance(seo_intelligence, dict)
+            else {}
+        )
+        blob = json.dumps(market_insights, ensure_ascii=False)
+        return category in self._strategy_sensitive_categories(blob)
+
+    def _apply_brand_evidence_boundaries(
+        self,
+        strategy: Dict[str, Any],
+        boundaries: Optional[Dict[str, Any]],
+        *,
+        primary_keyword: str,
+        area: str,
+        seo_intelligence: Optional[Dict[str, Any]] = None,
+    ) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Keep market observations from becoming unsupported brand proof."""
+        out = dict(strategy or {})
+        limits = dict(boundaries or {})
+        provenance: List[Dict[str, Any]] = []
+        sensitive_keys = {
+            "testimonials",
+            "awards",
+            "certifications",
+            "partnerships",
+            "brand_pricing",
+            "local_presence",
+            "projects",
+        }
+
+        def allowed(category: str) -> bool:
+            return bool(limits.get(category))
+
+        def record(category: str, value: str, action: str, claim_allowed: bool) -> None:
+            source = "brand_pack" if claim_allowed else (
+                "SERP" if self._serp_mentions_sensitive_category(category, seo_intelligence) else "strategy_candidate"
+            )
+            provenance.append({
+                "signal": str(value or "")[:240],
+                "category": category,
+                "source": source,
+                "allowed_use": "brand_proof" if claim_allowed else (
+                    "market_topic" if source == "SERP" else "none"
+                ),
+                "brand_claim_allowed": claim_allowed,
+                "action": action,
+            })
+
+        for field in ("supported_eeat_signals", "supported_differentiators", "supported_proof_points"):
+            retained = []
+            for value in out.get(field, []) or []:
+                text = str(value or "").strip()
+                categories = set(self._strategy_sensitive_categories(text)) & sensitive_keys
+                blocked = [category for category in categories if not allowed(category)]
+                if blocked:
+                    for category in blocked:
+                        record(category, text, f"removed_from_{field}", False)
+                    continue
+                retained.append(text)
+                for category in categories:
+                    record(category, text, f"retained_in_{field}", True)
+            out[field] = retained
+
+        conversion_text = str(out.get("conversion_strategy") or "")
+        conversion_categories = set(self._strategy_sensitive_categories(conversion_text)) & sensitive_keys
+        blocked_conversion = [
+            category for category in conversion_categories
+            if category not in {"projects"} and not allowed(category)
+        ]
+        if blocked_conversion:
+            for category in blocked_conversion:
+                record(category, conversion_text, "replaced_conversion_strategy", False)
+            out["conversion_strategy"] = self._build_brand_conversion_strategy()
+
+        out["local_strategy"] = self._build_brand_local_strategy(primary_keyword, area)
+        provenance.append({
+            "signal": area or "target area",
+            "category": "target_area",
+            "source": "user_input",
+            "allowed_use": "reader_context",
+            "brand_claim_allowed": False,
+            "action": "forced_reader_context_only",
+        })
+
+        roles = dict(out.get("section_role_map") or {})
+        proof_sources = []
+        if allowed("projects"):
+            proof_sources.append("observed projects or case studies")
+        if allowed("testimonials"):
+            proof_sources.append("explicit testimonials")
+        if allowed("awards"):
+            proof_sources.append("explicit awards")
+        if allowed("certifications"):
+            proof_sources.append("explicit certifications")
+        if allowed("brand_pricing"):
+            proof_sources.append("explicit brand pricing")
+        if proof_sources:
+            roles["proof"] = (
+                "Use only source-backed proof enabled by the brand evidence boundaries: "
+                + ", ".join(proof_sources)
+                + ". Do not infer any other proof category from SERP observations."
+            )
+        else:
+            roles["proof"] = (
+                "Keep proof minimal and factual. SERP observations are market topics, "
+                "not brand proof, and must not establish testimonials, awards, "
+                "certifications, partnerships, pricing, or local presence."
+            )
+        out["section_role_map"] = roles
+        return out, provenance
 
     def _contains_forbidden_strategy_phrase(self, text: str, allow_heavy_framing: bool = False) -> bool:
         normalized = self._normalize_token(text)

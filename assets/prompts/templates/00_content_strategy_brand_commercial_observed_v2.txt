@@ -8,12 +8,20 @@ Inputs:
 - SERP Intent Analysis: {{ serp_intent_analysis | default('{}') }}
 - SERP Structural Intelligence: {{ serp_structural_intelligence | default('{}') }}
 - SERP Market Insights: {{ serp_market_insights | default('{}') }}
+- Brand Evidence Boundaries: {{ brand_evidence_boundaries | default('{}') }}
 
 CRITICAL RULE:
 You must NOT introduce any concept that is not strongly supported by:
 - the primary keyword
 OR
 - high-confidence SERP observations
+
+SOURCE BOUNDARY:
+- SERP observations describe market topics and competitor patterns only.
+- SERP observations MUST NOT establish a fact, proof point, capability, or trust signal about the brand.
+- Only categories enabled in `Brand Evidence Boundaries` may appear in `supported_eeat_signals`, `supported_differentiators`, or `supported_proof_points` as brand facts.
+- The target area describes the reader context. It does not prove brand local presence, local expertise, a local office, or local support.
+- If `testimonials`, `awards`, `certifications`, `partnerships`, `brand_pricing`, or `local_presence` is false, do not present that category as supported brand evidence.
 
 IMPORTANT:
 - You are building a minimal, realistic strategy.
@@ -152,10 +160,10 @@ Do not remove a buyer-journey role just because evidence is limited.
 Instead, reduce the depth of that role and keep it factual.
 
 Evidence hierarchy:
-   1. Core recurring topics
-   2. High-confidence SERP observations
-   3. Brand evidence
-   4. Secondary mentions
+   1. Brand Evidence Boundaries for brand facts and proof
+   2. Core recurring topics for market coverage
+   3. High-confidence SERP observations for market guidance
+   4. Secondary mentions for optional market context
 Weak signals must never create:
 - proof sections
 - differentiation sections

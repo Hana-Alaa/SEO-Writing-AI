@@ -364,7 +364,7 @@ class AsyncWorkflowController:
                     0,
                     output_data=final_output,
                 )
-            state["workflow_logger"].export_csv()
+            state["workflow_logger"].export_csv(state=state)
             state["workflow_logger"].export_diagnostic_report(state)
 
         return final_output
@@ -557,7 +557,8 @@ class AsyncWorkflowController:
         from src.services.brand_evidence_service import (
             get_empty_brand_offer_contract,
             build_brand_offer_contract,
-            build_brand_generation_guardrails
+            build_brand_generation_guardrails,
+            build_brand_evidence_boundaries,
         )
         
         # 1. Same-domain defensive crawl enrichment
@@ -689,6 +690,54 @@ class AsyncWorkflowController:
                 "trust_page_urls": [],
                 "confidence": "low",
             }
+
+        # 4e. Freeze source-qualified strategy boundaries after all page evidence
+        # representations are available, then rebuild the contract/guardrails from
+        # the same final evidence view.
+        try:
+            state["brand_evidence_boundaries"] = build_brand_evidence_boundaries(state)
+            contract = build_brand_offer_contract(state)
+            state["brand_offer_contract"] = contract
+            guardrails = build_brand_generation_guardrails(state)
+            state["brand_generation_guardrails"] = guardrails
+            state["brand_guardrail_context"] = (
+                "\n[BRAND GENERATION GUARDRAILS - DO NOT TREAT AS BRAND DESCRIPTION]\n"
+                f"- Brand confidence: {guardrails.get('brand_confidence', 'low')}\n"
+                f"- Brand usage mode: {guardrails.get('brand_usage_mode', 'soft_context_only')}\n"
+                f"- Allowed brand claims: {', '.join(guardrails.get('allowed_brand_claims', []))}\n"
+                f"- Allowed conversion actions: {', '.join(guardrails.get('allowed_conversion_actions', []))}\n"
+                f"- Forbidden brand claims: {', '.join(guardrails.get('forbidden_brand_claims', []))}\n"
+                f"- Brand section policy: {guardrails.get('brand_section_policy', 'do_not_create_dedicated_brand_proof_or_why_choose_sections')}\n"
+            )
+            boundaries = state["brand_evidence_boundaries"]
+            logger.info(
+                "[brand_evidence_boundaries] projects=%s testimonials=%s awards=%s "
+                "certifications=%s partnerships=%s pricing=%s local_presence=%s",
+                boundaries.get("projects"),
+                boundaries.get("testimonials"),
+                boundaries.get("awards"),
+                boundaries.get("certifications"),
+                boundaries.get("partnerships"),
+                boundaries.get("brand_pricing"),
+                boundaries.get("local_presence"),
+            )
+        except Exception as e:
+            logger.warning("Failed to build final brand evidence boundaries: %s", e)
+            state["brand_evidence_boundaries"] = {
+                "services": False,
+                "projects": False,
+                "process": False,
+                "testimonials": False,
+                "awards": False,
+                "certifications": False,
+                "partnerships": False,
+                "brand_pricing": False,
+                "local_presence": False,
+                "explicit_geography": [],
+                "guarantees": False,
+                "delivery_timelines": False,
+                "evidence_sources": {},
+            }
         self._activate_brand_evidence_failure_mode_if_needed(state)
 
         # 3b. Build Writing Brief & Brief Context (Phase 1.6)
@@ -711,6 +760,7 @@ class AsyncWorkflowController:
             f"| conversion_actions_count={len(contract.get('conversion_actions', []))} "
             f"| missing_evidence={missing[:3]}"
         )
+        self._stamp_brand_evidence_snapshot(state, "initial_brand_discovery")
         
         return state
 
@@ -817,6 +867,52 @@ class AsyncWorkflowController:
         )
         return state
 
+    def _brand_ground_truth_catalog_lines(self, state: Dict[str, Any]) -> List[str]:
+        from src.services.brand_evidence_service import format_brand_ground_truth_catalog_lines
+
+        return format_brand_ground_truth_catalog_lines(state)
+
+    def _record_ground_truth_consumption(self, state: Dict[str, Any], layer: str) -> Dict[str, Any]:
+        """Step 3A-1: stamp + log that `layer` had the in-state ground truth available.
+
+        Availability/logging only - this never changes prompts or decisions.
+        """
+        try:
+            from src.services.brand_evidence_service import record_ground_truth_consumption
+
+            record = record_ground_truth_consumption(state, layer)
+            logger.info(
+                "[ground_truth] %s_ground_truth_used=%s chars=%s",
+                layer,
+                str(record.get("used")).lower(),
+                record.get("markdown_chars", 0),
+            )
+            return record
+        except Exception as exc:
+            logger.warning("[ground_truth] consumption record failed for %s: %s", layer, exc)
+            return {"used": False, "markdown_chars": 0, "catalog_counts": {}}
+
+    def _format_ground_truth_for_writer(self, state: Dict[str, Any], max_chars: int = 8000) -> str:
+        """Return a clearly-delimited, length-bounded Brand Ground Truth block.
+
+        Writer-only additive context (Step 3B parallel). Returns "" when no ground
+        truth exists so the writer simply keeps the legacy knowledge pack.
+        """
+        ground_truth_md = state.get("brand_ground_truth")
+        if not isinstance(ground_truth_md, str) or not ground_truth_md.strip():
+            return ""
+        body = ground_truth_md.strip()
+        if len(body) > max_chars:
+            body = body[:max_chars].rstrip() + "\n... [truncated]"
+        return (
+            "[BRAND GROUND TRUTH - SINGLE SOURCE OF TRUTH]\n"
+            "Consolidated, page-traceable brand facts. Use ONLY facts shown here or in "
+            "the page-by-page pack above. Do not invent services, projects, pricing, or "
+            "locations that are not present.\n"
+            f"{body}\n"
+            "[END BRAND GROUND TRUTH]"
+        )
+
     def _format_brand_page_knowledge_pack_for_prompt(self, state: Dict[str, Any], max_chars: Optional[int] = None) -> str:
         """Return the full cleaned page-by-page brand knowledge for every section prompt."""
         briefs = [
@@ -826,6 +922,7 @@ class AsyncWorkflowController:
         lines: List[str] = []
         lines.append("[BRAND PAGE KNOWLEDGE PACK - PAGE BY PAGE]")
         lines.append("Use this as page-scoped context only. Do not invent facts not present here.")
+        lines.extend(self._brand_ground_truth_catalog_lines(state))
         if state.get("brand_evidence_failure_mode"):
             lines.append(
                 "BRAND EVIDENCE FAILURE MODE: no usable crawled brand page text was available. "
@@ -885,6 +982,12 @@ class AsyncWorkflowController:
                 f"- Crawled URLs count: {len(crawl_report.get('crawled_urls') or [])}",
                 f"- Usable page narrative briefs: {len(briefs)}",
             ]
+            # 3E-2: surface the synced Brand Service Catalog (cards -> pack) so the
+            # saved pack matches exactly what strategy/outline/writer prompts see.
+            try:
+                lines.extend(self._brand_ground_truth_catalog_lines(state))
+            except Exception as catalog_error:
+                logger.warning("[brand_service_catalog] failed to render in saved pack: %s", catalog_error)
             if not briefs:
                 lines.extend(
                     [
@@ -942,7 +1045,232 @@ class AsyncWorkflowController:
         except Exception as e:
             logger.warning("[brand_page_knowledge_pack] failed to save: %s", e)
             state["brand_page_knowledge_pack_context"] = self._format_brand_page_knowledge_pack_for_prompt(state)
+        # Step 1 of Brand Ground Truth consolidation: emit one evidence-rich,
+        # page-by-page report. This is produced/saved only; it does not yet replace
+        # what strategy/outline/writer/validator consume.
+        self._persist_brand_ground_truth_report(state)
         return state
+
+    def _persist_brand_ground_truth_report(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Save the consolidated single-source Brand Discovery report to the output dir."""
+        output_dir = state.get("output_dir") or self.work_dir
+        try:
+            from src.services.brand_evidence_service import (
+                build_brand_ground_truth_data,
+                build_brand_ground_truth_report,
+            )
+
+            os.makedirs(output_dir, exist_ok=True)
+            report_path = os.path.join(output_dir, "brand_ground_truth.md")
+            report = build_brand_ground_truth_report(state)
+            with open(report_path, "w", encoding="utf-8") as f:
+                f.write(report)
+            state["brand_ground_truth_path"] = report_path
+            # Step 3A-0: expose the single source of truth IN state (markdown for
+            # prompts, structured data for code/validator). Built from the same
+            # inputs as the report, so the two stay in sync. No layer consumes these
+            # yet - this only makes them available for Step 3A-1.
+            state["brand_ground_truth"] = report
+            try:
+                ground_truth_data = build_brand_ground_truth_data(state)
+            except Exception as data_err:
+                ground_truth_data = {}
+                logger.warning("[brand_ground_truth_data] failed to build: %s", data_err)
+            state["brand_ground_truth_data"] = ground_truth_data
+            catalogs = ground_truth_data.get("catalogs") or {}
+            logger.info(
+                "[brand_ground_truth] saved=%s chars=%s state_keys=brand_ground_truth,brand_ground_truth_data "
+                "pages=%s services=%s technologies=%s projects=%s pricing_offers=%s",
+                report_path,
+                len(report),
+                ground_truth_data.get("pages_analyzed", 0),
+                len(catalogs.get("services") or []),
+                len(catalogs.get("technologies") or []),
+                len(catalogs.get("projects") or []),
+                len(catalogs.get("pricing_offers") or []),
+            )
+        except Exception as e:
+            logger.warning("[brand_ground_truth] failed to save: %s", e)
+        return state
+
+    def _brand_evidence_source_fingerprint(self, state: Dict[str, Any]) -> str:
+        """Hash the raw brand inputs that all derived evidence objects must reflect."""
+        resources = []
+        for item in state.get("internal_resources") or []:
+            if not isinstance(item, dict):
+                continue
+            semantic_sections = []
+            for section in item.get("semantic_sections") or []:
+                if not isinstance(section, dict):
+                    continue
+                semantic_sections.append({
+                    "heading": section.get("heading"),
+                    "body_text": section.get("body_text"),
+                    "url": section.get("url"),
+                    "page_type": section.get("page_type"),
+                })
+            resources.append({
+                "url": item.get("link") or item.get("url"),
+                "title": item.get("title"),
+                "page_type": item.get("page_type"),
+                "page_text_full": item.get("page_text_full"),
+                "page_text": item.get("page_text"),
+                "text": item.get("text"),
+                "semantic_sections": semantic_sections,
+            })
+        payload = {
+            "brand_url": state.get("brand_url"),
+            "brand_context": state.get("brand_context"),
+            "resources": resources,
+        }
+        encoded = json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        ).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()[:20]
+
+    def _format_brand_guardrail_context(self, guardrails: Dict[str, Any]) -> str:
+        """Render the compact diagnostic guardrail context from one current snapshot."""
+        return (
+            "\n[BRAND GENERATION GUARDRAILS - DO NOT TREAT AS BRAND DESCRIPTION]\n"
+            f"- Brand confidence: {guardrails.get('brand_confidence', 'low')}\n"
+            f"- Brand usage mode: {guardrails.get('brand_usage_mode', 'soft_context_only')}\n"
+            f"- Allowed brand claims: {', '.join(guardrails.get('allowed_brand_claims', []))}\n"
+            f"- Allowed conversion actions: {', '.join(guardrails.get('allowed_conversion_actions', []))}\n"
+            f"- Forbidden brand claims: {', '.join(guardrails.get('forbidden_brand_claims', []))}\n"
+            f"- Brand section policy: {guardrails.get('brand_section_policy', 'do_not_create_dedicated_brand_proof_or_why_choose_sections')}\n"
+        )
+
+    def _stamp_brand_evidence_snapshot(self, state: Dict[str, Any], reason: str) -> Dict[str, Any]:
+        """Mark all derived evidence objects as belonging to the same raw-source revision."""
+        fingerprint = self._brand_evidence_source_fingerprint(state)
+        revision = int(state.get("brand_evidence_revision") or 0) + 1
+        state["brand_evidence_revision"] = revision
+        state["brand_evidence_source_fingerprint"] = fingerprint
+        state["brand_evidence_derived_source_fingerprint"] = fingerprint
+        for key in (
+            "brand_page_knowledge_pack",
+            "brand_evidence_inventory",
+            "brand_evidence_boundaries",
+            "brand_offer_contract",
+            "brand_generation_guardrails",
+            "brand_writing_brief",
+        ):
+            state[f"{key}_revision"] = revision
+        history = list(state.get("brand_evidence_refresh_history") or [])
+        history.append({
+            "revision": revision,
+            "reason": reason,
+            "fingerprint": fingerprint,
+            "resources": len(state.get("internal_resources") or []),
+            "chunks": len(state.get("brand_source_chunks") or []),
+            "narrative_briefs": len(state.get("brand_page_narrative_briefs") or []),
+        })
+        state["brand_evidence_refresh_history"] = history[-12:]
+        return state
+
+    async def _refresh_brand_derived_evidence_state(
+        self,
+        state: Dict[str, Any],
+        *,
+        reason: str,
+        rebuild_evidence_map: bool = True,
+    ) -> Dict[str, Any]:
+        """Rebuild every derived brand object transactionally from current crawled pages."""
+        from src.services.brand_evidence_service import (
+            build_brand_evidence_boundaries,
+            build_brand_evidence_cards,
+            build_brand_evidence_inventory,
+            build_brand_generation_guardrails,
+            build_brand_offer_contract,
+            build_brand_page_briefs,
+            build_brand_page_narrative_briefs,
+            build_brand_pages_index,
+            build_brand_source_chunks,
+            build_brand_writing_brief,
+            format_brand_writing_brief_context,
+        )
+
+        working = dict(state)
+        working["brand_evidence_refresh_history"] = list(
+            state.get("brand_evidence_refresh_history") or []
+        )
+        if rebuild_evidence_map:
+            working = await self.brand_evidence_service.run_brand_evidence_map(working)
+
+        working["brand_evidence_cards"] = build_brand_evidence_cards(working)
+        working["brand_pages_index"] = build_brand_pages_index(working)
+        working["brand_source_chunks"] = build_brand_source_chunks(working)
+        working["brand_page_briefs"] = build_brand_page_briefs(working)
+        working["brand_page_narrative_briefs"] = build_brand_page_narrative_briefs(working)
+        self._activate_brand_evidence_failure_mode_if_needed(working)
+        self._persist_brand_page_knowledge_pack(working)
+        working["brand_evidence_inventory"] = build_brand_evidence_inventory(working)
+        working["brand_evidence_boundaries"] = build_brand_evidence_boundaries(working)
+        working["brand_offer_contract"] = build_brand_offer_contract(working)
+        working["brand_generation_guardrails"] = build_brand_generation_guardrails(working)
+        working["brand_guardrail_context"] = self._format_brand_guardrail_context(
+            working["brand_generation_guardrails"]
+        )
+        working["brand_writing_brief"] = build_brand_writing_brief(working)
+        working["brand_writing_brief_context"] = format_brand_writing_brief_context(
+            working["brand_writing_brief"]
+        )
+        self._activate_brand_evidence_failure_mode_if_needed(working)
+        self._stamp_brand_evidence_snapshot(working, reason)
+
+        if "brand_evidence_failure_mode" not in working:
+            state.pop("brand_evidence_failure_mode", None)
+        state.update(working)
+        logger.info(
+            "[brand_evidence_refresh] revision=%s reason=%s resources=%s chunks=%s "
+            "narrative_briefs=%s projects=%s pricing=%s local_presence=%s",
+            state.get("brand_evidence_revision"),
+            reason,
+            len(state.get("internal_resources") or []),
+            len(state.get("brand_source_chunks") or []),
+            len(state.get("brand_page_narrative_briefs") or []),
+            state.get("brand_evidence_boundaries", {}).get("projects"),
+            state.get("brand_evidence_boundaries", {}).get("brand_pricing"),
+            state.get("brand_evidence_boundaries", {}).get("local_presence"),
+        )
+        return state
+
+    async def _ensure_brand_evidence_state_current(
+        self,
+        state: Dict[str, Any],
+        *,
+        reason: str,
+    ) -> Dict[str, Any]:
+        """Refresh stale derived evidence before a downstream consumer can use it."""
+        if not state.get("brand_url"):
+            return state
+        current = self._brand_evidence_source_fingerprint(state)
+        derived = str(state.get("brand_evidence_derived_source_fingerprint") or "")
+        required = (
+            "brand_page_knowledge_pack_context",
+            "brand_evidence_inventory",
+            "brand_evidence_boundaries",
+            "brand_offer_contract",
+            "brand_generation_guardrails",
+        )
+        missing = [key for key in required if key not in state]
+        if current == derived and not missing:
+            return state
+        logger.info(
+            "[brand_evidence_stale] reason=%s current=%s derived=%s missing=%s",
+            reason,
+            current,
+            derived or "none",
+            missing,
+        )
+        return await self._refresh_brand_derived_evidence_state(
+            state,
+            reason=reason,
+            rebuild_evidence_map=True,
+        )
 
 
     def _extract_observed_pricing_signals(self, state: Dict[str, Any]) -> List[str]:
@@ -1240,6 +1568,7 @@ class AsyncWorkflowController:
                 compact_summary = ""
                 guardrails_context = ""
             inventory_context = self._format_brand_evidence_inventory_context(state)
+            self._record_ground_truth_consumption(state, "outline")
             h_brand_advantages = seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("brand_advantages", [])
             h_writing_blueprint = seo_intelligence.get("market_analysis", {}).get("market_insights", {}).get("writing_blueprint", "")
             h_seo_intelligence = seo_intelligence
@@ -1569,6 +1898,13 @@ class AsyncWorkflowController:
             )
             sec.setdefault("assigned_keywords", [])
 
+        # The raw outline promises determine which extra brand pages are needed.
+        # Crawl and refresh evidence before any evidence-based heading downgrade,
+        # otherwise the outline is judged against the older pre-outline snapshot.
+        state["outline"] = outline
+        state = await self._run_post_outline_brand_targeted_crawl(state, outline)
+        outline = state.get("outline", outline)
+
         outline = self._normalize_outline_with_brand_evidence_inventory(outline, state)
         outline = self._ensure_commercial_buyer_journey_coverage(outline, state)
         for idx, sec in enumerate(outline):
@@ -1657,8 +1993,6 @@ class AsyncWorkflowController:
             section["assigned_links"] = []
 
         state["outline"] = outline
-        state = await self._run_post_outline_brand_targeted_crawl(state, outline)
-        outline = state.get("outline", outline)
         present_types = {sec.get("section_type") for sec in outline}
 
         user_urls = state.get("input_data", {}).get("urls", [])
@@ -2160,24 +2494,10 @@ class AsyncWorkflowController:
                 "brand_mode": "brand_light",
             },
             {
-                "role": "features_included",
-                "coverage_role": "features_or_included",
-                "section_type": "features",
-                "job": "Show what the buyer gets or should check, without repeating the service catalog.",
-                "brand_mode": "brand_light",
-            },
-            {
                 "role": "evaluation_criteria",
                 "coverage_role": "custom_domain_topic",
                 "section_type": "core",
                 "job": "Give practical decision criteria that help the reader compare providers, products, or options.",
-                "brand_mode": "neutral_market",
-            },
-            {
-                "role": "comparison",
-                "coverage_role": "comparison",
-                "section_type": "comparison",
-                "job": "Compare genuinely different options or decision paths; avoid placeholder tables.",
                 "brand_mode": "neutral_market",
             },
             {
@@ -2238,7 +2558,22 @@ class AsyncWorkflowController:
                 }
             )
 
-        optional_roles: List[Dict[str, str]] = []
+        optional_roles: List[Dict[str, str]] = [
+            {
+                "role": "features_included",
+                "use_when": (
+                    "The offer section does not already explain concrete inclusions, "
+                    "deliverables, or capabilities as a distinct angle."
+                ),
+            },
+            {
+                "role": "comparison",
+                "use_when": (
+                    "There are genuinely different options or decision paths to compare. "
+                    "Otherwise merge comparison guidance into evaluation criteria."
+                ),
+            },
+        ]
         if has_any("security", "secure", "speed", "performance", "privacy", "compliance", "أمان", "حماية", "سرعة", "أداء"):
             optional_roles.append({
                 "role": "security_performance",
@@ -2670,6 +3005,7 @@ class AsyncWorkflowController:
             "evidence_expectation": evidence_expectation,
             "table_policy": self._section_table_policy(section, state),
             "project_usage": "proof_only" if role == "proof" else ("light" if role == "brand_differentiator" else "none"),
+            "source_heading": str(section.get("heading_text") or "").strip(),
         }
 
     def _merge_duplicate_commercial_buyer_questions(
@@ -2796,7 +3132,7 @@ class AsyncWorkflowController:
         outline: List[Dict[str, Any]],
         state: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
-        """Fill missing commercial buyer-journey roles without using industry-specific templates."""
+        """Cover the buyer journey without turning its role map into a fixed H2 template."""
         if str(state.get("content_type") or "").lower() != "brand_commercial":
             return outline
 
@@ -2813,24 +3149,257 @@ class AsyncWorkflowController:
             role for role in self._commercial_optional_topic_factors(state)
             if role not in {"security_performance", "technology_or_capability", "business_impact"}
         ]
-        existing_h2 = sum(1 for section in outline if (section.get("heading_level") or "").upper() == "H2")
         for role in optional_roles:
-            if existing_h2 >= 10:
-                break
             if role not in required_roles:
                 required_roles.append(role)
-                existing_h2 += 1
 
         prepared = [dict(section) for section in outline]
 
         def role_for(section: Dict[str, Any]) -> str:
             return str(section.get("commercial_section_role") or self._commercial_section_role_for_section(section, state)).lower()
 
+        for idx, section in enumerate(prepared):
+            self._apply_commercial_section_role(section, state, idx, len(prepared))
+
+        def merge_existing_section(
+            primary: Dict[str, Any],
+            secondary: Dict[str, Any],
+            covered_role: str,
+            reason: str,
+        ) -> None:
+            primary.setdefault("merged_coverage_roles", [])
+            if covered_role not in primary["merged_coverage_roles"]:
+                primary["merged_coverage_roles"].append(covered_role)
+            primary.setdefault("must_include_details", [])
+            secondary_heading = str(secondary.get("heading_text") or "").strip()
+            if secondary_heading:
+                note = (
+                    f"Cover '{secondary_heading}' as a distinct angle inside this section; "
+                    "do not repeat it as another H2."
+                )
+                if note not in primary["must_include_details"]:
+                    primary["must_include_details"].append(note)
+            primary.setdefault("subheadings", [])
+            for subheading in secondary.get("subheadings", []) or []:
+                text = self._subheading_text(subheading)
+                if text and text not in primary["subheadings"]:
+                    primary["subheadings"].append(text)
+            state.setdefault("commercial_coverage_report", []).append({
+                "role": covered_role,
+                "action": "merged_existing",
+                "reason": reason,
+                "removed_section_id": secondary.get("section_id"),
+                "target_section_id": primary.get("section_id"),
+            })
+            logger.info(
+                "[commercial_coverage_gate] Merged existing role '%s' from '%s' into '%s' (%s).",
+                covered_role,
+                secondary.get("heading_text", ""),
+                primary.get("heading_text", ""),
+                reason,
+            )
+
+        service_section = next(
+            (section for section in prepared if role_for(section) == "service_explanation"),
+            None,
+        )
+        if service_section:
+            service_blob = " ".join([
+                str(service_section.get("heading_text") or ""),
+                " ".join(
+                    self._subheading_text(item)
+                    for item in service_section.get("subheadings", []) or []
+                ),
+            ])
+            includes_scope = bool(re.search(
+                r"\b(?:include|includes|included|inclusions|what you get|deliverables|scope)\b|"
+                r"(?:يشمل|تتضمن|يتضمن|ما تحصل عليه|نطاق الخدمة)",
+                service_blob,
+                re.IGNORECASE,
+            ))
+            if includes_scope:
+                feature_sections = [
+                    section for section in prepared
+                    if role_for(section) == "features_included"
+                ]
+                for feature_section in feature_sections:
+                    merge_existing_section(
+                        service_section,
+                        feature_section,
+                        "features_included",
+                        "offer_section_already_covers_inclusions",
+                    )
+                if feature_sections:
+                    prepared = [
+                        section for section in prepared
+                        if section not in feature_sections
+                    ]
+
+        comparison_section = next(
+            (section for section in prepared if role_for(section) == "comparison"),
+            None,
+        )
+        if comparison_section:
+            evaluation_sections = [
+                section for section in prepared
+                if role_for(section) == "evaluation_criteria"
+            ]
+            for evaluation_section in evaluation_sections:
+                detail_count = len(evaluation_section.get("must_include_details", []) or [])
+                subheading_count = len(evaluation_section.get("subheadings", []) or [])
+                is_auto = str(evaluation_section.get("section_id") or "").startswith("sec_auto_")
+                if is_auto or (detail_count < 2 and subheading_count < 2):
+                    merge_existing_section(
+                        comparison_section,
+                        evaluation_section,
+                        "evaluation_criteria",
+                        "comparison_already_covers_decision_criteria",
+                    )
+                    prepared.remove(evaluation_section)
+
+        prepared = self._merge_commercial_decision_review_sections(prepared, state)
+        prepared = self._merge_duplicate_commercial_buyer_questions(prepared, state)
+
+        for idx, section in enumerate(prepared):
+            self._apply_commercial_section_role(section, state, idx, len(prepared))
+
         def has_role(role: str) -> bool:
             return any(role_for(section) == role for section in prepared)
-    
+
+        def merged_roles(section: Dict[str, Any]) -> set:
+            return {
+                str(value or "").lower()
+                for value in section.get("merged_coverage_roles", []) or []
+                if str(value or "").strip()
+            }
+
         def role_is_already_covered(role: str) -> bool:
-            return has_role(role)
+            if has_role(role):
+                return True
+            if any(role in merged_roles(section) for section in prepared):
+                return True
+            if role == "evaluation_criteria" and has_role("comparison"):
+                comparison = next(
+                    section for section in prepared
+                    if role_for(section) == "comparison"
+                )
+                add_merged_role(
+                    comparison,
+                    role,
+                    "Include concise decision criteria inside the comparison; "
+                    "do not add a separate evaluation H2 unless it has a distinct evidence-backed gap.",
+                )
+                return True
+            return False
+
+        def h2_count() -> int:
+            return sum(
+                1
+                for section in prepared
+                if (section.get("heading_level") or "").upper() == "H2"
+            )
+
+        def add_merged_role(target: Dict[str, Any], role: str, note: str) -> None:
+            target.setdefault("merged_coverage_roles", [])
+            if role not in target["merged_coverage_roles"]:
+                target["merged_coverage_roles"].append(role)
+            target.setdefault("must_include_details", [])
+            if note not in target["must_include_details"]:
+                target["must_include_details"].append(note)
+            state.setdefault("commercial_coverage_report", []).append({
+                "role": role,
+                "action": "merged",
+                "target_section_id": target.get("section_id"),
+                "target_heading": target.get("heading_text", ""),
+            })
+            logger.info(
+                "[commercial_coverage_gate] Merged missing role '%s' into existing H2: %s",
+                role,
+                target.get("heading_text", ""),
+            )
+
+        def try_merge_role(role: str) -> bool:
+            target_roles = {
+                "features_included": ("service_explanation",),
+                "evaluation_criteria": ("comparison", "features_included", "service_explanation"),
+                "comparison": ("evaluation_criteria",),
+                "brand_differentiator": ("proof", "service_explanation"),
+                "proof": ("brand_differentiator",),
+                "cost_value": ("comparison", "evaluation_criteria"),
+            }.get(role, ())
+            target = next(
+                (
+                    section
+                    for target_role in target_roles
+                    for section in prepared
+                    if role_for(section) == target_role
+                ),
+                None,
+            )
+            if not target:
+                return False
+            notes = {
+                "features_included": (
+                    "Also explain the concrete inclusions or deliverables here; "
+                    "do not create a second section that repeats the offer scope."
+                ),
+                "evaluation_criteria": (
+                    "Include concise decision criteria within this section without "
+                    "adding a separate evaluation H2."
+                ),
+                "comparison": (
+                    "Compare only genuinely different options inside this section; "
+                    "skip a standalone comparison when there is no useful contrast."
+                ),
+                "brand_differentiator": (
+                    "Explain the source-backed brand fit here without repeating the same evidence."
+                ),
+                "proof": (
+                    "Support this section with source-backed proof enabled by the brand evidence boundaries."
+                ),
+                "cost_value": (
+                    "Include concise market-level cost or value guidance here; "
+                    "do not imply brand pricing without explicit evidence."
+                ),
+            }
+            add_merged_role(target, role, notes[role])
+            return True
+
+        def make_room_for_terminal_role(role: str) -> bool:
+            if role not in {"faq", "cta"}:
+                return False
+            candidate = next(
+                (
+                    section for section in reversed(prepared)
+                    if role_for(section) == "informational"
+                    and (section.get("heading_level") or "").upper() == "H2"
+                ),
+                None,
+            )
+            target = next(
+                (
+                    section for section in prepared
+                    if role_for(section) in {
+                        "evaluation_criteria",
+                        "features_included",
+                        "service_explanation",
+                        "comparison",
+                        "brand_differentiator",
+                        "proof",
+                    }
+                ),
+                None,
+            )
+            if not candidate or not target or candidate is target:
+                return False
+            merge_existing_section(
+                target,
+                candidate,
+                "informational",
+                f"made_room_for_{role}",
+            )
+            prepared.remove(candidate)
+            return True
 
         def insert_before_terminal(new_section: Dict[str, Any], role: str) -> None:
             if role == "cta":
@@ -2867,6 +3436,20 @@ class AsyncWorkflowController:
                     continue
             if role_is_already_covered(role):
                 continue
+            if try_merge_role(role):
+                continue
+            if h2_count() >= 8 and not make_room_for_terminal_role(role):
+                state.setdefault("commercial_coverage_report", []).append({
+                    "role": role,
+                    "action": "skipped_max_h2",
+                    "h2_count": h2_count(),
+                })
+                logger.info(
+                    "[commercial_coverage_gate] Skipped role '%s'; outline already has %s H2 sections.",
+                    role,
+                    h2_count(),
+                )
+                continue
             section_type = self._commercial_role_section_type(role)
             heading_level = "H2"
             section = {
@@ -2895,6 +3478,12 @@ class AsyncWorkflowController:
                 section["requires_primary_keyword"] = True
 
             insert_before_terminal(section, role)
+            state.setdefault("commercial_coverage_report", []).append({
+                "role": role,
+                "action": "added",
+                "section_id": section["section_id"],
+                "heading": section["heading_text"],
+            })
             logger.info("[commercial_coverage_gate] Added missing role '%s' as H2: %s", role, section["heading_text"])
 
         prepared = self._merge_commercial_decision_review_sections(prepared, state)
@@ -3014,29 +3603,20 @@ class AsyncWorkflowController:
                 "new_urls": sorted(url for url in (after_urls - before_urls) if url),
                 "max_pages": max_pages,
             }
-            from src.services.brand_evidence_service import (
-                build_brand_evidence_cards,
-                build_brand_evidence_inventory,
-                build_brand_page_briefs,
-                build_brand_page_narrative_briefs,
-                build_brand_pages_index,
-                build_brand_source_chunks,
+            state = await self._refresh_brand_derived_evidence_state(
+                state,
+                reason="post_outline_targeted_crawl",
+                rebuild_evidence_map=True,
             )
-            state["brand_evidence_cards"] = build_brand_evidence_cards(state)
-            state["brand_pages_index"] = build_brand_pages_index(state)
-            state["brand_source_chunks"] = build_brand_source_chunks(state)
-            state["brand_page_briefs"] = build_brand_page_briefs(state)
-            state["brand_page_narrative_briefs"] = build_brand_page_narrative_briefs(state)
-            state["brand_evidence_inventory"] = build_brand_evidence_inventory(state)
-            self._activate_brand_evidence_failure_mode_if_needed(state)
-            self._persist_brand_page_knowledge_pack(state)
             logger.info(
-                "[post_outline_brand_crawl] requirements=%s new_urls=%s chunks=%s briefs=%s narrative_briefs=%s",
+                "[post_outline_brand_crawl] requirements=%s new_urls=%s chunks=%s briefs=%s "
+                "narrative_briefs=%s revision=%s",
                 active_requirements,
                 len(state["post_outline_brand_crawl_report"]["new_urls"]),
                 len(state.get("brand_source_chunks", [])),
                 len(state.get("brand_page_briefs", [])),
                 len(state.get("brand_page_narrative_briefs", [])),
+                state.get("brand_evidence_revision"),
             )
         except Exception as e:
             logger.warning("[post_outline_brand_crawl] skipped due to error: %s", e)
@@ -3240,11 +3820,21 @@ class AsyncWorkflowController:
             return "brand_differentiator"
         return "informational"
 
-    def _apply_commercial_section_role(self, section: Dict[str, Any], state: Dict[str, Any], index: int, total: int) -> None:
+    def _apply_commercial_section_role(
+        self,
+        section: Dict[str, Any],
+        state: Dict[str, Any],
+        index: int,
+        total: int,
+        role_override: Optional[str] = None,
+    ) -> None:
         """Persist commercial funnel role and compatible legacy coverage_role."""
         if str(state.get("content_type") or "").lower() != "brand_commercial":
             return
-        role = self._commercial_section_role_for_section(section, state, index=index, total=total)
+        role = str(
+            role_override
+            or self._commercial_section_role_for_section(section, state, index=index, total=total)
+        ).lower()
         section["commercial_section_role"] = role
         role_to_coverage = {
             "intro": "introduction",
@@ -3266,6 +3856,259 @@ class AsyncWorkflowController:
             section["coverage_role"] = role_to_coverage[role]
         section["brand_usage_policy"] = self._brand_usage_policy_for_section(section, state)
         section["section_intent_snapshot"] = self._build_section_intent_snapshot(section, state)
+
+    def _commercial_role_for_rewritten_heading(
+        self,
+        section: Dict[str, Any],
+        state: Dict[str, Any],
+        heading: str,
+        index: int = 0,
+        total: int = 1,
+    ) -> str:
+        """Classify a rewritten heading without letting stale role metadata win."""
+        structural_type = str(section.get("section_type") or "").lower()
+        if structural_type in {"introduction", "intro"} or str(section.get("heading_level") or "").upper() == "INTRO":
+            return "intro"
+        if structural_type == "faq":
+            return "faq"
+        if structural_type == "conclusion":
+            return "cta"
+
+        probe = dict(section)
+        probe["heading_text"] = str(heading or "").strip()
+        probe["section_type"] = "core"
+        probe["coverage_role"] = "custom_domain_topic"
+        for key in (
+            "commercial_section_role",
+            "section_intent_snapshot",
+            "section_contract",
+            "brand_usage_policy",
+            "_visible_brand_reference",
+        ):
+            probe.pop(key, None)
+
+        heading_blob = probe["heading_text"].casefold()
+        if re.search(
+            r"\b(projects?|portfolio|case stud(?:y|ies)|client examples?)\b|"
+            r"\u0645\u0634\u0627\u0631\u064a\u0639|\u0646\u0645\u0627\u0630\u062c|\u0633\u0627\u0628\u0642\u0629 \u0623\u0639\u0645\u0627\u0644",
+            heading_blob,
+            re.IGNORECASE,
+        ):
+            probe["section_type"] = "proof"
+            probe["taxonomy_axis"] = "brand_projects"
+        else:
+            probe["taxonomy_axis"] = self._generic_taxonomy_axis_for_section(probe)
+
+        return self._commercial_section_role_for_section(
+            probe,
+            state,
+            index=index,
+            total=total,
+        )
+
+    def _section_type_for_commercial_role(self, role: str) -> str:
+        """Return compatible structural metadata for a commercial role."""
+        return {
+            "intro": "introduction",
+            "service_explanation": "offer",
+            "features_included": "features",
+            "brand_differentiator": "differentiation",
+            "proof": "proof",
+            "comparison": "comparison",
+            "process": "process",
+            "cost_value": "pricing",
+            "faq": "faq",
+            "cta": "conclusion",
+        }.get(str(role or "").lower(), "core")
+
+    def _taxonomy_axis_for_commercial_role(self, role: str) -> str:
+        """Return a neutral taxonomy axis before brand-policy enforcement."""
+        return {
+            "service_explanation": "category_or_type",
+            "features_included": "features",
+            "brand_differentiator": "brand_support",
+            "proof": "brand_projects",
+            "comparison": "comparison",
+            "process": "process",
+            "cost_value": "pricing",
+            "faq": "faq",
+            "cta": "conclusion",
+            "evaluation_criteria": "criteria",
+            "security_performance": "criteria",
+            "technology_or_capability": "criteria",
+            "business_impact": "criteria",
+        }.get(str(role or "").lower(), "criteria")
+
+    def _sync_heading_role_contract(
+        self,
+        section: Dict[str, Any],
+        state: Dict[str, Any],
+        old_heading: str,
+        *,
+        outline: Optional[List[Dict[str, Any]]] = None,
+        index: Optional[int] = None,
+        existing_content: str = "",
+        force: bool = False,
+    ) -> Dict[str, Any]:
+        """Atomically align heading-derived role, snapshot, and writer contract."""
+        if str(state.get("content_type") or section.get("content_type") or "").lower() != "brand_commercial":
+            return section.get("heading_contract_sync", {})
+        new_heading = str(section.get("heading_text") or "").strip()
+        old_heading = str(old_heading or "").strip()
+        active_outline = outline if isinstance(outline, list) and outline else state.get("outline", [])
+        if not isinstance(active_outline, list) or not active_outline:
+            active_outline = [section]
+
+        if index is None:
+            index = 0
+            section_id = section.get("section_id") or section.get("id")
+            for candidate_index, candidate in enumerate(active_outline):
+                if candidate is section or (
+                    section_id
+                    and (candidate.get("section_id") or candidate.get("id")) == section_id
+                ):
+                    index = candidate_index
+                    break
+        total = max(len(active_outline), 1)
+
+        current_role = str(section.get("commercial_section_role") or "").lower()
+        old_role = current_role or self._commercial_role_for_rewritten_heading(
+            section,
+            state,
+            old_heading or new_heading,
+            index=index,
+            total=total,
+        )
+        new_role = self._commercial_role_for_rewritten_heading(
+            section,
+            state,
+            new_heading,
+            index=index,
+            total=total,
+        )
+        heading_changed = old_heading != new_heading
+        role_changed = old_role != new_role
+
+        contract_heading = str((section.get("section_contract") or {}).get("source_heading") or "").strip()
+        snapshot_heading = str((section.get("section_intent_snapshot") or {}).get("source_heading") or "").strip()
+        metadata_stale = bool(
+            (contract_heading and contract_heading != new_heading)
+            or (snapshot_heading and snapshot_heading != new_heading)
+            or (current_role and current_role != new_role)
+        )
+        if not (heading_changed or role_changed or metadata_stale or force):
+            return section.get("heading_contract_sync", {})
+
+        if role_changed:
+            section["section_type"] = self._section_type_for_commercial_role(new_role)
+            section["taxonomy_axis"] = self._taxonomy_axis_for_commercial_role(new_role)
+
+        for key in (
+            "section_contract",
+            "section_intent_snapshot",
+            "section_promise",
+            "reader_takeaway",
+            "depth_goal",
+            "practical_decision_value",
+            "semantic_goal",
+            "decision_frame",
+            "content_behavior",
+            "execution_mode",
+            "preferred_axis",
+            "forbidden_taxonomy_axis",
+            "must_include_details",
+            "must_not_repeat",
+        ):
+            section.pop(key, None)
+
+        if role_changed and str(section.get("table_type") or "").startswith("project") and new_role != "proof":
+            section["requires_table"] = False
+            section["table_type"] = "none"
+
+        self._apply_commercial_section_role(
+            section,
+            state,
+            index,
+            total,
+            role_override=new_role,
+        )
+        section["section_contract"] = self._build_section_contract(
+            section,
+            active_outline,
+            index,
+            state,
+        )
+        self._enrich_section_contract(section, active_outline, index, state)
+        self._enforce_commercial_role_contract(section, state)
+        section["section_intent_snapshot"] = self._build_section_intent_snapshot(section, state)
+
+        body_rewrite_required = False
+        if str(existing_content or "").strip() and (heading_changed or role_changed):
+            role_report = self._evaluate_section_role_fulfillment(
+                section,
+                existing_content,
+                state,
+            )
+            body_rewrite_required = bool(
+                role_changed
+                or role_report.get("fulfillment_status") in {"weak", "unsupported"}
+            )
+
+        sync_report = {
+            "old_heading": old_heading,
+            "new_heading": new_heading,
+            "old_role": old_role,
+            "new_role": new_role,
+            "body_rewrite_required": body_rewrite_required,
+        }
+        section["heading_contract_sync"] = sync_report
+        if body_rewrite_required:
+            self._record_section_quality_issue(section, "heading_contract_body_rewrite_required")
+
+        logger.info(
+            "[heading_contract_sync] old_heading=%r new_heading=%r old_role=%s new_role=%s body_rewrite_required=%s",
+            old_heading,
+            new_heading,
+            old_role,
+            new_role,
+            str(body_rewrite_required).lower(),
+        )
+        return sync_report
+
+    def _ensure_heading_role_contract_current(
+        self,
+        section: Dict[str, Any],
+        state: Dict[str, Any],
+        outline: Optional[List[Dict[str, Any]]] = None,
+        index: Optional[int] = None,
+    ) -> None:
+        """Refresh heading-derived metadata if any writer-facing layer is stale."""
+        if str(state.get("content_type") or section.get("content_type") or "").lower() != "brand_commercial":
+            return
+        heading = str(section.get("heading_text") or "").strip()
+        contract_heading = str((section.get("section_contract") or {}).get("source_heading") or "").strip()
+        snapshot_heading = str((section.get("section_intent_snapshot") or {}).get("source_heading") or "").strip()
+        fresh_role = self._commercial_role_for_rewritten_heading(
+            section,
+            state,
+            heading,
+            index=index or 0,
+            total=max(len(outline or state.get("outline", []) or [section]), 1),
+        )
+        current_role = str(section.get("commercial_section_role") or "").lower()
+        if (
+            contract_heading != heading
+            or snapshot_heading != heading
+            or current_role != fresh_role
+        ):
+            self._sync_heading_role_contract(
+                section,
+                state,
+                contract_heading or snapshot_heading or heading,
+                outline=outline,
+                index=index,
+                force=True,
+            )
 
     def _enforce_commercial_role_contract(self, section: Dict[str, Any], state: Dict[str, Any]) -> None:
         """Keep legacy brand_policy/taxonomy fields aligned with the section role."""
@@ -3471,6 +4314,7 @@ class AsyncWorkflowController:
             "format": self._infer_contract_format(section),
             "brand_policy": self._infer_brand_policy(section, state),
             "location_policy": self._infer_location_policy(section, state),
+            "source_heading": heading,
         }
         section["_visible_brand_reference"] = self._section_visibly_references_brand(section, state)
         return contract
@@ -4469,7 +5313,7 @@ class AsyncWorkflowController:
             return outline
 
         normalized: List[Dict[str, Any]] = []
-        for raw_section in outline:
+        for section_index, raw_section in enumerate(outline):
             section = raw_section
             section_type = str(section.get("section_type") or "").lower()
             visible_brand = self._section_visibly_references_brand(section, state)
@@ -4513,6 +5357,13 @@ class AsyncWorkflowController:
                 self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
             section["heading_text"] = self._fulfill_and_downgrade_heading(section, state)
             if section["heading_text"] != original_heading:
+                self._sync_heading_role_contract(
+                    section,
+                    state,
+                    original_heading,
+                    outline=outline,
+                    index=section_index,
+                )
                 visible_brand = self._section_visibly_references_brand(section, state)
                 should_use_brand_evidence = self._section_role_should_use_brand_evidence(section, state)
 
@@ -4570,7 +5421,16 @@ class AsyncWorkflowController:
             self.outline_gen._normalize_section(section, idx, content_type, content_strategy, area)
 
             # Apply Heading Fulfillment & Downgrade Rule (Phase 1.7 Step 9)
+            original_heading = str(section.get("heading_text") or "")
             section["heading_text"] = self._fulfill_and_downgrade_heading(section, state)
+            if section["heading_text"] != original_heading:
+                self._sync_heading_role_contract(
+                    section,
+                    state,
+                    original_heading,
+                    outline=[*safe_outline, section],
+                    index=idx,
+                )
 
             # --- Pricing Enrichment (Grounded Guidance) ---
             # If this is a pricing section, inject the observed mentions harvested from SERP.
@@ -4953,29 +5813,104 @@ class AsyncWorkflowController:
             return []
         return safe[: max(1, min(limit, len(safe)))]
 
+    def _contains_professional_certification_claim(self, text: str) -> bool:
+        """Distinguish professional credentials from ordinary workflow approval."""
+        value = re.sub(r"\s+", " ", str(text or "")).strip()
+        if not value:
+            return False
+        return bool(re.search(
+            r"\b(?:certified|certification|accredited|accreditation|licensed)\b|"
+            r"(?:"
+            r"(?:\u0634\u0631\u0643\u0629|\u062c\u0647\u0629|\u0645\u0632\u0648\u062f|"
+            r"\u0645\u0642\u062f\u0645 \u062e\u062f\u0645\u0629)\s+"
+            r"\u0645\u0639\u062a\u0645\u062f(?:\u0629|\u0648\u0646|\u064a\u0646)?\b|"
+            r"\u0645\u0639\u062a\u0645\u062f(?:\u0629|\u0648\u0646|\u064a\u0646)?\s+"
+            r"(?:\u0645\u0646|\u0644\u062f\u0649|\u0628\u0648\u0627\u0633\u0637\u0629)\b|"
+            r"\u062d\u0627\u0635\u0644(?:\u0629|\u0648\u0646|\u064a\u0646)?\s+\u0639\u0644\u0649\s+"
+            r"(?:\u0634\u0647\u0627\u062f\u0629|\u0627\u0639\u062a\u0645\u0627\u062f)\b|"
+            r"\u0627\u0639\u062a\u0645\u0627\u062f(?:\u0627\u062a)?\s+"
+            r"(?:\u0645\u0646|\u0644\u062f\u0649|\u0628\u0648\u0627\u0633\u0637\u0629|"
+            r"\u0645\u0647\u0646\u064a(?:\u0629)?|\u0631\u0633\u0645\u064a(?:\u0629)?|"
+            r"\u062f\u0648\u0644\u064a(?:\u0629)?|ISO\b)|"
+            r"\u0634\u0647\u0627\u062f(?:\u0629|\u0627\u062a)\s+"
+            r"(?:\u0645\u0647\u0646\u064a(?:\u0629)?|\u0645\u0639\u062a\u0645\u062f(?:\u0629)?|ISO\b)|"
+            r"\u0645\u0631\u062e\u0635(?:\u0629|\u0648\u0646|\u064a\u0646)?\s+"
+            r"(?:\u0645\u0646|\u0644\u062f\u0649|\u0628\u0648\u0627\u0633\u0637\u0629)\b"
+            r")",
+            value,
+            re.IGNORECASE,
+        ))
+
     def _brand_claim_support_flags(self, state: Dict[str, Any]) -> Dict[str, bool]:
-        """Return category-specific support flags from the brand knowledge pack."""
-        inventory = self._brand_evidence_inventory_for_outline(state)
+        """Return category-specific support flags from brand claim boundaries."""
         pack = self._positive_brand_pack_text(state)
 
         def has(pattern: str) -> bool:
             return bool(re.search(pattern, pack, re.IGNORECASE))
 
-        # Inventory geography excludes portfolio/project locations, so it is
-        # the safe signal for general brand presence.
-        local_presence = bool(inventory.get("explicit_geography"))
+        # Step 3B: prefer unified ground-truth claim boundaries when present.
+        try:
+            from src.services.brand_evidence_service import (
+                record_ground_truth_consumption,
+                resolve_brand_claim_boundaries,
+            )
+
+            if isinstance(state.get("brand_ground_truth_data"), dict):
+                claim_bounds = resolve_brand_claim_boundaries(state)
+                record_ground_truth_consumption(state, "validator")
+                local_presence = bool(claim_bounds.get("local_presence"))
+                logger.info(
+                    "[ground_truth] validator_claim_boundaries_used=true "
+                    "pricing=%s local_presence=%s",
+                    str(bool(claim_bounds.get("pricing_available"))).lower(),
+                    str(local_presence).lower(),
+                )
+                return {
+                    "pricing": bool(claim_bounds.get("pricing_available")),
+                    "testimonial": bool(claim_bounds.get("testimonials")),
+                    "certification": bool(claim_bounds.get("certifications")),
+                    "award": bool(claim_bounds.get("awards")),
+                    "local_presence": local_presence,
+                    "local_support": local_presence and has(
+                        r"\b(?:local support|local customer support|local technical support|on-site support)\b|"
+                        r"(?:\u062f\u0639\u0645 \u0645\u062d\u0644\u064a|\u062f\u0639\u0645 \u0641\u0646\u064a \u0645\u062d\u0644\u064a|"
+                        r"\u062f\u0639\u0645 \u0645\u064a\u062f\u0627\u0646\u064a)"
+                    ),
+                }
+        except Exception:
+            pass
+
+        boundaries = state.get("brand_evidence_boundaries")
+        has_explicit_boundaries = isinstance(boundaries, dict)
+        if not isinstance(boundaries, dict):
+            try:
+                from src.services.brand_evidence_service import build_brand_evidence_boundaries
+                boundaries = build_brand_evidence_boundaries(state)
+            except Exception:
+                boundaries = {}
+        inventory = self._brand_evidence_inventory_for_outline(state)
+
+        local_presence = bool(
+            boundaries.get("local_presence")
+            if has_explicit_boundaries
+            else inventory.get("explicit_geography")
+        )
         return {
-            "pricing": bool(inventory.get("pricing_available")),
+            "pricing": bool(
+                boundaries.get("brand_pricing")
+                if has_explicit_boundaries
+                else inventory.get("pricing_available")
+            ),
             "testimonial": has(
                 r"\b(?:testimonial|client review|customer review|client feedback|customer feedback)\b|"
                 r"(?:\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
                 r"\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|"
                 r"\u0634\u0647\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621)"
             ),
-            "certification": has(
-                r"\b(?:certified|certification|accredited|accreditation|licensed)\b|"
-                r"(?:\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|"
-                r"\u0645\u0631\u062e\u0635|\u0634\u0647\u0627\u062f\u0629 \u0645\u0647\u0646\u064a\u0629)"
+            "certification": bool(
+                boundaries.get("certifications")
+                if has_explicit_boundaries
+                else self._contains_professional_certification_claim(pack)
             ),
             "award": has(
                 r"\b(?:award-winning|awarded|won (?:an? )?award|recipient of)\b|"
@@ -5056,13 +5991,7 @@ class AsyncWorkflowController:
         if (brand_pricing_claim or heading_like_pricing) and not support["pricing"]:
             issues.append("pricing")
 
-        if re.search(
-            r"\b(?:certified|certification|accredited|accreditation|licensed)\b|"
-            r"(?:\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|"
-            r"\u0645\u0631\u062e\u0635|\u0634\u0647\u0627\u062f\u0629 \u0645\u0647\u0646\u064a\u0629)",
-            value,
-            re.IGNORECASE,
-        ) and not support["certification"]:
+        if self._contains_professional_certification_claim(value) and not support["certification"]:
             issues.append("certification")
 
         if re.search(
@@ -5155,8 +6084,23 @@ class AsyncWorkflowController:
                 ),
                 "certification": (
                     r"\b(?:and\s+)?(?:certified|certification|accredited|accreditation|licensed)\b|"
-                    r"\s*(?:\u0648)?\s*(?:\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|"
-                    r"\u0645\u0631\u062e\u0635|\u0634\u0647\u0627\u062f\u0629 \u0645\u0647\u0646\u064a\u0629)"
+                    r"(?:"
+                    r"(?:\u0634\u0631\u0643\u0629|\u062c\u0647\u0629|\u0645\u0632\u0648\u062f|"
+                    r"\u0645\u0642\u062f\u0645 \u062e\u062f\u0645\u0629)\s+"
+                    r"\u0645\u0639\u062a\u0645\u062f(?:\u0629|\u0648\u0646|\u064a\u0646)?|"
+                    r"\u0645\u0639\u062a\u0645\u062f(?:\u0629|\u0648\u0646|\u064a\u0646)?\s+"
+                    r"(?:\u0645\u0646|\u0644\u062f\u0649|\u0628\u0648\u0627\u0633\u0637\u0629)|"
+                    r"\u062d\u0627\u0635\u0644(?:\u0629|\u0648\u0646|\u064a\u0646)?\s+\u0639\u0644\u0649\s+"
+                    r"(?:\u0634\u0647\u0627\u062f\u0629|\u0627\u0639\u062a\u0645\u0627\u062f)|"
+                    r"\u0627\u0639\u062a\u0645\u0627\u062f(?:\u0627\u062a)?\s+"
+                    r"(?:\u0645\u0646|\u0644\u062f\u0649|\u0628\u0648\u0627\u0633\u0637\u0629|"
+                    r"\u0645\u0647\u0646\u064a(?:\u0629)?|\u0631\u0633\u0645\u064a(?:\u0629)?|"
+                    r"\u062f\u0648\u0644\u064a(?:\u0629)?|ISO\b)|"
+                    r"\u0634\u0647\u0627\u062f(?:\u0629|\u0627\u062a)\s+"
+                    r"(?:\u0645\u0647\u0646\u064a(?:\u0629)?|\u0645\u0639\u062a\u0645\u062f(?:\u0629)?|ISO\b)|"
+                    r"\u0645\u0631\u062e\u0635(?:\u0629|\u0648\u0646|\u064a\u0646)?\s+"
+                    r"(?:\u0645\u0646|\u0644\u062f\u0649|\u0628\u0648\u0627\u0633\u0637\u0629)"
+                    r")"
                 ),
                 "award": (
                     r"\b(?:and\s+)?(?:award-winning|awarded|industry awards?)\b|"
@@ -5309,13 +6253,15 @@ class AsyncWorkflowController:
         return bool((meta and directive) or (formatting and directive))
 
     def _faq_sensitive_topic(self, question: str) -> str:
+        if self._contains_professional_certification_claim(question):
+            return "certification"
         patterns = (
             ("pricing", r"\b(?:price|pricing|cost|fee|quote|packages?|plans?)\b|\u0633\u0639\u0631|\u0623\u0633\u0639\u0627\u0631|\u062a\u0643\u0644\u0641|\u062a\u0633\u0639\u064a\u0631|\u0628\u0627\u0642\u0627\u062a?"),
             ("timeline", r"\b(?:timeline|delivery time|turnaround|how long|duration)\b|\u0645\u062f\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630|\u0645\u062f\u0629 \u0627\u0644\u062a\u0633\u0644\u064a\u0645|\u0643\u0645 \u064a\u0633\u062a\u063a\u0631\u0642"),
             ("guarantee", r"\b(?:guarantee|guaranteed|warrant(?:y|ies))\b|\u0636\u0645\u0627\u0646|\u0645\u0636\u0645\u0648\u0646"),
             ("support", r"\b(?:technical support|customer support|maintenance|aftercare|after launch)\b|\u062f\u0639\u0645 \u0641\u0646\u064a|\u0635\u064a\u0627\u0646\u0629|\u062f\u0639\u0645 \u0628\u0639\u062f"),
             ("client_count", r"\b(?:number of clients|how many clients|client count|projects completed|how many projects)\b|\u0639\u062f\u062f \u0627\u0644\u0639\u0645\u0644\u0627\u0621|\u0643\u0645 \u0639\u0645\u064a\u0644|\u0639\u062f\u062f \u0627\u0644\u0645\u0634\u0627\u0631\u064a\u0639|\u0643\u0645 \u0645\u0634\u0631\u0648\u0639"),
-            ("certification", r"\b(?:certified|certification|accredited|licensed|awards?)\b|\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|\u0634\u0647\u0627\u062f\u0627\u062a?|\u062c\u0648\u0627\u0626\u0632?"),
+            ("certification", r"\bawards?\b|\u062c\u0648\u0627\u0626\u0632?"),
             ("testimonial", r"\b(?:testimonials?|reviews?|ratings?|client feedback)\b|\u062a\u0642\u064a\u064a\u0645\u0627\u062a|\u0645\u0631\u0627\u062c\u0639\u0627\u062a|\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621"),
         )
         for topic, pattern in patterns:
@@ -5352,13 +6298,14 @@ class AsyncWorkflowController:
         inventory = self._brand_evidence_inventory_for_outline(state)
         if topic == "pricing":
             return bool(inventory.get("pricing_available"))
+        if topic == "certification":
+            return self._brand_claim_support_flags(state)["certification"]
         pack = self._positive_brand_pack_text(state)
         patterns = {
             "timeline": r"\b(?:delivery timeline|turnaround|delivered within|delivery time)\b|\u0645\u062f\u0629 \u0627\u0644\u062a\u0633\u0644\u064a\u0645|\u0645\u062f\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630|\u062e\u0644\u0627\u0644 \d+",
             "guarantee": r"\b(?:guarantee|guaranteed|warranty)\b|\u0636\u0645\u0627\u0646|\u0645\u0636\u0645\u0648\u0646",
             "support": r"\b(?:technical support|customer support|maintenance|aftercare|post-launch support)\b|\u062f\u0639\u0645 \u0641\u0646\u064a|\u0635\u064a\u0627\u0646\u0629|\u062f\u0639\u0645 \u0628\u0639\u062f",
             "client_count": r"\b\d+\+?\s+(?:clients?|projects?)\b|\d+\+?\s*(?:\u0639\u0645\u064a\u0644|\u0645\u0634\u0631\u0648\u0639)",
-            "certification": r"\b(?:certified|certification|accredited|licensed|award-winning|awarded)\b|\u0645\u0639\u062a\u0645\u062f|\u0627\u0639\u062a\u0645\u0627\u062f|\u0645\u0631\u062e\u0635|\u062c\u0627\u0626\u0632\u0629",
             "testimonial": r"\b(?:testimonial|client review|customer review|client feedback)\b|\u0622\u0631\u0627\u0621 \u0627\u0644\u0639\u0645\u0644\u0627\u0621|\u062a\u062c\u0627\u0631\u0628 \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
         }
         pattern = patterns.get(topic)
@@ -5802,8 +6749,32 @@ class AsyncWorkflowController:
             lines = lines[:start] + bullets + lines[end:]
         return "\n".join(lines).strip()
 
+    def _section_body_integrity_issues(
+        self,
+        content: str,
+        section: Dict[str, Any],
+        state: Dict[str, Any],
+    ) -> List[str]:
+        """Blocking integrity checks after sanitization/normalization."""
+        issues: List[str] = []
+        text = str(content or "").strip()
+        is_intro = self._is_commercial_intro_section(section, state)
+        if not text and not is_intro:
+            return ["section_body_empty"]
+
+        for line in str(content or "").splitlines():
+            match = re.match(r"^(\s*)(\d+)\.\s*(.*)$", line)
+            if match and not str(match.group(3) or "").strip():
+                issues.append("empty_numbered_list_item")
+                break
+
+        if self._is_commercial_process_section(section, state) and self._count_ordered_list_items(text) < 2:
+            issues.append("process_section_insufficient_steps")
+
+        return list(dict.fromkeys(issues))
+
     def _normalize_ordered_lists(self, content: str) -> str:
-        """Renumber each contiguous ordered list block from 1."""
+        """Remove empty ordered-list markers and renumber each list block from 1."""
         if not content:
             return content
         lines = str(content).splitlines()
@@ -5811,9 +6782,12 @@ class AsyncWorkflowController:
         in_list = False
         out: List[str] = []
         for line in lines:
-            match = re.match(r"^(\s*)(\d+)\.\s+(.*)$", line)
+            match = re.match(r"^(\s*)(\d+)\.\s*(.*)$", line)
             if match:
                 indent, _, body = match.groups()
+                body = body.strip()
+                if not body:
+                    continue
                 out.append(f"{indent}{current}. {body}")
                 current += 1
                 in_list = True
@@ -6015,7 +6989,9 @@ class AsyncWorkflowController:
             return content
         original_paragraphs = list(paragraphs)
         paragraphs = self._dedupe_intro_paragraphs(paragraphs)
+        fallback_keys = set(section.get("_intro_fallback_paragraph_keys") or [])
 
+        hook_was_fallback = False
         hook = next(
             (
                 paragraph
@@ -6029,7 +7005,10 @@ class AsyncWorkflowController:
         )
         if not hook:
             hook = self._build_commercial_intro_hook(state, content)
+            hook_was_fallback = bool(hook)
         hook = self._inject_keyword_into_intro_hook(hook, primary_keyword, state)
+        if hook_was_fallback and hook:
+            fallback_keys.add(self._normalize_intro_paragraph(hook))
 
         brand_bridge = next(
             (
@@ -6041,10 +7020,14 @@ class AsyncWorkflowController:
         )
         if not brand_bridge:
             brand_bridge = self._build_commercial_intro_brand_bridge(state, content)
+            if brand_bridge:
+                fallback_keys.add(self._normalize_intro_paragraph(brand_bridge))
 
         cta = next((paragraph for paragraph in paragraphs if self._is_intro_cta(paragraph, state)), "")
         if not cta:
             cta = self._build_commercial_intro_cta(state, content)
+            if cta:
+                fallback_keys.add(self._normalize_intro_paragraph(cta))
 
         final_paragraphs = self._dedupe_intro_paragraphs([hook, brand_bridge, cta])
         fallback_builders = (
@@ -6058,6 +7041,7 @@ class AsyncWorkflowController:
             if fallback:
                 final_paragraphs = self._dedupe_intro_paragraphs([*final_paragraphs, fallback])
         final_paragraphs = final_paragraphs[:3]
+        section["_intro_fallback_paragraph_keys"] = sorted(fallback_keys)
 
         first = final_paragraphs[0] if final_paragraphs else ""
         first_has_keyword = self._text_contains_keyword(first, primary_keyword)
@@ -6075,6 +7059,234 @@ class AsyncWorkflowController:
                 any(self._is_intro_cta(paragraph, state) for paragraph in original_paragraphs),
             )
         return "\n\n".join(paragraph.strip() for paragraph in final_paragraphs if paragraph.strip()).strip()
+
+    def _finalize_commercial_intro_surgically(
+        self,
+        content: str,
+        section: Dict[str, Any],
+        state: Dict[str, Any],
+    ) -> tuple[str, Dict[str, Any]]:
+        """Minimally normalize a final intro without generating missing paragraphs."""
+        original = str(content or "").strip()
+        report = {
+            "status": "pass",
+            "changed": False,
+            "issues": [],
+            "paragraph_count": 0,
+            "keyword_in_first_paragraph": False,
+            "brand_bridge_present": False,
+            "soft_cta_present": False,
+        }
+        if not self._is_commercial_intro_section(section, state):
+            return original, report
+
+        primary_keyword = str(
+            state.get("primary_keyword")
+            or state.get("raw_title")
+            or state.get("input_data", {}).get("title")
+            or ""
+        ).strip()
+        normalized_content = self._fix_intro_spacing(original, state)
+        paragraphs = self._dedupe_intro_paragraphs([
+            self._fix_intro_spacing(paragraph.strip(), state)
+            for paragraph in re.split(r"\n\s*\n", normalized_content)
+            if paragraph.strip()
+        ])
+        fallback_keys = set(section.get("_intro_fallback_paragraph_keys") or [])
+        original_paragraphs = list(paragraphs)
+        paragraphs = [
+            paragraph
+            for paragraph in paragraphs
+            if self._normalize_intro_paragraph(paragraph) not in fallback_keys
+        ]
+        removed_fallbacks = len(original_paragraphs) != len(paragraphs)
+
+        hook = next(
+            (
+                paragraph
+                for paragraph in paragraphs
+                if not self._brand_name_in_text(paragraph, state)
+                and not self._is_intro_cta(paragraph, state)
+                and len(paragraph.split()) >= 8
+            ),
+            "",
+        )
+        if not hook:
+            report["issues"].append("intro_missing_hook")
+        elif primary_keyword:
+            hook = self._inject_keyword_into_intro_hook(hook, primary_keyword, state)
+
+        bridge = ""
+        bridge_claim_issues: List[str] = []
+        unsafe_bridge_keys: set[str] = set()
+        for paragraph in paragraphs:
+            if not self._is_intro_brand_bridge(paragraph, state) or len(paragraph.split()) > 80:
+                continue
+            cleaned_bridge, claim_issues = self._sanitize_unsupported_brand_claims(
+                paragraph,
+                state,
+                section=section,
+                context="body",
+                brand_sensitive=True,
+            )
+            if claim_issues:
+                bridge_claim_issues.extend(claim_issues)
+                unsafe_bridge_keys.add(self._normalize_intro_paragraph(paragraph))
+            if cleaned_bridge.strip() and self._is_intro_brand_bridge(cleaned_bridge, state):
+                bridge = cleaned_bridge.strip()
+                break
+        if not bridge:
+            report["issues"].append(
+                "intro_brand_bridge_unsupported"
+                if bridge_claim_issues
+                else "intro_missing_brand_bridge"
+            )
+
+        cta_candidates = [
+            paragraph for paragraph in paragraphs
+            if self._is_intro_cta(paragraph, state)
+        ]
+        cta = cta_candidates[0].strip() if cta_candidates else ""
+        brand_url = str(state.get("brand_url") or "").strip()
+        if not cta:
+            report["issues"].append("intro_missing_soft_cta")
+        elif brand_url and brand_url.casefold() not in cta.casefold():
+            report["issues"].append("intro_cta_missing_brand_url")
+
+        if hook and primary_keyword and not self._text_contains_keyword(hook, primary_keyword):
+            report["issues"].append("intro_keyword_patch_failed")
+        if hook and self._brand_name_in_text(hook, state):
+            report["issues"].append("intro_hook_mentions_brand")
+
+        if report["issues"]:
+            minimally_repaired = [
+                paragraph
+                for paragraph in paragraphs
+                if self._normalize_intro_paragraph(paragraph) not in unsafe_bridge_keys
+            ]
+            if hook:
+                hook_key = next(
+                    (
+                        idx for idx, paragraph in enumerate(minimally_repaired)
+                        if not self._brand_name_in_text(paragraph, state)
+                        and not self._is_intro_cta(paragraph, state)
+                        and len(paragraph.split()) >= 8
+                    ),
+                    None,
+                )
+                if hook_key is not None:
+                    minimally_repaired[hook_key] = hook
+            result = "\n\n".join(minimally_repaired).strip()
+            report.update({
+                "status": "needs_revision",
+                "changed": result != original or removed_fallbacks,
+                "paragraph_count": len(minimally_repaired),
+                "keyword_in_first_paragraph": bool(
+                    minimally_repaired
+                    and primary_keyword
+                    and self._text_contains_keyword(minimally_repaired[0], primary_keyword)
+                ),
+                "brand_bridge_present": bool(bridge),
+                "soft_cta_present": bool(cta),
+            })
+            return result, report
+
+        final_paragraphs = [hook, bridge, cta]
+        result = "\n\n".join(final_paragraphs).strip()
+        report.update({
+            "status": "repaired" if result != original else "pass",
+            "changed": result != original or removed_fallbacks,
+            "paragraph_count": 3,
+            "keyword_in_first_paragraph": self._text_contains_keyword(hook, primary_keyword),
+            "brand_bridge_present": True,
+            "soft_cta_present": True,
+        })
+        return result, report
+
+    def _record_final_intro_report(
+        self,
+        state: Dict[str, Any],
+        section: Optional[Dict[str, Any]],
+        report: Dict[str, Any],
+    ) -> None:
+        """Persist final intro status and prevent false-success output."""
+        state["final_intro_quality_report"] = dict(report or {})
+        if section is not None:
+            section["final_intro_quality_report"] = dict(report or {})
+
+        if report.get("status") != "needs_revision":
+            if section is not None:
+                section["section_quality_issues"] = [
+                    issue
+                    for issue in section.get("section_quality_issues", [])
+                    if not str(issue).startswith("intro_final_enforcement_failed:")
+                ]
+            state["final_quality_warnings"] = [
+                warning
+                for warning in state.get("final_quality_warnings", [])
+                if not str(warning).startswith("intro_final_enforcement_failed:")
+            ]
+            if (
+                state.get("final_status") == "needs_revision"
+                and not state.get("final_quality_warnings")
+            ):
+                state.pop("final_status", None)
+            logger.info(
+                "[final_intro_enforcement] status=%s changed=%s keyword=%s bridge=%s cta=%s",
+                report.get("status"),
+                str(bool(report.get("changed"))).lower(),
+                str(bool(report.get("keyword_in_first_paragraph"))).lower(),
+                str(bool(report.get("brand_bridge_present"))).lower(),
+                str(bool(report.get("soft_cta_present"))).lower(),
+            )
+            return
+
+        issue = "intro_final_enforcement_failed:" + ",".join(report.get("issues") or ["unknown"])
+        if section is not None:
+            self._record_section_quality_issue(section, issue)
+        warnings = state.setdefault("final_quality_warnings", [])
+        if issue not in warnings:
+            warnings.append(issue)
+        state["final_status"] = "needs_revision"
+        logger.warning("[final_intro_enforcement] status=needs_revision issues=%s", report.get("issues"))
+
+    def _finalize_intro_sections_for_output(
+        self,
+        state: Dict[str, Any],
+        sections: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Apply the surgical final intro invariant to assembled section objects."""
+        if str(state.get("content_type") or "").lower() != "brand_commercial":
+            return {"status": "pass", "changed": False, "issues": []}
+
+        intro = next(
+            (
+                section for section in sections or []
+                if self._is_commercial_intro_section(section, state)
+            ),
+            None,
+        )
+        if intro is None:
+            report = {
+                "status": "needs_revision",
+                "changed": False,
+                "issues": ["intro_section_missing"],
+                "paragraph_count": 0,
+                "keyword_in_first_paragraph": False,
+                "brand_bridge_present": False,
+                "soft_cta_present": False,
+            }
+            self._record_final_intro_report(state, None, report)
+            return report
+
+        repaired, report = self._finalize_commercial_intro_surgically(
+            intro.get("generated_content", ""),
+            intro,
+            state,
+        )
+        intro["generated_content"] = repaired
+        self._record_final_intro_report(state, intro, report)
+        return report
 
     def _is_commercial_process_section(self, section: Dict[str, Any], state: Dict[str, Any]) -> bool:
         if str(state.get("content_type") or "").lower() != "brand_commercial":
@@ -6192,12 +7404,14 @@ class AsyncWorkflowController:
         content: str,
         section: Dict[str, Any],
         state: Dict[str, Any],
+        *,
+        skip_intro_contract: bool = False,
     ) -> str:
         """Apply deterministic commercial quality gates consistently after writing."""
         content = self._ensure_project_proof_format(content, section, state)
         content = self._ensure_required_table_content(content, section, state)
-        content = self._ensure_commercial_intro_contract(content, section, state)
-        content = self._ensure_commercial_process_depth(content, section, state)
+        if not skip_intro_contract:
+            content = self._ensure_commercial_intro_contract(content, section, state)
         content = self._ensure_commercial_faq_depth(content, section, state)
         content = self._ensure_commercial_conclusion_cta(content, section, state)
         content, claim_issues = self._sanitize_unsupported_brand_claims(
@@ -6209,13 +7423,17 @@ class AsyncWorkflowController:
         for issue in claim_issues:
             self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
         content = self._normalize_ordered_lists(content)
+        content = self._ensure_commercial_process_depth(content, section, state)
+        content = self._normalize_ordered_lists(content)
+        for issue in self._section_body_integrity_issues(content, section, state):
+            self._record_section_quality_issue(section, issue)
         return content
 
     def _has_minimum_project_table_evidence(self, state: Dict[str, Any], minimum: int = 2) -> bool:
         """Return True only when safe project records are available, not loose routing labels."""
         return len(self._project_records_from_narrative_pack(state, limit=minimum)) >= minimum
 
-    def _project_records_from_narrative_pack(
+    def _legacy_project_records_from_narrative_pack(
         self,
         state: Dict[str, Any],
         section: Optional[Dict[str, Any]] = None,
@@ -6487,6 +7705,23 @@ class AsyncWorkflowController:
             records.sort(key=lambda record: str(record.get("name") or "").casefold())
 
         return records[:limit]
+
+    def _project_records_from_narrative_pack(
+        self,
+        state: Dict[str, Any],
+        section: Optional[Dict[str, Any]] = None,
+        limit: int = 6,
+    ) -> List[Dict[str, Any]]:
+        """Use the single knowledge-pack project truth path for proof rendering."""
+        from src.services.brand_evidence_service import (
+            build_safe_project_records_from_knowledge_pack,
+        )
+
+        return build_safe_project_records_from_knowledge_pack(
+            state,
+            section=section,
+            limit=limit,
+        )
 
     def _build_project_proof_cards(
         self,
@@ -7113,7 +8348,16 @@ class AsyncWorkflowController:
         """Keep project proof sections away from noisy writer-generated tables by default."""
         if not self._is_project_like_section(section):
             return content
+        original_heading = str(section.get("heading_text") or "")
         self._downgrade_unsupported_testimonial_heading(section, state)
+        if str(section.get("heading_text") or "") != original_heading:
+            self._sync_heading_role_contract(
+                section,
+                state,
+                original_heading,
+                outline=state.get("outline", []),
+                existing_content=content,
+            )
         records = self._project_records_from_narrative_pack(state, section, limit=5)
         section["safe_project_records_from_pack"] = records
         proof_cards = self._build_project_proof_cards(records, state, section, limit=5)
@@ -7128,7 +8372,7 @@ class AsyncWorkflowController:
                     [record.get("name") for record in required_records],
                 )
                 if proof_cards:
-                    return ((content or "").strip() + "\n\n" + proof_cards).strip()
+                    return (proof_cards + "\n\n" + (content or "").strip()).strip()
             return content
 
         table_type = str(section.get("table_type") or "").lower()
@@ -7155,7 +8399,7 @@ class AsyncWorkflowController:
         if required_records and not self._content_mentions_any_project_record(replaced_content or "", required_records):
             self._record_section_quality_issue(section, "project_proof_missed_target_relevant_evidence")
             if proof_cards:
-                replaced_content = ((replaced_content or "").strip() + "\n\n" + proof_cards).strip()
+                replaced_content = (proof_cards + "\n\n" + (replaced_content or "").strip()).strip()
         return replaced_content
 
     def _ensure_required_table_content(self, content: str, section: Dict[str, Any], state: Dict[str, Any]) -> str:
@@ -7373,6 +8617,10 @@ class AsyncWorkflowController:
     async def _step_2_write_sections(self, state: Dict[str, Any]) -> Dict[str, Any]:
         input_data = state.get("input_data", {})
         title = input_data.get("title", "Untitled")
+        state = await self._ensure_brand_evidence_state_current(
+            state,
+            reason="pre_section_writing",
+        )
         outline = state.get("outline", [])
         global_keywords = state.get("global_keywords", {})
         intent = state.get("intent", "Informational")
@@ -7392,6 +8640,12 @@ class AsyncWorkflowController:
                 text for text in (self._subheading_text(item) for item in section.get("subheadings", []) or [])
                 if text
             ]
+            self._ensure_heading_role_contract_current(
+                section,
+                state,
+                outline=outline,
+                index=idx,
+            )
             if not section.get("section_contract"):
                 section["section_contract"] = self._build_section_contract(section, outline, idx, state)
             self._enrich_section_contract(section, outline, idx, state)
@@ -7586,6 +8840,12 @@ class AsyncWorkflowController:
     ) -> Optional[Dict[str, Any]]:
         """Worker to write one section."""
 
+        self._ensure_heading_role_contract_current(
+            section,
+            state,
+            outline=state.get("outline", []),
+            index=section_index,
+        )
         section_id = section.get("section_id") or section.get("id")
         brand_url = state.get("brand_url")
         brand_link_used = state.get("brand_link_used", False)
@@ -7745,6 +9005,25 @@ class AsyncWorkflowController:
                 brand_usage_policy,
             )
 
+        # Step 3A-1: record that the single source of truth is available to the
+        # writer alongside the legacy knowledge pack.
+        gt_writer_record = self._record_ground_truth_consumption(state, "writer")
+
+        # Step 3B (writer-only, parallel read): expose the consolidated Brand Ground
+        # Truth to the writer ALONGSIDE the legacy page-by-page pack, for brand-
+        # eligible sections only (same firewall). The knowledge pack is NOT removed -
+        # this is an additive read so we can measure ground truth's value on writer
+        # output before wiring strategy/outline/validator. No other consumer and no
+        # saved file is affected (only this writer-local context copy changes).
+        ground_truth_injected = False
+        if writer_brand_page_knowledge_pack_context:
+            gt_block = self._format_ground_truth_for_writer(state)
+            if gt_block:
+                writer_brand_page_knowledge_pack_context = (
+                    writer_brand_page_knowledge_pack_context + "\n\n" + gt_block
+                )
+                ground_truth_injected = True
+
         writer_truth_trace = {
             "section_id": section.get("section_id"),
             "heading": section.get("heading_text", ""),
@@ -7752,6 +9031,9 @@ class AsyncWorkflowController:
             "brand_usage_policy": brand_usage_policy,
             "knowledge_pack_visible": bool(writer_brand_page_knowledge_pack_context),
             "knowledge_pack_chars": len(writer_brand_page_knowledge_pack_context or ""),
+            "ground_truth_available": bool(gt_writer_record.get("used")),
+            "ground_truth_chars": gt_writer_record.get("markdown_chars", 0),
+            "ground_truth_injected_into_writer": ground_truth_injected,
             "legacy_section_source_visible": bool(writer_section_source_text),
             "legacy_page_briefs_visible": bool(writer_section_brand_page_briefs or writer_section_page_narrative_briefs),
             "legacy_raw_blocks_visible": bool(writer_section_raw_brand_blocks),
@@ -8014,6 +9296,17 @@ class AsyncWorkflowController:
                 downgraded_heading = self._fulfill_and_downgrade_heading(section, state)
                 if downgraded_heading and downgraded_heading != original_heading:
                     section["heading_text"] = downgraded_heading
+                    self._sync_heading_role_contract(
+                        section,
+                        state,
+                        original_heading,
+                        outline=state.get("outline", []),
+                        index=section_index,
+                        existing_content=final_content,
+                    )
+                    execution_plan = self._build_execution_plan(section, state)
+                    execution_plan["brand_link_allowed"] = can_use_brand_link
+                    execution_plan["brand_url"] = brand_url
                     fulfillment_report = self._evaluate_brand_owned_section_fulfillment(section, final_content, state)
                     policy_report = self._evaluate_brand_usage_policy_fulfillment(section, final_content, state)
                     fulfillment_report = self._stricter_fulfillment_report(fulfillment_report, policy_report)
@@ -8032,7 +9325,9 @@ class AsyncWorkflowController:
                     )
                 )
                 if (
-                    section.get("fulfillment_status") == "unsupported" or repairable_weak_fulfillment
+                    section.get("fulfillment_status") == "unsupported"
+                    or repairable_weak_fulfillment
+                    or bool((section.get("heading_contract_sync") or {}).get("body_rewrite_required"))
                 ) and not section.get("_brand_fulfillment_repair_attempted"):
                     section["_brand_fulfillment_repair_attempted"] = True
                     repair_plan = dict(execution_plan or {})
@@ -8206,6 +9501,13 @@ class AsyncWorkflowController:
                             section["fulfillment_reason"] = candidate_report.get("fulfillment_reason", "")
                             section["evidence_density"] = candidate_report.get("evidence_density", {})
                             section["heading_fidelity"] = candidate_report.get("heading_fidelity", {})
+                            if isinstance(section.get("heading_contract_sync"), dict):
+                                section["heading_contract_sync"]["body_rewrite_required"] = False
+                            section["section_quality_issues"] = [
+                                issue
+                                for issue in section.get("section_quality_issues", [])
+                                if issue != "heading_contract_body_rewrite_required"
+                            ]
                             logger.info(
                                 "[brand_fulfillment] corrective rewrite accepted section='%s' status='%s'.",
                                 section.get("heading_text", ""),
@@ -8709,6 +10011,8 @@ class AsyncWorkflowController:
             section["generated_content"] = self.validator.prune_redundant_intros(content)
             final_sections.append(section)
 
+        self._finalize_intro_sections_for_output(state, final_sections)
+
         # PREFLIGHT CONTRACT CHECK
         validate_service_call(
             self.assembler.assemble,
@@ -8816,6 +10120,8 @@ class AsyncWorkflowController:
                     section["generated_content"] = new_content
             except Exception as e:
                 logger.error(f"Humanization failed for section '{heading}': {e}. Falling back to original.")
+
+        self._finalize_intro_sections_for_output(state, ordered_sections)
 
         # Re-assemble the article after humanization
         # PREFLIGHT CONTRACT CHECK
@@ -9285,7 +10591,7 @@ class AsyncWorkflowController:
         parts = [f"# {safe_title}"]
         for issue in title_claim_issues:
             quality_warnings.append(f"title: unsupported_brand_claim_removed:{issue}")
-        for outline_section in outline:
+        for section_index, outline_section in enumerate(outline):
             section_id = outline_section.get("section_id")
             generated_section = sections_dict.get(section_id, {}) if section_id else {}
             section = {**outline_section, **generated_section}
@@ -9294,29 +10600,36 @@ class AsyncWorkflowController:
                 str(section.get("generated_content", "") or "").strip(),
                 outline_section,
             )
-            # content = self._apply_commercial_section_quality_gates(content, section, state)
-            if is_commercial and self._is_commercial_faq_section(section, state):
-                content = self._ensure_commercial_faq_depth(content, section, state)
-                if isinstance(generated_section, dict):
-                    generated_section["generated_content"] = content
-                    generated_section["section_quality_issues"] = list(section.get("section_quality_issues", []))
-            if is_commercial:
-                content, claim_issues = self._sanitize_unsupported_brand_claims(
+            if is_commercial and self._is_commercial_intro_section(section, state):
+                content, intro_report = self._finalize_commercial_intro_surgically(
                     content,
+                    section,
                     state,
-                    section=section,
-                    context="body",
                 )
-                for issue in claim_issues:
-                    self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
+                self._record_final_intro_report(state, section, intro_report)
+                if isinstance(generated_section, dict):
+                    generated_section["generated_content"] = content
+                    generated_section["final_intro_quality_report"] = dict(intro_report)
+                    generated_section["section_quality_issues"] = list(
+                        section.get("section_quality_issues", [])
+                    )
+            if is_commercial:
+                content = self._apply_commercial_section_quality_gates(
+                    content,
+                    section,
+                    state,
+                    skip_intro_contract=self._is_commercial_intro_section(section, state),
+                )
                 if isinstance(generated_section, dict):
                     generated_section["generated_content"] = content
                     generated_section["section_quality_issues"] = list(section.get("section_quality_issues", []))
-            content = self._normalize_ordered_lists(content)
+            else:
+                content = self._normalize_ordered_lists(content)
 
             section_type = (outline_section.get("section_type") or "").lower()
             heading = str(outline_section.get("heading_text") or "").strip()
             if is_commercial and heading:
+                original_heading = heading
                 heading, heading_claim_issues = self._sanitize_unsupported_brand_claims(
                     heading,
                     state,
@@ -9327,6 +10640,31 @@ class AsyncWorkflowController:
                 for issue in heading_claim_issues:
                     self._record_section_quality_issue(section, f"unsupported_brand_claim_removed:{issue}")
                 outline_section["heading_text"] = heading
+                if heading != original_heading:
+                    self._sync_heading_role_contract(
+                        outline_section,
+                        state,
+                        original_heading,
+                        outline=outline,
+                        index=section_index,
+                        existing_content=content,
+                    )
+                    if isinstance(generated_section, dict):
+                        for key in (
+                            "heading_text",
+                            "section_type",
+                            "taxonomy_axis",
+                            "coverage_role",
+                            "commercial_section_role",
+                            "brand_usage_policy",
+                            "section_intent_snapshot",
+                            "section_contract",
+                            "heading_contract_sync",
+                            "section_quality_issues",
+                        ):
+                            if key in outline_section:
+                                generated_section[key] = outline_section[key]
+                    section = {**outline_section, **generated_section}
             heading_level = str(outline_section.get("heading_level") or "H2").upper()
 
             if section_type != "introduction" and heading:
@@ -9406,9 +10744,15 @@ class AsyncWorkflowController:
             "unsupported_brand_claim_removed",
             "role drift",
             "faq_repair_leak",
+            "heading_contract_body_rewrite_required",
+            "intro_final_enforcement_failed",
+            "Commercial introduction does not contain the primary keyword",
             "unsupported fulfillment",
             "Commercial article has no decision-useful markdown table",
             "Malformed markdown table",
+            "empty_numbered_list_item",
+            "process_section_insufficient_steps",
+            "section_body_empty",
         )
         needs_revision = any(
             any(marker in item for marker in critical_semantic_markers)
@@ -9423,12 +10767,27 @@ class AsyncWorkflowController:
             "section_truth_trace": state.get("section_truth_trace", []),
         }
         state["content_stage_status"] = "needs_revision" if state["content_stage_quality_report"]["status"] == "needs_revision" else "success"
+        if state["content_stage_status"] == "needs_revision":
+            state["final_status"] = "needs_revision"
         if quality_warnings:
             logger.warning("[content_stage_quality_gate] warnings=%s", quality_warnings)
         elif state.get("commercial_role_collision_report"):
             logger.info("[content_stage_quality_gate] role_collisions=%s", state.get("commercial_role_collision_report"))
 
         output_dir = state.get("output_dir", self.work_dir)
+        quality_report_path = os.path.join(output_dir, "quality_warnings.txt")
+        try:
+            with open(quality_report_path, "w", encoding="utf-8") as f:
+                f.write(f"STATUS: {state['content_stage_status']}\n")
+                f.write(f"WARNING_COUNT: {len(quality_warnings)}\n")
+                f.write("-" * 60 + "\n")
+                for warning in quality_warnings:
+                    f.write(f"- {warning}\n")
+        except OSError as exc:
+            logger.error("Failed to write quality_warnings.txt: %s", exc)
+        workflow_logger = state.get("workflow_logger")
+        if workflow_logger:
+            workflow_logger.log_event("content_stage_quality_gate", state["content_stage_quality_report"])
         os.makedirs(output_dir, exist_ok=True)
         for filename in ("article_content_draft.md", "article_final.md"):
             with open(os.path.join(output_dir, filename), "w", encoding="utf-8") as f:
