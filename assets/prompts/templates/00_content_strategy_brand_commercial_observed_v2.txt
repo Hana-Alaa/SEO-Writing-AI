@@ -10,6 +10,17 @@ Inputs:
 - SERP Market Insights: {{ serp_market_insights | default('{}') }}
 - Brand Evidence Boundaries: {{ brand_evidence_boundaries | default('{}') }}
 
+[BRAND GROUND TRUTH PLANNING SLICE]
+{{ ground_truth_planning_slice | default('') }}
+
+GROUND TRUTH PLANNING RULES (apply only when the planning slice above is non-empty):
+- Treat the planning slice as observed brand facts. Do NOT invent services, technologies, projects, or process steps beyond it.
+- `supported_differentiators` MUST use `observed_technologies` when that list is non-empty.
+- `supported_proof_points` MUST prefer `target_relevant_projects` for the reader area before `secondary_projects`.
+- `section_role_map.process` MUST reference `observed_process_steps` in order when that list is non-empty.
+- Respect `claim_boundaries` and `forbidden_claims`. Never claim pricing, local office, testimonials, certifications, or awards when boundaries are false.
+- Matching projects to the reader area does NOT prove brand local presence.
+
 CRITICAL RULE:
 You must NOT introduce any concept that is not strongly supported by:
 - the primary keyword
@@ -72,6 +83,7 @@ STRICT RULES:
 7. Use only the strongest observed signals.
    - If SERP observations are thin or mixed, keep the strategy conservative.
    - Leave unsupported fields minimal or empty rather than inflating them.
+   - Exception: when the planning slice lists `observed_technologies`, `supported_differentiators` must not be empty.
 
 8. The strategy must support a real user journey:
    - understand the offering

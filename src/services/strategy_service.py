@@ -615,19 +615,44 @@ class StrategyService:
                 brand_evidence_boundaries = {}
             state["brand_evidence_boundaries"] = brand_evidence_boundaries
 
-        # Step 3A-1: read the single source of truth in parallel with the legacy
-        # boundaries (availability + logging only; strategy decisions are unchanged
-        # and still driven by brand_evidence_boundaries until Step 3B).
+        # Step 3C-A: build the compact GT planning slice for strategy prompts while
+        # keeping legacy brand_evidence_boundaries for boundary enforcement.
+        planning_slice: Dict[str, Any] = {}
+        planning_slice_text = ""
         try:
-            from src.services.brand_evidence_service import record_ground_truth_consumption
+            from src.services.brand_evidence_service import (
+                build_ground_truth_planning_slice,
+                format_ground_truth_for_planning,
+                record_ground_truth_consumption,
+            )
             gt_record = record_ground_truth_consumption(state, "strategy")
+            planning_slice = build_ground_truth_planning_slice(state)
+            planning_slice_text = format_ground_truth_for_planning(state)
+            strategy_gt_logging = {
+                "strategy_prompt_used_gt": bool(planning_slice_text),
+                "strategy_gt_services_count": len(planning_slice.get("observed_services") or []),
+                "strategy_gt_technologies_count": len(planning_slice.get("observed_technologies") or []),
+                "strategy_gt_target_projects_count": len(planning_slice.get("target_relevant_projects") or []),
+                "strategy_gt_process_steps_count": len(planning_slice.get("observed_process_steps") or []),
+            }
+            state["strategy_gt_logging"] = strategy_gt_logging
+            if isinstance(state.get("ground_truth_consumption"), dict):
+                state["ground_truth_consumption"].setdefault("strategy", {})
+                state["ground_truth_consumption"]["strategy"]["prompt_used"] = bool(planning_slice_text)
             logger.info(
-                "[ground_truth] strategy_ground_truth_used=%s chars=%s",
+                "[ground_truth] strategy_ground_truth_used=%s chars=%s strategy_prompt_used_gt=%s "
+                "services=%s technologies=%s target_projects=%s process_steps=%s",
                 str(gt_record["used"]).lower(),
                 gt_record["markdown_chars"],
+                str(strategy_gt_logging["strategy_prompt_used_gt"]).lower(),
+                strategy_gt_logging["strategy_gt_services_count"],
+                strategy_gt_logging["strategy_gt_technologies_count"],
+                strategy_gt_logging["strategy_gt_target_projects_count"],
+                strategy_gt_logging["strategy_gt_process_steps_count"],
             )
         except Exception:
-            pass
+            planning_slice = {}
+            planning_slice_text = ""
 
         clusters = market_insights.get("keyword_clusters", [])
         if not clusters:
@@ -662,6 +687,7 @@ class StrategyService:
             serp_structural_intelligence=json.dumps(structural_layer),
             serp_market_insights=json.dumps(market_insights),
             brand_evidence_boundaries=json.dumps(brand_evidence_boundaries),
+            ground_truth_planning_slice=planning_slice_text,
             keyword_clusters=json.dumps(clusters),
             content_type=content_type,
             area=area,
@@ -766,6 +792,20 @@ class StrategyService:
                     item.get("brand_claim_allowed"),
                     item.get("action"),
                 )
+            if planning_slice:
+                try:
+                    from src.services.brand_evidence_service import apply_ground_truth_strategy_postfill
+
+                    final_data, postfill_log = apply_ground_truth_strategy_postfill(
+                        final_data,
+                        planning_slice,
+                        state,
+                    )
+                    strategy_gt_logging = dict(state.get("strategy_gt_logging") or {})
+                    strategy_gt_logging.update(postfill_log)
+                    state["strategy_gt_logging"] = strategy_gt_logging
+                except Exception:
+                    pass
 
         state["content_strategy"] = final_data
         return state
@@ -1023,7 +1063,7 @@ class StrategyService:
             ),
             "certifications": (
                 r"\b(?:certified|certification|accredited|licensed|iso\s*\d*)\b|"
-                r"(?:اعتماد|معتمد|مرخص|شهادة مهنية|شهادة اعتماد)"
+                r"(?:شهادة مهنية|شهادة اعتماد|اعتماد رسمي|اعتماد مهني|معتمد رسمياً|معتمدة رسمياً|مرخص)"
             ),
             "partnerships": (
                 r"\b(?:official partner|certified partner|partnerships?|partner program)\b|"

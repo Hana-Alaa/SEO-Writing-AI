@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 import re
 import asyncio
@@ -56,6 +57,20 @@ _PROCESS_HINT_RE = re.compile(
     r"\b(?:planning|consultation|design|development|execution|delivery|testing|launch|"
     r"discovery|implementation|training|support)\b|"
     r"(?:استشارة|تخطيط|تصميم|تطوير|تنفيذ|تسليم|اختبار|إطلاق|اطلاق|تدريب|دعم)",
+    re.IGNORECASE,
+)
+
+_PLANNING_PROCESS_SERVICE_NOISE_RE = re.compile(
+    r"\b(?:services?|specialized|ux\s+design|video\s+production|3d\s+animation|photography|"
+    r"animation|marketing|hosting|management)\b|"
+    r"(?:خدمات|تخصص|تصميم تطبيقات|انتاج فيديو|رسوم متحركة|ادارة|إدارة)",
+    re.IGNORECASE,
+)
+
+_PLANNING_PROCESS_STEP_RE = re.compile(
+    r"\b(?:consultation\s*&\s*planning|design\s*&\s*development|execution\s*&\s*delivery|"
+    r"planning|consultation|execution|delivery|discovery|implementation|testing|launch)\b|"
+    r"(?:استشارة\s*وتخطيط|تخطيط|استشارة|تنفيذ|تسليم|إطلاق|اختبار)",
     re.IGNORECASE,
 )
 
@@ -1418,6 +1433,341 @@ def build_brand_ground_truth_data(state: Dict[str, Any]) -> Dict[str, Any]:
         },
         "pages": pages,
     }
+
+
+def _planning_catalog_values(catalogs: Dict[str, Any], key: str, limit: int = 12) -> List[str]:
+    """Extract plain string values from a GT catalog list."""
+    out: List[str] = []
+    for entry in catalogs.get(key) or []:
+        if not isinstance(entry, dict):
+            continue
+        value = str(entry.get("value") or "").strip()
+        if value:
+            out.append(value)
+    return out[:limit]
+
+
+def _is_planning_process_step(item: str) -> bool:
+    """Keep workflow steps only; drop service-like labels mis-tagged as process."""
+    text = str(item or "").strip()
+    if not text or _PLANNING_PROCESS_SERVICE_NOISE_RE.search(text):
+        return False
+    if _PLANNING_PROCESS_STEP_RE.search(text):
+        return True
+    if "&" in text and _PROCESS_HINT_RE.search(text):
+        return True
+    return False
+
+
+def _planning_page_blob(page: Dict[str, Any]) -> str:
+    """Combine page fields used for geography and project matching."""
+    parts = [
+        str(page.get("title") or ""),
+        str(page.get("summary") or ""),
+        str(page.get("url") or ""),
+    ]
+    evidence = page.get("observed_evidence") or []
+    if isinstance(evidence, list):
+        parts.extend(str(item) for item in evidence if str(item).strip())
+    return " ".join(parts).casefold()
+
+
+def _planning_page_area_score(page: Dict[str, Any], state: Dict[str, Any]) -> int:
+    """Score a GT page for reader-area geography mentions (ranking only)."""
+    blob = _planning_page_blob(page)
+    score = 0
+    for term in _area_priority_terms_from_state(state):
+        folded_term = re.sub(r"\s+", " ", str(term).casefold()).strip()
+        if folded_term and len(folded_term) >= 3 and folded_term in blob:
+            score += 100
+    return score
+
+
+def _planning_project_name_from_page(page: Dict[str, Any]) -> str:
+    """Derive a portfolio project label from a dedicated portfolio page."""
+    title = str(page.get("title") or "").strip()
+    if title:
+        for sep in (" - ", " | ", " – "):
+            if sep in title:
+                candidate = title.split(sep, 1)[0].strip()
+                if candidate:
+                    return candidate
+        return title
+    url = str(page.get("url") or "").strip()
+    if "/portfolio/" in url.casefold():
+        slug = unquote(url.rstrip("/").rsplit("/", 1)[-1]).strip()
+        if slug and slug.casefold() not in {"projects", "portfolio"}:
+            if re.search(r"[\u0600-\u06ff]", slug):
+                return slug.replace("-", " ").strip()
+            return " ".join(part.capitalize() for part in slug.replace("-", " ").split())
+    return ""
+
+
+def _planning_projects_from_pages(
+    gt_data: Dict[str, Any],
+    state: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """
+    Fallback: recover area-relevant portfolio projects from GT pages when the
+    derived projects catalog is incomplete.
+    """
+    pages = gt_data.get("pages") or []
+    entries: List[Dict[str, Any]] = []
+    seen = set()
+    for page in pages:
+        if not isinstance(page, dict):
+            continue
+        page_type = str(page.get("page_type") or "").casefold()
+        url = str(page.get("url") or "")
+        folded_url = url.casefold()
+        is_listing = page_type == "portfolio_listing" or folded_url.rstrip("/").endswith("/projects")
+        is_portfolio_page = (
+            page_type in {"portfolio", "projects", "case_study", "case-study"}
+            or ("/portfolio/" in folded_url and not is_listing)
+        )
+        if not is_portfolio_page or is_listing:
+            continue
+        area_score = _planning_page_area_score(page, state)
+        if area_score <= 0:
+            continue
+        name = _planning_project_name_from_page(page)
+        if not name:
+            continue
+        folded_name = name.casefold()
+        if folded_name in seen:
+            continue
+        seen.add(folded_name)
+        entries.append(
+            {
+                "value": name,
+                "sources": [url] if url else [],
+                "_from_portfolio_page": True,
+                "_page_area_score": area_score,
+            }
+        )
+    return entries
+
+
+def _merge_planning_project_entries(
+    catalog_entries: List[Dict[str, Any]],
+    page_entries: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Merge catalog and page-derived projects without losing page-level geography."""
+    merged_by_folded: Dict[str, Dict[str, Any]] = {}
+    for entry in list(page_entries or []) + list(catalog_entries or []):
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("value") or "").strip()
+        if not name:
+            continue
+        folded = name.casefold()
+        existing = merged_by_folded.get(folded)
+        if not existing:
+            merged_by_folded[folded] = dict(entry)
+            continue
+        combined = dict(existing)
+        if entry.get("_from_portfolio_page"):
+            combined["_from_portfolio_page"] = True
+            combined["_page_area_score"] = max(
+                int(combined.get("_page_area_score") or 0),
+                int(entry.get("_page_area_score") or 0),
+            )
+        for candidate in (name, str(existing.get("value") or "").strip()):
+            if candidate and candidate != candidate.casefold():
+                combined["value"] = candidate
+                break
+        sources = list(dict.fromkeys(
+            [*(combined.get("sources") or []), *(entry.get("sources") or [])]
+        ))
+        if sources:
+            combined["sources"] = sources
+        merged_by_folded[folded] = combined
+    return list(merged_by_folded.values())
+
+
+def _planning_project_area_score(
+    state: Dict[str, Any],
+    project_entry: Dict[str, Any],
+    gt_data: Dict[str, Any],
+) -> int:
+    """Rank portfolio entries for the reader area without implying local presence."""
+    if int(project_entry.get("_page_area_score") or 0) > 0:
+        score = int(project_entry.get("_page_area_score") or 0)
+        if project_entry.get("_from_portfolio_page"):
+            score += 500
+        return score
+
+    name = str(project_entry.get("value") or "").strip()
+    if not name:
+        return 0
+    blob_parts = [name.casefold(), " ".join(str(s) for s in (project_entry.get("sources") or [])).casefold()]
+    folded_name = name.casefold()
+    for page in gt_data.get("pages") or []:
+        if not isinstance(page, dict):
+            continue
+        summary = str(page.get("summary") or "").casefold()
+        if folded_name in summary:
+            blob_parts.append(summary)
+            blob_parts.append(_planning_page_blob(page))
+    blob = " ".join(blob_parts)
+    score = 0
+    for term in _area_priority_terms_from_state(state):
+        folded_term = re.sub(r"\s+", " ", str(term).casefold()).strip()
+        if folded_term and len(folded_term) >= 3 and folded_term in blob:
+            score += 100
+    return score
+
+
+def _rank_planning_projects(
+    state: Dict[str, Any],
+    project_entries: List[Dict[str, Any]],
+    gt_data: Dict[str, Any],
+) -> tuple:
+    """Split observed projects into area-matched targets vs secondary examples."""
+    scored: List[tuple] = []
+    for entry in project_entries or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("value") or "").strip()
+        if not name:
+            continue
+        scored.append((_planning_project_area_score(state, entry, gt_data), name))
+    scored.sort(key=lambda item: (-item[0], item[1].casefold()))
+    target = [name for score, name in scored if score > 0][:4]
+    secondary = [name for score, name in scored if score <= 0][:6]
+    return target, secondary
+
+
+def _planning_forbidden_claims(claim_boundaries: Dict[str, Any]) -> List[str]:
+    """Derive strategy-level forbidden claim categories from GT boundaries."""
+    cb = claim_boundaries or {}
+    forbidden: List[str] = []
+    if not cb.get("pricing_available"):
+        forbidden.append("pricing_or_packages_as_proven_brand_facts")
+    if not cb.get("local_presence"):
+        forbidden.append("local_office_or_implied_brand_presence_in_reader_area")
+    if not cb.get("testimonials"):
+        forbidden.append("testimonials_or_client_quotes")
+    if not cb.get("certifications"):
+        forbidden.append("certifications_or_accreditations")
+    if not cb.get("awards"):
+        forbidden.append("awards_or_industry_rankings")
+    return forbidden
+
+
+def build_ground_truth_planning_slice(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Step 3C-A: compact structured planning slice from brand_ground_truth_data only.
+
+    Used by content strategy (and later outline) without passing the full markdown GT.
+    """
+    state = state or {}
+    gt_data = state.get("brand_ground_truth_data")
+    if not isinstance(gt_data, dict) or not gt_data:
+        return {}
+
+    catalogs = gt_data.get("catalogs") or {}
+    claim_boundaries = gt_data.get("claim_boundaries") or {}
+
+    all_services = _planning_catalog_values(catalogs, "services", limit=24)
+    technologies = _planning_catalog_values(catalogs, "technologies", limit=12)
+    process_steps = [item for item in all_services if _is_planning_process_step(item)][:6]
+    observed_services = [item for item in all_services if item not in process_steps][:12]
+
+    catalog_projects = catalogs.get("projects") or []
+    page_projects = _planning_projects_from_pages(gt_data, state)
+    merged_projects = _merge_planning_project_entries(catalog_projects, page_projects)
+    target_projects, secondary_projects = _rank_planning_projects(
+        state,
+        merged_projects,
+        gt_data,
+    )
+
+    projects_available = bool(merged_projects or target_projects or secondary_projects)
+    process_available = bool(process_steps)
+    slice_boundaries = {
+        "pricing_available": bool(claim_boundaries.get("pricing_available")),
+        "local_presence": bool(claim_boundaries.get("local_presence")),
+        "testimonials": bool(claim_boundaries.get("testimonials")),
+        "certifications": bool(claim_boundaries.get("certifications")),
+        "awards": bool(claim_boundaries.get("awards")),
+        "projects_available": projects_available,
+        "process_available": process_available,
+    }
+
+    return {
+        "reader_area": str(state.get("area") or "").strip(),
+        "observed_services": observed_services,
+        "observed_technologies": technologies,
+        "observed_process_steps": process_steps,
+        "target_relevant_projects": [{"name": name} for name in target_projects],
+        "secondary_projects": [{"name": name} for name in secondary_projects],
+        "claim_boundaries": slice_boundaries,
+        "forbidden_claims": _planning_forbidden_claims(slice_boundaries),
+    }
+
+
+def format_ground_truth_for_planning(state: Dict[str, Any]) -> str:
+    """Return a JSON planning slice for strategy/outline prompts, or '' when absent."""
+    planning_slice = build_ground_truth_planning_slice(state)
+    if not planning_slice:
+        return ""
+    return json.dumps(planning_slice, ensure_ascii=False, indent=2)
+
+
+def apply_ground_truth_strategy_postfill(
+    strategy: Dict[str, Any],
+    planning_slice: Dict[str, Any],
+    state: Optional[Dict[str, Any]] = None,
+) -> tuple:
+    """
+    Deterministic strategy safety net when the LLM leaves GT-backed fields empty.
+
+    Returns (updated_strategy, postfill_log).
+    """
+    state = state or {}
+    out = dict(strategy or {})
+    log: Dict[str, Any] = {"strategy_gt_postfill_differentiators": False}
+    if not planning_slice:
+        return out, log
+
+    technologies = list(planning_slice.get("observed_technologies") or [])
+    differentiators = [
+        str(item).strip()
+        for item in (out.get("supported_differentiators") or [])
+        if str(item).strip()
+    ]
+    if not differentiators and technologies:
+        out["supported_differentiators"] = technologies[:6]
+        log["strategy_gt_postfill_differentiators"] = True
+        log["strategy_gt_postfill_reason"] = "llm_returned_empty_but_gt_has_technologies"
+        logger.info(
+            "[ground_truth] strategy_gt_postfill_differentiators=true reason=%s values=%s",
+            log["strategy_gt_postfill_reason"],
+            out["supported_differentiators"],
+        )
+
+    proof_points = [
+        str(item).strip()
+        for item in (out.get("supported_proof_points") or [])
+        if str(item).strip()
+    ]
+    target_projects = [
+        str((item or {}).get("name") or "").strip()
+        for item in (planning_slice.get("target_relevant_projects") or [])
+        if isinstance(item, dict) and str((item or {}).get("name") or "").strip()
+    ]
+    if not proof_points and target_projects and planning_slice.get("claim_boundaries", {}).get("projects_available"):
+        out["supported_proof_points"] = target_projects[:4]
+        log["strategy_gt_postfill_proof_points"] = True
+        log["strategy_gt_postfill_proof_reason"] = "llm_returned_empty_but_gt_has_target_projects"
+        logger.info(
+            "[ground_truth] strategy_gt_postfill_proof_points=true reason=%s values=%s",
+            log["strategy_gt_postfill_proof_reason"],
+            out["supported_proof_points"],
+        )
+
+    return out, log
 
 
 def record_ground_truth_consumption(state: Dict[str, Any], layer: str) -> Dict[str, Any]:

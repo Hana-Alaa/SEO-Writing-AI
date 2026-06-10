@@ -10160,5 +10160,230 @@ class TestSafeRepairPlaceholderGuard(unittest.TestCase):
         self.assertFalse(controller._is_project_like_section(section))
 
 
+class TestStep3CAPlanningStrategy(unittest.TestCase):
+    """Step 3C-A: GT planning slice -> content strategy."""
+
+    def _planning_state(self):
+        return {
+            "area": "السعودية",
+            "brand_ground_truth": "# Brand Ground Truth\nx",
+            "brand_ground_truth_data": {
+                "catalogs": {
+                    "services": [
+                        {"value": "Consultation & Planning", "sources": ["design-services"]},
+                        {"value": "Design & Development", "sources": ["design-services"]},
+                        {"value": "Execution & Delivery", "sources": ["design-services"]},
+                        {"value": "Web Hosting", "sources": ["homepage"]},
+                        {"value": "SEO", "sources": ["homepage"]},
+                    ],
+                    "technologies": [
+                        {"value": "WordPress", "sources": ["homepage"]},
+                        {"value": "PHP", "sources": ["homepage"]},
+                        {"value": "React JS", "sources": ["homepage"]},
+                    ],
+                    "projects": [
+                        {"value": "Baddel", "sources": ["portfolio/baddel"]},
+                        {"value": "Billion", "sources": ["portfolio/billion"]},
+                        {"value": "Aqar Ya Masr", "sources": ["portfolio/aqar-ya-masr"]},
+                    ],
+                },
+                "claim_boundaries": {
+                    "pricing_available": False,
+                    "local_presence": False,
+                    "testimonials": False,
+                    "certifications": False,
+                    "awards": False,
+                    "projects_available": True,
+                    "process_available": True,
+                },
+                "pages": [
+                    {
+                        "url": "https://brand.test/portfolio/baddel",
+                        "summary": "Baddel project delivered in Riyadh, Saudi Arabia.",
+                    },
+                    {
+                        "url": "https://brand.test/portfolio/billion",
+                        "summary": "Billion project in Riyadh, Saudi Arabia.",
+                    },
+                    {
+                        "url": "https://brand.test/portfolio/aqar-ya-masr",
+                        "summary": "Aqar Ya Masr project in Egypt.",
+                    },
+                ],
+            },
+        }
+
+    def test_planning_slice_includes_technologies_process_steps_and_forbidden_claims(self):
+        from src.services.brand_evidence_service import build_ground_truth_planning_slice
+
+        planning = build_ground_truth_planning_slice(self._planning_state())
+        self.assertIn("WordPress", planning["observed_technologies"])
+        self.assertIn("Consultation & Planning", planning["observed_process_steps"])
+        self.assertFalse(planning["claim_boundaries"]["local_presence"])
+        self.assertIn("local_office_or_implied_brand_presence_in_reader_area", planning["forbidden_claims"])
+
+    def test_planning_slice_prefers_area_matched_projects_without_local_presence(self):
+        from src.services.brand_evidence_service import build_ground_truth_planning_slice
+
+        planning = build_ground_truth_planning_slice(self._planning_state())
+        target_names = [item["name"] for item in planning["target_relevant_projects"]]
+        secondary_names = [item["name"] for item in planning["secondary_projects"]]
+        self.assertIn("Baddel", target_names)
+        self.assertIn("Billion", target_names)
+        self.assertIn("Aqar Ya Masr", secondary_names)
+        self.assertFalse(planning["claim_boundaries"]["local_presence"])
+
+    def test_format_ground_truth_for_planning_returns_json_not_markdown(self):
+        from src.services.brand_evidence_service import format_ground_truth_for_planning
+        import json
+
+        payload = format_ground_truth_for_planning(self._planning_state())
+        self.assertIn("observed_technologies", payload)
+        self.assertNotIn("# Brand Ground Truth", payload)
+        parsed = json.loads(payload)
+        self.assertIn("PHP", parsed["observed_technologies"])
+
+    def test_strategy_postfill_fills_empty_differentiators_from_gt_technologies(self):
+        from src.services.brand_evidence_service import (
+            apply_ground_truth_strategy_postfill,
+            build_ground_truth_planning_slice,
+        )
+
+        planning = build_ground_truth_planning_slice(self._planning_state())
+        strategy = {"supported_differentiators": [], "supported_proof_points": []}
+        updated, log = apply_ground_truth_strategy_postfill(strategy, planning, self._planning_state())
+        self.assertEqual(updated["supported_differentiators"], ["WordPress", "PHP", "React JS"])
+        self.assertTrue(log["strategy_gt_postfill_differentiators"])
+        self.assertEqual(log["strategy_gt_postfill_reason"], "llm_returned_empty_but_gt_has_technologies")
+
+    def test_strategy_prompt_template_receives_planning_slice_block(self):
+        from jinja2 import Environment, FileSystemLoader
+
+        env = Environment(loader=FileSystemLoader("assets/prompts/templates"))
+        template = env.get_template("00_content_strategy_brand_commercial_observed_v2.txt")
+        rendered = template.render(
+            primary_keyword="افضل شركة تصميم مواقع",
+            intent="commercial",
+            content_type="brand_commercial",
+            area="السعودية",
+            serp_intent_analysis="{}",
+            serp_structural_intelligence="{}",
+            serp_market_insights="{}",
+            brand_evidence_boundaries="{}",
+            ground_truth_planning_slice='{"observed_technologies":["WordPress","PHP"]}',
+            keyword_clusters="[]",
+            prohibited_competitors=[],
+        )
+        self.assertIn("[BRAND GROUND TRUTH PLANNING SLICE]", rendered)
+        self.assertIn("WordPress", rendered)
+        self.assertIn("supported_differentiators` MUST use `observed_technologies`", rendered)
+
+    def _planning_state_catalog_drift(self):
+        """Mimic run 163821: catalog omits Saudi portfolio pages; boundaries drift false."""
+        return {
+            "area": "السعودية",
+            "brand_ground_truth": "# Brand Ground Truth\nx",
+            "brand_ground_truth_data": {
+                "catalogs": {
+                    "services": [
+                        {"value": "Specialized Design Services for Building & Management", "sources": ["design-services"]},
+                        {"value": "Consultation & Planning", "sources": ["design-services"]},
+                        {"value": "Design & Development", "sources": ["design-services"]},
+                        {"value": "Execution & Delivery", "sources": ["design-services"]},
+                        {"value": "UX design for apps", "sources": ["design-services"]},
+                        {"value": "Web Hosting", "sources": ["homepage"]},
+                    ],
+                    "technologies": [
+                        {"value": "WordPress", "sources": ["homepage"]},
+                        {"value": "PHP", "sources": ["homepage"]},
+                        {"value": "React JS", "sources": ["homepage"]},
+                        {"value": "SEO", "sources": ["homepage"]},
+                    ],
+                    "projects": [
+                        {"value": "My Progress", "sources": ["design-services", "portfolio/5631-2"]},
+                        {"value": "ماي بروسيس", "sources": ["ar/portfolio/%d9%85%d8%a7%d9%8a-%d8%a8%d8%b1%d9%88%d8%b3%d9%8a%d8%b3"]},
+                        {"value": "Bolaq Bookstore", "sources": ["projects"]},
+                    ],
+                },
+                "claim_boundaries": {
+                    "pricing_available": False,
+                    "local_presence": False,
+                    "testimonials": False,
+                    "certifications": False,
+                    "awards": False,
+                    "projects_available": False,
+                    "process_available": False,
+                },
+                "pages": [
+                    {
+                        "url": "https://cems-it.com/portfolio/baddel",
+                        "title": "Baddel - Creative Minds Company",
+                        "page_type": "portfolio",
+                        "summary": "This page presents the Baddel project in Riyadh, Saudi Arabia.",
+                    },
+                    {
+                        "url": "https://cems-it.com/portfolio/billion",
+                        "title": "Billion - Creative Minds Company",
+                        "page_type": "portfolio",
+                        "summary": "This page presents the Billion project in Riyadh, Saudi Arabia.",
+                    },
+                    {
+                        "url": "https://cems-it.com/portfolio/5631-2",
+                        "title": "My Progress - Creative Minds Company",
+                        "page_type": "portfolio",
+                        "summary": "Design Services My Progress Project Name My Progress Design Services Publish Date 02-2018 Brief",
+                    },
+                    {
+                        "url": "https://cems-it.com/ar/portfolio/%d9%85%d8%a7%d9%8a-%d8%a8%d8%b1%d9%88%d8%b3%d9%8a%d8%b3",
+                        "title": "ماي بروسيس - Creative Minds Company",
+                        "page_type": "portfolio",
+                        "summary": "ماي بروسيس project page in الخبر.",
+                    },
+                ],
+            },
+        }
+
+    def test_planning_slice_pages_fallback_prefers_saudi_portfolio_pages(self):
+        from src.services.brand_evidence_service import build_ground_truth_planning_slice
+
+        planning = build_ground_truth_planning_slice(self._planning_state_catalog_drift())
+        target_names = [item["name"] for item in planning["target_relevant_projects"]]
+        self.assertIn("Baddel", target_names)
+        self.assertIn("Billion", target_names)
+        self.assertNotIn("My Progress", target_names[:2])
+
+    def test_planning_slice_availability_flags_derived_from_slice_not_drifted_boundaries(self):
+        from src.services.brand_evidence_service import build_ground_truth_planning_slice
+
+        planning = build_ground_truth_planning_slice(self._planning_state_catalog_drift())
+        self.assertTrue(planning["claim_boundaries"]["projects_available"])
+        self.assertTrue(planning["claim_boundaries"]["process_available"])
+
+    def test_planning_slice_excludes_service_noise_from_process_steps(self):
+        from src.services.brand_evidence_service import build_ground_truth_planning_slice
+
+        planning = build_ground_truth_planning_slice(self._planning_state_catalog_drift())
+        steps = planning["observed_process_steps"]
+        self.assertIn("Consultation & Planning", steps)
+        self.assertIn("Design & Development", steps)
+        self.assertIn("Execution & Delivery", steps)
+        self.assertNotIn("Specialized Design Services for Building & Management", steps)
+        self.assertNotIn("UX design for apps", steps)
+
+    def test_strategy_postfill_fills_empty_proof_points_from_target_projects(self):
+        from src.services.brand_evidence_service import (
+            apply_ground_truth_strategy_postfill,
+            build_ground_truth_planning_slice,
+        )
+
+        state = self._planning_state_catalog_drift()
+        planning = build_ground_truth_planning_slice(state)
+        strategy = {"supported_differentiators": [], "supported_proof_points": []}
+        updated, log = apply_ground_truth_strategy_postfill(strategy, planning, state)
+        self.assertIn("Baddel", updated["supported_proof_points"])
+        self.assertIn("Billion", updated["supported_proof_points"])
+        self.assertTrue(log["strategy_gt_postfill_proof_points"])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -713,6 +713,52 @@ def test_patch_3a_serp_testimonials_do_not_become_supported_brand_proof():
     assert all(item["source"] == "SERP" for item in removed)
 
 
+def test_strategy_does_not_strip_technology_dependency_wording_as_certification():
+    ai_payload = {
+        "primary_angle": "اختيار شركة تصميم مواقع",
+        "market_angle": "مقارنة الخيارات",
+        "target_reader_state": "باحث",
+        "pain_point_focus": ["صعوبة الاختيار"],
+        "emotional_trigger": "الاطمئنان",
+        "depth_level": "intermediate",
+        "supported_eeat_signals": [],
+        "supported_differentiators": [
+            "الاعتماد على تقنيات حديثة تشمل PHP وWordPress وReact JS"
+        ],
+        "supported_proof_points": ["Baddel", "Billion"],
+        "conversion_strategy": "Clarify, compare, answer objections, close.",
+        "cta_philosophy": "Direct but calm",
+        "local_strategy": "",
+        "tone_direction": "Professional",
+        "section_role_map": {},
+    }
+    service = _make_service([ai_payload])
+    state = _brand_state(ai_payload)
+    state["brand_evidence_boundaries"] = {
+        "services": True,
+        "projects": True,
+        "process": True,
+        "testimonials": False,
+        "awards": False,
+        "certifications": False,
+        "partnerships": False,
+        "brand_pricing": False,
+        "local_presence": False,
+        "explicit_geography": [],
+    }
+
+    asyncio.run(service.run_content_strategy(state))
+
+    differentiators = state["content_strategy"]["supported_differentiators"]
+    assert differentiators
+    assert "PHP" in differentiators[0]
+    removed = [
+        item for item in state.get("brand_strategy_provenance", [])
+        if item.get("category") == "certifications" and item.get("action", "").startswith("removed_from")
+    ]
+    assert not removed
+
+
 def test_patch_3a_strategy_prompt_receives_boundaries_not_full_knowledge_pack():
     service = _make_service([{}])
     state = _brand_state({})
