@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 from langdetect import detect
-from jinja2 import Environment, FileSystemLoader, Template, StrictUndefined
+from jinja2 import Environment, Template, StrictUndefined
 import hashlib
 import requests
 from typing import Dict, Any, List, Optional, Callable, ClassVar
@@ -51,7 +51,11 @@ from src.services.semantic_service import SemanticService
 from src.services.outline_repair_service import OutlineRepairService
 from src.services.brand_evidence_service import BrandEvidenceService, build_brand_offer_contract
 from src.utils.contract_safety import PipelineContractError, validate_service_call, is_signature_mismatch
-BASE_DIR = Path(__file__).resolve().parents[2]
+from src.config.paths import (
+    create_prompt_template_loader,
+    prompt_template_path,
+    read_prompt_template,
+)
 
 
 # Custom errors
@@ -175,16 +179,17 @@ class AsyncWorkflowController:
         self.executor = AsyncExecutor(self.ai_client.observer)
         self.image_prompt_planner = ImagePromptPlanner(
             ai_client=self.ai_client,
-            template_path=BASE_DIR / "assets/prompts/templates/06_image_planner.txt"
-
+            template_path=prompt_template_path("06_image_planner.txt"),
         )
         self.env = Environment(
-            loader=FileSystemLoader("assets/prompts/templates"),
+            loader=create_prompt_template_loader(),
             undefined=StrictUndefined
         )
 
-        with open("assets/prompts/templates/00_intent_classifier.txt", "r", encoding="utf-8") as f:
-            self.intent_template = Template(f.read(), undefined=StrictUndefined)
+        self.intent_template = Template(
+            read_prompt_template("00_intent_classifier.txt"),
+            undefined=StrictUndefined,
+        )
 
         # Semantic Intelligence Layer
         self.semantic_service = SemanticService()
@@ -11052,8 +11057,8 @@ class AsyncWorkflowController:
 
         # Load template (reusing existing path for consistency)
         try:
-            from jinja2 import Environment, FileSystemLoader
-            env = Environment(loader=FileSystemLoader("assets/prompts/templates"))
+            from jinja2 import Environment
+            env = Environment(loader=create_prompt_template_loader())
             coherence_template = env.get_template("09_humanizer_editor.txt")
         except Exception as e:
             logger.error(f"Failed to load coherence template: {e}")

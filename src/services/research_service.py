@@ -16,6 +16,7 @@ from PIL import Image
 from io import BytesIO
 from jinja2 import Template
 
+from src.config.paths import PromptTemplatesNotFoundError, read_prompt_template
 from src.utils.link_manager import LinkManager
 from src.utils.json_utils import recover_json
 from src.utils.scraper_utils import ScraperUtils
@@ -637,8 +638,7 @@ class ResearchService:
         lang = state.get("article_language", "ar")
         search_query = self._compose_search_query(primary_keyword, area, lang)
 
-        with open("assets/prompts/templates/seo_web_research.txt") as f:
-            template = Template(f.read())
+        template = Template(read_prompt_template("seo_web_research.txt"))
 
         attempts = []
 
@@ -726,11 +726,9 @@ class ResearchService:
         logger.info(f"Running Hybrid SERP+Strategy Research for: {search_query}")
         
         try:
-            with open("assets/prompts/templates/seo_hybrid_research.txt") as f:
-                template = Template(f.read())
-        except FileNotFoundError:
-            with open("assets/prompts/templates/seo_web_research.txt") as f:
-                template = Template(f.read())
+            template = Template(read_prompt_template("seo_hybrid_research.txt"))
+        except PromptTemplatesNotFoundError:
+            template = Template(read_prompt_template("seo_web_research.txt"))
 
         research_prompt = template.render(primary_keyword=search_query)
         max_results = state.get("competitor_count", 3)
@@ -780,8 +778,7 @@ class ResearchService:
         competitor_headers = [r for r in results if r]
         
         # 3. Perform Analysis (Brand-Unaware Prompt)
-        with open("assets/prompts/templates/seo_serp_analysis_observed_v2.txt") as f:
-            template = Template(f.read())
+        template = Template(read_prompt_template("seo_serp_analysis_observed_v2.txt"))
         
         analysis_prompt = template.render(
             primary_keyword=primary_keyword, 

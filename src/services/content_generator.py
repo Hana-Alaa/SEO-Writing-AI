@@ -4,7 +4,8 @@ import asyncio
 import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader, Template, StrictUndefined
+from jinja2 import Environment, Template, StrictUndefined
+from src.config.paths import create_prompt_template_loader, resolve_prompt_template_path
 from src.utils.json_utils import recover_json
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,7 @@ class OutlineGenerator:
     def __init__(self, ai_client: Any):
         self.ai_client = ai_client
         self.env = Environment(
-            loader=FileSystemLoader("assets/prompts/templates"),
+            loader=create_prompt_template_loader(),
             undefined=StrictUndefined
         )
         
@@ -839,7 +840,7 @@ class SectionWriter:
     def __init__(self, ai_client: Any):
         self.ai_client = ai_client
         self.env = Environment(
-            loader=FileSystemLoader("assets/prompts/templates"),
+            loader=create_prompt_template_loader(),
             undefined=StrictUndefined
         )
 
@@ -1318,8 +1319,11 @@ class SectionWriter:
 class Assembler:
     def __init__(self, ai_client: Any, template_path: str = "assets/prompts/templates/04_article_assembler.txt"):
         self.ai_client = ai_client
-        with open(template_path, "r", encoding="utf-8") as f:
-            self.template = Template(f.read(), undefined=StrictUndefined)
+        resolved_template_path = resolve_prompt_template_path(template_path)
+        self.template = Template(
+            resolved_template_path.read_text(encoding="utf-8"),
+            undefined=StrictUndefined,
+        )
 
     async def assemble(
         self,
@@ -1442,8 +1446,11 @@ class Assembler:
 class FinalHumanizer:
     def __init__(self, ai_client: Any, template_path: str = "assets/prompts/templates/05_final_humanizer.txt"):
         self.ai_client = ai_client
-        with open(template_path, "r", encoding="utf-8") as f:
-            self.template = Template(f.read(), undefined=StrictUndefined)
+        resolved_template_path = resolve_prompt_template_path(template_path)
+        self.template = Template(
+            resolved_template_path.read_text(encoding="utf-8"),
+            undefined=StrictUndefined,
+        )
 
     async def humanize_section(
         self,
