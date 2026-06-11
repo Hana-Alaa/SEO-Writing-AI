@@ -1,6 +1,7 @@
 import unittest
 from src.services.workflow_controller import AsyncWorkflowController
 
+
 class TestPricingExtraction(unittest.TestCase):
     def setUp(self):
         self.controller = object.__new__(AsyncWorkflowController)
@@ -14,7 +15,6 @@ class TestPricingExtraction(unittest.TestCase):
             }
         }
         mentions = self.controller._extract_observed_pricing_signals(state)
-        # Check if 110,000 is in one of the contexts
         self.assertTrue(any("110,000" in m for m in mentions))
 
     def test_extract_arabic_price(self):
@@ -27,7 +27,7 @@ class TestPricingExtraction(unittest.TestCase):
         }
         mentions = self.controller._extract_observed_pricing_signals(state)
         self.assertTrue(any("2.000" in m for m in mentions))
-        self.assertTrue(any("الايجار الشهري" in m for m in mentions))
+        self.assertTrue(any("ريال" in m for m in mentions))
 
     def test_extract_from_top_results_meta_and_headings(self):
         state = {
@@ -104,35 +104,113 @@ class TestPricingExtraction(unittest.TestCase):
             }
         }
         mentions = self.controller._extract_observed_pricing_signals(state)
-        # Should be empty because no price terms (rent, price, etc.) are in the snippet
         self.assertEqual(len(mentions), 0)
+
+    def test_extract_arabic_indic_digits_with_currency(self):
+        state = {
+            "serp_data": {
+                "results": [
+                    {"snippet": "متوسط الإيجار ١٠٠٠ جنيه شهريًا في القاهرة"}
+                ]
+            }
+        }
+        mentions = self.controller._extract_observed_pricing_signals(state)
+        self.assertTrue(any("١٠٠٠" in m or "1000" in m for m in mentions))
+        self.assertTrue(any("جنيه" in m for m in mentions))
+
+    def test_extract_short_scale_with_currency(self):
+        state = {
+            "serp_data": {
+                "results": [
+                    {"snippet": "Packages start from 110K USD for enterprise clients."}
+                ]
+            }
+        }
+        mentions = self.controller._extract_observed_pricing_signals(state)
+        self.assertTrue(any("110K" in m for m in mentions))
+        self.assertTrue(any("USD" in m for m in mentions))
+
+    def test_extract_million_scale_formats(self):
+        state = {
+            "serp_data": {
+                "results": [
+                    {"snippet": "Enterprise rollout from 1.1M EUR with annual support."},
+                    {"snippet": "باقات تبدأ من 1.5 مليون جنيه للشركات الكبرى."},
+                    {"snippet": "عروض من 250 ألف درهم للمشاريع المتوسطة."},
+                ]
+            }
+        }
+        mentions = self.controller._extract_observed_pricing_signals(state)
+        self.assertTrue(any("1.1M" in m and "EUR" in m for m in mentions))
+        self.assertTrue(any("مليون" in m and "جنيه" in m for m in mentions))
+        self.assertTrue(any("ألف" in m and "درهم" in m for m in mentions))
+
+    def test_extract_symbol_prefixed_amount(self):
+        state = {
+            "serp_data": {
+                "results": [
+                    {"snippet": "Starter plan at $1,000 per month."},
+                    {"snippet": "Localized pricing from 1000 EGP annually."},
+                ]
+            }
+        }
+        mentions = self.controller._extract_observed_pricing_signals(state)
+        self.assertTrue(any("$1,000" in m or "1,000" in m for m in mentions))
+        self.assertTrue(any("1000" in m and "EGP" in m for m in mentions))
+
+    def test_ignore_listing_count_without_currency(self):
+        state = {
+            "serp_data": {
+                "results": [
+                    {
+                        "title": "شقق للايجار في الرياض",
+                        "snippet": "شقق للايجار في الرياض - 329 شقق للايجار | بروبرتي فايندر",
+                    }
+                ]
+            }
+        }
+        mentions = self.controller._extract_observed_pricing_signals(state)
+        self.assertEqual(mentions, [])
+
+    def test_ignore_discount_only_percentage(self):
+        state = {
+            "serp_data": {
+                "results": [
+                    {"snippet": "Limited offer: 50% off your first month."},
+                    {"snippet": "عرض خاص: خصم ٥٠٪ لفترة محدودة."},
+                ]
+            }
+        }
+        mentions = self.controller._extract_observed_pricing_signals(state)
+        self.assertEqual(mentions, [])
 
     def test_pricing_section_receives_mentions(self):
         state = {
             "serp_data": {
                 "results": [
-                    {"title": "Pricing", "snippet": "Rent is 50,000"}
+                    {"title": "Pricing", "snippet": "Plans start from 50,000 SAR annually."}
                 ]
             },
-            "article_language": "en"
+            "article_language": "en",
         }
-        # First extract
         self.controller._extract_observed_pricing_signals(state)
-        
+
         section = {
             "heading_text": "Apartment Pricing",
-            "section_type": "pricing"
+            "section_type": "pricing",
+            "taxonomy_axis": "pricing_by_type",
         }
-        
+
         enriched = self.controller._enrich_section_contract(
             section=section,
             outline=[section],
             index=0,
-            state=state
+            state=state,
         )
-        
+
         mentions = enriched.get("observed_data_mentions", [])
         self.assertTrue(any("50,000" in m for m in mentions))
+
 
 if __name__ == "__main__":
     unittest.main()

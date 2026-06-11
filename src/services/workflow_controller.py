@@ -70,6 +70,190 @@ logger = logging.getLogger(__name__)
 DetectorFactory.seed = 0
 PARALLEL_SECTIONS = False
 
+_PRICING_ARABIC_INDIC_TRANSLATION = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+_PRICING_CONTEXT_WINDOW = 45
+_PRICING_CURRENCY_TOKEN_RE = re.compile(
+    r"(?:"
+    r"ريال|ر\.س|جنيه|ج\.م|درهم|د\.إ|دينار|د\.ك|د\.ب|دولار|يورو|باوند|ليرة|"
+    r"sar|saudi\s+riyals?|egp|aed|usd|eur|gbp|kwd|bhd|qar|omr|"
+    r"dollars?|euros?|pounds?|dirhams?|dinars?|riyals?|"
+    r"[\$€£]"
+    r")",
+    re.IGNORECASE,
+)
+_PRICING_PHRASE_RE = re.compile(
+    r"(?:"
+    r"سعر|الاسعار|الأسعار|تكلفة|يبدأ\s+من|تبدأ\s+من|"
+    r"prices?|pricing|cost|starts?\s+from|starting\s+from|\bfrom\b"
+    r")",
+    re.IGNORECASE,
+)
+_PRICING_LISTING_MARKERS_RE = re.compile(
+    r"(?:"
+    r"شقق|عقارات|نتائج|مشاريع|عملاء|سنوات|"
+    r"pages?|listings?|results?|projects?|clients?"
+    r")",
+    re.IGNORECASE,
+)
+_PRICING_DISCOUNT_ONLY_RE = re.compile(
+    r"(?:%|٪|خصم|off\b|discount)",
+    re.IGNORECASE,
+)
+_PRICING_ASCII_NUMBER = r"(?:\d{1,3}(?:[,\s]\d{3})+(?:\.\d+)?|\d{3,}(?:\.\d+)?)"
+_PRICING_SCALED_ASCII_NUMBER = r"\d+(?:\.\d+)?\s*[KkMm]"
+_PRICING_ARABIC_SCALE_AMOUNT = r"\d+(?:[.,]\d+)?\s+(?:مليون|ألف|الف|الاف)"
+_PRICING_ARABIC_INDIC_NUMBER = r"(?:[٠-٩]{1,3}(?:[٬،,\s][٠-٩]{3})+(?:[.,][٠-٩]+)?|[٠-٩]{3,}(?:[.,][٠-٩]+)?)"
+_PRICING_NUMBER = rf"(?:{_PRICING_ASCII_NUMBER}|{_PRICING_ARABIC_INDIC_NUMBER}|{_PRICING_SCALED_ASCII_NUMBER})"
+_PRICING_SCALE = r"(?:\s*[KkMm]|\s+(?:مليون|ألف|الف|الاف))"
+_PRICING_CURRENCY_GROUP = (
+    r"(?:ريال|ر\.س|جنيه|ج\.م|درهم|د\.إ|دينار|د\.ك|د\.ب|دولار|يورو|باوند|ليرة|"
+    r"SAR|EGP|AED|USD|EUR|GBP|KWD|BHD|QAR|OMR|"
+    r"dollars?|euros?|pounds?|dirhams?|dinars?|riyals?)"
+)
+_PRICING_CANDIDATE_PATTERNS = [
+    re.compile(rf"[\$€£]\s*{_PRICING_ASCII_NUMBER}{_PRICING_SCALE}?", re.IGNORECASE),
+    re.compile(
+        rf"(?:{_PRICING_CURRENCY_GROUP})\s*{_PRICING_NUMBER}{_PRICING_SCALE}?",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"{_PRICING_NUMBER}{_PRICING_SCALE}?\s*(?:{_PRICING_CURRENCY_GROUP})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"{_PRICING_ARABIC_SCALE_AMOUNT}\s*(?:{_PRICING_CURRENCY_GROUP})?",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"{_PRICING_NUMBER}{_PRICING_SCALE}\s+(?:{_PRICING_CURRENCY_GROUP})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"(?:{_PRICING_PHRASE_RE.pattern})\s*:?\s*{_PRICING_NUMBER}{_PRICING_SCALE}?",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"{_PRICING_SCALED_ASCII_NUMBER}\s+(?:{_PRICING_CURRENCY_GROUP})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"{_PRICING_NUMBER}{_PRICING_SCALE}?",
+        re.IGNORECASE,
+    ),
+]
+
+
+def _normalize_pricing_context(text: str) -> str:
+    normalized = (
+        str(text or "")
+        .lower()
+        .replace("إ", "ا")
+        .replace("أ", "ا")
+        .replace("آ", "ا")
+        .replace("ى", "ي")
+        .replace("ة", "ه")
+    )
+    return normalized.translate(_PRICING_ARABIC_INDIC_TRANSLATION)
+
+
+def _pricing_digits_only(value: str) -> str:
+    return re.sub(r"\D", "", _normalize_pricing_context(value))
+
+
+def _pricing_amount_strength(value: str) -> int:
+    digits = _pricing_digits_only(value)
+    if not digits:
+        return 0
+    if re.search(r"[KkMm]|مليون|الف|ألف|الاف", value, re.IGNORECASE):
+        return max(len(digits), 4)
+    return len(digits)
+
+
+def _pricing_local_window(blob: str, start: int, end: int, pad: int = _PRICING_CONTEXT_WINDOW) -> str:
+    return blob[max(0, start - pad): min(len(blob), end + pad)]
+
+
+def _pricing_has_currency_token(text: str) -> bool:
+    return bool(_PRICING_CURRENCY_TOKEN_RE.search(_normalize_pricing_context(text)))
+
+
+def _pricing_has_currency_or_phrase(text: str) -> bool:
+    normalized = _normalize_pricing_context(text)
+    return bool(_PRICING_CURRENCY_TOKEN_RE.search(normalized) or _PRICING_PHRASE_RE.search(normalized))
+
+
+def _pricing_is_guide_year(match_text: str, local_window: str) -> bool:
+    digits = _pricing_digits_only(match_text)
+    if not re.fullmatch(r"\d{4}", digits):
+        return False
+    year = int(digits)
+    if not 1900 <= year <= 2099:
+        return False
+    return not _pricing_has_currency_token(local_window)
+
+
+def _pricing_is_listing_count_context(local_window: str, match_text: str) -> bool:
+    normalized = _normalize_pricing_context(local_window)
+    if _pricing_has_currency_token(local_window):
+        return False
+    match_norm = _normalize_pricing_context(match_text)
+    if not match_norm:
+        return False
+    start = normalized.find(match_norm)
+    if start == -1:
+        start = 0
+    end = start + len(match_norm)
+    tight_after = normalized[end:end + 18]
+    tight_before = normalized[max(0, start - 18):start]
+    tight = f"{tight_before} {match_norm} {tight_after}"
+    if not _PRICING_LISTING_MARKERS_RE.search(tight):
+        return False
+    return not _pricing_has_currency_or_phrase(tight)
+
+
+def _pricing_is_discount_only(local_window: str, match_text: str) -> bool:
+    if not _PRICING_DISCOUNT_ONLY_RE.search(local_window):
+        return False
+    if _pricing_has_currency_token(local_window):
+        return False
+    return _pricing_amount_strength(match_text) < 3
+
+
+def _iter_observed_price_candidates(blob: str) -> List[tuple[int, int, str]]:
+    seen: set[tuple[int, int]] = set()
+    candidates: List[tuple[int, int, str]] = []
+    for pattern in _PRICING_CANDIDATE_PATTERNS:
+        for match in pattern.finditer(blob):
+            start, end = match.start(), match.end()
+            key = (start, end)
+            if key in seen:
+                continue
+            seen.add(key)
+            candidates.append((start, end, match.group(0).strip()))
+    candidates.sort(key=lambda item: item[0])
+    return candidates
+
+
+def _is_valid_observed_price_mention(blob: str, start: int, end: int, matched: str) -> bool:
+    if _pricing_amount_strength(matched) < 2 and not _pricing_has_currency_token(matched):
+        return False
+    local_window = _pricing_local_window(blob, start, end)
+    if not _pricing_has_currency_or_phrase(local_window):
+        return False
+    if _pricing_is_guide_year(matched, local_window):
+        return False
+    if _pricing_is_listing_count_context(local_window, matched):
+        return False
+    if _pricing_is_discount_only(local_window, matched):
+        return False
+    return True
+
+
+def _observed_price_context(blob: str, start: int, end: int) -> str:
+    context = _pricing_local_window(blob, start, end, pad=35).strip()
+    return " ".join(context.split())
+
+
 class AsyncExecutor:
     """Executes async workflow steps with logging and retries."""
     def __init__(self, observer=None):
@@ -1279,31 +1463,12 @@ class AsyncWorkflowController:
 
 
     def _extract_observed_pricing_signals(self, state: Dict[str, Any]) -> List[str]:
-        """Extracts numeric pricing patterns from SERP data (titles, snippets, meta)."""
+        """Extracts currency-grounded pricing patterns from SERP data (titles, snippets, meta)."""
         serp_data = state.get("serp_data", {})
         if not serp_data:
             return []
 
-        # Pricing keywords to filter context
-        price_terms = [
-            "سعر", "اسعار", "أسعار", "تكلفة", "ريال", "درهم", "ايجار", "إيجار",
-            "شهري", "سنوي", "rent", "price", "pricing", "cost", "sar", "aed",
-            "fees", "monthly", "yearly", "annual", "starts from", "تبدأ من"
-        ]
-        
-        # Pattern to find numbers with 3+ digits or decimals (e.g., 110,000 or 2.000 or 1500)
-        price_pattern = re.compile(r"(\d{3,}(?:[.,\s]\d{3})*(?:\.\d+)?|\d{1,3}(?:[.,\s]\d{3})+(?:\.\d+)?)")
-        
         found_mentions = []
-        
-        def _normalise_price_context(text: str) -> str:
-            return (
-                str(text or "")
-                .lower()
-                .replace("إ", "ا")
-                .replace("أ", "ا")
-                .replace("آ", "ا")
-            )
 
         def _add_text(value: Any, output: List[str]) -> None:
             if isinstance(value, str) and value.strip():
@@ -1350,34 +1515,14 @@ class AsyncWorkflowController:
         _add_text(serp_data.get("related_searches", []), text_blobs)
         
         for blob in text_blobs:
-            if not blob: continue
-            blob_l = _normalise_price_context(blob)
-            
-            # Context Check: only extract if price-related word is nearby
-            if any(term in blob_l for term in price_terms):
-                matches = price_pattern.findall(blob)
-                for match in matches:
-                    cleaned = re.sub(r"[.,\s]", "", match)
-                    if cleaned.isdigit() and len(cleaned) >= 3:
-                        # Extract context: 30 chars before and after
-                        start_idx = blob.find(match)
-                        context_start = max(0, start_idx - 30)
-                        context_end = min(len(blob), start_idx + len(match) + 30)
-                        context = blob[context_start:context_end].strip()
-                        context = " ".join(context.split())
-                        # Avoid obvious guide years such as "2026" unless the
-                        # local context also contains a stronger price marker.
-                        match_digits = re.sub(r"\D", "", match)
-                        if re.fullmatch(r"\d{4}", match_digits):
-                            as_int = int(match_digits)
-                            local_l = _normalise_price_context(context)
-                            strong_price_terms = (
-                                "ريال", "درهم", "sar", "aed", "شهري", "سنوي",
-                                "monthly", "yearly", "annual", "rent", "ايجار",
-                            )
-                            if 1900 <= as_int <= 2099 and not any(t in local_l for t in strong_price_terms):
-                                continue
-                        found_mentions.append(context)
+            if not blob:
+                continue
+            for start, end, matched in _iter_observed_price_candidates(blob):
+                if not _is_valid_observed_price_mention(blob, start, end, matched):
+                    continue
+                context = _observed_price_context(blob, start, end)
+                if context:
+                    found_mentions.append(context)
 
         # Store in state at the required path
         intelligence = state.setdefault("seo_intelligence", {})
